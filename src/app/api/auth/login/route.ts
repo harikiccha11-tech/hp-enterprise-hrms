@@ -26,10 +26,17 @@ export async function POST(req: NextRequest) {
     }
 
     await db.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } })
+
+    // If CLIENT role, resolve linked client record
+    let linkedClient = null
+    if (user.role === 'CLIENT' && user.clientId) {
+      linkedClient = await db.client.findUnique({ where: { id: user.clientId } })
+    }
+
     const token = await createSessionToken({
       userId: user.id,
       username: user.username,
-      role: user.role as 'OWNER' | 'SUPER_ADMIN' | 'HR_MANAGER' | 'EMPLOYEE',
+      role: user.role as 'OWNER' | 'SUPER_ADMIN' | 'HR_MANAGER' | 'EMPLOYEE' | 'CLIENT',
       employeeId: user.employee?.id,
     })
     await setSessionCookie(token)
@@ -43,6 +50,16 @@ export async function POST(req: NextRequest) {
         role: user.role,
         mustResetPassword: user.mustResetPassword,
         employeeId: user.employee?.id ?? null,
+        clientId: linkedClient?.id ?? null,
+        client: linkedClient
+          ? {
+              id: linkedClient.id,
+              clientName: linkedClient.clientName,
+              companyName: linkedClient.companyName,
+              email: linkedClient.email,
+              phone: linkedClient.phone,
+            }
+          : null,
         employee: user.employee
           ? {
               id: user.employee.id,

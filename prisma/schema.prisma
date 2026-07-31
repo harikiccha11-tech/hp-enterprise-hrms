@@ -20,7 +20,8 @@ model User {
   username         String   @unique
   email            String   @unique
   passwordHash     String
-  role             String   @default("EMPLOYEE") // SUPER_ADMIN | HR_MANAGER | EMPLOYEE
+  role             String   @default("EMPLOYEE") // OWNER | SUPER_ADMIN | HR_MANAGER | EMPLOYEE | CLIENT
+  clientId         String?  // For CLIENT role users — links to Client record
   mustResetPassword Boolean @default(true)
   locked           Boolean  @default(false)
   lastLoginAt      DateTime?

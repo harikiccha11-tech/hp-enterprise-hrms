@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
 
 export const runtime = 'nodejs'
@@ -8,6 +9,13 @@ export async function GET() {
   const cu = await getCurrentUser()
   if (!cu) return NextResponse.json({ user: null }, { status: 200 })
   const { user, session } = cu
+
+  // If CLIENT role, resolve linked client
+  let linkedClient = null
+  if (user.role === 'CLIENT' && user.clientId) {
+    linkedClient = await db.client.findUnique({ where: { id: user.clientId } })
+  }
+
   return NextResponse.json({
     user: {
       id: user.id,
@@ -16,6 +24,16 @@ export async function GET() {
       role: user.role,
       mustResetPassword: user.mustResetPassword,
       employeeId: user.employee?.id ?? null,
+      clientId: linkedClient?.id ?? null,
+      client: linkedClient
+        ? {
+            id: linkedClient.id,
+            clientName: linkedClient.clientName,
+            companyName: linkedClient.companyName,
+            email: linkedClient.email,
+            phone: linkedClient.phone,
+          }
+        : null,
       employee: user.employee
         ? {
             id: user.employee.id,

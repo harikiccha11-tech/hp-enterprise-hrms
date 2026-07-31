@@ -5,14 +5,23 @@ export type View =
   | 'forgot'
   | 'admin'
   | 'employee'
+  | 'client'
 
 export interface AppUser {
   id: string
   username: string
   email: string
-  role: 'SUPER_ADMIN' | 'HR_MANAGER' | 'EMPLOYEE'
+  role: 'OWNER' | 'SUPER_ADMIN' | 'HR_MANAGER' | 'EMPLOYEE' | 'CLIENT'
   mustResetPassword: boolean
   employeeId?: string | null
+  clientId?: string | null
+  client?: {
+    id: string
+    clientName: string
+    companyName: string | null
+    email: string | null
+    phone: string | null
+  } | null
   employee?: {
     id: string
     employeeCode: string | null

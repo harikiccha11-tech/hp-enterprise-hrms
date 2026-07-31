@@ -4,6 +4,7 @@ import { useAuth } from '@/lib/store'
 import { Landing } from '@/components/auth/Landing'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { EmployeeLayout } from '@/components/employee/EmployeeLayout'
+import { ClientLayout } from '@/components/client/ClientLayout'
 import { BrandLogo } from '@/components/brand/BrandLogo'
 
 export default function Page() {
@@ -34,6 +35,9 @@ export default function Page() {
 
   if (user.role === 'OWNER' || user.role === 'SUPER_ADMIN' || user.role === 'HR_MANAGER') {
     return <AdminLayout />
+  }
+  if (user.role === 'CLIENT') {
+    return <ClientLayout />
   }
   return <EmployeeLayout />
 }

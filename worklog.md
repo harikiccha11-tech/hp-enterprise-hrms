@@ -57,3 +57,28 @@ Stage Summary:
 - All 15 brand string instances updated across all generic letter document types in docservice.ts
 - No old brand references remain in file
 - Note: `Head — Finance` (full_final_settlement) and `Authorized Signatory` (nda, employment_agreement) were intentionally left unchanged
+
+---
+Task ID: 4
+Agent: Main
+Task: Create client dashboard API route
+
+Work Log:
+- Created /src/app/api/client/dashboard/route.ts
+- Returns client-specific projects, work orders, invoices, announcements, stats
+
+Stage Summary:
+- Client dashboard API ready
+
+---
+Task ID: 3
+Agent: Main
+Task: Build Client Portal UI component
+
+Work Log:
+- Created ClientLayout.tsx with sidebar, topbar, dashboard
+- 4 stat cards, 3 data tables (projects, work orders, invoices)
+- Responsive design with mobile Sheet sidebar
+
+Stage Summary:
+- Client Portal UI complete

@@ -74,21 +74,23 @@ export const DEPARTMENTS = [
   'Procurement', 'HR & Admin', 'Finance', 'Safety', 'Operations',
 ]
 
-export type Role = 'OWNER' | 'SUPER_ADMIN' | 'HR_MANAGER' | 'EMPLOYEE'
+export type Role = 'OWNER' | 'SUPER_ADMIN' | 'HR_MANAGER' | 'EMPLOYEE' | 'CLIENT'
 
 export const ROLE_LABELS: Record<string, string> = {
   OWNER: 'Owner',
   SUPER_ADMIN: 'Admin',
   HR_MANAGER: 'HR Manager',
   EMPLOYEE: 'Employee',
+  CLIENT: 'Client',
 }
 
 // Role hierarchy: OWNER > SUPER_ADMIN > HR_MANAGER > EMPLOYEE
 export const ROLE_RANK: Record<string, number> = {
-  OWNER: 4,
-  SUPER_ADMIN: 3,
-  HR_MANAGER: 2,
-  EMPLOYEE: 1,
+  OWNER: 5,
+  SUPER_ADMIN: 4,
+  HR_MANAGER: 3,
+  EMPLOYEE: 2,
+  CLIENT: 1,
 }
 
 export function canManageRole(myRole: string, targetRole: string): boolean {
