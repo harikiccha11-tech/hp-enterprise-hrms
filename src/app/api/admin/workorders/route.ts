@@ -27,3 +27,28 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, workOrder: wo })
   } catch (e) { return NextResponse.json({ error: 'Failed' }, { status: 500 }) }
 }
+
+export async function PATCH(req: NextRequest) {
+  const { error, cu } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER')
+  if (error) return error
+  try {
+    const { id, startDate, endDate, ...data } = await req.json()
+    if (startDate) data.startDate = new Date(startDate)
+    if (endDate) data.endDate = new Date(endDate)
+    if (data.value !== undefined) data.value = Number(data.value) || 0
+    const wo = await db.workOrder.update({ where: { id }, data })
+    await audit(cu!.user.id, 'UPDATE_WORKORDER', 'WorkOrder', id, wo.woNumber)
+    return NextResponse.json({ ok: true, workOrder: wo })
+  } catch (e) { return NextResponse.json({ error: 'Failed' }, { status: 500 }) }
+}
+
+export async function DELETE(req: NextRequest) {
+  const { error, cu } = await requireRole('OWNER', 'SUPER_ADMIN')
+  if (error) return error
+  try {
+    const { id } = await req.json()
+    await db.workOrder.delete({ where: { id } })
+    await audit(cu!.user.id, 'DELETE_WORKORDER', 'WorkOrder', id)
+    return NextResponse.json({ ok: true })
+  } catch (e) { return NextResponse.json({ error: 'Failed' }, { status: 500 }) }
+}

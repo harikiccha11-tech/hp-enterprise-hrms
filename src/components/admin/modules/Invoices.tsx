@@ -12,11 +12,16 @@ import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog'
 import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
+  AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
 import { SectionTitle, StatusBadge, EmptyState } from '@/components/shared'
 import { toast } from 'sonner'
-import { ReceiptText, Plus } from 'lucide-react'
+import { ReceiptText, Plus, Trash2, Download } from 'lucide-react'
+import { useAuth } from '@/lib/store'
 import { api, fmtDate, formatINR } from '../lib'
 
 interface Invoice {
@@ -35,10 +40,13 @@ interface ClientLite { id: string; clientName: string }
 interface WorkOrderLite { id: string; woNumber: string; clientId: string; title: string }
 
 export function Invoices({ refreshKey }: { refreshKey: number }) {
+  const { user } = useAuth()
+  const isSuperAdmin = user?.role === 'OWNER' || user?.role === 'SUPER_ADMIN'
   const [list, setList] = useState<Invoice[]>([])
   const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
   const [editing, setEditing] = useState<Invoice | null>(null)
+  const [deleting, setDeleting] = useState<Invoice | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -126,9 +134,23 @@ export function Invoices({ refreshKey }: { refreshKey: number }) {
                       </TableCell>
                       <TableCell><StatusBadge status={inv.status} /></TableCell>
                       <TableCell className="text-right">
-                        <Button size="sm" variant="ghost" className="h-8" onClick={() => setEditing(inv)}>
-                          Update Status
-                        </Button>
+                        <div className="flex items-center justify-end gap-1">
+                          <Button size="sm" variant="ghost" className="h-8 w-8 p-0" title="Download PDF"
+                            onClick={() => window.open(`/api/invoice-pdf?id=${inv.id}`, '_blank')}
+                          >
+                            <Download className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button size="sm" variant="ghost" className="h-8" onClick={() => setEditing(inv)}>
+                            Update Status
+                          </Button>
+                          {isSuperAdmin && (
+                            <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50" title="Delete invoice"
+                              onClick={() => setDeleting(inv)}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -153,6 +175,36 @@ export function Invoices({ refreshKey }: { refreshKey: number }) {
           onSuccess={() => { setEditing(null); load() }}
         />
       )}
+
+      {/* Delete confirmation */}
+      <AlertDialog open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-red-700">Delete invoice?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete invoice <strong>{deleting?.invoiceNumber}</strong> ({formatINR(deleting?.total)}). This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              onClick={async () => {
+                if (!deleting) return
+                try {
+                  await api('/api/admin/invoices', { method: 'DELETE', body: JSON.stringify({ id: deleting.id }) })
+                  toast.success('Invoice deleted')
+                  setDeleting(null); load()
+                } catch (e: any) {
+                  toast.error(e.message || 'Delete failed')
+                }
+              }}
+            >
+              <Trash2 className="mr-1 h-4 w-4" /> Delete Permanently
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

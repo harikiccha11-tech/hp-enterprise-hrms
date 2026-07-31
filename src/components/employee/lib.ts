@@ -63,7 +63,6 @@ export function docTypeLabel(t: string): string {
     employment_agreement: 'Employment Agreement',
     nda: 'Non-Disclosure Agreement',
     salary_slip: 'Salary Slip',
-    attendance_sheet: 'Attendance Sheet',
     warning_letter: 'Warning Letter',
     promotion_letter: 'Promotion Letter',
     transfer_letter: 'Transfer Letter',

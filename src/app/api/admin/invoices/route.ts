@@ -35,9 +35,27 @@ export async function PATCH(req: NextRequest) {
   const { error, cu } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER')
   if (error) return error
   try {
-    const { id, ...data } = await req.json()
-    if (data.amount) { data.total = Number(data.amount) + Number(data.tax || 0) }
+    const { id, dueDate, ...data } = await req.json()
+    if (data.amount !== undefined) data.amount = Number(data.amount) || 0
+    if (data.tax !== undefined) data.tax = Number(data.tax) || 0
+    if (data.amount !== undefined || data.tax !== undefined) {
+      const existing = await db.invoice.findUnique({ where: { id } })
+      data.total = (Number(data.amount ?? existing?.amount) || 0) + (Number(data.tax ?? existing?.tax) || 0)
+    }
+    if (dueDate) data.dueDate = new Date(dueDate)
     const inv = await db.invoice.update({ where: { id }, data })
+    await audit(cu!.user.id, 'UPDATE_INVOICE', 'Invoice', id)
     return NextResponse.json({ ok: true, invoice: inv })
+  } catch (e) { return NextResponse.json({ error: 'Failed' }, { status: 500 }) }
+}
+
+export async function DELETE(req: NextRequest) {
+  const { error, cu } = await requireRole('OWNER', 'SUPER_ADMIN')
+  if (error) return error
+  try {
+    const { id } = await req.json()
+    await db.invoice.delete({ where: { id } })
+    await audit(cu!.user.id, 'DELETE_INVOICE', 'Invoice', id)
+    return NextResponse.json({ ok: true })
   } catch (e) { return NextResponse.json({ error: 'Failed' }, { status: 500 }) }
 }

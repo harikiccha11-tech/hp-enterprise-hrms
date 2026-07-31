@@ -55,3 +55,16 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: 'Failed' }, { status: 500 })
   }
 }
+
+export async function DELETE(req: NextRequest) {
+  const { error, cu } = await requireRole('OWNER', 'SUPER_ADMIN')
+  if (error) return error
+  try {
+    const { id } = await req.json()
+    await db.attendance.delete({ where: { id } })
+    await audit(cu!.user.id, 'DELETE_ATTENDANCE', 'Attendance', id)
+    return NextResponse.json({ ok: true })
+  } catch (e) {
+    return NextResponse.json({ error: 'Failed' }, { status: 500 })
+  }
+}

@@ -15,9 +15,14 @@ import {
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog'
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
+  AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { SectionTitle, StatusBadge, EmptyState } from '@/components/shared'
 import { toast } from 'sonner'
-import { Fingerprint, Calendar, Pencil, MapPin } from 'lucide-react'
+import { Fingerprint, Calendar, Pencil, MapPin, Trash2, Download } from 'lucide-react'
+import { useAuth } from '@/lib/store'
 import { api, fmtDate, fmtTime } from '../lib'
 
 interface AttendanceRecord {
@@ -48,10 +53,13 @@ const STATUS_OPTIONS = [
 ]
 
 export function Attendance({ refreshKey }: { refreshKey: number }) {
+  const { user } = useAuth()
+  const isSuperAdmin = user?.role === 'OWNER' || user?.role === 'SUPER_ADMIN'
   const [list, setList] = useState<AttendanceRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [date, setDate] = useState('') // single-day filter
   const [editing, setEditing] = useState<AttendanceRecord | null>(null)
+  const [deleting, setDeleting] = useState<AttendanceRecord | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -76,6 +84,35 @@ export function Attendance({ refreshKey }: { refreshKey: number }) {
         desc="Daily punch records — filter by date and edit entries"
         action={
           <div className="flex items-center gap-2">
+            {records.length > 0 && (
+              <Button variant="outline" size="sm" onClick={() => {
+                const esc = (s: string) => '"' + s.replace(/"/g, '""') + '"'
+                const cols = [
+                  { key: 'employee.employeeCode', label: 'Code' },
+                  { key: 'employee.fullName', label: 'Name' },
+                  { key: 'date', label: 'Date' },
+                  { key: 'punchIn', label: 'Punch In' },
+                  { key: 'punchOut', label: 'Punch Out' },
+                  { key: 'workingHours', label: 'Hours' },
+                  { key: 'overtime', label: 'OT' },
+                  { key: 'status', label: 'Status' },
+                ]
+                let csv = cols.map(c => c.label).join(',') + '\n'
+                for (const r of records) {
+                  csv += cols.map(c => {
+                    const v = c.key.includes('.') ? (r as any)[c.key.split('.')[0]]?.[c.key.split('.')[1]] : (r as any)[c.key]
+                    return typeof v === 'string' ? esc(v) : (v ?? '')
+                  }).join(',') + '\n'
+                }
+                const blob = new Blob([csv], { type: 'text/csv' })
+                const url = URL.createObjectURL(blob)
+                const a = document.createElement('a')
+                a.href = url; a.download = `attendance_${new Date().toISOString().slice(0, 10)}.csv`
+                a.click(); URL.revokeObjectURL(url)
+              }}>
+                <Download className="mr-1.5 h-3.5 w-3.5" /> Export CSV
+              </Button>
+            )}
             <div className="relative">
               <Calendar className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -190,9 +227,18 @@ export function Attendance({ refreshKey }: { refreshKey: number }) {
                         </div>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button size="sm" variant="outline" className="h-8 gap-1" onClick={() => setEditing(r)}>
-                          <Pencil className="h-3.5 w-3.5" /> Edit
-                        </Button>
+                        <div className="flex items-center justify-end gap-1">
+                          <Button size="sm" variant="outline" className="h-8 gap-1" onClick={() => setEditing(r)}>
+                            <Pencil className="h-3.5 w-3.5" /> Edit
+                          </Button>
+                          {isSuperAdmin && (
+                            <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50" title="Delete record"
+                              onClick={() => setDeleting(r)}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -213,6 +259,36 @@ export function Attendance({ refreshKey }: { refreshKey: number }) {
           onSuccess={() => { setEditing(null); load() }}
         />
       )}
+
+      {/* Delete confirmation */}
+      <AlertDialog open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-red-700">Delete attendance record?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the attendance record for <strong>{deleting?.employee.fullName}</strong> on <strong>{deleting ? fmtDate(deleting.date) : ''}</strong>. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              onClick={async () => {
+                if (!deleting) return
+                try {
+                  await api('/api/admin/attendance', { method: 'DELETE', body: JSON.stringify({ id: deleting.id }) })
+                  toast.success('Attendance record deleted')
+                  setDeleting(null); load()
+                } catch (e: any) {
+                  toast.error(e.message || 'Delete failed')
+                }
+              }}
+            >
+              <Trash2 className="mr-1 h-4 w-4" /> Delete Permanently
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

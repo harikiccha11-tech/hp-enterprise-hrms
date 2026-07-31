@@ -31,7 +31,7 @@ export async function GET() {
       orderBy: { issueDate: 'desc' },
     }),
     db.announcement.findMany({
-      where: { audience: { in: ['ALL', 'ADMIN'] } },
+      where: { audience: 'ALL' },
       orderBy: { postedAt: 'desc' },
       take: 20,
     }),

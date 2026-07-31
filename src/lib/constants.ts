@@ -67,6 +67,7 @@ export const DOCUMENT_TYPES = [
   'nda', 'id_card', 'warning_letter',
   'promotion_letter', 'transfer_letter', 'confirmation_letter',
   'experience_letter', 'relieving_letter', 'no_due_certificate', 'full_final_settlement',
+  'salary_slip',
 ]
 
 export const DEPARTMENTS = [

@@ -455,7 +455,7 @@ export function AdminLayout() {
               {active === 'documents' && <Documents />}
               {active === 'announcements' && <Announcements refreshKey={refreshKey} />}
               {active === 'audit' && <AuditLogs isSuperAdmin={isSuperAdmin} />}
-              {active === 'settings' && <SettingsModule isSuperAdmin={isSuperAdmin} />}
+              {active === 'settings' && <SettingsModule isSuperAdmin={isSuperAdmin} isOwner={isOwner} />}
               {active === 'users' && isOwner && <UserAccounts refreshKey={refreshKey} />}
             </div>
           </main>

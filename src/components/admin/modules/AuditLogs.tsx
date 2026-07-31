@@ -79,8 +79,8 @@ export function AuditLogs({ isSuperAdmin }: { isSuperAdmin: boolean }) {
           <CardContent className="py-12">
             <EmptyState
               icon={Lock}
-              title="Super Admin only"
-              desc="Audit logs are restricted to the Super Admin role for security & compliance."
+              title="Owner / Super Admin only"
+              desc="Audit logs are restricted to senior roles for security & compliance."
             />
           </CardContent>
         </Card>

@@ -35,9 +35,9 @@ export async function POST(req: NextRequest) {
     const start = new Date(y, m - 1, 1)
     const end = new Date(y, m, 0, 23, 59, 59, 999)
     const records = await db.attendance.findMany({ where: { employeeId, date: { gte: start, lte: end } } })
-    const presentDays = records.filter(r => r.status === 'PRESENT' || r.status === 'LATE' || r.status === 'HALF_DAY').length
-    const halfDays = records.filter(r => r.status === 'HALF_DAY').length * 0.5
-    const effectivePresent = presentDays - halfDays + halfDays // present counted
+    const fullDays = records.filter(r => r.status === 'PRESENT' || r.status === 'LATE').length
+    const halfDays = records.filter(r => r.status === 'HALF_DAY').length
+    const effectivePresent = fullDays + (halfDays * 0.5)
     const totalOvertime = records.reduce((s, r) => s + (r.overtime || 0), 0)
 
     // LOP: unapproved absences (absent days beyond approved leave)

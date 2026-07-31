@@ -163,6 +163,37 @@ export function Employees({ refreshKey, canDelete }: { refreshKey: number; canDe
       <SectionTitle
         title="Employees"
         desc="Review applications, manage employee records & credentials"
+        action={
+          list.length > 0 ? (
+            <Button variant="outline" size="sm" onClick={() => {
+              const cols = [
+                { key: 'employeeCode', label: 'Code' },
+                { key: 'fullName', label: 'Name' },
+                { key: 'designation', label: 'Designation' },
+                { key: 'department', label: 'Department' },
+                { key: 'email', label: 'Email' },
+                { key: 'mobile', label: 'Mobile' },
+                { key: 'status', label: 'Status' },
+                { key: 'employmentType', label: 'Type' },
+              ]
+              const esc = (s: string) => '"' + s.replace(/"/g, '""') + '"'
+              let csv = cols.map(c => c.label).join(',') + '\n'
+              for (const e of list) {
+                csv += cols.map(c => {
+                  const v = (e as any)[c.key]
+                  return typeof v === 'string' ? esc(v) : (v ?? '')
+                }).join(',') + '\n'
+              }
+              const blob = new Blob([csv], { type: 'text/csv' })
+              const url = URL.createObjectURL(blob)
+              const a = document.createElement('a')
+              a.href = url; a.download = `employees_${new Date().toISOString().slice(0, 10)}.csv`
+              a.click(); URL.revokeObjectURL(url)
+            }}>
+              <Download className="mr-1.5 h-3.5 w-3.5" /> Export CSV
+            </Button>
+          ) : undefined
+        }
       />
 
       <Card>

@@ -39,10 +39,20 @@ export async function PATCH(req: NextRequest) {
   const { error, cu } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER')
   if (error) return error
   try {
-    const { id, ...data } = await req.json()
+    const { id, members, ...data } = await req.json()
     if (data.startDate) data.startDate = new Date(data.startDate)
     if (data.endDate) data.endDate = new Date(data.endDate)
+    // Update scalar fields first
     const project = await db.project.update({ where: { id }, data })
+    // Handle member updates (relation — delete old, create new)
+    if (Array.isArray(members)) {
+      await db.projectMember.deleteMany({ where: { projectId: id } })
+      for (const m of members) {
+        if (m.employeeId) {
+          await db.projectMember.create({ data: { projectId: id, employeeId: m.employeeId, role: m.role || null } })
+        }
+      }
+    }
     await audit(cu!.user.id, 'UPDATE_PROJECT', 'Project', id)
     return NextResponse.json({ ok: true, project })
   } catch (e) { return NextResponse.json({ error: 'Failed' }, { status: 500 }) }
@@ -53,6 +63,7 @@ export async function DELETE(req: NextRequest) {
   if (error) return error
   try {
     const { id } = await req.json()
+    await db.projectMember.deleteMany({ where: { projectId: id } })
     await db.project.delete({ where: { id } })
     await audit(cu!.user.id, 'DELETE_PROJECT', 'Project', id)
     return NextResponse.json({ ok: true })

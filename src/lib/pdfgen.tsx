@@ -328,7 +328,107 @@ export function SalarySlipDoc(m: DocMeta & { month: number; year: number; earnin
   )
 }
 
-// ============ GENERIC LETTER (experience, relieving, confirmation, etc.) ============
+// ============ INVOICE PDF ============
+export function InvoiceDoc(m: {
+  invoiceNumber: string
+  issueDate: string
+  dueDate: string | null
+  clientName: string
+  companyName: string
+  clientAddress: string
+  clientGst: string
+  workOrderTitle: string | null
+  amount: number
+  tax: number
+  total: number
+  status: string
+}) {
+  return (
+    <Document>
+      <Page size="A4" style={brandStyles.page}>
+        <View style={brandStyles.headerBand}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <Image src={LOGO_PATH} style={{ width: 48, height: 48, objectFit: 'contain', backgroundColor: '#FFFFFF', borderRadius: 4, padding: 2 }} />
+            <View>
+              <Text style={brandStyles.logo}>HP ENTERPRISE</Text>
+              <Text style={brandStyles.logoSub}>SAFETY SERVICE &amp; MAN POWER SUPPLY</Text>
+            </View>
+          </View>
+          <View style={brandStyles.headerRight}>
+            <Text style={brandStyles.headerTitle}>TAX INVOICE</Text>
+            <Text style={brandStyles.headerMuted}>{m.status}</Text>
+          </View>
+        </View>
+        <View style={{ ...brandStyles.refLine, marginBottom: 18 }}>
+          <Text>Invoice No: <Text style={brandStyles.bold}>{m.invoiceNumber}</Text></Text>
+          <Text>Date: {m.issueDate}</Text>
+          <Text>Due: {m.dueDate || '—'}</Text>
+        </View>
+        <View style={{ flexDirection: 'row', marginBottom: 18, gap: 20 }}>
+          <View style={{ flex: 1 }}>
+            <Text style={{ ...brandStyles.sectionTitle, marginTop: 0, marginBottom: 6 }}>From</Text>
+            <Text style={{ ...brandStyles.body, marginBottom: 2, fontSize: 9.5 }}>HP ENTERPRISE Safety Service &amp; Man Power Supply</Text>
+            <Text style={{ ...brandStyles.body, marginBottom: 2, fontSize: 9 }}>Plot 14, Tech Park Phase II, Whitefield</Text>
+            <Text style={{ ...brandStyles.body, marginBottom: 2, fontSize: 9 }}>Bengaluru, Karnataka 560066</Text>
+            <Text style={{ ...brandStyles.body, fontSize: 9 }}>GST: 29AAGCH4521K1ZP</Text>
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={{ ...brandStyles.sectionTitle, marginTop: 0, marginBottom: 6 }}>Bill To</Text>
+            <Text style={{ ...brandStyles.body, marginBottom: 2, fontSize: 9.5 }}>{m.clientName}</Text>
+            {m.companyName && m.companyName !== m.clientName && <Text style={{ ...brandStyles.body, marginBottom: 2, fontSize: 9 }}>{m.companyName}</Text>}
+            <Text style={{ ...brandStyles.body, marginBottom: 2, fontSize: 9 }}>{m.clientAddress}</Text>
+            <Text style={{ ...brandStyles.body, fontSize: 9 }}>GST: {m.clientGst || '—'}</Text>
+          </View>
+        </View>
+        {m.workOrderTitle && <Text style={{ ...brandStyles.body, marginBottom: 14, fontSize: 9.5 }}>Work Order: <Text style={brandStyles.bold}>{m.workOrderTitle}</Text></Text>}
+        <View style={brandStyles.table}>
+          <View style={{ ...brandStyles.row, backgroundColor: NAVY }}>
+            <Text style={{ ...brandStyles.cell, color: GOLD_LIGHT, fontFamily: 'Helvetica-Bold', flex: 1 }}>Description</Text>
+            <Text style={{ ...brandStyles.cell, color: GOLD_LIGHT, fontFamily: 'Helvetica-Bold', width: 100, textAlign: 'right' }}>Amount (₹)</Text>
+          </View>
+          <View style={brandStyles.row}>
+            <Text style={{ ...brandStyles.cell, flex: 1 }}>Manpower Supply &amp; Safety Services — {m.workOrderTitle || m.invoiceNumber}</Text>
+            <Text style={{ ...brandStyles.cell, width: 100, textAlign: 'right' }}>{m.amount.toLocaleString('en-IN')}</Text>
+          </View>
+          <View style={brandStyles.row}>
+            <Text style={{ ...brandStyles.cell, flex: 1 }}>GST (as applicable)</Text>
+            <Text style={{ ...brandStyles.cell, width: 100, textAlign: 'right' }}>{m.tax.toLocaleString('en-IN')}</Text>
+          </View>
+          <View style={brandStyles.rowLast}>
+            <Text style={{ ...brandStyles.cell, flex: 1, backgroundColor: '#F6F7FB', fontFamily: 'Helvetica-Bold', color: NAVY }}>Total</Text>
+            <Text style={{ ...brandStyles.cell, width: 100, textAlign: 'right', backgroundColor: '#F6F7FB', fontFamily: 'Helvetica-Bold', color: NAVY, fontSize: 12 }}>{m.total.toLocaleString('en-IN')}</Text>
+          </View>
+        </View>
+        <Text style={{ ...brandStyles.body, fontSize: 9, marginTop: 8, color: MUTED }}>
+          Amount in Words: Indian Rupees {numberToWords(m.total)} Only
+        </Text>
+        <View style={brandStyles.signBlock}>
+          <View style={brandStyles.signCol}><Text style={brandStyles.signLine}>Authorized Signatory</Text></View>
+          <View style={brandStyles.signCol}><Text style={brandStyles.signLine}>Client Authorized Signatory</Text></View>
+        </View>
+        <Text style={{ fontSize: 7.5, color: MUTED, marginTop: 20, textAlign: 'center' }}>This is a computer-generated invoice. Kindly remit payment to the bank details provided separately.</Text>
+        <Footer />
+      </Page>
+    </Document>
+  )
+}
+
+function numberToWords(n: number): string {
+  if (n === 0) return 'Zero'
+  const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen']
+  const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety']
+  function convert(num: number): string {
+    if (num < 20) return ones[num]
+    if (num < 100) return tens[Math.floor(num / 10)] + (num % 10 ? ' ' + ones[num % 10] : '')
+    if (num < 1000) return ones[Math.floor(num / 100)] + ' Hundred' + (num % 100 ? ' and ' + convert(num % 100) : '')
+    if (num < 100000) return convert(Math.floor(num / 1000)) + ' Thousand' + (num % 1000 ? ' ' + convert(num % 1000) : '')
+    if (num < 10000000) return convert(Math.floor(num / 100000)) + ' Lakh' + (num % 100000 ? ' ' + convert(num % 100000) : '')
+    return convert(Math.floor(num / 10000000)) + ' Crore' + (num % 10000000 ? ' ' + convert(num % 10000000) : '')
+  }
+  return convert(Math.round(n))
+}
+
+// ============ GENERIC LETTER (experience, relieving, confirmation, etc.) =============
 export function GenericLetterDoc(m: DocMeta & { docTitle: string; bodyParagraphs: string[]; signatory: string }) {
   return (
     <Document>

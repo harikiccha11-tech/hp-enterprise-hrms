@@ -42,7 +42,7 @@ const FIELDS: { group: string; icon: any; fields: { key: string; label: string; 
   },
 ]
 
-export function SettingsModule({ isSuperAdmin }: { isSuperAdmin: boolean }) {
+export function SettingsModule({ isSuperAdmin, isOwner }: { isSuperAdmin: boolean; isOwner: boolean }) {
   const [settings, setSettings] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -82,7 +82,7 @@ export function SettingsModule({ isSuperAdmin }: { isSuperAdmin: boolean }) {
 
   const hasChanges = JSON.stringify(settings) !== JSON.stringify(original)
 
-  if (!isSuperAdmin) {
+  if (!isOwner) {
     return (
       <div className="space-y-5">
         <SectionTitle title="Settings" desc="System configuration" />

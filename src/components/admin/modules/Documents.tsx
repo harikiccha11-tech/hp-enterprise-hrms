@@ -13,7 +13,7 @@ import {
 import { SectionTitle, EmptyState } from '@/components/shared'
 import { toast } from 'sonner'
 import {
-  FileText, Search, Download, FilePlus2, Award, Loader2,
+  FileText, Search, Download, FilePlus2, Award, Loader2, Sparkles,
 } from 'lucide-react'
 import { api, docTypeLabel, fmtDate, initials } from '../lib'
 import { DOCUMENT_TYPES } from '@/lib/constants'
@@ -36,6 +36,7 @@ export function Documents() {
   const [loadingEmps, setLoadingEmps] = useState(true)
   const [loadingDocs, setLoadingDocs] = useState(false)
   const [generating, setGenerating] = useState<string | null>(null)
+  const [autoGenerating, setAutoGenerating] = useState(false)
   const [search, setSearch] = useState('')
 
   useEffect(() => {
@@ -83,6 +84,20 @@ export function Documents() {
 
   const selected = employees.find((e) => e.id === selectedId)
   const existingTypes = new Set(docs.map((d) => d.docType))
+
+  const autoGenerateAll = async () => {
+    if (!selectedId) return
+    setAutoGenerating(true)
+    try {
+      const data = await api<{ generated: number }>(`/api/auto-docs?employeeId=${selectedId}`, { method: 'POST' })
+      toast.success(`${data.generated || 'All'} documents generated successfully`)
+      loadDocs()
+    } catch (e: any) {
+      toast.error(e.message || 'Auto-generation failed')
+    } finally {
+      setAutoGenerating(false)
+    }
+  }
 
   return (
     <div className="space-y-5">
@@ -144,11 +159,24 @@ export function Documents() {
                   <p className="text-xs text-muted-foreground mt-0.5">{selected.fullName} • {selected.employeeCode}</p>
                 )}
               </div>
-              {docs.length > 0 && (
-                <Badge variant="outline" className="gap-1 border-[var(--gold)]/40 text-[#8a6f24]">
-                  <Award className="h-3 w-3" /> {docs.length} generated
-                </Badge>
-              )}
+              <div className="flex items-center gap-2">
+                {selectedId && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-[var(--gold)]/40 text-[#8a6f24] hover:bg-[var(--gold)]/5"
+                    onClick={autoGenerateAll}
+                    disabled={autoGenerating}
+                  >
+                    {autoGenerating ? <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> Generating…</> : <><Sparkles className="mr-1.5 h-3.5 w-3.5" /> Auto-Generate All</>}
+                  </Button>
+                )}
+                {docs.length > 0 && (
+                  <Badge variant="outline" className="gap-1 border-[var(--gold)]/40 text-[#8a6f24]">
+                    <Award className="h-3 w-3" /> {docs.length} generated
+                  </Badge>
+                )}
+              </div>
             </div>
           </CardHeader>
           <CardContent>

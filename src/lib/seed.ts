@@ -180,11 +180,10 @@ async function main() {
           fileName: d.name,
           filePath: `employees/${emp.id}/${d.name}`,
           mimeType: 'image/png',
-          verified: d.type === 'aadhaar' || d.type === 'pan', // pre-verify aadhaar & pan
+          verified: d.type === 'aadhaar' || d.type === 'pan',
         },
       })
     }
-    // Mark docs as partially verified
     await db.employee.update({ where: { id: emp.id }, data: { documentsVerified: false, interviewStatus: 'PASSED', interviewNotes: 'Strong technical background in civil engineering. Recommended for hire.' } })
     console.log('Sample documents created for Arjun')
   }
@@ -204,40 +203,73 @@ async function main() {
       },
     })
   }
-  const project = await db.project.create({
-    data: {
-      projectName: 'Infosys Campus Tower C — MEP & Finishing',
-      clientId: client.id,
-      site: 'Electronics City, Bengaluru',
-      startDate: new Date('2024-01-15'),
-      status: 'ACTIVE',
-      description: 'MEP works, interior fit-out and finishing for Tower C (14 floors).',
-    },
-  })
-  await db.projectMember.create({ data: { projectId: project.id, employeeId: emp.id, role: 'Site Engineer' } })
-  // Assign client to Arjun so the hiring pipeline shows "Client Assigned"
-  await db.employee.update({ where: { id: emp.id }, data: { assignedClientId: client.id } })
-  await db.workOrder.create({
-    data: {
-      woNumber: 'WO-INFY-2024-014',
-      clientId: client.id,
-      projectId: project.id,
-      title: 'MEP & Finishing — Tower C',
-      value: 4200000,
-      startDate: new Date('2024-01-15'),
-      endDate: new Date('2024-12-30'),
-      status: 'OPEN',
-    },
-  })
 
-  // Sample announcement
-  await db.announcement.create({
-    data: {
-      title: 'Diwali Holiday Notice',
-      body: 'HP ENTERPRISE offices will remain closed on 1st November for Diwali. Wishing you and your family a prosperous festival.',
-      audience: 'ALL',
-    },
-  })
+  // CLIENT user for Infosys portal login
+  const clientPass = await hashPassword('Client@123')
+  let clientUser = await db.user.findUnique({ where: { username: 'infosys.client' } })
+  if (!clientUser) {
+    clientUser = await db.user.create({
+      data: {
+        username: 'infosys.client',
+        email: 'client.infosys@hpenterprise.co.in',
+        passwordHash: clientPass,
+        role: 'CLIENT',
+        clientId: client.id,
+        mustResetPassword: false,
+      },
+    })
+    console.log('Client login: infosys.client / Client@123')
+  }
+
+  // Project (idempotent)
+  let project = await db.project.findFirst({ where: { projectName: 'Infosys Campus Tower C — MEP & Finishing' } })
+  if (!project) {
+    project = await db.project.create({
+      data: {
+        projectName: 'Infosys Campus Tower C — MEP & Finishing',
+        clientId: client.id,
+        site: 'Electronics City, Bengaluru',
+        startDate: new Date('2024-01-15'),
+        status: 'ACTIVE',
+        description: 'MEP works, interior fit-out and finishing for Tower C (14 floors).',
+      },
+    })
+    const existingMember = await db.projectMember.findFirst({ where: { projectId: project.id, employeeId: emp.id } })
+    if (!existingMember) {
+      await db.projectMember.create({ data: { projectId: project.id, employeeId: emp.id, role: 'Site Engineer' } })
+    }
+    // Assign client to Arjun
+    await db.employee.update({ where: { id: emp.id }, data: { assignedClientId: client.id } })
+  }
+
+  // Work Order (idempotent)
+  const existingWO = await db.workOrder.findFirst({ where: { woNumber: 'WO-INFY-2024-014' } })
+  if (!existingWO) {
+    await db.workOrder.create({
+      data: {
+        woNumber: 'WO-INFY-2024-014',
+        clientId: client.id,
+        projectId: project.id,
+        title: 'MEP & Finishing — Tower C',
+        value: 4200000,
+        startDate: new Date('2024-01-15'),
+        endDate: new Date('2024-12-30'),
+        status: 'OPEN',
+      },
+    })
+  }
+
+  // Sample announcement (idempotent)
+  const existingAnn = await db.announcement.findFirst({ where: { title: 'Diwali Holiday Notice' } })
+  if (!existingAnn) {
+    await db.announcement.create({
+      data: {
+        title: 'Diwali Holiday Notice',
+        body: 'HP ENTERPRISE offices will remain closed on 1st November for Diwali. Wishing you and your family a prosperous festival.',
+        audience: 'ALL',
+      },
+    })
+  }
 
   // Attendance for today + a few days for the employee
   const today = new Date()

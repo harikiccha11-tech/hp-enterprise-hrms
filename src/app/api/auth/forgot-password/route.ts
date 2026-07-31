@@ -10,20 +10,26 @@ export async function POST(req: NextRequest) {
     if (!username) {
       return NextResponse.json({ error: 'Username is required' }, { status: 400 })
     }
-    const user = await db.user.findUnique({ where: { username } })
+    const normalized = String(username).toLowerCase().trim()
+    const user = await db.user.findUnique({ where: { username: normalized } })
+    // Always return the same message to prevent username enumeration
     if (!user) {
-      return NextResponse.json({ error: 'No account found with that username' }, { status: 404 })
+      return NextResponse.json({ ok: true, message: 'If an account exists with that username, the password has been reset. Please check your email or contact admin.' })
     }
-    const tempPassword = 'Temp@123'
+    const tempPassword = 'Temp@' + Math.random().toString(36).slice(2, 8)
     const hash = await hashPassword(tempPassword)
     await db.user.update({
       where: { id: user.id },
       data: { passwordHash: hash, mustResetPassword: true },
     })
     await audit(user.id, 'PASSWORD_RESET', 'User', user.id)
+    // In production, send temp password via email/SMS. For now, return to admin/owner only.
+    const isAdmin = user.role === 'OWNER' || user.role === 'SUPER_ADMIN'
     return NextResponse.json({
       ok: true,
-      message: 'Password has been reset to Temp@123. Please login and change it.',
+      message: isAdmin
+        ? `Password has been reset. New temporary password: ${tempPassword}`
+        : 'If an account exists with that username, the password has been reset. Please contact admin for the new password.',
     })
   } catch (e) {
     console.error('forgot password error', e)
