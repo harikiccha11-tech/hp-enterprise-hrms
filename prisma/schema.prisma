@@ -1,0 +1,430 @@
+// HP Enterprise HRMS — Prisma Schema
+// Note: SQLite is used as the local engine (Prisma-compatible). Schema is designed
+// to be portable to PostgreSQL for production cloud deployment.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// AUTH & USERS
+// ============================================================
+
+model User {
+  id               String   @id @default(cuid())
+  username         String   @unique
+  email            String   @unique
+  passwordHash     String
+  role             String   @default("EMPLOYEE") // SUPER_ADMIN | HR_MANAGER | EMPLOYEE
+  mustResetPassword Boolean @default(true)
+  locked           Boolean  @default(false)
+  lastLoginAt      DateTime?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  employee       Employee?
+  notifications  Notification[]
+  auditLogs      AuditLog[]
+  attendanceRecords Attendance[] @relation("AttendanceMarkedBy")
+  leaveActions   LeaveAction[]
+
+  @@index([role])
+}
+
+// ============================================================
+// EMPLOYEES (registration -> approved)
+// ============================================================
+
+model Employee {
+  id              String   @id @default(cuid())
+  employeeCode    String?  @unique // e.g. HPE-0042 — generated on approval
+  status          String   @default("PENDING") // PENDING | APPROVED | REJECTED | TERMINATED
+
+  // Personal
+  fullName        String
+  fatherName      String?
+  motherName      String?
+  dob             DateTime?
+  gender          String?
+  bloodGroup      String?
+  mobile          String?
+  alternateMobile String?
+  email           String
+  address         String?
+  emergencyContact String?
+
+  // Identity
+  aadhaar         String?
+  pan             String?
+  uan             String?
+  esic            String?
+  passport        String?
+  drivingLicence  String?
+
+  // Bank
+  bankHolder      String?
+  bankName        String?
+  bankBranch      String?
+  bankAccount     String?
+  bankIfsc        String?
+
+  // Education (JSON string array of {qualification, specialization, college, year})
+  educationJson   String?
+
+  // Experience
+  currentDesignation String?
+  totalExperience    String?
+  relevantExperience String?
+  currentCompany     String?
+  previousCompany    String?
+  currentSalary      String?
+  expectedSalary     String?
+  noticePeriod       String?
+
+  // Engineering disciplines / project experience / skills (comma separated)
+  disciplines    String?
+  projectTypes   String?
+  skills         String?
+
+  // Employment
+  designation    String?
+  department     String?
+  joinDate       DateTime?
+  employmentType String? // Full-time / Contract
+  salary         Float?
+  // Salary structure (monthly) — used by payroll
+  basic          Float?
+  hra            Float?
+  allowances     Float?
+  specialAllowance Float?
+
+  // Links
+  userId         String?  @unique
+  user           User?    @relation(fields: [userId], references: [id])
+  documents      EmployeeDocument[]
+  attendance     Attendance[]
+  leaves         Leave[]
+  payrolls       Payroll[]
+  salarySlips    SalarySlip[]
+  generatedDocs  GeneratedDocument[]
+  projectAssignments ProjectMember[]
+  leaveBalance   LeaveBalance?
+
+  reviewedBy     String?
+  reviewedAt     DateTime?
+  rejectReason   String?
+  // Interview & verification workflow
+  interviewStatus String? // SCHEDULED | COMPLETED | PASSED | FAILED | NONE
+  interviewDate   DateTime?
+  interviewNotes  String?
+  assignedClientId String?
+  documentsVerified Boolean @default(false)
+  assignedClient  Client?  @relation("AssignedClient", fields: [assignedClientId], references: [id])
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([status])
+}
+
+model EmployeeDocument {
+  id           String   @id @default(cuid())
+  employeeId   String
+  documentType String // aadhaar | pan | photo | signature | passbook | resume | certificate ...
+  fileName     String
+  filePath     String
+  mimeType     String?
+  uploadedAt   DateTime @default(now())
+  verified     Boolean  @default(false)
+  verifiedBy   String?
+  verifiedAt   DateTime?
+  verifyNote   String?
+
+  employee     Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId, documentType])
+}
+
+// ============================================================
+// ATTENDANCE
+// ============================================================
+
+model Attendance {
+  id          String   @id @default(cuid())
+  employeeId  String
+  date        DateTime
+  punchIn     DateTime?
+  punchOut    DateTime?
+  workingHours Float?  // hours
+  overtime    Float?   // hours
+  lateArrival Boolean @default(false)
+  status      String  @default("PRESENT") // PRESENT | ABSENT | LATE | HALF_DAY | LEAVE | HOLIDAY
+  markedBy    String?
+  markedById  String?
+  // Geolocation captured on punch in/out (no continuous tracking)
+  punchInLat      Float?
+  punchInLng      Float?
+  punchInAddress  String?
+  punchOutLat     Float?
+  punchOutLng     Float?
+  punchOutAddress String?
+
+  employee    Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  markedByUser User?   @relation("AttendanceMarkedBy", fields: [markedById], references: [id])
+
+  @@unique([employeeId, date])
+  @@index([date])
+}
+
+// ============================================================
+// LEAVE
+// ============================================================
+
+model Leave {
+  id          String   @id @default(cuid())
+  employeeId  String
+  leaveType   String // CL | SL | EL | PL | LOP | WFH
+  fromDate    DateTime
+  toDate      DateTime
+  days        Float
+  reason      String
+  status      String @default("PENDING") // PENDING | APPROVED | REJECTED | CANCELLED
+  appliedAt   DateTime @default(now())
+  reviewedBy  String?
+  reviewedAt  DateTime?
+  comments    String?
+
+  employee    Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  actions     LeaveAction[]
+
+  @@index([employeeId, status])
+}
+
+model LeaveAction {
+  id        String   @id @default(cuid())
+  leaveId   String
+  userId    String
+  action    String // APPROVED | REJECTED
+  comments  String?
+  at        DateTime @default(now())
+
+  leave     Leave @relation(fields: [leaveId], references: [id], onDelete: Cascade)
+  user      User  @relation(fields: [userId], references: [id])
+}
+
+model LeaveBalance {
+  id          String  @id @default(cuid())
+  employeeId  String  @unique
+  casual      Float   @default(12)
+  sick        Float   @default(12)
+  earned      Float   @default(15)
+  usedCasual  Float   @default(0)
+  usedSick    Float   @default(0)
+  usedEarned  Float   @default(0)
+  carriedForward Float @default(0)
+
+  employee    Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+}
+
+// ============================================================
+// PAYROLL
+// ============================================================
+
+model Payroll {
+  id           String   @id @default(cuid())
+  employeeId   String
+  month        Int      // 1-12
+  year         Int
+  basic        Float
+  hra          Float
+  allowances   Float
+  specialAllowance Float
+  grossSalary  Float
+  overtimePay  Float    @default(0)
+  lopDays      Float    @default(0)
+  lopAmount    Float    @default(0)
+  pfEmployee   Float    @default(0)
+  pfEmployer   Float    @default(0)
+  esiEmployee  Float    @default(0)
+  esiEmployer  Float    @default(0)
+  professionalTax Float @default(0)
+  netSalary    Float
+  status       String   @default("GENERATED") // GENERATED | PAID | HELD
+  processedAt  DateTime @default(now())
+  processedBy  String?
+
+  salarySlip   SalarySlip?
+  employee     Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@unique([employeeId, month, year])
+}
+
+model SalarySlip {
+  id          String   @id @default(cuid())
+  employeeId  String
+  payrollId   String   @unique
+  month       Int
+  year        Int
+  netSalary   Float
+  generatedAt DateTime @default(now())
+
+  payroll     Payroll  @relation(fields: [payrollId], references: [id], onDelete: Cascade)
+  employee    Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+}
+
+model GeneratedDocument {
+  id          String   @id @default(cuid())
+  employeeId  String
+  docType     String // offer_letter | appointment_letter | id_card | joining_letter | nda | experience_letter | relieving_letter | confirmation_letter | promotion_letter | transfer_letter | warning_letter | no_due_certificate | full_final_settlement
+  title       String
+  filePath    String?
+  metaJson    String?
+  generatedAt DateTime @default(now())
+  generatedBy String?
+
+  employee    Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId, docType])
+}
+
+// ============================================================
+// CLIENTS & PROJECTS
+// ============================================================
+
+model Client {
+  id           String   @id @default(cuid())
+  clientName   String
+  companyName  String?
+  gst          String?
+  email        String?
+  phone        String?
+  address      String?
+  contactsJson String? // JSON array of contact persons
+  createdAt    DateTime @default(now())
+
+  projects     Project[]
+  workOrders   WorkOrder[]
+  invoices     Invoice[]
+  assignedEmployees Employee[] @relation("AssignedClient")
+}
+
+model Project {
+  id          String   @id @default(cuid())
+  projectName String
+  clientId    String
+  site        String?
+  startDate   DateTime?
+  endDate     DateTime?
+  status      String   @default("ACTIVE") // ACTIVE | COMPLETED | ON_HOLD
+  description String?
+  createdAt   DateTime @default(now())
+
+  client      Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  members     ProjectMember[]
+  workOrders  WorkOrder[]
+}
+
+model ProjectMember {
+  id          String  @id @default(cuid())
+  projectId   String
+  employeeId  String
+  role        String?
+  assignedAt  DateTime @default(now())
+
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  employee    Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, employeeId])
+}
+
+model WorkOrder {
+  id          String   @id @default(cuid())
+  woNumber    String
+  clientId    String
+  projectId   String?
+  title       String
+  value       Float
+  startDate   DateTime?
+  endDate     DateTime?
+  status      String   @default("OPEN")
+  createdAt   DateTime @default(now())
+
+  client      Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  project     Project? @relation(fields: [projectId], references: [id])
+  invoices    Invoice[]
+}
+
+model Invoice {
+  id          String   @id @default(cuid())
+  invoiceNumber String @unique
+  clientId    String
+  workOrderId String?
+  amount      Float
+  tax         Float    @default(0)
+  total       Float
+  status      String   @default("DRAFT") // DRAFT | SENT | PAID | OVERDUE
+  issueDate   DateTime @default(now())
+  dueDate     DateTime?
+  filePath    String?
+
+  client      Client     @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  workOrder   WorkOrder? @relation(fields: [workOrderId], references: [id])
+}
+
+// ============================================================
+// NOTIFICATIONS & AUDIT
+// ============================================================
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  message   String
+  type      String   @default("INFO") // INFO | SUCCESS | WARNING | LEAVE | PAYROLL | DOCUMENT | ANNOUNCEMENT
+  read      Boolean  @default(false)
+  link      String?
+  createdAt DateTime @default(now())
+
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String
+  entity    String
+  entityId  String?
+  details   String?
+  ip        String?
+  at        DateTime @default(now())
+
+  user      User? @relation(fields: [userId], references: [id])
+
+  @@index([entity, at])
+}
+
+// ============================================================
+// SETTINGS
+// ============================================================
+
+model Setting {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String
+}
+
+model Announcement {
+  id        String   @id @default(cuid())
+  title     String
+  body      String
+  audience  String   @default("ALL") // ALL | EMPLOYEE | ADMIN
+  postedBy  String?
+  postedAt  DateTime @default(now())
+}
