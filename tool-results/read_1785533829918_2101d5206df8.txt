@@ -1,0 +1,704 @@
+    50→
+    51→type ClientView = 'dashboard' | 'projects' | 'work-orders' | 'invoices'
+    52→
+    53→interface NavItem {
+    54→  key: ClientView
+    55→  label: string
+    56→  icon: typeof LayoutDashboard
+    57→  desc: string
+    58→}
+    59→
+    60→interface DashboardProject {
+    61→  id: string
+    62→  projectName: string
+    63→  site: string | null
+    64→  status: string
+    65→  memberCount: number
+    66→  startDate: string
+    67→  endDate: string | null
+    68→}
+    69→
+    70→interface DashboardWorkOrder {
+    71→  id: string
+    72→  woNumber: string
+    73→  title: string
+    74→  value: number
+    75→  status: string
+    76→  createdAt: string
+    77→  completedAt: string | null
+    78→}
+    79→
+    80→interface DashboardInvoice {
+    81→  id: string
+    82→  invoiceNumber: string
+    83→  subtotal: number
+    84→  total: number
+    85→  status: string
+    86→  issuedAt: string
+    87→}
+    88→
+    89→interface NotificationLite {
+    90→  id: string
+    91→  title: string
+    92→  message: string
+    93→  type: string
+    94→  read: boolean
+    95→  createdAt: string
+    96→}
+    97→
+    98→interface DashboardData {
+    99→  stats: {
+   100→    totalProjects: number
+   101→    activeProjects: number
+   102→    workOrderValue: number
+   103→    invoiceTotal: number
+   104→  }
+   105→  projects: DashboardProject[]
+   106→  workOrders: DashboardWorkOrder[]
+   107→  invoices: DashboardInvoice[]
+   108→  announcements: { id: string; title: string; message: string; createdAt: string }[]
+   109→  notifications: NotificationLite[]
+   110→  unread: number
+   111→}
+   112→
+   113→// ── Helpers ────────────────────────────────────────────────────────────────
+   114→
+   115→function initials(name: string): string {
+   116→  return name
+   117→    .split(' ')
+   118→    .map((w) => w[0])
+   119→    .join('')
+   120→    .toUpperCase()
+   121→    .slice(0, 2)
+   122→}
+   123→
+   124→function formatINR(amount: number): string {
+   125→  return new Intl.NumberFormat('en-IN', {
+   126→    style: 'currency',
+   127→    currency: 'INR',
+   128→    maximumFractionDigits: 0,
+   129→  }).format(amount)
+   130→}
+   131→
+   132→function statusColor(status: string): string {
+   133→  const s = status.toLowerCase()
+   134→  if (s === 'active' || s === 'in progress' || s === 'paid') return 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/25'
+   135→  if (s === 'pending' || s === 'submitted') return 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/25'
+   136→  if (s === 'completed' || s === 'closed' || s === 'approved') return 'bg-sky-500/15 text-sky-700 dark:text-sky-400 border-sky-500/25'
+   137→  if (s === 'cancelled' || s === 'rejected' || s === 'overdue') return 'bg-red-500/15 text-red-700 dark:text-red-400 border-red-500/25'
+   138→  if (s === 'draft' || s === 'on hold') return 'bg-slate-500/15 text-slate-700 dark:text-slate-400 border-slate-500/25'
+   139→  return 'bg-primary/10 text-primary border-primary/20'
+   140→}
+   141→
+   142→// ── Navigation ─────────────────────────────────────────────────────────────
+   143→
+   144→const NAV: NavItem[] = [
+   145→  { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, desc: 'Overview & quick actions' },
+   146→  { key: 'projects', label: 'Projects', icon: Briefcase, desc: 'Active & completed projects' },
+   147→  { key: 'work-orders', label: 'Work Orders', icon: ClipboardList, desc: 'Service work orders' },
+   148→  { key: 'invoices', label: 'Invoices', icon: FileText, desc: 'Billing & payments' },
+   149→]
+   150→
+   151→// ── Stat Card ───────────────────────────────────────────────────────────────
+   152→
+   153→function StatCard({ label, value, icon: Icon, loading }: { label: string; value: string; icon: typeof IndianRupee; loading: boolean }) {
+   154→  return (
+   155→    <Card className="relative overflow-hidden">
+   156→      <div className="absolute -right-3 -top-3 h-16 w-16 rounded-full bg-[var(--gold)]/8" />
+   157→      <CardContent className="p-5">
+   158→        <div className="flex items-center gap-3">
+   159→          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-[var(--navy)]/10">
+   160→            <Icon className="h-5 w-5 text-[var(--navy)] dark:text-[var(--gold-light)]" />
+   161→          </div>
+   162→          <div className="min-w-0 flex-1">
+   163→            {loading ? (
+   164→              <>
+   165→                <Skeleton className="mb-1 h-3.5 w-20" />
+   166→                <Skeleton className="h-6 w-28" />
+   167→              </>
+   168→            ) : (
+   169→              <>
+   170→                <p className="text-xs font-medium text-muted-foreground">{label}</p>
+   171→                <p className="text-xl font-bold text-[var(--navy)] dark:text-white">{value}</p>
+   172→              </>
+   173→            )}
+   174→          </div>
+   175→        </div>
+   176→      </CardContent>
+   177→    </Card>
+   178→  )
+   179→}
+   180→
+   181→// ── Data Table ───────────────────────────────────────────────────────────────
+   182→
+   183→function DataTable<T extends { id: string }>({
+   184→  title,
+   185→  data,
+   186→  loading,
+   187→  emptyMessage,
+   188→  columns,
+   189→  renderRow,
+   190→}: {
+   191→  title: string
+   192→  data: T[]
+   193→  loading: boolean
+   194→  emptyMessage: string
+   195→  columns: { key: string; label: string; className?: string }[]
+   196→  renderRow: (item: T) => React.ReactNode
+   197→}) {
+   198→  return (
+   199→    <Card>
+   200→      <CardHeader className="pb-3">
+   201→        <CardTitle className="text-base">{title}</CardTitle>
+   202→      </CardHeader>
+   203→      <CardContent className="px-6 pb-6 pt-0">
+   204→        {loading ? (
+   205→          <div className="space-y-3">
+   206→            {Array.from({ length: 4 }).map((_, i) => (
+   207→              <Skeleton key={i} className="h-10 w-full" />
+   208→            ))}
+   209→          </div>
+   210→        ) : data.length === 0 ? (
+   211→          <div className="flex flex-col items-center justify-center py-10 text-muted-foreground">
+   212→            <FileText className="mb-2 h-8 w-8 opacity-40" />
+   213→            <p className="text-sm font-medium">{emptyMessage}</p>
+   214→            <p className="mt-0.5 text-xs">Data will appear here once available</p>
+   215→          </div>
+   216→        ) : (
+   217→          <div className="max-h-96 overflow-y-auto rounded-lg border scroll-thin">
+   218→            <Table>
+   219→              <TableHeader className="bg-muted/50">
+   220→                <TableRow>
+   221→                  {columns.map((col) => (
+   222→                    <TableHead key={col.key} className={cn('text-xs font-semibold uppercase tracking-wide text-muted-foreground', col.className)}>
+   223→                      {col.label}
+   224→                    </TableHead>
+   225→                  ))}
+   226→                </TableRow>
+   227→              </TableHeader>
+   228→              <TableBody>
+   229→                {data.map((item) => renderRow(item))}
+   230→              </TableBody>
+   231→            </Table>
+   232→          </div>
+   233→        )}
+   234→      </CardContent>
+   235→    </Card>
+   236→  )
+   237→}
+   238→
+   239→// ── Dashboard View ──────────────────────────────────────────────────────────
+   240→
+   241→function DashboardView({
+   242→  data,
+   243→  loading,
+   244→}: {
+   245→  data: DashboardData | null
+   246→  loading: boolean
+   247→}) {
+   248→  const stats = data?.stats
+   249→  return (
+   250→    <div className="space-y-6">
+   251→      {/* Welcome */}
+   252→      <div className="rounded-xl bg-gradient-to-r from-[var(--navy)] to-[var(--navy)]/90 p-6 text-white shadow-lg">
+   253→        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+   254→          <div>
+   255→            <h2 className="text-xl font-bold sm:text-2xl">Welcome back!</h2>
+   256→            <p className="mt-1 text-sm text-blue-100/80">
+   257→              Here&apos;s an overview of your engagement with HP ENTERPRISE.
+   258→            </p>
+   259→          </div>
+   260→          <div className="flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-medium backdrop-blur-sm">
+   261→            <TrendingUp className="h-4 w-4 text-[var(--gold)]" />
+   262→            <span className="text-[var(--gold-light)]">Client Dashboard</span>
+   263→          </div>
+   264→        </div>
+   265→      </div>
+   266→
+   267→      {/* Stat Cards */}
+   268→      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+   269→        <StatCard
+   270→          label="Total Projects"
+   271→          value={stats ? String(stats.totalProjects) : '—'}
+   272→          icon={Building2}
+   273→          loading={loading}
+   274→        />
+   275→        <StatCard
+   276→          label="Active Projects"
+   277→          value={stats ? String(stats.activeProjects) : '—'}
+   278→          icon={TrendingUp}
+   279→          loading={loading}
+   280→        />
+   281→        <StatCard
+   282→          label="Work Order Value"
+   283→          value={stats ? formatINR(stats.workOrderValue) : '—'}
+   284→          icon={IndianRupee}
+   285→          loading={loading}
+   286→        />
+   287→        <StatCard
+   288→          label="Invoice Total"
+   289→          value={stats ? formatINR(stats.invoiceTotal) : '—'}
+   290→          icon={Receipt}
+   291→          loading={loading}
+   292→        />
+   293→      </div>
+   294→
+   295→      {/* Projects Table */}
+   296→      <DataTable
+   297→        title="Projects"
+   298→        data={data?.projects || []}
+   299→        loading={loading}
+   300→        emptyMessage="No projects found"
+   301→        columns={[
+   302→          { key: 'name', label: 'Project' },
+   303→          { key: 'site', label: 'Site' },
+   304→          { key: 'status', label: 'Status', className: 'w-24' },
+   305→          { key: 'members', label: 'Members', className: 'w-20' },
+   306→          { key: 'dates', label: 'Dates' },
+   307→        ]}
+   308→        renderRow={(p) => (
+   309→          <TableRow key={p.id}>
+   310→            <TableCell className="font-medium text-[var(--navy)] dark:text-white">{p.projectName}</TableCell>
+   311→            <TableCell>
+   312→              <div className="flex items-center gap-1.5 text-muted-foreground">
+   313→                <MapPin className="h-3.5 w-3.5 shrink-0" />
+   314→                <span className="truncate max-w-32">{p.site || '—'}</span>
+   315→              </div>
+   316→            </TableCell>
+   317→            <TableCell>
+   318→              <Badge variant="outline" className={cn('text-[11px]', statusColor(p.status))}>
+   319→                {p.status}
+   320→              </Badge>
+   321→            </TableCell>
+   322→            <TableCell>
+   323→              <div className="flex items-center gap-1 text-muted-foreground">
+   324→                <Users className="h-3.5 w-3.5" />
+   325→                <span>{p.memberCount}</span>
+   326→              </div>
+   327→            </TableCell>
+   328→            <TableCell className="text-xs text-muted-foreground">
+   329→              <div className="flex flex-col gap-0.5">
+   330→                <span>Start: {format(new Date(p.startDate), 'dd MMM yy')}</span>
+   331→                {p.endDate && <span>End: {format(new Date(p.endDate), 'dd MMM yy')}</span>}
+   332→              </div>
+   333→            </TableCell>
+   334→          </TableRow>
+   335→        )}
+   336→      />
+   337→
+   338→      {/* Work Orders Table */}
+   339→      <DataTable
+   340→        title="Work Orders"
+   341→        data={data?.workOrders || []}
+   342→        loading={loading}
+   343→        emptyMessage="No work orders found"
+   344→        columns={[
+   345→          { key: 'number', label: 'WO #' },
+   346→          { key: 'title', label: 'Title' },
+   347→          { key: 'value', label: 'Value' },
+   348→          { key: 'status', label: 'Status', className: 'w-28' },
+   349→          { key: 'dates', label: 'Dates' },
+   350→        ]}
+   351→        renderRow={(wo) => (
+   352→          <TableRow key={wo.id}>
+   353→            <TableCell className="font-mono text-xs font-semibold text-[var(--navy)] dark:text-[var(--gold-light)]">{wo.woNumber}</TableCell>
+   354→            <TableCell className="font-medium">{wo.title}</TableCell>
+   355→            <TableCell className="font-semibold">{formatINR(wo.value)}</TableCell>
+   356→            <TableCell>
+   357→              <Badge variant="outline" className={cn('text-[11px]', statusColor(wo.status))}>
+   358→                {wo.status}
+   359→              </Badge>
+   360→            </TableCell>
+   361→            <TableCell className="text-xs text-muted-foreground">
+   362→              <div className="flex flex-col gap-0.5">
+   363→                <span>{format(new Date(wo.createdAt), 'dd MMM yy')}</span>
+   364→                {wo.completedAt && <span>Done: {format(new Date(wo.completedAt), 'dd MMM yy')}</span>}
+   365→              </div>
+   366→            </TableCell>
+   367→          </TableRow>
+   368→        )}
+   369→      />
+   370→
+   371→      {/* Invoices Table */}
+   372→      <DataTable
+   373→        title="Invoices"
+   374→        data={data?.invoices || []}
+   375→        loading={loading}
+   376→        emptyMessage="No invoices found"
+   377→        columns={[
+   378→          { key: 'number', label: 'Invoice #' },
+   379→          { key: 'amount', label: 'Amount' },
+   380→          { key: 'total', label: 'Total' },
+   381→          { key: 'status', label: 'Status', className: 'w-28' },
+   382→          { key: 'date', label: 'Issue Date' },
+   383→        ]}
+   384→        renderRow={(inv) => (
+   385→          <TableRow key={inv.id}>
+   386→            <TableCell className="font-mono text-xs font-semibold text-[var(--navy)] dark:text-[var(--gold-light)]">{inv.invoiceNumber}</TableCell>
+   387→            <TableCell>{formatINR(inv.subtotal)}</TableCell>
+   388→            <TableCell className="font-semibold">{formatINR(inv.total)}</TableCell>
+   389→            <TableCell>
+   390→              <Badge variant="outline" className={cn('text-[11px]', statusColor(inv.status))}>
+   391→                {inv.status}
+   392→              </Badge>
+   393→            </TableCell>
+   394→            <TableCell className="text-xs text-muted-foreground">
+   395→              {format(new Date(inv.issuedAt), 'dd MMM yyyy')}
+   396→            </TableCell>
+   397→          </TableRow>
+   398→        )}
+   399→      />
+   400→    </div>
+   401→  )
+   402→}
+   403→
+   404→// ── Placeholder View ─────────────────────────────────────────────────────────
+   405→
+   406→function PlaceholderView({ title, description }: { title: string; description: string }) {
+   407→  return (
+   408→    <div className="flex flex-col items-center justify-center py-20 text-center">
+   409→      <div className="grid h-16 w-16 place-items-center rounded-2xl bg-[var(--navy)]/10 mb-4">
+   410→        <LayoutDashboard className="h-8 w-8 text-[var(--navy)] dark:text-[var(--gold-light)]" />
+   411→      </div>
+   412→      <h2 className="text-lg font-bold text-[var(--navy)] dark:text-white">{title}</h2>
+   413→      <p className="mt-1 max-w-md text-sm text-muted-foreground">{description}</p>
+   414→    </div>
+   415→  )
+   416→}
+   417→
+   418→// ── Main Component ──────────────────────────────────────────────────────────
+   419→
+   420→export function ClientLayout() {
+   421→  const { user, logout } = useAuth()
+   422→  const [active, setActive] = useState<ClientView>('dashboard')
+   423→  const [mobileOpen, setMobileOpen] = useState(false)
+   424→  const [data, setData] = useState<DashboardData | null>(null)
+   425→  const [loading, setLoading] = useState(true)
+   426→  const [notifications, setNotifications] = useState<NotificationLite[]>([])
+   427→  const [unread, setUnread] = useState(0)
+   428→  const [now, setNow] = useState(new Date())
+   429→  const [bellOpen, setBellOpen] = useState(false)
+   430→
+   431→  const client = user?.client
+   432→  const clientName = client?.clientName || client?.companyName || user?.username || 'Client'
+   433→
+   434→  // Fetch dashboard data
+   435→  const loadDashboard = useCallback(async () => {
+   436→    try {
+   437→      const res = await fetch('/api/client/dashboard', { cache: 'no-store' })
+   438→      if (!res.ok) return
+   439→      const json = await res.json()
+   440→      setData(json)
+   441→      setNotifications(json.notifications || [])
+   442→      setUnread(json.unread || 0)
+   443→    } catch {
+   444→      // silent
+   445→    } finally {
+   446→      setLoading(false)
+   447→    }
+   448→  }, [])
+   449→
+   450→  useEffect(() => {
+   451→    let cancelled = false
+   452→    setLoading(true)
+   453→    fetch('/api/client/dashboard', { cache: 'no-store' })
+   454→      .then((r) => (r.ok ? r.json() : null))
+   455→      .then((json) => {
+   456→        if (cancelled || !json) return
+   457→        setData(json)
+   458→        setNotifications(json.notifications || [])
+   459→        setUnread(json.unread || 0)
+   460→      })
+   461→      .catch(() => {})
+   462→      .finally(() => {
+   463→        if (!cancelled) setLoading(false)
+   464→      })
+   465→    return () => { cancelled = true }
+   466→  }, [])
+   467→
+   468→  // Tick clock every 30s
+   469→  useEffect(() => {
+   470→    const t = setInterval(() => setNow(new Date()), 30_000)
+   471→    return () => clearInterval(t)
+   472→  }, [])
+   473→
+   474→  const handleNavigate = (key: ClientView) => {
+   475→    setActive(key)
+   476→    setMobileOpen(false)
+   477→  }
+   478→
+   479→  const markAllRead = async () => {
+   480→    try {
+   481→      await fetch('/api/notifications', {
+   482→        method: 'PATCH',
+   483→        headers: { 'Content-Type': 'application/json' },
+   484→        body: JSON.stringify({ all: true }),
+   485→      })
+   486→      setNotifications((arr) => arr.map((n) => ({ ...n, read: true })))
+   487→      setUnread(0)
+   488→      toast.success('All notifications marked as read')
+   489→    } catch {
+   490→      toast.error('Failed to update notifications')
+   491→    }
+   492→  }
+   493→
+   494→  const markOneRead = async (id: string) => {
+   495→    try {
+   496→      await fetch('/api/notifications', {
+   497→        method: 'PATCH',
+   498→        headers: { 'Content-Type': 'application/json' },
+   499→        body: JSON.stringify({ id }),
+   500→      })
+   501→      setNotifications((arr) => arr.map((n) => (n.id === id ? { ...n, read: true } : n)))
+   502→      setUnread((u) => Math.max(0, u - 1))
+   503→    } catch {}
+   504→  }
+   505→
+   506→  const handleLogout = async () => {
+   507→    await logout()
+   508→    toast.success('Signed out successfully')
+   509→  }
+   510→
+   511→  const currentNav = NAV.find((n) => n.key === active)
+   512→
+   513→  // ── Sidebar inner (shared between desktop & mobile) ──
+   514→  const sidebarInner = (
+   515→    <div className="flex h-full flex-col text-slate-200">
+   516→      {/* Brand */}
+   517→      <div className="px-5 pt-5 pb-4 border-b border-white/10">
+   518→        <BrandLogo />
+   519→      </div>
+   520→
+   521→      {/* Navigation */}
+   522→      <nav className="flex-1 overflow-y-auto scroll-thin px-3 py-4 space-y-1">
+   523→        {NAV.map((item) => {
+   524→          const Icon = item.icon
+   525→          const isActive = active === item.key
+   526→          return (
+   527→            <button
+   528→              key={item.key}
+   529→              onClick={() => handleNavigate(item.key)}
+   530→              aria-current={isActive ? 'page' : undefined}
+   531→              className={cn(
+   532→                'group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-all',
+   533→                isActive
+   534→                  ? 'bg-[var(--gold)] text-[var(--navy)] shadow-sm'
+   535→                  : 'text-blue-100/80 hover:bg-white/10 hover:text-white'
+   536→              )}
+   537→            >
+   538→              <Icon
+   539→                className={cn(
+   540→                  'h-[18px] w-[18px] shrink-0',
+   541→                  isActive ? 'text-[var(--navy)]' : 'text-blue-200/70 group-hover:text-[var(--gold-light)]'
+   542→                )}
+   543→              />
+   544→              <span className="flex-1 truncate">{item.label}</span>
+   545→              {isActive && <ChevronRight className="h-4 w-4 text-[var(--navy)]" />}
+   546→            </button>
+   547→          )
+   548→        })}
+   549→      </nav>
+   550→
+   551→      {/* User card + logout */}
+   552→      <div className="border-t border-white/10 p-3">
+   553→        <div className="rounded-lg bg-white/5 p-3">
+   554→          <div className="flex items-center gap-3">
+   555→            <Avatar className="h-9 w-9 ring-2 ring-[var(--gold)]/40">
+   556→              <AvatarFallback className="bg-[var(--gold)] text-[var(--navy)] text-xs font-bold">
+   557→                {initials(clientName)}
+   558→              </AvatarFallback>
+   559→            </Avatar>
+   560→            <div className="min-w-0 flex-1">
+   561→              <p className="truncate text-sm font-semibold text-white">{clientName}</p>
+   562→              <p className="truncate text-[11px] text-blue-200/70">
+   563→                {client?.companyName || client?.email || 'Client Portal'}
+   564→              </p>
+   565→            </div>
+   566→          </div>
+   567→          <Button
+   568→            onClick={handleLogout}
+   569→            variant="ghost"
+   570→            size="sm"
+   571→            className="mt-3 w-full justify-start gap-2 text-blue-100/80 hover:bg-white/10 hover:text-white"
+   572→          >
+   573→            <LogOut className="h-4 w-4" /> Sign Out
+   574→          </Button>
+   575→        </div>
+   576→      </div>
+   577→    </div>
+   578→  )
+   579→
+   580→  return (
+   581→    <div className="min-h-screen flex flex-col bg-background">
+   582→      {/* Top accent bar */}
+   583→      <div className="h-1 hpe-gold-bar w-full" />
+   584→
+   585→      <div className="flex flex-1 overflow-hidden">
+   586→        {/* Desktop sidebar */}
+   587→        <aside className="hidden lg:flex w-[260px] shrink-0 hpe-sidebar-gradient border-r border-white/10">
+   588→          {sidebarInner}
+   589→        </aside>
+   590→
+   591→        {/* Mobile sidebar (Sheet) */}
+   592→        <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+   593→          <SheetContent side="left" className="w-[260px] p-0 hpe-sidebar-gradient border-white/10">
+   594→            <SheetTitle className="sr-only">HP ENTERPRISE Client Portal Navigation</SheetTitle>
+   595→            <SheetDescription className="sr-only">Client portal navigation with access to your dashboard, projects, work orders, and invoices.</SheetDescription>
+   596→            <button
+   597→              onClick={() => setMobileOpen(false)}
+   598→              className="absolute right-3 top-3 z-10 grid h-8 w-8 place-items-center rounded-md text-blue-100 hover:bg-white/10"
+   599→              aria-label="Close menu"
+   600→            >
+   601→              <X className="h-5 w-5" />
+   602→            </button>
+   603→            {sidebarInner}
+   604→          </SheetContent>
+   605→        </Sheet>
+   606→
+   607→        {/* Main area */}
+   608→        <div className="flex flex-1 flex-col min-w-0">
+   609→          {/* Top bar */}
+   610→          <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-3 border-b bg-card/95 px-4 backdrop-blur-md sm:px-6">
+   611→            <div className="flex items-center gap-3 min-w-0">
+   612→              {/* Mobile hamburger */}
+   613→              <button
+   614→                onClick={() => setMobileOpen(true)}
+   615→                className="lg:hidden grid h-9 w-9 place-items-center rounded-md border bg-background"
+   616→                aria-label="Open menu"
+   617→              >
+   618→                <Menu className="h-5 w-5" />
+   619→              </button>
+   620→              <div className="min-w-0">
+   621→                <h1 className="truncate text-base font-bold text-[var(--navy)] dark:text-white sm:text-lg">
+   622→                  {currentNav?.label}
+   623→                </h1>
+   624→                <p className="hidden text-xs text-muted-foreground sm:block">{currentNav?.desc}</p>
+   625→              </div>
+   626→            </div>
+   627→
+   628→            <div className="flex items-center gap-2 sm:gap-3">
+   629→              {/* Date / Time */}
+   630→              <div className="hidden md:flex flex-col items-end leading-tight">
+   631→                <span className="text-xs font-medium text-[var(--navy)] dark:text-white">
+   632→                  {format(now, 'EEEE, dd MMM yyyy')}
+   633→                </span>
+   634→                <span className="text-[11px] text-muted-foreground">
+   635→                  {format(now, 'h:mm a')}
+   636→                </span>
+   637→              </div>
+   638→
+   639→              {/* Notifications bell */}
+   640→              <DropdownMenu open={bellOpen} onOpenChange={setBellOpen}>
+   641→                <DropdownMenuTrigger asChild>
+   642→                  <button
+   643→                    className="relative grid h-10 w-10 place-items-center rounded-full border bg-background hover:bg-muted transition-colors"
+   644→                    aria-label={`Notifications${unread ? `, ${unread} unread` : ''}`}
+   645→                  >
+   646→                    <Bell className="h-[18px] w-[18px] text-[var(--navy)] dark:text-white" />
+   647→                    {unread > 0 && (
+   648→                      <span className="absolute -right-0.5 -top-0.5 grid h-5 min-w-5 place-items-center rounded-full bg-[var(--gold)] px-1 text-[10px] font-bold text-[var(--navy)] ring-2 ring-card">
+   649→                        {unread > 9 ? '9+' : unread}
+   650→                      </span>
+   651→                    )}
+   652→                  </button>
+   653→                </DropdownMenuTrigger>
+   654→                <DropdownMenuContent align="end" className="w-80 p-0">
+   655→                  <div className="flex items-center justify-between border-b px-3 py-2.5">
+   656→                    <p className="text-sm font-semibold text-[var(--navy)] dark:text-white">Notifications</p>
+   657→                    {unread > 0 && (
+   658→                      <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={markAllRead}>
+   659→                        <UserCheck className="mr-1 h-3.5 w-3.5" /> Mark all read
+   660→                      </Button>
+   661→                    )}
+   662→                  </div>
+   663→                  <div className="max-h-80 overflow-y-auto scroll-thin">
+   664→                    {notifications.length === 0 ? (
+   665→                      <div className="py-8 text-center text-sm text-muted-foreground">
+   666→                        <Bell className="mx-auto mb-2 h-6 w-6 opacity-50" />
+   667→                        No notifications yet
+   668→                      </div>
+   669→                    ) : (
+   670→                      notifications.slice(0, 12).map((n) => (
+   671→                        <DropdownMenuItem
+   672→                          key={n.id}
+   673→                          className="flex flex-col items-start gap-0.5 px-3 py-2.5 focus:bg-muted/60"
+   674→                          onClick={() => {
+   675→                            if (!n.read) markOneRead(n.id)
+   676→                          }}
+   677→                        >
+   678→                          <div className="flex w-full items-start gap-2">
+   679→                            {!n.read && <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-[var(--gold)]" />}
+   680→                            <div className="min-w-0 flex-1">
+   681→                              <p
+   682→                                className={cn(
+   683→                                  'text-sm leading-snug',
+   684→                                  n.read ? 'text-muted-foreground' : 'font-semibold text-[var(--navy)] dark:text-white'
+   685→                                )}
+   686→                              >
+   687→                                {n.title}
+   688→                              </p>
+   689→                              <p className="mt-0.5 text-xs text-muted-foreground line-clamp-2">{n.message}</p>
+   690→                              <p className="mt-1 text-[10px] text-muted-foreground">
+   691→                                {format(new Date(n.createdAt), 'dd MMM yyyy, h:mm a')}
+   692→                              </p>
+   693→                            </div>
+   694→                          </div>
+   695→                        </DropdownMenuItem>
+   696→                      ))
+   697→                    )}
+   698→                  </div>
+   699→                </DropdownMenuContent>
+   700→              </DropdownMenu>
+   701→
+   702→              {/* User avatar */}
+   703→              <Avatar className="hidden sm:block h-9 w-9 ring-2 ring-[var(--gold)]/40">
+   704→                <AvatarFallback className="bg-[var(--navy)] text-[var(--gold)] text-xs font-bold">
+   705→                  {initials(clientName)}
+   706→                </AvatarFallback>
+   707→              </Avatar>
+   708→            </div>
+   709→          </header>
+   710→
+   711→          {/* Module content */}
+   712→          <main className="flex-1 overflow-y-auto scroll-thin">
+   713→            <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+   714→              {active === 'dashboard' && <DashboardView data={data} loading={loading} />}
+   715→              {active === 'projects' && (
+   716→                <PlaceholderView
+   717→                  title="Projects"
+   718→                  description="Your project details, timelines, and assigned team members will be displayed here."
+   719→                />
+   720→              )}
+   721→              {active === 'work-orders' && (
+   722→                <PlaceholderView
+   723→                  title="Work Orders"
+   724→                  description="All service work orders, their progress, and completion status will appear here."
+   725→                />
+   726→              )}
+   727→              {active === 'invoices' && (
+   728→                <PlaceholderView
+   729→                  title="Invoices"
+   730→                  description="Invoice history, payment status, and downloadable billing documents will be shown here."
+   731→                />
+   732→              )}
+   733→            </div>
+   734→          </main>
+   735→        </div>
+   736→      </div>
+   737→
+   738→      {/* Sticky footer */}
+   739→      <footer className="mt-auto border-t bg-card px-4 py-3 sm:px-6">
+   740→        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-1 text-xs text-muted-foreground sm:flex-row">
+   741→          <p>&copy; 2025 HP ENTERPRISE Safety Service &amp; Man Power Supply &bull; Client Portal</p>
+   742→          <p className="flex items-center gap-1.5">
+   743→            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+   744→            All systems operational
+   745→          </p>
+   746→        </div>
+   747→      </footer>
+   748→
+   749→      <Toaster richColors position="top-right" />
+   750→    </div>
+   751→  )
+   752→}
+   753→

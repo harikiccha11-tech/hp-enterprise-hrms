@@ -119,18 +119,26 @@ export async function api<T = any>(
   return data as T
 }
 
-/** Download CSV from rows + columns. Caller passes the human column order/names. */
-export function downloadCSV(filename: string, columns: string[], rows: Record<string, any>[]) {
+/** Column descriptor for downloadCSV — key maps to row property, label is the CSV header */
+export interface CSVColumn {
+  key: string
+  label: string
+}
+
+/** Download CSV from rows + column descriptors. Uses column keys to access row values. */
+export function downloadCSV(filename: string, columns: (string | CSVColumn)[], rows: Record<string, any>[]) {
   const esc = (v: any) => {
     if (v === null || v === undefined) return ''
     const s = String(v).replace(/"/g, '""')
     if (/[",\n]/.test(s)) return `"${s}"`
     return s
   }
-  const lines = [columns.join(',')]
+  const normalized = columns.map((c) =>
+    typeof c === 'string' ? { key: c, label: c } : c
+  )
+  const lines = [normalized.map((c) => c.label).join(',')]
   for (const r of rows) {
-    // Map by index — we expect rows to be plain objects with values aligned to column order
-    const values = columns.map((_, i) => esc(Object.values(r)[i]))
+    const values = normalized.map((col) => esc(r[col.key]))
     lines.push(values.join(','))
   }
   const csv = lines.join('\n')

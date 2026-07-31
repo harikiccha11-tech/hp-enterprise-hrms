@@ -23,7 +23,7 @@ import { SectionTitle, StatusBadge, EmptyState } from '@/components/shared'
 import { toast } from 'sonner'
 import {
   UserCog, Plus, KeyRound, Lock, Unlock, Trash2, Crown, ShieldCheck, ShieldAlert,
-  Copy, Eye, EyeOff,
+  Copy, Eye, EyeOff, Building2,
 } from 'lucide-react'
 import { api, fmtDateTime, fmtRelative } from '../lib'
 import { ROLE_LABELS } from '@/lib/constants'
@@ -67,6 +67,7 @@ export function UserAccounts({ refreshKey }: { refreshKey: number }) {
     if (role === 'OWNER') return <Crown className="h-4 w-4 text-[var(--gold)]" />
     if (role === 'SUPER_ADMIN') return <ShieldCheck className="h-4 w-4 text-[var(--navy)]" />
     if (role === 'HR_MANAGER') return <ShieldAlert className="h-4 w-4 text-sky-600" />
+    if (role === 'CLIENT') return <Building2 className="h-4 w-4 text-emerald-600" />
     return <UserCog className="h-4 w-4 text-muted-foreground" />
   }
 
@@ -83,11 +84,12 @@ export function UserAccounts({ refreshKey }: { refreshKey: number }) {
       />
 
       {/* Role summary */}
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         <RoleCard icon={Crown} label="Owner" count={list.filter(u => u.role === 'OWNER').length} desc="Full control" color="gold" />
         <RoleCard icon={ShieldCheck} label="Admins" count={list.filter(u => u.role === 'SUPER_ADMIN').length} desc="Operations & payroll" color="navy" />
         <RoleCard icon={ShieldAlert} label="HR Managers" count={list.filter(u => u.role === 'HR_MANAGER').length} desc="Verify & manage staff" color="sky" />
-        <RoleCard icon={UserCog} label="Total Accounts" count={list.length} desc="Active users" color="muted" />
+        <RoleCard icon={Building2} label="Clients" count={list.filter(u => u.role === 'CLIENT').length} desc="Client portal" color="emerald" />
+        <RoleCard icon={UserCog} label="Total Accounts" count={list.length} desc="All users" color="muted" />
       </div>
 
       <Card>
@@ -97,7 +99,7 @@ export function UserAccounts({ refreshKey }: { refreshKey: number }) {
               {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-14 w-full" />)}
             </div>
           ) : list.length === 0 ? (
-            <EmptyState icon={UserCog} title="No accounts yet" desc="Create Admin or HR Manager accounts to delegate work." />
+            <EmptyState icon={UserCog} title="No accounts yet" desc="Create Admin, HR Manager, or Client accounts to delegate work." />
           ) : (
             <div className="max-h-[60vh] overflow-y-auto scroll-thin rounded-lg border">
               <Table>
@@ -267,6 +269,7 @@ function RoleCard({ icon: Icon, label, count, desc, color }: { icon: any; label:
     gold: 'bg-[var(--gold)]/10 text-[#8a6f24]',
     navy: 'bg-[var(--navy)]/10 text-[var(--navy)]',
     sky: 'bg-sky-500/10 text-sky-700',
+    emerald: 'bg-emerald-500/10 text-emerald-700',
     muted: 'bg-muted text-muted-foreground',
   }
   return (
@@ -292,8 +295,27 @@ function CreateUserDialog({ onClose, onSuccess }: { onClose: () => void; onSucce
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [role, setRole] = useState('HR_MANAGER')
+  const [clientId, setClientId] = useState('')
+  const [clients, setClients] = useState<{ id: string; clientName: string }[]>([])
+  const [loadingClients, setLoadingClients] = useState(false)
   const [showPass, setShowPass] = useState(false)
   const [saving, setSaving] = useState(false)
+
+  // Fetch clients list when role is set to CLIENT
+  useEffect(() => {
+    if (role === 'CLIENT' && clients.length === 0) {
+      setLoadingClients(true)
+      api<{ clients: { id: string; clientName: string }[] }>('/api/admin/clients')
+        .then((data) => setClients(data.clients || []))
+        .catch(() => {})
+        .finally(() => setLoadingClients(false))
+    }
+  }, [role, clients.length])
+
+  // Reset clientId when role changes away from CLIENT
+  useEffect(() => {
+    if (role !== 'CLIENT') setClientId('')
+  }, [role])
 
   function genPassword() {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789@#$'
@@ -304,11 +326,14 @@ function CreateUserDialog({ onClose, onSuccess }: { onClose: () => void; onSucce
 
   async function submit() {
     if (!username.trim() || !email.trim() || !password) { toast.error('All fields are required'); return }
+    if (role === 'CLIENT' && !clientId) { toast.error('Please select a client to link'); return }
     setSaving(true)
     try {
+      const payload: Record<string, string> = { username, email, password, role }
+      if (role === 'CLIENT') payload.clientId = clientId
       const res = await fetch('/api/admin/users', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, email, password, role }),
+        body: JSON.stringify(payload),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed')
@@ -322,7 +347,7 @@ function CreateUserDialog({ onClose, onSuccess }: { onClose: () => void; onSucce
       <DialogContent>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2"><UserCog className="h-5 w-5 text-[var(--gold)]" /> Create User Account</DialogTitle>
-          <DialogDescription>As the Owner, create an Admin or HR Manager account. Credentials will be shown once for you to share securely.</DialogDescription>
+          <DialogDescription>Create an Admin, HR Manager, or Client portal account. Credentials will be shown once for you to share securely.</DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
           <div className="space-y-1.5">
@@ -332,12 +357,28 @@ function CreateUserDialog({ onClose, onSuccess }: { onClose: () => void; onSucce
               <SelectContent>
                 <SelectItem value="HR_MANAGER">HR Manager — verifies documents, manages employees</SelectItem>
                 <SelectItem value="SUPER_ADMIN">Admin — full operations + payroll</SelectItem>
+                <SelectItem value="CLIENT">Client — client portal access</SelectItem>
               </SelectContent>
             </Select>
           </div>
+          {role === 'CLIENT' && (
+            <div className="space-y-1.5">
+              <Label>Link to Client *</Label>
+              <Select value={clientId} onValueChange={setClientId}>
+                <SelectTrigger>
+                  <SelectValue placeholder={loadingClients ? 'Loading clients…' : 'Select a client'} />
+                </SelectTrigger>
+                <SelectContent>
+                  {clients.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>{c.clientName}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <div className="space-y-1.5">
             <Label>Username *</Label>
-            <Input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="e.g. hr.sunita" />
+            <Input value={username} onChange={(e) => setUsername(e.target.value)} placeholder={role === 'CLIENT' ? 'e.g. infosys.client' : 'e.g. hr.sunita'} />
           </div>
           <div className="space-y-1.5">
             <Label>Email *</Label>

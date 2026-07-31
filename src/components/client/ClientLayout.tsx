@@ -1,9 +1,9 @@
 'use client'
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState } from 'react'
 import { useAuth } from '@/lib/store'
 import { BrandLogo } from '@/components/brand/BrandLogo'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from '@/components/ui/sheet'
@@ -43,7 +43,8 @@ import {
   Receipt,
   Building2,
   MapPin,
-  UserCheck,
+  Wallet,
+  CalendarClock,
 } from 'lucide-react'
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -57,14 +58,25 @@ interface NavItem {
   desc: string
 }
 
+interface ClientInfo {
+  id: string
+  clientName: string
+  companyName: string | null
+  email: string | null
+  phone: string | null
+  address: string | null
+  gst: string | null
+}
+
 interface DashboardProject {
   id: string
   projectName: string
   site: string | null
-  status: string
-  memberCount: number
-  startDate: string
+  startDate: string | null
   endDate: string | null
+  status: string
+  description: string | null
+  memberCount: number
 }
 
 interface DashboardWorkOrder {
@@ -72,18 +84,22 @@ interface DashboardWorkOrder {
   woNumber: string
   title: string
   value: number
+  startDate: string | null
+  endDate: string | null
   status: string
-  createdAt: string
-  completedAt: string | null
+  projectName: string | null
 }
 
 interface DashboardInvoice {
   id: string
   invoiceNumber: string
-  subtotal: number
+  amount: number
+  tax: number
   total: number
   status: string
-  issuedAt: string
+  issueDate: string
+  dueDate: string | null
+  workOrderTitle: string | null
 }
 
 interface NotificationLite {
@@ -96,18 +112,19 @@ interface NotificationLite {
 }
 
 interface DashboardData {
+  client: ClientInfo
   stats: {
     totalProjects: number
     activeProjects: number
     workOrderValue: number
     invoiceTotal: number
+    paidAmount: number
   }
   projects: DashboardProject[]
   workOrders: DashboardWorkOrder[]
   invoices: DashboardInvoice[]
   announcements: { id: string; title: string; message: string; createdAt: string }[]
-  notifications: NotificationLite[]
-  unread: number
+  unreadNotifications: number
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -115,10 +132,10 @@ interface DashboardData {
 function initials(name: string): string {
   return name
     .split(' ')
-    .map((w) => w[0])
-    .join('')
-    .toUpperCase()
+    .filter(Boolean)
     .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase())
+    .join('')
 }
 
 function formatINR(amount: number): string {
@@ -129,14 +146,31 @@ function formatINR(amount: number): string {
   }).format(amount)
 }
 
+function fmtDate(d: string | null | undefined): string {
+  if (!d) return '—'
+  try {
+    return format(new Date(d), 'dd MMM yyyy')
+  } catch {
+    return '—'
+  }
+}
+
 function statusColor(status: string): string {
-  const s = status.toLowerCase()
-  if (s === 'active' || s === 'in progress' || s === 'paid') return 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/25'
-  if (s === 'pending' || s === 'submitted') return 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/25'
-  if (s === 'completed' || s === 'closed' || s === 'approved') return 'bg-sky-500/15 text-sky-700 dark:text-sky-400 border-sky-500/25'
-  if (s === 'cancelled' || s === 'rejected' || s === 'overdue') return 'bg-red-500/15 text-red-700 dark:text-red-400 border-red-500/25'
-  if (s === 'draft' || s === 'on hold') return 'bg-slate-500/15 text-slate-700 dark:text-slate-400 border-slate-500/25'
+  const s = status.toUpperCase()
+  if (s === 'ACTIVE' || s === 'OPEN' || s === 'PAID') return 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/25'
+  if (s === 'COMPLETED' || s === 'SENT') return 'bg-sky-500/15 text-sky-700 dark:text-sky-400 border-sky-500/25'
+  if (s === 'ON_HOLD' || s === 'DRAFT') return 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/25'
+  if (s === 'REJECTED' || s === 'OVERDUE') return 'bg-red-500/15 text-red-700 dark:text-red-400 border-red-500/25'
+  if (s === 'CLOSED') return 'bg-slate-500/15 text-slate-600 dark:text-slate-400 border-slate-500/25'
   return 'bg-primary/10 text-primary border-primary/20'
+}
+
+function StatusBadge({ status }: { status: string }) {
+  return (
+    <Badge variant="outline" className={cn('text-[11px]', statusColor(status))}>
+      {status.replace(/_/g, ' ')}
+    </Badge>
+  )
 }
 
 // ── Navigation ─────────────────────────────────────────────────────────────
@@ -178,13 +212,14 @@ function StatCard({ label, value, icon: Icon, loading }: { label: string; value:
   )
 }
 
-// ── Data Table ───────────────────────────────────────────────────────────────
+// ── Data Table (reusable) ──────────────────────────────────────────────────
 
 function DataTable<T extends { id: string }>({
   title,
   data,
   loading,
   emptyMessage,
+  emptyIcon: EmptyIcon,
   columns,
   renderRow,
 }: {
@@ -192,6 +227,7 @@ function DataTable<T extends { id: string }>({
   data: T[]
   loading: boolean
   emptyMessage: string
+  emptyIcon: typeof LayoutDashboard
   columns: { key: string; label: string; className?: string }[]
   renderRow: (item: T) => React.ReactNode
 }) {
@@ -208,8 +244,8 @@ function DataTable<T extends { id: string }>({
             ))}
           </div>
         ) : data.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-10 text-muted-foreground">
-            <FileText className="mb-2 h-8 w-8 opacity-40" />
+          <div className="flex flex-col items-center justify-center py-10 text-center text-muted-foreground">
+            <EmptyIcon className="mb-2 h-8 w-8 opacity-40" />
             <p className="text-sm font-medium">{emptyMessage}</p>
             <p className="mt-0.5 text-xs">Data will appear here once available</p>
           </div>
@@ -245,16 +281,20 @@ function DashboardView({
   data: DashboardData | null
   loading: boolean
 }) {
+  const clientName = data?.client?.companyName || data?.client?.clientName || 'Client'
   const stats = data?.stats
+
   return (
     <div className="space-y-6">
-      {/* Welcome */}
+      {/* Welcome Banner */}
       <div className="rounded-xl bg-gradient-to-r from-[var(--navy)] to-[var(--navy)]/90 p-6 text-white shadow-lg">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-xl font-bold sm:text-2xl">Welcome back!</h2>
+            <h2 className="text-xl font-bold sm:text-2xl">
+              Welcome back, {data?.client?.clientName || 'Client'}!
+            </h2>
             <p className="mt-1 text-sm text-blue-100/80">
-              Here&apos;s an overview of your engagement with HP ENTERPRISE.
+              Here&apos;s an overview of your engagement with {clientName}.
             </p>
           </div>
           <div className="flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-medium backdrop-blur-sm">
@@ -264,8 +304,8 @@ function DashboardView({
         </div>
       </div>
 
-      {/* Stat Cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {/* 5 Stat Cards */}
+      <div className="grid gap-4 grid-cols-2 lg:grid-cols-5">
         <StatCard
           label="Total Projects"
           value={stats ? String(stats.totalProjects) : '—'}
@@ -290,20 +330,27 @@ function DashboardView({
           icon={Receipt}
           loading={loading}
         />
+        <StatCard
+          label="Paid Amount"
+          value={stats ? formatINR(stats.paidAmount) : '—'}
+          icon={Wallet}
+          loading={loading}
+        />
       </div>
 
-      {/* Projects Table */}
+      {/* Recent Projects — top 5 */}
       <DataTable
-        title="Projects"
-        data={data?.projects || []}
+        title="Recent Projects"
+        data={(data?.projects || []).slice(0, 5)}
         loading={loading}
         emptyMessage="No projects found"
+        emptyIcon={Briefcase}
         columns={[
           { key: 'name', label: 'Project' },
           { key: 'site', label: 'Site' },
-          { key: 'status', label: 'Status', className: 'w-24' },
-          { key: 'members', label: 'Members', className: 'w-20' },
-          { key: 'dates', label: 'Dates' },
+          { key: 'status', label: 'Status', className: 'w-28' },
+          { key: 'members', label: 'Team', className: 'w-16' },
+          { key: 'dates', label: 'Period' },
         ]}
         renderRow={(p) => (
           <TableRow key={p.id}>
@@ -314,11 +361,7 @@ function DashboardView({
                 <span className="truncate max-w-32">{p.site || '—'}</span>
               </div>
             </TableCell>
-            <TableCell>
-              <Badge variant="outline" className={cn('text-[11px]', statusColor(p.status))}>
-                {p.status}
-              </Badge>
-            </TableCell>
+            <TableCell><StatusBadge status={p.status} /></TableCell>
             <TableCell>
               <div className="flex items-center gap-1 text-muted-foreground">
                 <Users className="h-3.5 w-3.5" />
@@ -327,72 +370,73 @@ function DashboardView({
             </TableCell>
             <TableCell className="text-xs text-muted-foreground">
               <div className="flex flex-col gap-0.5">
-                <span>Start: {format(new Date(p.startDate), 'dd MMM yy')}</span>
-                {p.endDate && <span>End: {format(new Date(p.endDate), 'dd MMM yy')}</span>}
+                <span>Start: {fmtDate(p.startDate)}</span>
+                <span>End: {fmtDate(p.endDate)}</span>
               </div>
             </TableCell>
           </TableRow>
         )}
       />
 
-      {/* Work Orders Table */}
+      {/* Recent Work Orders — top 5 */}
       <DataTable
-        title="Work Orders"
-        data={data?.workOrders || []}
+        title="Recent Work Orders"
+        data={(data?.workOrders || []).slice(0, 5)}
         loading={loading}
         emptyMessage="No work orders found"
+        emptyIcon={ClipboardList}
         columns={[
           { key: 'number', label: 'WO #' },
           { key: 'title', label: 'Title' },
-          { key: 'value', label: 'Value' },
+          { key: 'project', label: 'Project', className: 'hidden md:table-cell' },
+          { key: 'value', label: 'Value', className: 'text-right' },
           { key: 'status', label: 'Status', className: 'w-28' },
-          { key: 'dates', label: 'Dates' },
+          { key: 'dates', label: 'Period', className: 'hidden lg:table-cell' },
         ]}
         renderRow={(wo) => (
           <TableRow key={wo.id}>
             <TableCell className="font-mono text-xs font-semibold text-[var(--navy)] dark:text-[var(--gold-light)]">{wo.woNumber}</TableCell>
             <TableCell className="font-medium">{wo.title}</TableCell>
-            <TableCell className="font-semibold">{formatINR(wo.value)}</TableCell>
-            <TableCell>
-              <Badge variant="outline" className={cn('text-[11px]', statusColor(wo.status))}>
-                {wo.status}
-              </Badge>
-            </TableCell>
-            <TableCell className="text-xs text-muted-foreground">
+            <TableCell className="hidden md:table-cell text-sm text-muted-foreground">{wo.projectName || '—'}</TableCell>
+            <TableCell className="text-right font-semibold">{formatINR(wo.value)}</TableCell>
+            <TableCell><StatusBadge status={wo.status} /></TableCell>
+            <TableCell className="hidden lg:table-cell text-xs text-muted-foreground">
               <div className="flex flex-col gap-0.5">
-                <span>{format(new Date(wo.createdAt), 'dd MMM yy')}</span>
-                {wo.completedAt && <span>Done: {format(new Date(wo.completedAt), 'dd MMM yy')}</span>}
+                <span>Start: {fmtDate(wo.startDate)}</span>
+                <span>End: {fmtDate(wo.endDate)}</span>
               </div>
             </TableCell>
           </TableRow>
         )}
       />
 
-      {/* Invoices Table */}
+      {/* Recent Invoices — top 5 */}
       <DataTable
-        title="Invoices"
-        data={data?.invoices || []}
+        title="Recent Invoices"
+        data={(data?.invoices || []).slice(0, 5)}
         loading={loading}
         emptyMessage="No invoices found"
+        emptyIcon={FileText}
         columns={[
           { key: 'number', label: 'Invoice #' },
-          { key: 'amount', label: 'Amount' },
-          { key: 'total', label: 'Total' },
+          { key: 'workOrder', label: 'Work Order', className: 'hidden md:table-cell' },
+          { key: 'amount', label: 'Amount', className: 'text-right' },
+          { key: 'total', label: 'Total', className: 'text-right' },
           { key: 'status', label: 'Status', className: 'w-28' },
-          { key: 'date', label: 'Issue Date' },
+          { key: 'dates', label: 'Dates' },
         ]}
         renderRow={(inv) => (
           <TableRow key={inv.id}>
             <TableCell className="font-mono text-xs font-semibold text-[var(--navy)] dark:text-[var(--gold-light)]">{inv.invoiceNumber}</TableCell>
-            <TableCell>{formatINR(inv.subtotal)}</TableCell>
-            <TableCell className="font-semibold">{formatINR(inv.total)}</TableCell>
-            <TableCell>
-              <Badge variant="outline" className={cn('text-[11px]', statusColor(inv.status))}>
-                {inv.status}
-              </Badge>
-            </TableCell>
+            <TableCell className="hidden md:table-cell text-sm text-muted-foreground">{inv.workOrderTitle || '—'}</TableCell>
+            <TableCell className="text-right">{formatINR(inv.amount)}</TableCell>
+            <TableCell className="text-right font-semibold">{formatINR(inv.total)}</TableCell>
+            <TableCell><StatusBadge status={inv.status} /></TableCell>
             <TableCell className="text-xs text-muted-foreground">
-              {format(new Date(inv.issuedAt), 'dd MMM yyyy')}
+              <div className="flex flex-col gap-0.5">
+                <span>Issue: {fmtDate(inv.issueDate)}</span>
+                <span>Due: {fmtDate(inv.dueDate)}</span>
+              </div>
             </TableCell>
           </TableRow>
         )}
@@ -401,16 +445,177 @@ function DashboardView({
   )
 }
 
-// ── Placeholder View ─────────────────────────────────────────────────────────
+// ── Projects Full View ─────────────────────────────────────────────────────
 
-function PlaceholderView({ title, description }: { title: string; description: string }) {
+function ProjectsView({ data, loading }: { data: DashboardData | null; loading: boolean }) {
   return (
-    <div className="flex flex-col items-center justify-center py-20 text-center">
-      <div className="grid h-16 w-16 place-items-center rounded-2xl bg-[var(--navy)]/10 mb-4">
-        <LayoutDashboard className="h-8 w-8 text-[var(--navy)] dark:text-[var(--gold-light)]" />
+    <DataTable
+      title="All Projects"
+      data={data?.projects || []}
+      loading={loading}
+      emptyMessage="No projects found"
+      emptyIcon={Briefcase}
+      columns={[
+        { key: 'name', label: 'Project' },
+        { key: 'site', label: 'Site', className: 'hidden md:table-cell' },
+        { key: 'status', label: 'Status', className: 'w-32' },
+        { key: 'members', label: 'Team', className: 'w-16' },
+        { key: 'description', label: 'Description', className: 'hidden lg:table-cell' },
+        { key: 'dates', label: 'Period' },
+      ]}
+      renderRow={(p) => (
+        <TableRow key={p.id} className="hover:bg-muted/40">
+          <TableCell>
+            <p className="truncate text-sm font-semibold text-[var(--navy)] dark:text-white">{p.projectName}</p>
+          </TableCell>
+          <TableCell className="hidden md:table-cell">
+            <div className="flex items-center gap-1.5 text-muted-foreground">
+              <MapPin className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate max-w-40">{p.site || '—'}</span>
+            </div>
+          </TableCell>
+          <TableCell><StatusBadge status={p.status} /></TableCell>
+          <TableCell>
+            <div className="flex items-center gap-1 text-muted-foreground">
+              <Users className="h-3.5 w-3.5" />
+              <span>{p.memberCount}</span>
+            </div>
+          </TableCell>
+          <TableCell className="hidden lg:table-cell max-w-48">
+            <p className="truncate text-sm text-muted-foreground">{p.description || '—'}</p>
+          </TableCell>
+          <TableCell className="text-xs text-muted-foreground">
+            <div className="flex flex-col gap-0.5">
+              <span>Start: {fmtDate(p.startDate)}</span>
+              <span>End: {fmtDate(p.endDate)}</span>
+            </div>
+          </TableCell>
+        </TableRow>
+      )}
+    />
+  )
+}
+
+// ── Work Orders Full View ──────────────────────────────────────────────────
+
+function WorkOrdersView({ data, loading }: { data: DashboardData | null; loading: boolean }) {
+  const list = data?.workOrders || []
+  const totalValue = list.reduce((s, wo) => s + wo.value, 0)
+
+  return (
+    <div className="space-y-5">
+      {/* Summary Cards */}
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+        <Card className="p-4">
+          <p className="text-xs uppercase tracking-wider text-muted-foreground">Total Work Orders</p>
+          <p className="mt-1 text-xl font-bold text-[var(--navy)] dark:text-white">{list.length}</p>
+        </Card>
+        <Card className="p-4">
+          <p className="text-xs uppercase tracking-wider text-muted-foreground">Total Value</p>
+          <p className="mt-1 text-xl font-bold text-[var(--navy)] dark:text-white">{formatINR(totalValue)}</p>
+        </Card>
+        <Card className="p-4">
+          <p className="text-xs uppercase tracking-wider text-muted-foreground">Open Orders</p>
+          <p className="mt-1 text-xl font-bold text-emerald-700">{list.filter((wo) => wo.status === 'OPEN').length}</p>
+        </Card>
       </div>
-      <h2 className="text-lg font-bold text-[var(--navy)] dark:text-white">{title}</h2>
-      <p className="mt-1 max-w-md text-sm text-muted-foreground">{description}</p>
+
+      <DataTable
+        title="All Work Orders"
+        data={list}
+        loading={loading}
+        emptyMessage="No work orders found"
+        emptyIcon={ClipboardList}
+        columns={[
+          { key: 'number', label: 'WO #' },
+          { key: 'title', label: 'Title' },
+          { key: 'project', label: 'Project', className: 'hidden md:table-cell' },
+          { key: 'value', label: 'Value', className: 'text-right' },
+          { key: 'status', label: 'Status', className: 'w-32' },
+          { key: 'dates', label: 'Period' },
+        ]}
+        renderRow={(wo) => (
+          <TableRow key={wo.id} className="hover:bg-muted/40">
+            <TableCell className="font-mono text-xs font-semibold text-[var(--navy)] dark:text-[var(--gold-light)]">{wo.woNumber}</TableCell>
+            <TableCell>
+              <p className="truncate text-sm font-semibold text-[var(--navy)] dark:text-white">{wo.title}</p>
+            </TableCell>
+            <TableCell className="hidden md:table-cell text-sm text-muted-foreground">{wo.projectName || '—'}</TableCell>
+            <TableCell className="text-right font-mono font-semibold">{formatINR(wo.value)}</TableCell>
+            <TableCell><StatusBadge status={wo.status} /></TableCell>
+            <TableCell className="text-xs text-muted-foreground">
+              <div className="flex flex-col gap-0.5">
+                <span>Start: {fmtDate(wo.startDate)}</span>
+                <span>End: {fmtDate(wo.endDate)}</span>
+              </div>
+            </TableCell>
+          </TableRow>
+        )}
+      />
+    </div>
+  )
+}
+
+// ── Invoices Full View ─────────────────────────────────────────────────────
+
+function InvoicesView({ data, loading }: { data: DashboardData | null; loading: boolean }) {
+  const list = data?.invoices || []
+  const totalAmount = list.reduce((s, i) => s + i.total, 0)
+  const totalPaid = list.filter((i) => i.status === 'PAID').reduce((s, i) => s + i.total, 0)
+
+  return (
+    <div className="space-y-5">
+      {/* Summary Cards */}
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+        <Card className="p-4">
+          <p className="text-xs uppercase tracking-wider text-muted-foreground">Total Invoiced</p>
+          <p className="mt-1 text-xl font-bold text-[var(--navy)] dark:text-white">{formatINR(totalAmount)}</p>
+          <p className="mt-0.5 text-[11px] text-muted-foreground">{list.length} invoice{list.length !== 1 ? 's' : ''}</p>
+        </Card>
+        <Card className="p-4">
+          <p className="text-xs uppercase tracking-wider text-muted-foreground">Paid</p>
+          <p className="mt-1 text-xl font-bold text-emerald-700">{formatINR(totalPaid)}</p>
+          <p className="mt-0.5 text-[11px] text-muted-foreground">PAID status</p>
+        </Card>
+        <Card className="p-4">
+          <p className="text-xs uppercase tracking-wider text-muted-foreground">Outstanding</p>
+          <p className="mt-1 text-xl font-bold text-amber-700">{formatINR(totalAmount - totalPaid)}</p>
+          <p className="mt-0.5 text-[11px] text-muted-foreground">Pending / overdue</p>
+        </Card>
+      </div>
+
+      <DataTable
+        title="All Invoices"
+        data={list}
+        loading={loading}
+        emptyMessage="No invoices found"
+        emptyIcon={FileText}
+        columns={[
+          { key: 'number', label: 'Invoice #' },
+          { key: 'workOrder', label: 'Work Order', className: 'hidden md:table-cell' },
+          { key: 'amount', label: 'Amount', className: 'text-right' },
+          { key: 'tax', label: 'Tax', className: 'hidden lg:table-cell text-right' },
+          { key: 'total', label: 'Total', className: 'text-right' },
+          { key: 'status', label: 'Status', className: 'w-28' },
+          { key: 'dates', label: 'Dates' },
+        ]}
+        renderRow={(inv) => (
+          <TableRow key={inv.id} className="hover:bg-muted/40">
+            <TableCell className="font-mono text-xs font-semibold text-[var(--navy)] dark:text-[var(--gold-light)]">{inv.invoiceNumber}</TableCell>
+            <TableCell className="hidden md:table-cell text-sm text-muted-foreground">{inv.workOrderTitle || '—'}</TableCell>
+            <TableCell className="text-right font-mono">{formatINR(inv.amount)}</TableCell>
+            <TableCell className="hidden lg:table-cell text-right font-mono text-muted-foreground">{formatINR(inv.tax)}</TableCell>
+            <TableCell className="text-right font-mono font-bold text-[var(--navy)] dark:text-white">{formatINR(inv.total)}</TableCell>
+            <TableCell><StatusBadge status={inv.status} /></TableCell>
+            <TableCell className="text-xs text-muted-foreground">
+              <div className="flex flex-col gap-0.5">
+                <span>Issue: {fmtDate(inv.issueDate)}</span>
+                <span>Due: {fmtDate(inv.dueDate)}</span>
+              </div>
+            </TableCell>
+          </TableRow>
+        )}
+      />
     </div>
   )
 }
@@ -429,39 +634,35 @@ export function ClientLayout() {
   const [bellOpen, setBellOpen] = useState(false)
 
   const client = user?.client
-  const clientName = client?.clientName || client?.companyName || user?.username || 'Client'
+  const clientName = data?.client?.clientName || client?.clientName || client?.companyName || user?.username || 'Client'
 
   // Fetch dashboard data
-  const loadDashboard = useCallback(async () => {
-    try {
-      const res = await fetch('/api/client/dashboard', { cache: 'no-store' })
-      if (!res.ok) return
-      const json = await res.json()
-      setData(json)
-      setNotifications(json.notifications || [])
-      setUnread(json.unread || 0)
-    } catch {
-      // silent
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
   useEffect(() => {
     let cancelled = false
-    setLoading(true)
     fetch('/api/client/dashboard', { cache: 'no-store' })
       .then((r) => (r.ok ? r.json() : null))
       .then((json) => {
         if (cancelled || !json) return
         setData(json)
-        setNotifications(json.notifications || [])
-        setUnread(json.unread || 0)
+        setUnread(json.unreadNotifications ?? 0)
       })
       .catch(() => {})
       .finally(() => {
         if (!cancelled) setLoading(false)
       })
+    return () => { cancelled = true }
+  }, [])
+
+  // Fetch notifications separately
+  useEffect(() => {
+    let cancelled = false
+    fetch('/api/notifications', { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (cancelled || !data) return
+        setNotifications(data.notifications || [])
+      })
+      .catch(() => {})
     return () => { cancelled = true }
   }, [])
 
@@ -560,7 +761,7 @@ export function ClientLayout() {
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-semibold text-white">{clientName}</p>
               <p className="truncate text-[11px] text-blue-200/70">
-                {client?.companyName || client?.email || 'Client Portal'}
+                {data?.client?.companyName || client?.companyName || client?.email || 'Client Portal'}
               </p>
             </div>
           </div>
@@ -656,7 +857,7 @@ export function ClientLayout() {
                     <p className="text-sm font-semibold text-[var(--navy)] dark:text-white">Notifications</p>
                     {unread > 0 && (
                       <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={markAllRead}>
-                        <UserCheck className="mr-1 h-3.5 w-3.5" /> Mark all read
+                        Mark all read
                       </Button>
                     )}
                   </div>
@@ -712,24 +913,9 @@ export function ClientLayout() {
           <main className="flex-1 overflow-y-auto scroll-thin">
             <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
               {active === 'dashboard' && <DashboardView data={data} loading={loading} />}
-              {active === 'projects' && (
-                <PlaceholderView
-                  title="Projects"
-                  description="Your project details, timelines, and assigned team members will be displayed here."
-                />
-              )}
-              {active === 'work-orders' && (
-                <PlaceholderView
-                  title="Work Orders"
-                  description="All service work orders, their progress, and completion status will appear here."
-                />
-              )}
-              {active === 'invoices' && (
-                <PlaceholderView
-                  title="Invoices"
-                  description="Invoice history, payment status, and downloadable billing documents will be shown here."
-                />
-              )}
+              {active === 'projects' && <ProjectsView data={data} loading={loading} />}
+              {active === 'work-orders' && <WorkOrdersView data={data} loading={loading} />}
+              {active === 'invoices' && <InvoicesView data={data} loading={loading} />}
             </div>
           </main>
         </div>

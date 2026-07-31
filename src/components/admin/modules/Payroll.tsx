@@ -16,7 +16,7 @@ import {
 import { SectionTitle, StatusBadge, EmptyState } from '@/components/shared'
 import { toast } from 'sonner'
 import { Wallet, Lock, Download, Play, Calendar, FileText } from 'lucide-react'
-import { api, fmtDate, formatINR, monthName, downloadCSV } from '../lib'
+import { api, fmtDate, formatINR, monthName, downloadCSV, type CSVColumn } from '../lib'
 
 interface PayrollRow {
   id: string
@@ -107,8 +107,8 @@ export function Payroll({ refreshKey, isSuperAdmin }: { refreshKey: number; isSu
           <CardContent className="py-12">
             <EmptyState
               icon={Lock}
-              title="Super Admin only"
-              desc="Payroll processing is restricted to Super Admin role. Contact your system administrator for access."
+              title="Owner / Super Admin only"
+              desc="Payroll processing is restricted to Owner / Super Admin role. Contact your system administrator for access."
             />
             <p className="mt-2 text-center text-xs text-muted-foreground">
               You can still view reports including payroll summaries from the Reports module.
@@ -214,7 +214,16 @@ export function Payroll({ refreshKey, isSuperAdmin }: { refreshKey: number; isSu
               <Input type="number" value={year} onChange={(e) => setYear(e.target.value)} className="w-24" />
               <Button variant="outline" size="sm" disabled={list.length === 0}
                 onClick={() => downloadCSV(`payroll-${month !== 'ALL' ? monthName(Number(month)) : 'all'}-${year}.csv`,
-                  ['Code', 'Name', 'Month', 'Year', 'Gross', 'Basic', 'HRA', 'Allowances', 'PF', 'ESI', 'PT', 'LOP Days', 'LOP Amount', 'Overtime', 'Net', 'Status'],
+                  [
+                    { key: 'Code', label: 'Code' }, { key: 'Name', label: 'Name' },
+                    { key: 'Month', label: 'Month' }, { key: 'Year', label: 'Year' },
+                    { key: 'Gross', label: 'Gross' }, { key: 'Basic', label: 'Basic' },
+                    { key: 'HRA', label: 'HRA' }, { key: 'Allowances', label: 'Allowances' },
+                    { key: 'PF', label: 'PF' }, { key: 'ESI', label: 'ESI' },
+                    { key: 'PT', label: 'PT' }, { key: 'LOP Days', label: 'LOP Days' },
+                    { key: 'LOP Amount', label: 'LOP Amount' }, { key: 'Overtime', label: 'Overtime' },
+                    { key: 'Net', label: 'Net' }, { key: 'Status', label: 'Status' },
+                  ] as CSVColumn[],
                   list.map((p) => ({
                     Code: p.employee.employeeCode || '', Name: p.employee.fullName,
                     Month: monthName(p.month), Year: p.year,

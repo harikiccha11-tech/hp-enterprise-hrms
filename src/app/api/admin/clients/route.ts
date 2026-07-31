@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { requireRole, audit } from '@/lib/guards'
+import { hashPassword } from '@/lib/auth'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -23,7 +24,44 @@ export async function POST(req: NextRequest) {
       contactsJson: body.contacts ? JSON.stringify(body.contacts) : null,
     } })
     await audit(cu!.user.id, 'CREATE_CLIENT', 'Client', client.id, client.clientName)
-    return NextResponse.json({ ok: true, client })
+
+    // Auto-create a CLIENT user account linked to this client
+    let generatedUsername = ''
+    let generatedPassword = 'Client@123'
+    try {
+      // Generate username from client name: lowercase, spaces→dots, append '.client'
+      const base = body.clientName.toLowerCase().replace(/[^a-z0-9]+/g, '.').replace(/\.+$/, '') + '.client'
+
+      // Check for username collision and add number suffix if needed
+      let username = base
+      let suffix = 0
+      while (await db.user.findUnique({ where: { username } })) {
+        suffix++
+        username = `${base}${suffix}`
+      }
+      generatedUsername = username
+
+      // Use client email or generate one
+      const email = body.email?.trim()
+        ? body.email.trim()
+        : `${base.replace(/\.client$/, '')}@client.local`
+
+      await db.user.create({
+        data: {
+          username,
+          email,
+          passwordHash: await hashPassword(generatedPassword),
+          role: 'CLIENT',
+          clientId: client.id,
+          mustResetPassword: true,
+        },
+      })
+    } catch (userErr) {
+      console.error('Auto-create client user failed:', userErr)
+      // Don't fail the client creation if user creation fails
+    }
+
+    return NextResponse.json({ ok: true, client, credentials: { username: generatedUsername, password: generatedPassword } })
   } catch (e) { return NextResponse.json({ error: 'Failed' }, { status: 500 }) }
 }
 

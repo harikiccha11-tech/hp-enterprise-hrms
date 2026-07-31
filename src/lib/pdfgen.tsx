@@ -99,7 +99,7 @@ function Header({ docTitle, refNo, date }: { docTitle: string; refNo: string; da
           <Image src={LOGO_PATH} style={{ width: 48, height: 48, objectFit: 'contain', backgroundColor: '#FFFFFF', borderRadius: 4, padding: 2 }} />
           <View>
             <Text style={brandStyles.logo}>HP ENTERPRISE</Text>
-            <Text style={brandStyles.logoSub}>SAFETY MANAGEMENT &amp; PROJECT SUPPORT</Text>
+            <Text style={brandStyles.logoSub}>SAFETY SERVICE &amp; MAN POWER SUPPLY</Text>
           </View>
         </View>
         <View style={brandStyles.headerRight}>

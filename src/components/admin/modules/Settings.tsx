@@ -90,8 +90,8 @@ export function SettingsModule({ isSuperAdmin }: { isSuperAdmin: boolean }) {
           <CardContent className="py-12">
             <EmptyState
               icon={Lock}
-              title="Super Admin only"
-              desc="System settings can only be modified by the Super Admin role."
+              title="Owner only"
+              desc="System settings can only be modified by the Owner role."
             />
           </CardContent>
         </Card>

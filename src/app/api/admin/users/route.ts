@@ -11,7 +11,7 @@ export async function GET() {
   if (!cu) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   if (cu.user.role !== 'OWNER') return NextResponse.json({ error: 'Only the Owner can manage users' }, { status: 403 })
   const users = await db.user.findMany({
-    where: { role: { in: ['OWNER', 'SUPER_ADMIN', 'HR_MANAGER'] } },
+    where: { role: { in: ['OWNER', 'SUPER_ADMIN', 'HR_MANAGER', 'CLIENT'] } },
     orderBy: { createdAt: 'asc' },
     select: { id: true, username: true, email: true, role: true, locked: true, mustResetPassword: true, lastLoginAt: true, createdAt: true, employee: { select: { id: true, fullName: true, employeeCode: true } } },
   })
@@ -23,11 +23,21 @@ export async function POST(req: NextRequest) {
   if (!cu) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   if (cu.user.role !== 'OWNER') return NextResponse.json({ error: 'Only the Owner can create accounts' }, { status: 403 })
   try {
-    const { username, email, password, role, fullName } = await req.json()
+    const body = await req.json()
+    const { username, email, password, role, fullName } = body
     if (!username || !email || !password) return NextResponse.json({ error: 'Username, email and password are required' }, { status: 400 })
-    const allowedRoles = ['SUPER_ADMIN', 'HR_MANAGER']
-    if (!allowedRoles.includes(role)) return NextResponse.json({ error: 'Owner can only create Admin or HR Manager accounts' }, { status: 400 })
+    const allowedRoles = ['SUPER_ADMIN', 'HR_MANAGER', 'CLIENT']
+    if (!allowedRoles.includes(role)) return NextResponse.json({ error: 'Owner can only create Admin, HR Manager, or Client accounts' }, { status: 400 })
     if (password.length < 8) return NextResponse.json({ error: 'Password must be at least 8 characters' }, { status: 400 })
+
+    // For CLIENT role, clientId is required
+    let clientId: string | undefined
+    if (role === 'CLIENT') {
+      clientId = body.clientId
+      if (!clientId) return NextResponse.json({ error: 'Client ID is required for CLIENT role' }, { status: 400 })
+      const clientExists = await db.client.findUnique({ where: { id: clientId } })
+      if (!clientExists) return NextResponse.json({ error: 'Selected client does not exist' }, { status: 400 })
+    }
 
     const existing = await db.user.findFirst({ where: { OR: [{ username: username.toLowerCase().trim() }, { email: email.toLowerCase().trim() }] } })
     if (existing) return NextResponse.json({ error: 'Username or email already exists' }, { status: 400 })
@@ -38,7 +48,8 @@ export async function POST(req: NextRequest) {
         email: email.toLowerCase().trim(),
         passwordHash: await hashPassword(password),
         role,
-        mustResetPassword: false,
+        clientId: clientId || null,
+        mustResetPassword: role === 'CLIENT' ? true : false,
       },
     })
     await audit(cu.user.id, 'CREATE_USER', 'User', user.id, `Created ${ROLE_LABELS[role]}: ${user.username}`)

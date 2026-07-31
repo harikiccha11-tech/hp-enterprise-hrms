@@ -64,7 +64,7 @@ export const LEAVE_TYPES = [
 
 export const DOCUMENT_TYPES = [
   'offer_letter', 'appointment_letter', 'joining_letter', 'employment_agreement',
-  'nda', 'id_card', 'salary_slip', 'attendance_sheet', 'warning_letter',
+  'nda', 'id_card', 'warning_letter',
   'promotion_letter', 'transfer_letter', 'confirmation_letter',
   'experience_letter', 'relieving_letter', 'no_due_certificate', 'full_final_settlement',
 ]

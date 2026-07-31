@@ -14,7 +14,7 @@ import {
 import { SectionTitle, EmptyState } from '@/components/shared'
 import { toast } from 'sonner'
 import { BarChart3, Download, Printer, Search, FileSpreadsheet } from 'lucide-react'
-import { api, downloadCSV, fmtDate, fmtDateTime, formatINR } from '../lib'
+import { api, downloadCSV, type CSVColumn, fmtDate, fmtDateTime, formatINR } from '../lib'
 
 const REPORT_TYPES = [
   { value: 'employees', label: 'Employees' },
@@ -74,12 +74,37 @@ export function Reports() {
   const handleExport = () => {
     if (filteredRows.length === 0) { toast.error('Nothing to export'); return }
     const filename = `${type}_report_${new Date().toISOString().slice(0, 10)}.csv`
-    downloadCSV(filename, columns, filteredRows)
+    const csvCols: CSVColumn[] = columns.map((c) => ({ key: c, label: c }))
+    downloadCSV(filename, csvCols, filteredRows)
     toast.success('CSV exported')
   }
 
   const handlePrint = () => {
-    window.print()
+    if (filteredRows.length === 0) return
+    const win = window.open('', '_blank', 'width=1000,height=700')
+    if (!win) { toast.error('Pop-up blocked — please allow pop-ups to print'); return }
+    const reportLabel = REPORT_TYPES.find((r) => r.value === type)?.label || type
+    const thStyle = 'padding:8px 12px;background:#002B5C;color:#E8C96A;font-weight:600;text-align:left;font-size:11px;border:1px solid #001A3D'
+    const tdStyle = 'padding:6px 12px;font-size:11px;border:1px solid #dde3ee'
+    const tableRows = filteredRows.slice(0, 500).map((r) =>
+      '<tr>' + columns.map((c) => `<td style="${tdStyle}">${formatCell(c, r[c])}</td>`).join('') + '</tr>'
+    ).join('')
+    win.document.write(`<!DOCTYPE html><html><head><title>${reportLabel} Report — HP ENTERPRISE</title>
+    <style>body{font-family:Arial,sans-serif;color:#0E1B33;margin:0;padding:40px}
+    .head{background:#002B5C;color:#fff;padding:18px 30px;border-bottom:3px solid #D4AF37;margin:-40px -40px 24px}
+    .head h1{margin:0;font-size:20px}.head p{margin:4px 0 0;color:#E8C96A;font-size:10px;letter-spacing:2px}
+    table{width:100%;border-collapse:collapse;font-size:11px;margin-bottom:8px}
+    .foot{margin-top:20px;border-top:1px solid #dde3ee;padding-top:8px;font-size:9px;color:#5A6A8A;text-align:center}
+    .meta{font-size:10px;color:#5A6A8A;margin-bottom:14px}
+    @media print{body{padding:20px}.head{margin:-20px -20px 16px}}</style></head><body>
+    <div class="head"><h1>HP ENTERPRISE — ${reportLabel} Report</h1><p>SAFETY SERVICE &amp; MAN POWER SUPPLY</p></div>
+    <p class="meta">Generated on ${new Date().toLocaleString('en-IN')} &bull; ${filteredRows.length} row${filteredRows.length !== 1 ? 's' : ''} &bull; ${columns.length} columns</p>
+    <table><thead><tr>${columns.map((c) => `<th style="${thStyle}">${c}</th>`).join('')}</tr></thead><tbody>${tableRows}</tbody></table>
+    ${filteredRows.length > 500 ? '<p class="meta">Showing first 500 rows.</p>' : ''}
+    <div class="foot">HP ENTERPRISE Safety Service & Man Power Supply &bull; Confidential</div>
+    </body></html>`)
+    win.document.close()
+    setTimeout(() => { win.print() }, 500)
   }
 
   return (

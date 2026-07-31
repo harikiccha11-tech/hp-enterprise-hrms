@@ -7,26 +7,55 @@ import { toast } from 'sonner'
 import { useState } from 'react'
 
 export function ForgotPasswordDialog() {
-  const [email, setEmail] = useState('')
-  function submit() {
-    toast.success('If an account exists for ' + email + ', a reset link has been sent to your registered email.')
+  const [username, setUsername] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [open, setOpen] = useState(false)
+
+  async function submit() {
+    if (!username.trim()) {
+      toast.error('Please enter your username')
+      return
+    }
+    setLoading(true)
+    try {
+      const res = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: username.trim() }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        toast.error(data.error || 'Failed to reset password')
+        return
+      }
+      toast.success(data.message, { duration: 10000 })
+      setOpen(false)
+      setUsername('')
+    } catch {
+      toast.error('Network error. Please try again.')
+    } finally {
+      setLoading(false)
+    }
   }
+
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <button className="text-xs text-muted-foreground hover:text-[var(--navy)] dark:hover:text-[var(--gold)]">Forgot password?</button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Reset your password</DialogTitle>
-          <DialogDescription>Enter your registered email. Our HR team will verify and send a reset link.</DialogDescription>
+          <DialogDescription>Enter your username. Your password will be reset to a temporary one.</DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
           <div className="space-y-2">
-            <Label>Email</Label>
-            <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
+            <Label>Username</Label>
+            <Input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="e.g. john.doe" />
           </div>
-          <Button className="w-full bg-[var(--navy)] hover:bg-[var(--navy-light)]" onClick={submit}>Send Reset Link</Button>
+          <Button className="w-full bg-[var(--navy)] hover:bg-[var(--navy-light)]" onClick={submit} disabled={loading}>
+            {loading ? 'Resetting…' : 'Reset Password'}
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

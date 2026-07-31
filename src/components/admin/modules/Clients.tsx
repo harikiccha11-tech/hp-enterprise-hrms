@@ -183,8 +183,15 @@ function ClientFormDialog({ client, onClose, onSuccess }: {
         await api('/api/admin/clients', { method: 'PATCH', body: JSON.stringify({ id: client.id, ...form }) })
         toast.success('Client updated')
       } else {
-        await api('/api/admin/clients', { method: 'POST', body: JSON.stringify(form) })
+        const res = await api<{ ok: boolean; credentials?: { username: string; password: string } }>('/api/admin/clients', { method: 'POST', body: JSON.stringify(form) })
         toast.success('Client created')
+        // Show auto-generated credentials toast if present
+        if (res.credentials?.username) {
+          toast.success(
+            `Client portal credentials — Username: ${res.credentials.username} | Password: ${res.credentials.password} (must be changed on first login)`,
+            { duration: 10000 }
+          )
+        }
       }
       onSuccess()
     } catch (e: any) {
