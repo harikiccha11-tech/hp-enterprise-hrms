@@ -1,4 +1,4 @@
-// Shared client-side types for the HRMS SPA
+// Shared client-side types for the HP ENTERPRISE workforce management system
 export type View =
   | 'login'
   | 'register'

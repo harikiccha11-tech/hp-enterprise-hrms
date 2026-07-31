@@ -103,7 +103,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     // Notify employee (via their new user account)
     await notify(
       user.id,
-      'Welcome to HP Enterprise!',
+      'Welcome to HP ENTERPRISE!',
       `Your application has been approved. Username: ${username}. Please login and reset your temporary password.`,
       'SUCCESS',
       '/employee',

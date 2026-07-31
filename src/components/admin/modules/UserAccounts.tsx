@@ -249,7 +249,7 @@ export function UserAccounts({ refreshKey }: { refreshKey: number }) {
                 <p className="font-mono font-bold text-[var(--navy)] dark:text-white">{showCreds.password}</p>
               </div>
               <div className="rounded-lg border border-amber-500/30 bg-amber-50 p-3 text-sm text-amber-800">
-                <strong>Important:</strong> Save these credentials securely. The user can login at the HRMS portal with these details.
+                <strong>Important:</strong> Save these credentials securely. The user can login at the Employee portal with these details.
               </div>
             </div>
             <DialogFooter>

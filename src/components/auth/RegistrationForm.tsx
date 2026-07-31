@@ -308,7 +308,7 @@ export function RegistrationForm({ onBack }: { onBack: () => void }) {
                 <label className="mt-6 flex items-start gap-3 rounded-lg border p-4 cursor-pointer hover:bg-muted/50">
                   <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} className="mt-0.5 h-4 w-4 accent-[var(--gold)]" />
                   <span className="text-sm text-muted-foreground">
-                    I hereby declare that the information provided above is true and complete to the best of my knowledge. I understand that any false statement may lead to rejection of my application or termination of employment. I authorise HP Enterprise Pvt. Ltd. to verify the documents and details submitted.
+                    I hereby declare that the information provided above is true and complete to the best of my knowledge. I understand that any false statement may lead to rejection of my application or termination of employment. I authorise HP ENTERPRISE Safety Service & Man Power Supply to verify the documents and details submitted.
                   </span>
                 </label>
               </Section>

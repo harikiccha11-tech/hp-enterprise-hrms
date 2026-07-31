@@ -10,11 +10,11 @@ const geistSans = Geist({
 });
 
 export const metadata: Metadata = {
-  title: "HP Enterprise HRMS — Workforce Management",
+  title: "HP ENTERPRISE — Safety Service & Man Power Supply",
   description:
-    "HP Enterprise HRMS — a secure, cloud-based Human Resource Management System with Super Admin panel and Employee self-service portal. Onboarding, attendance, payroll, documents, clients & projects.",
-  keywords: ["HP Enterprise", "HRMS", "HR Management", "Payroll", "Attendance", "Employee Portal"],
-  authors: [{ name: "HP Enterprise" }],
+    "HP ENTERPRISE Safety Service & Man Power Supply — a secure, cloud-based Workforce Management System with Super Admin panel and Employee self-service portal. Safety services, manpower supply, attendance, payroll, documents, clients & projects.",
+  keywords: ["HP ENTERPRISE", "Safety Service", "Man Power Supply", "EHS", "Payroll", "Attendance", "Employee Portal"],
+  authors: [{ name: "HP ENTERPRISE Safety Service & Man Power Supply" }],
 };
 
 export default function RootLayout({

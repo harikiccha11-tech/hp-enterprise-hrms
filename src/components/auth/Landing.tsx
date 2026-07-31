@@ -69,10 +69,10 @@ export function Landing() {
               <ShieldCheck className="h-3.5 w-3.5" /> Secure • Cloud-based • ISO 27001 Ready
             </span>
             <h1 className="mt-5 text-4xl font-black leading-tight tracking-tight sm:text-5xl lg:text-6xl">
-              HP Enterprise <span className="text-gradient-gold">HRMS</span>
+              HP ENTERPRISE <span className="text-gradient-gold">Safety & Manpower</span>
             </h1>
             <p className="mt-4 max-w-xl text-lg text-blue-100/90">
-              A complete Human Resource Management System powering our workforce — from onboarding to payroll, attendance, documents, and real-time synchronization between the Super Admin panel and Employee Portal.
+              A complete Workforce Management System for Safety Services & Man Power Supply — from onboarding to payroll, attendance tracking, document management, and real-time coordination between Admin and Employee portals.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Button size="lg" onClick={() => setMode('register')} className="hpe-gold-bar text-[var(--navy)] hover:opacity-90">
@@ -84,7 +84,7 @@ export function Landing() {
             </div>
             <div className="mt-10 grid grid-cols-3 gap-4 max-w-md">
               {[
-                { v: '22+', l: 'Disciplines' },
+                { v: '500+', l: 'Manpower Deployed' },
                 { v: '15+', l: 'Project Types' },
                 { v: '16', l: 'HR Documents' },
               ].map((s) => (
@@ -144,13 +144,13 @@ export function Landing() {
       <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
         <div className="text-center">
           <h2 className="text-3xl font-bold text-[var(--navy)] dark:text-white">Everything your workforce needs</h2>
-          <p className="mt-2 text-muted-foreground">A unified platform for HR, operations, and employees.</p>
+          <p className="mt-2 text-muted-foreground">Safety services, manpower supply, and complete workforce management.</p>
         </div>
         <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {[
-            { icon: Users, t: 'Apply for a Job', d: 'Anyone can register with full details & documents — HR verifies, interviews, then hires with auto account creation.' },
-            { icon: ShieldCheck, t: 'HR Verification', d: 'HR reviews every uploaded document, schedules interviews, and approves candidates — all downloadable.' },
-            { icon: Clock, t: 'Attendance & Leave', d: 'Punch in/out with location tracking, overtime, late marks, and leave applications with carry-forward.' },
+            { icon: Users, t: 'Apply for a Job', d: 'Join HP ENTERPRISE — register with your details & documents. Our team verifies, interviews, and onboards you with auto account creation.' },
+            { icon: ShieldCheck, t: 'Safety & Verification', d: 'EHS compliance, document verification, safety training records, and complete HR verification — all downloadable.' },
+            { icon: Clock, t: 'Attendance & Leave', d: 'Punch in/out with location tracking, overtime, late marks, and leave applications with carry-forward balance.' },
             { icon: Wallet, t: 'Payroll & Documents', d: 'Automated monthly payroll (PF/ESI/LOP) plus 16+ branded HR letters — offer, appointment, ID card, salary slips.' },
           ].map((f) => (
             <div key={f.t} className="rounded-xl border bg-card p-6 lift">

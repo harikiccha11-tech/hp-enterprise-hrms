@@ -1,11 +1,11 @@
-// HP Enterprise HRMS — Brand constants & domain types
+// HP ENTERPRISE — Brand constants & domain types
 
 export const BRAND = {
-  name: 'HP Enterprise',
-  legalName: 'HP Enterprise Pvt. Ltd.',
-  tagline: 'Safety Management & Project Support Services',
-  taglineFull: 'EHS Consultancy • Manpower • Land Survey • Vendor Coordination',
-  subTagline: 'Project Support From Planning To Handover',
+  name: 'HP ENTERPRISE',
+  legalName: 'HP ENTERPRISE Safety Service & Man Power Supply',
+  tagline: 'Safety Service & Man Power Supply',
+  taglineFull: 'Safety Services • Manpower Supply • EHS Consultancy • Project Support',
+  subTagline: 'Comprehensive Workforce Solutions For Every Project',
   navy: '#002B5C',
   navyDeep: '#001A3D',
   navyLight: '#0A4488',

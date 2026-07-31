@@ -3,7 +3,7 @@ import { db } from './db'
 import { hashPassword } from './auth'
 
 async function main() {
-  console.log('Seeding HP Enterprise HRMS...')
+  console.log('Seeding HP ENTERPRISE Workforce...')
 
   // Settings
   const defaults: Record<string, string> = {
@@ -234,7 +234,7 @@ async function main() {
   await db.announcement.create({
     data: {
       title: 'Diwali Holiday Notice',
-      body: 'HP Enterprise offices will remain closed on 1st November for Diwali. Wishing you and your family a prosperous festival.',
+      body: 'HP ENTERPRISE offices will remain closed on 1st November for Diwali. Wishing you and your family a prosperous festival.',
       audience: 'ALL',
     },
   })

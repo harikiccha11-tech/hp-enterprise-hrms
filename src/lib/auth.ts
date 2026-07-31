@@ -1,4 +1,4 @@
-// HP Enterprise HRMS — Auth utilities (JWT + cookie sessions, password hashing)
+// HP ENTERPRISE — Auth utilities (JWT + cookie sessions, password hashing)
 import { SignJWT, jwtVerify } from 'jose'
 import { cookies } from 'next/headers'
 import { db } from './db'

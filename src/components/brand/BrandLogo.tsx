@@ -19,7 +19,7 @@ export function BrandLogo({ className, size = 'md', showText = true, variant = '
       >
         <Image
           src="/hp-logo.jpg"
-          alt="HP Enterprise Logo"
+          alt="HP ENTERPRISE Logo"
           fill
           className="object-contain"
           sizes={`${dims}px`}
@@ -29,10 +29,10 @@ export function BrandLogo({ className, size = 'md', showText = true, variant = '
       {showText && (
         <div className="leading-none">
           <div className={cn('font-extrabold tracking-tight', text, variant === 'light' ? 'text-white' : 'text-[var(--navy)] dark:text-white')}>
-            HP <span className="text-gradient-gold">Enterprise</span>
+            HP <span className="text-gradient-gold">ENTERPRISE</span>
           </div>
           <div className={cn('uppercase tracking-[0.15em] text-muted-foreground mt-0.5 font-semibold', sub)}>
-            HRMS Suite
+            Safety & Manpower
           </div>
         </div>
       )}

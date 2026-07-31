@@ -22,7 +22,7 @@ export default function Page() {
         <div className="h-1 w-40 overflow-hidden rounded-full bg-muted">
           <div className="h-full w-1/2 animate-[loading_1.2s_ease-in-out_infinite] hpe-gold-bar" />
         </div>
-        <p className="text-sm text-muted-foreground">Loading HP Enterprise HRMS…</p>
+        <p className="text-sm text-muted-foreground">Loading HP ENTERPRISE Workforce…</p>
         <style>{`@keyframes loading{0%{transform:translateX(-100%)}100%{transform:translateX(200%)}}`}</style>
       </div>
     )

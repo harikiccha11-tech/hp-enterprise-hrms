@@ -325,8 +325,8 @@ export function AdminLayout() {
         {/* Mobile sidebar (Sheet) */}
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
           <SheetContent side="left" className="w-[260px] p-0 hpe-sidebar-gradient border-white/10">
-            <SheetTitle className="sr-only">HP Enterprise Admin Navigation</SheetTitle>
-            <SheetDescription className="sr-only">Admin console navigation menu with access to all HRMS modules.</SheetDescription>
+            <SheetTitle className="sr-only">HP ENTERPRISE Admin Navigation</SheetTitle>
+            <SheetDescription className="sr-only">Admin console navigation menu with access to all workforce management modules.</SheetDescription>
             <button
               onClick={() => setMobileOpen(false)}
               className="absolute right-3 top-3 z-10 grid h-8 w-8 place-items-center rounded-md text-blue-100 hover:bg-white/10"
@@ -465,7 +465,7 @@ export function AdminLayout() {
       {/* Sticky footer */}
       <footer className="mt-auto border-t bg-card px-4 py-3 sm:px-6">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-1 text-xs text-muted-foreground sm:flex-row">
-          <p>© 2025 HP Enterprise Pvt. Ltd. • HRMS Admin Console • CIN: U72900KA2015PTC112233</p>
+          <p>© 2025 HP ENTERPRISE Safety Service & Man Power Supply • Admin Console • CIN: U72900KA2015PTC112233</p>
           <p className="flex items-center gap-1.5">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
             All systems operational

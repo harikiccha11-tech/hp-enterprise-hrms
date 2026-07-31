@@ -1122,7 +1122,7 @@ function exportEmployeeProfile(emp: Employee | null, docs: { uploaded: EmployeeD
   .badge{display:inline-block;background:#002B5C;color:#D4AF37;padding:2px 8px;border-radius:10px;font-size:10px;margin:2px}
   .foot{margin-top:30px;border-top:1px solid #dde3ee;padding-top:10px;font-size:10px;color:#5A6A8A;text-align:center}
   </style></head><body>
-  <div class="head"><h1>HP Enterprise — Employee Profile</h1><p>SAFETY MANAGEMENT &amp; PROJECT SUPPORT</p></div>
+  <div class="head"><h1>HP ENTERPRISE — Employee Profile</h1><p>SAFETY SERVICE &amp; MAN POWER SUPPLY</p></div>
   <h2>Employment</h2>
   <table>${rows('Employee Code', emp.employeeCode)}${rows('Full Name', emp.fullName)}${rows('Status', emp.status)}${rows('Designation', emp.designation || emp.currentDesignation)}${rows('Department', emp.department)}${rows('Join Date', emp.joinDate ? fmtDate(emp.joinDate) : '—')}${rows('Employment Type', emp.employmentType)}${rows('Salary (CTC)', emp.salary ? formatINR(emp.salary) : '—')}</table>
   <h2>Personal Details</h2>
@@ -1142,7 +1142,7 @@ function exportEmployeeProfile(emp: Employee | null, docs: { uploaded: EmployeeD
   <table>${docs.uploaded.length ? docs.uploaded.map(d=>rows((DOC_LABELS[d.documentType]||d.documentType), d.fileName)).join('') : rows('Documents', 'None')}</table>
   <h2>Generated Documents (${docs.generated.length})</h2>
   <table>${docs.generated.length ? docs.generated.map(d=>rows(d.title, fmtDate(d.generatedAt))).join('') : rows('Documents', 'None')}</table>
-  <div class="foot">HP Enterprise Pvt. Ltd. • Generated on ${new Date().toLocaleString('en-IN')} • Confidential</div>
+  <div class="foot">HP ENTERPRISE Safety Service & Man Power Supply • Generated on ${new Date().toLocaleString('en-IN')} • Confidential</div>
   </body></html>`)
   win.document.close()
   setTimeout(() => { win.print() }, 500)

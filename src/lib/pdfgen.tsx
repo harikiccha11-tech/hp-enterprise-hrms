@@ -98,13 +98,13 @@ function Header({ docTitle, refNo, date }: { docTitle: string; refNo: string; da
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
           <Image src={LOGO_PATH} style={{ width: 48, height: 48, objectFit: 'contain', backgroundColor: '#FFFFFF', borderRadius: 4, padding: 2 }} />
           <View>
-            <Text style={brandStyles.logo}>HP Enterprise</Text>
+            <Text style={brandStyles.logo}>HP ENTERPRISE</Text>
             <Text style={brandStyles.logoSub}>SAFETY MANAGEMENT &amp; PROJECT SUPPORT</Text>
           </View>
         </View>
         <View style={brandStyles.headerRight}>
           <Text style={brandStyles.headerTitle}>{docTitle}</Text>
-          <Text style={brandStyles.headerMuted}>Human Resource Department</Text>
+          <Text style={brandStyles.headerMuted}>Safety & Workforce Management</Text>
         </View>
       </View>
       <View style={brandStyles.refLine}>
@@ -118,7 +118,7 @@ function Header({ docTitle, refNo, date }: { docTitle: string; refNo: string; da
 function Footer() {
   return (
     <View style={brandStyles.footer} fixed>
-      <Text>HP Enterprise Pvt. Ltd. • Plot 14, Tech Park Phase II, Whitefield, Bengaluru 560066</Text>
+      <Text>HP ENTERPRISE Safety Service & Man Power Supply • Plot 14, Tech Park Phase II, Whitefield, Bengaluru 560066</Text>
       <Text>hr@hpenterprise.co.in • www.hpenterprise.co.in • CIN: U72900KA2015PTC112233</Text>
     </View>
   )
@@ -138,7 +138,7 @@ export function OfferLetterDoc(m: DocMeta) {
           Dear {m.fullName.split(' ')[0]},
         </Text>
         <Text style={brandStyles.body}>
-          We are delighted to extend to you a formal offer of employment with <Text style={brandStyles.bold}>HP Enterprise Pvt. Ltd.</Text> Based on your interview and our assessment of your profile, we are confident that your skills and experience will be a valuable addition to our team.
+          We are delighted to extend to you a formal offer of employment with <Text style={brandStyles.bold}>HP ENTERPRISE Safety Service & Man Power Supply</Text> Based on your interview and our assessment of your profile, we are confident that your skills and experience will be a valuable addition to our team.
         </Text>
         <Text style={brandStyles.sectionTitle}>Position & Joining</Text>
         <View style={brandStyles.table}>
@@ -159,7 +159,7 @@ export function OfferLetterDoc(m: DocMeta) {
         <Text style={brandStyles.body}>Kindly sign and return a copy of this letter as your token of acceptance.</Text>
         <View style={brandStyles.signBlock}>
           <View style={brandStyles.signCol}><Text style={brandStyles.signLine}>Candidate Signature</Text></View>
-          <View style={brandStyles.signCol}><Text style={brandStyles.signLine}>For HP Enterprise Pvt. Ltd.</Text><Text style={{ fontSize: 9, color: NAVY, fontFamily: 'Helvetica-Bold', marginTop: 2 }}>Authorized Signatory</Text></View>
+          <View style={brandStyles.signCol}><Text style={brandStyles.signLine}>For HP ENTERPRISE Safety Service & Man Power Supply</Text><Text style={{ fontSize: 9, color: NAVY, fontFamily: 'Helvetica-Bold', marginTop: 2 }}>Authorized Signatory</Text></View>
         </View>
         <Footer />
       </Page>
@@ -179,7 +179,7 @@ export function AppointmentLetterDoc(m: DocMeta) {
           Dear {m.fullName.split(' ')[0]},
         </Text>
         <Text style={brandStyles.body}>
-          With reference to your offer of employment, we are pleased to formally appoint you as <Text style={brandStyles.bold}>{m.designation || 'Employee'}</Text> in the <Text style={brandStyles.bold}>{m.department || 'Operations'}</Text> department of HP Enterprise Pvt. Ltd. with effect from <Text style={brandStyles.bold}>{m.joinDate || today()}</Text>.
+          With reference to your offer of employment, we are pleased to formally appoint you as <Text style={brandStyles.bold}>{m.designation || 'Employee'}</Text> in the <Text style={brandStyles.bold}>{m.department || 'Operations'}</Text> department of HP ENTERPRISE Safety Service & Man Power Supply with effect from <Text style={brandStyles.bold}>{m.joinDate || today()}</Text>.
         </Text>
         <Text style={brandStyles.sectionTitle}>Terms of Appointment</Text>
         <View style={brandStyles.table}>
@@ -198,7 +198,7 @@ export function AppointmentLetterDoc(m: DocMeta) {
         <Text style={brandStyles.body}>We look forward to a long and mutually rewarding association.</Text>
         <View style={brandStyles.signBlock}>
           <View style={brandStyles.signCol}><Text style={brandStyles.signLine}>Employee Signature</Text></View>
-          <View style={brandStyles.signCol}><Text style={brandStyles.signLine}>For HP Enterprise Pvt. Ltd.</Text><Text style={{ fontSize: 9, color: NAVY, fontFamily: 'Helvetica-Bold', marginTop: 2 }}>Head — Human Resources</Text></View>
+          <View style={brandStyles.signCol}><Text style={brandStyles.signLine}>For HP ENTERPRISE Safety Service & Man Power Supply</Text><Text style={{ fontSize: 9, color: NAVY, fontFamily: 'Helvetica-Bold', marginTop: 2 }}>Head — Safety & Workforce Management</Text></View>
         </View>
         <Footer />
       </Page>
@@ -213,14 +213,14 @@ export function IdCardDoc(m: DocMeta) {
       <Page size="A4" style={{ ...brandStyles.page, paddingTop: 60, paddingBottom: 40 }}>
         <View style={{ alignItems: 'center', marginBottom: 20 }}>
           <Image src={LOGO_PATH} style={{ width: 80, height: 80, objectFit: 'contain', marginBottom: 8 }} />
-          <Text style={{ fontSize: 22, fontFamily: 'Helvetica-Bold', color: NAVY }}>HP Enterprise</Text>
+          <Text style={{ fontSize: 22, fontFamily: 'Helvetica-Bold', color: NAVY }}>HP ENTERPRISE</Text>
           <Text style={{ fontSize: 8, color: GOLD, letterSpacing: 3, fontFamily: 'Helvetica-Bold' }}>EMPLOYEE IDENTITY CARD</Text>
         </View>
         <View style={{ borderWidth: 2, borderColor: NAVY, borderRadius: 10, overflow: 'hidden', marginHorizontal: 80 }}>
           <View style={{ backgroundColor: NAVY, paddingVertical: 14, paddingHorizontal: 18, borderBottomWidth: 2, borderBottomColor: GOLD, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <Image src={LOGO_PATH} style={{ width: 28, height: 28, objectFit: 'contain', backgroundColor: '#FFFFFF', borderRadius: 3 }} />
-              <Text style={{ color: '#FFFFFF', fontFamily: 'Helvetica-Bold', fontSize: 14 }}>HP Enterprise</Text>
+              <Text style={{ color: '#FFFFFF', fontFamily: 'Helvetica-Bold', fontSize: 14 }}>HP ENTERPRISE</Text>
             </View>
             <Text style={{ color: GOLD_LIGHT, fontSize: 7, letterSpacing: 2 }}>OFFICIAL ID</Text>
           </View>
@@ -238,11 +238,11 @@ export function IdCardDoc(m: DocMeta) {
             </View>
           </View>
           <View style={{ backgroundColor: NAVY_LIGHT, paddingVertical: 8, paddingHorizontal: 18, borderTopWidth: 1, borderTopColor: GOLD }}>
-            <Text style={{ color: GOLD_LIGHT, fontSize: 7, textAlign: 'center', letterSpacing: 1 }}>IF FOUND, PLEASE RETURN TO HP ENTERPRISE PVT. LTD. • PLOT 14, TECH PARK PHASE II, WHITEFIELD, BENGALURU 560066</Text>
+            <Text style={{ color: GOLD_LIGHT, fontSize: 7, textAlign: 'center', letterSpacing: 1 }}>IF FOUND, PLEASE RETURN TO HP ENTERPRISE Safety Service & Man Power Supply • PLOT 14, TECH PARK PHASE II, WHITEFIELD, BENGALURU 560066</Text>
           </View>
         </View>
         <Text style={{ fontSize: 8, color: MUTED, textAlign: 'center', marginTop: 16, marginHorizontal: 80 }}>
-          This card is the property of HP Enterprise Pvt. Ltd. and must be returned upon separation. Valid until employment termination.
+          This card is the property of HP ENTERPRISE Safety Service & Man Power Supply and must be returned upon separation. Valid until employment termination.
         </Text>
         <Footer />
       </Page>
@@ -260,7 +260,7 @@ export function SalarySlipDoc(m: DocMeta & { month: number; year: number; earnin
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
             <Image src={LOGO_PATH} style={{ width: 44, height: 44, objectFit: 'contain', backgroundColor: '#FFFFFF', borderRadius: 4, padding: 2 }} />
             <View>
-              <Text style={brandStyles.logo}>HP Enterprise</Text>
+              <Text style={brandStyles.logo}>HP ENTERPRISE</Text>
               <Text style={brandStyles.logoSub}>PAYSLIP • {monthName.toUpperCase()}</Text>
             </View>
           </View>
@@ -343,7 +343,7 @@ export function GenericLetterDoc(m: DocMeta & { docTitle: string; bodyParagraphs
         ))}
         <View style={brandStyles.signBlock}>
           <View style={brandStyles.signCol} />
-          <View style={brandStyles.signCol}><Text style={brandStyles.signLine}>For HP Enterprise Pvt. Ltd.</Text><Text style={{ fontSize: 9, color: NAVY, fontFamily: 'Helvetica-Bold', marginTop: 2 }}>{m.signatory}</Text></View>
+          <View style={brandStyles.signCol}><Text style={brandStyles.signLine}>For HP ENTERPRISE Safety Service & Man Power Supply</Text><Text style={{ fontSize: 9, color: NAVY, fontFamily: 'Helvetica-Bold', marginTop: 2 }}>{m.signatory}</Text></View>
         </View>
         <Footer />
       </Page>
