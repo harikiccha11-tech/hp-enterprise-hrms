@@ -6,35 +6,39 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 export async function GET(req: NextRequest) {
-  const { error, cu } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER')
-  if (error) return error
-  const { searchParams } = new URL(req.url)
-  const status = searchParams.get('status') || undefined
-  const q = searchParams.get('q') || undefined
+  try {
+    const { error, cu } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER')
+    if (error) return error
+    const { searchParams } = new URL(req.url)
+    const status = searchParams.get('status') || undefined
+    const q = searchParams.get('q') || undefined
 
-  const employees = await db.employee.findMany({
-    where: {
-      ...(status && status !== 'ALL' ? { status } : {}),
-      ...(q
-        ? {
-            OR: [
-              { fullName: { contains: q } },
-              { email: { contains: q } },
-              { employeeCode: { contains: q } },
-              { mobile: { contains: q } },
-            ],
-          }
-        : {}),
-    },
-    include: {
-      user: { select: { id: true, username: true, locked: true, mustResetPassword: true, lastLoginAt: true } },
-      _count: { select: { documents: true, generatedDocs: true } },
-      assignedClient: { select: { id: true, clientName: true } },
-    },
-    orderBy: { createdAt: 'desc' },
-    take: 500,
-  })
-  return NextResponse.json({ employees })
+    const employees = await db.employee.findMany({
+      where: {
+        ...(status && status !== 'ALL' ? { status } : {}),
+        ...(q
+          ? {
+              OR: [
+                { fullName: { contains: q } },
+                { email: { contains: q } },
+                { employeeCode: { contains: q } },
+                { mobile: { contains: q } },
+              ],
+            }
+          : {}),
+      },
+      include: {
+        user: { select: { id: true, username: true, locked: true, mustResetPassword: true, lastLoginAt: true } },
+        _count: { select: { documents: true, generatedDocs: true } },
+        assignedClient: { select: { id: true, clientName: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 500,
+    })
+    return NextResponse.json({ employees })
+  } catch (e) {
+    return NextResponse.json({ error: 'Request failed' }, { status: 500 })
+  }
 }
 
 export async function PATCH(req: NextRequest) {

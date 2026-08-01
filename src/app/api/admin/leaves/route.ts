@@ -72,6 +72,7 @@ export async function POST(req: NextRequest) {
     const leave = await db.leave.create({
       data: { employeeId: body.employeeId, leaveType: body.leaveType, fromDate: from, toDate: to, days, reason: body.reason, status: body.status || 'PENDING' },
     })
+    await audit(cu.user.id, 'CREATE_LEAVE_ON_BEHALF', 'Leave', leave.id, `${body.leaveType} ${days}d for ${body.employeeId}`)
     return NextResponse.json({ ok: true, leave })
   } catch (e) {
     console.error('leave apply', e)

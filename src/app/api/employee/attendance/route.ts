@@ -7,22 +7,26 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
-  const cu = await getCurrentUser()
-  if (!cu) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const employeeId = cu.user.employee?.id
-  if (!employeeId) return NextResponse.json({ error: 'No employee profile' }, { status: 400 })
+  try {
+    const cu = await getCurrentUser()
+    if (!cu) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const employeeId = cu.user.employee?.id
+    if (!employeeId) return NextResponse.json({ error: 'No employee profile' }, { status: 400 })
 
-  const today = new Date()
-  const start = new Date(today.setHours(0, 0, 0, 0))
-  const end = new Date(today.setHours(23, 59, 59, 999))
-  const todayRecord = await db.attendance.findFirst({ where: { employeeId, date: { gte: start, lte: end } } })
+    const today = new Date()
+    const start = new Date(today.setHours(0, 0, 0, 0))
+    const end = new Date(today.setHours(23, 59, 59, 999))
+    const todayRecord = await db.attendance.findFirst({ where: { employeeId, date: { gte: start, lte: end } } })
 
-  const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1)
-  const monthRecords = await db.attendance.findMany({ where: { employeeId, date: { gte: monthStart } }, orderBy: { date: 'desc' } })
-  const presentDays = monthRecords.filter(r => ['PRESENT', 'LATE'].includes(r.status)).length
-  const totalHours = monthRecords.reduce((s, r) => s + (r.workingHours || 0), 0)
+    const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+    const monthRecords = await db.attendance.findMany({ where: { employeeId, date: { gte: monthStart } }, orderBy: { date: 'desc' } })
+    const presentDays = monthRecords.filter(r => ['PRESENT', 'LATE'].includes(r.status)).length
+    const totalHours = monthRecords.reduce((s, r) => s + (r.workingHours || 0), 0)
 
-  return NextResponse.json({ todayRecord, monthRecords, stats: { presentDays, totalHours: Math.round(totalHours * 10) / 10 } })
+    return NextResponse.json({ todayRecord, monthRecords, stats: { presentDays, totalHours: Math.round(totalHours * 10) / 10 } })
+  } catch (e) {
+    return NextResponse.json({ error: 'Request failed' }, { status: 500 })
+  }
 }
 
 export async function POST(req: NextRequest) {

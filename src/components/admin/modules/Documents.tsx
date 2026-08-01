@@ -29,7 +29,7 @@ interface GeneratedDoc {
   metaJson: string | null
 }
 
-export function Documents() {
+export function Documents({ refreshKey }: { refreshKey: number }) {
   const [employees, setEmployees] = useState<EmployeeLite[]>([])
   const [selectedId, setSelectedId] = useState('')
   const [docs, setDocs] = useState<GeneratedDoc[]>([])
@@ -57,7 +57,7 @@ export function Documents() {
     } finally {
       setLoadingDocs(false)
     }
-  }, [selectedId])
+  }, [selectedId, refreshKey])
 
   useEffect(() => { loadDocs() }, [loadDocs])
 

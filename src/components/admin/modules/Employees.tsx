@@ -109,6 +109,8 @@ export function Employees({ refreshKey, canDelete }: { refreshKey: number; canDe
   const [deleting, setDeleting] = useState<Employee | null>(null)
   const [resetting, setResetting] = useState<Employee | null>(null)
   const [lockToggling, setLockToggling] = useState<Employee | null>(null)
+  const [schedulingInterview, setSchedulingInterview] = useState<Employee | null>(null)
+  const [assigningClient, setAssigningClient] = useState<Employee | null>(null)
   const [creds, setCreds] = useState<{ username: string; tempPassword: string; empName: string } | null>(null)
 
   const load = useCallback(async () => {
@@ -147,6 +149,15 @@ export function Employees({ refreshKey, canDelete }: { refreshKey: number; canDe
         .catch(() => {})
         .finally(() => setLoadingDocs(false))
     }, 50)
+  }
+
+  const refreshDetail = async (empId: string) => {
+    try {
+      const data = await api<{ employees: Employee[] }>('/api/admin/employees')
+      const updated = data.employees?.find((e) => e.id === empId)
+      if (updated) setViewing(updated)
+    } catch {}
+    load()
   }
 
   const copyCreds = async (text: string) => {
@@ -350,7 +361,7 @@ export function Employees({ refreshKey, canDelete }: { refreshKey: number; canDe
             <DialogDescription className="sr-only">Full employee profile</DialogDescription>
           </DialogHeader>
 
-          {viewing && <ProfileBody emp={viewing} docs={viewingDocs} loadingDocs={loadingDocs} onDocsChange={(d) => setViewingDocs(d)} />}
+          {viewing && <ProfileBody emp={viewing} docs={viewingDocs} loadingDocs={loadingDocs} onDocsChange={(d) => setViewingDocs(d)} onScheduleInterview={() => setSchedulingInterview(viewing)} onAssignClient={() => setAssigningClient(viewing)} />}
 
           <DialogFooter className="gap-2 sm:gap-2 flex-wrap">
             <Button variant="outline" size="sm" onClick={() => exportEmployeeProfile(viewing, viewingDocs)}>
@@ -500,6 +511,31 @@ export function Employees({ refreshKey, canDelete }: { refreshKey: number; canDe
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* Schedule Interview Dialog */}
+      {schedulingInterview && (
+        <ScheduleInterviewDialog
+          emp={schedulingInterview}
+          onClose={() => setSchedulingInterview(null)}
+          onSuccess={(updatedEmp) => {
+            setViewing(updatedEmp)
+            setSchedulingInterview(null)
+            load()
+          }}
+        />
+      )}
+
+      {/* Assign Client Dialog */}
+      {assigningClient && (
+        <AssignClientDialog
+          emp={assigningClient}
+          onClose={() => setAssigningClient(null)}
+          onSuccess={() => {
+            setAssigningClient(null)
+            refreshDetail(assigningClient.id)
+          }}
+        />
+      )}
+
       {/* Credentials (success) Dialog */}
       <Dialog open={!!creds} onOpenChange={(o) => !o && setCreds(null)}>
         <DialogContent className="max-w-md">
@@ -608,7 +644,7 @@ function Section({ title, icon: Icon, children }: { title: string; icon: any; ch
   )
 }
 
-function ProfileBody({ emp, docs, loadingDocs, onDocsChange }: { emp: Employee; docs: { uploaded: EmployeeDoc[]; generated: GeneratedDoc[] }; loadingDocs: boolean; onDocsChange: (d: { uploaded: EmployeeDoc[]; generated: GeneratedDoc[] }) => void }) {
+function ProfileBody({ emp, docs, loadingDocs, onDocsChange, onScheduleInterview, onAssignClient }: { emp: Employee; docs: { uploaded: EmployeeDoc[]; generated: GeneratedDoc[] }; loadingDocs: boolean; onDocsChange: (d: { uploaded: EmployeeDoc[]; generated: GeneratedDoc[] }) => void; onScheduleInterview: () => void; onAssignClient: () => void }) {
   const education = parseJSON<{ qualification?: string; specialization?: string; college?: string; year?: string }[]>(emp.educationJson, [])
   const disciplines = emp.disciplines?.split(',').map((s) => s.trim()).filter(Boolean) || []
   const skills = emp.skills?.split(',').map((s) => s.trim()).filter(Boolean) || []
@@ -620,7 +656,15 @@ function ProfileBody({ emp, docs, loadingDocs, onDocsChange }: { emp: Employee; 
         {emp.user?.locked && <Badge variant="outline" className="border-red-500/30 text-red-700"><Lock className="mr-1 h-3 w-3" /> Locked</Badge>}
         {emp.employmentType && <Badge variant="outline">{emp.employmentType}</Badge>}
         {emp.department && <Badge variant="outline">{emp.department}</Badge>}
-        {emp.assignedClient && <Badge variant="outline" className="border-[var(--gold)]/40 text-[#8a6f24]"><Building2 className="mr-1 h-3 w-3" /> {emp.assignedClient.clientName}</Badge>}
+        {emp.assignedClient ? (
+          <Badge variant="outline" className="border-[var(--gold)]/40 text-[#8a6f24] cursor-pointer hover:bg-[var(--gold)]/10 transition-colors" onClick={onAssignClient}>
+            <Building2 className="mr-1 h-3 w-3" /> {emp.assignedClient.clientName}
+          </Badge>
+        ) : (
+          <Button variant="outline" size="sm" className="h-6 text-[10px] gap-1 border-dashed" onClick={onAssignClient}>
+            <Building2 className="h-3 w-3" /> Assign Client
+          </Button>
+        )}
       </div>
 
       {/* Hiring Pipeline */}
@@ -632,6 +676,9 @@ function ProfileBody({ emp, docs, loadingDocs, onDocsChange }: { emp: Employee; 
           <PipelineStep label="Docs Verified" active={true} done={!!emp.documentsVerified} />
           <PipelineArrow />
           <PipelineStep label="Interview" active={!!emp.interviewStatus} done={emp.interviewStatus === 'PASSED'} pending={emp.interviewStatus === 'SCHEDULED'} />
+          <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-muted-foreground hover:text-[var(--navy)]" onClick={onScheduleInterview} aria-label="Schedule interview">
+            <Pencil className="h-3 w-3" />
+          </Button>
           <PipelineArrow />
           <PipelineStep label="Hired" active={emp.status === 'APPROVED'} done={emp.status === 'APPROVED'} />
           <PipelineArrow />
@@ -1128,6 +1175,212 @@ function EditDialog({ emp, onClose, onSuccess }: { emp: Employee; onClose: () =>
           <Button variant="outline" onClick={onClose}>Cancel</Button>
           <Button className="bg-[var(--navy)] text-white hover:bg-[var(--navy-light)]" onClick={submit} disabled={saving}>
             {saving ? 'Saving…' : 'Save Changes'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+// ============================================================
+// Schedule Interview Dialog
+// ============================================================
+
+const INTERVIEW_STATUSES = [
+  { value: 'SCHEDULED', label: 'Scheduled' },
+  { value: 'COMPLETED', label: 'Completed' },
+  { value: 'PASSED', label: 'Passed' },
+  { value: 'FAILED', label: 'Failed' },
+  { value: 'CANCELLED', label: 'Cancelled' },
+  { value: 'NONE', label: 'Not Set / Clear' },
+]
+
+function ScheduleInterviewDialog({ emp, onClose, onSuccess }: {
+  emp: Employee
+  onClose: () => void
+  onSuccess: (updatedEmp: Employee) => void
+}) {
+  const [status, setStatus] = useState(emp.interviewStatus || 'SCHEDULED')
+  const [interviewDate, setInterviewDate] = useState(
+    emp.interviewDate
+      ? new Date(emp.interviewDate).toISOString().slice(0, 16)
+      : new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 16)
+  )
+  const [notes, setNotes] = useState(emp.interviewNotes || '')
+  const [saving, setSaving] = useState(false)
+
+  const submit = async () => {
+    setSaving(true)
+    try {
+      const data = await api<{ ok: boolean; employee: Employee }>(`/api/admin/employees/${emp.id}/interview`, {
+        method: 'POST',
+        body: JSON.stringify({ status, interviewDate: interviewDate || null, notes: notes.trim() || null }),
+      })
+      toast.success(`Interview ${status === 'NONE' ? 'cleared' : `updated to ${status}`}`)
+      onSuccess(data.employee)
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to update interview')
+    } finally { setSaving(false) }
+  }
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Calendar className="h-5 w-5 text-[var(--gold)]" /> Schedule Interview
+          </DialogTitle>
+          <DialogDescription>
+            Update interview status for <strong>{emp.fullName}</strong>
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="rounded-lg border p-3">
+            <p className="text-xs text-muted-foreground">Employee</p>
+            <p className="font-semibold text-[var(--navy)] dark:text-white">{emp.fullName}</p>
+            <p className="text-xs text-muted-foreground">{emp.email}</p>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="int-status">Interview Status *</Label>
+            <Select value={status} onValueChange={setStatus}>
+              <SelectTrigger id="int-status"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {INTERVIEW_STATUSES.map((s) => (
+                  <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {status !== 'NONE' && (
+            <div className="space-y-1.5">
+              <Label htmlFor="int-date">Date & Time</Label>
+              <Input id="int-date" type="datetime-local" value={interviewDate} onChange={(e) => setInterviewDate(e.target.value)} />
+            </div>
+          )}
+          {status !== 'NONE' && (
+            <div className="space-y-1.5">
+              <Label htmlFor="int-notes">Notes</Label>
+              <Textarea
+                id="int-notes"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Interview feedback, panel notes…"
+                rows={3}
+              />
+            </div>
+          )}
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button className="bg-[var(--navy)] text-white hover:bg-[var(--navy-light)]" onClick={submit} disabled={saving}>
+            {saving ? 'Saving…' : 'Save Interview'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+// ============================================================
+// Assign Client Dialog
+// ============================================================
+
+function AssignClientDialog({ emp, onClose, onSuccess }: {
+  emp: Employee
+  onClose: () => void
+  onSuccess: () => void
+}) {
+  const [clients, setClients] = useState<{ id: string; clientName: string }[]>([])
+  const [projects, setProjects] = useState<{ id: string; projectName: string; clientId: string }[]>([])
+  const [clientId, setClientId] = useState(emp.assignedClient?.id || '')
+  const [projectId, setProjectId] = useState('')
+  const [loadingClients, setLoadingClients] = useState(true)
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    setLoadingClients(true)
+    Promise.all([
+      api<{ clients: { id: string; clientName: string }[] }>('/api/admin/clients').then((d) => d.clients || []).catch(() => []),
+      api<{ projects: { id: string; projectName: string; clientId: string }[] }>('/api/admin/projects').then((d) => d.projects || []).catch(() => []),
+    ]).then(([c, p]) => {
+      setClients(c)
+      setProjects(p)
+      setLoadingClients(false)
+    })
+  }, [])
+
+  const filteredProjects = clientId ? projects.filter((p) => p.clientId === clientId) : projects
+
+  const submit = async () => {
+    setSaving(true)
+    try {
+      const effectiveClientId = (clientId && clientId !== '__none__') ? clientId : null
+      const effectiveProjectId = projectId || null
+      await api(`/api/admin/employees/${emp.id}/assign-client`, {
+        method: 'POST',
+        body: JSON.stringify({ clientId: effectiveClientId, projectId: effectiveProjectId }),
+      })
+      toast.success(effectiveClientId ? `Assigned to ${clients.find((c) => c.id === effectiveClientId)?.clientName || 'client'}` : 'Client assignment removed')
+      onSuccess()
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to assign client')
+    } finally { setSaving(false) }
+  }
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Building2 className="h-5 w-5 text-[var(--gold)]" /> Assign Client
+          </DialogTitle>
+          <DialogDescription>
+            Assign or change client for <strong>{emp.fullName}</strong>
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="rounded-lg border p-3">
+            <p className="text-xs text-muted-foreground">Employee</p>
+            <p className="font-semibold text-[var(--navy)] dark:text-white">{emp.fullName}</p>
+            <p className="text-xs text-muted-foreground">{emp.email}</p>
+          </div>
+          {loadingClients ? (
+            <Skeleton className="h-10 w-full" />
+          ) : (
+            <>
+              <div className="space-y-1.5">
+                <Label htmlFor="ac-client">Client</Label>
+                <Select value={clientId} onValueChange={(v) => { setClientId(v); setProjectId('') }}>
+                  <SelectTrigger id="ac-client"><SelectValue placeholder="Select client…" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">— No Client —</SelectItem>
+                    {clients.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>{c.clientName}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              {clientId && clientId !== '__none__' && filteredProjects.length > 0 && (
+                <div className="space-y-1.5">
+                  <Label htmlFor="ac-project">Project (optional)</Label>
+                  <Select value={projectId} onValueChange={setProjectId}>
+                    <SelectTrigger id="ac-project"><SelectValue placeholder="Select project…" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">— No Project —</SelectItem>
+                      {filteredProjects.map((p) => (
+                        <SelectItem key={p.id} value={p.id}>{p.projectName}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button className="bg-[var(--navy)] text-white hover:bg-[var(--navy-light)]" onClick={submit} disabled={saving || loadingClients}>
+            {saving ? 'Saving…' : 'Assign Client'}
           </Button>
         </DialogFooter>
       </DialogContent>

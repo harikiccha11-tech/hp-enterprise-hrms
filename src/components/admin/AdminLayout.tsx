@@ -451,8 +451,8 @@ export function AdminLayout() {
               {active === 'projects' && <Projects refreshKey={refreshKey} canDelete={isSuperAdmin} />}
               {active === 'workorders' && <WorkOrders refreshKey={refreshKey} />}
               {active === 'invoices' && <Invoices refreshKey={refreshKey} />}
-              {active === 'reports' && <Reports />}
-              {active === 'documents' && <Documents />}
+              {active === 'reports' && <Reports refreshKey={refreshKey} />}
+              {active === 'documents' && <Documents refreshKey={refreshKey} />}
               {active === 'announcements' && <Announcements refreshKey={refreshKey} />}
               {active === 'audit' && <AuditLogs isSuperAdmin={isSuperAdmin} />}
               {active === 'settings' && <SettingsModule isSuperAdmin={isSuperAdmin} isOwner={isOwner} />}

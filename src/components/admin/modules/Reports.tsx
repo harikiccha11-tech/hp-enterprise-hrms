@@ -45,7 +45,7 @@ function formatCell(col: string, value: any): string {
   return String(value)
 }
 
-export function Reports() {
+export function Reports({ refreshKey }: { refreshKey: number }) {
   const [type, setType] = useState('employees')
   const [rows, setRows] = useState<Record<string, any>[]>([])
   const [columns, setColumns] = useState<string[]>([])
@@ -63,7 +63,7 @@ export function Reports() {
     } finally {
       setLoading(false)
     }
-  }, [type])
+  }, [type, refreshKey])
 
   useEffect(() => { load() }, [load])
 

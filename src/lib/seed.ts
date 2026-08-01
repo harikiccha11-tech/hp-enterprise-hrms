@@ -31,7 +31,7 @@ async function main() {
   const ownerPass = await hashPassword('Owner@123')
   const owner = await db.user.upsert({
     where: { username: 'owner' },
-    update: {},
+    update: { passwordHash: ownerPass, mustResetPassword: false },
     create: {
       username: 'owner',
       email: 'owner@hpenterprise.co.in',
@@ -46,7 +46,7 @@ async function main() {
   const adminPass = await hashPassword('Admin@123')
   const admin = await db.user.upsert({
     where: { username: 'superadmin' },
-    update: {},
+    update: { passwordHash: adminPass, mustResetPassword: false },
     create: {
       username: 'superadmin',
       email: 'admin@hpenterprise.co.in',
@@ -61,7 +61,7 @@ async function main() {
   const hrPass = await hashPassword('Hrmanager@123')
   const hr = await db.user.upsert({
     where: { username: 'hrmanager' },
-    update: {},
+    update: { passwordHash: hrPass, mustResetPassword: false },
     create: {
       username: 'hrmanager',
       email: 'hr@hpenterprise.co.in',

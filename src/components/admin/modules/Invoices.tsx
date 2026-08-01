@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/table'
 import { SectionTitle, StatusBadge, EmptyState } from '@/components/shared'
 import { toast } from 'sonner'
-import { ReceiptText, Plus, Trash2, Download } from 'lucide-react'
+import { ReceiptText, Plus, Trash2, Download, Pencil } from 'lucide-react'
 import { useAuth } from '@/lib/store'
 import { api, fmtDate, formatINR } from '../lib'
 
@@ -46,6 +46,7 @@ export function Invoices({ refreshKey }: { refreshKey: number }) {
   const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
   const [editing, setEditing] = useState<Invoice | null>(null)
+  const [fullEditing, setFullEditing] = useState<Invoice | null>(null)
   const [deleting, setDeleting] = useState<Invoice | null>(null)
 
   const load = useCallback(async () => {
@@ -140,6 +141,11 @@ export function Invoices({ refreshKey }: { refreshKey: number }) {
                           >
                             <Download className="h-3.5 w-3.5" />
                           </Button>
+                          <Button size="sm" variant="ghost" className="h-8 w-8 p-0" title="Edit invoice"
+                            onClick={() => setFullEditing(inv)}
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </Button>
                           <Button size="sm" variant="ghost" className="h-8" onClick={() => setEditing(inv)}>
                             Update Status
                           </Button>
@@ -173,6 +179,14 @@ export function Invoices({ refreshKey }: { refreshKey: number }) {
           invoice={editing}
           onClose={() => setEditing(null)}
           onSuccess={() => { setEditing(null); load() }}
+        />
+      )}
+
+      {fullEditing && (
+        <EditInvoiceDialog
+          invoice={fullEditing}
+          onClose={() => setFullEditing(null)}
+          onSuccess={() => { setFullEditing(null); load() }}
         />
       )}
 
@@ -298,6 +312,99 @@ function InvoiceFormDialog({ onClose, onSuccess }: { onClose: () => void; onSucc
           <Button variant="outline" onClick={onClose}>Cancel</Button>
           <Button className="bg-[var(--navy)] text-white hover:bg-[var(--navy-light)]" onClick={submit} disabled={saving}>
             {saving ? 'Creating…' : 'Create Invoice'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function EditInvoiceDialog({ invoice, onClose, onSuccess }: {
+  invoice: Invoice
+  onClose: () => void
+  onSuccess: () => void
+}) {
+  const [clients, setClients] = useState<ClientLite[]>([])
+  const [workOrders, setWorkOrders] = useState<WorkOrderLite[]>([])
+  const [form, setForm] = useState({
+    clientId: invoice.client.id,
+    workOrderId: invoice.workOrder?.id || '',
+    amount: String(invoice.amount),
+    tax: String(invoice.tax),
+    dueDate: invoice.dueDate ? invoice.dueDate.slice(0, 10) : '',
+  })
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    Promise.all([
+      api<{ clients: ClientLite[] }>('/api/admin/clients'),
+      api<{ workOrders: WorkOrderLite[] }>('/api/admin/workorders'),
+    ]).then(([c, w]) => {
+      setClients(c.clients || [])
+      setWorkOrders(w.workOrders || [])
+    }).catch(() => {})
+  }, [])
+
+  const set = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }))
+
+  const submit = async () => {
+    if (!form.clientId || !form.amount) { toast.error('Client & amount required'); return }
+    setSaving(true)
+    try {
+      await api('/api/admin/invoices', {
+        method: 'PATCH',
+        body: JSON.stringify({
+          id: invoice.id,
+          clientId: form.clientId,
+          workOrderId: form.workOrderId || null,
+          amount: Number(form.amount),
+          tax: Number(form.tax) || 0,
+          dueDate: form.dueDate || null,
+        }),
+      })
+      toast.success('Invoice updated')
+      onSuccess()
+    } catch (e: any) {
+      toast.error(e.message || 'Update failed')
+    } finally { setSaving(false) }
+  }
+
+  const filteredWOs = form.clientId ? workOrders.filter((w) => w.clientId === form.clientId) : workOrders
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2"><Pencil className="h-5 w-5" /> Edit Invoice</DialogTitle>
+          <DialogDescription>{invoice.invoiceNumber} • {formatINR(invoice.total)}</DialogDescription>
+        </DialogHeader>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label>Client *</Label>
+            <Select value={form.clientId} onValueChange={(v) => set('clientId', v)}>
+              <SelectTrigger><SelectValue placeholder="Select client" /></SelectTrigger>
+              <SelectContent className="max-h-72">
+                {clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.clientName}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label>Work Order</Label>
+            <Select value={form.workOrderId} onValueChange={(v) => set('workOrderId', v)}>
+              <SelectTrigger><SelectValue placeholder="Optional" /></SelectTrigger>
+              <SelectContent className="max-h-72">
+                {filteredWOs.map((w) => <SelectItem key={w.id} value={w.id}>{w.woNumber} — {w.title}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5"><Label>Amount (₹) *</Label><Input type="number" value={form.amount} onChange={(e) => set('amount', e.target.value)} /></div>
+          <div className="space-y-1.5"><Label>Tax (₹)</Label><Input type="number" value={form.tax} onChange={(e) => set('tax', e.target.value)} /></div>
+          <div className="space-y-1.5 sm:col-span-2"><Label>Due Date</Label><Input type="date" value={form.dueDate} onChange={(e) => set('dueDate', e.target.value)} /></div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button className="bg-[var(--navy)] text-white hover:bg-[var(--navy-light)]" onClick={submit} disabled={saving}>
+            {saving ? 'Saving…' : 'Save Changes'}
           </Button>
         </DialogFooter>
       </DialogContent>

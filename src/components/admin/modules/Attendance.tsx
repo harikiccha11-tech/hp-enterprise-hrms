@@ -84,7 +84,7 @@ export function Attendance({ refreshKey }: { refreshKey: number }) {
         desc="Daily punch records — filter by date and edit entries"
         action={
           <div className="flex items-center gap-2">
-            {records.length > 0 && (
+            {list.length > 0 && (
               <Button variant="outline" size="sm" onClick={() => {
                 const esc = (s: string) => '"' + s.replace(/"/g, '""') + '"'
                 const cols = [
@@ -98,7 +98,7 @@ export function Attendance({ refreshKey }: { refreshKey: number }) {
                   { key: 'status', label: 'Status' },
                 ]
                 let csv = cols.map(c => c.label).join(',') + '\n'
-                for (const r of records) {
+                for (const r of list) {
                   csv += cols.map(c => {
                     const v = c.key.includes('.') ? (r as any)[c.key.split('.')[0]]?.[c.key.split('.')[1]] : (r as any)[c.key]
                     return typeof v === 'string' ? esc(v) : (v ?? '')

@@ -1,13 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { getCurrentUser } from '@/lib/auth'
 import { requireRole, audit } from '@/lib/guards'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 export async function GET(req: NextRequest) {
-  const { error } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER', 'EMPLOYEE')
-  if (error) return error
+  const cu = await getCurrentUser()
+  if (!cu) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!['OWNER', 'SUPER_ADMIN', 'HR_MANAGER', 'EMPLOYEE'].includes(cu.user.role))
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   const { searchParams } = new URL(req.url)
   const date = searchParams.get('date')
   const employeeId = searchParams.get('employeeId')
@@ -15,6 +18,10 @@ export async function GET(req: NextRequest) {
   const to = searchParams.get('to')
 
   const where: any = {}
+  // Scope employee role to their own records only
+  if (cu.user.role === 'EMPLOYEE') {
+    where.employeeId = cu.user.employee?.id
+  }
   if (employeeId) where.employeeId = employeeId
   if (date) {
     const d = new Date(date)
@@ -25,13 +32,17 @@ export async function GET(req: NextRequest) {
     if (to) where.date.lte = new Date(to)
   }
 
-  const records = await db.attendance.findMany({
-    where,
-    include: { employee: { select: { id: true, fullName: true, employeeCode: true, designation: true, department: true } } },
-    orderBy: { date: 'desc' },
-    take: 500,
-  })
-  return NextResponse.json({ records })
+  try {
+    const records = await db.attendance.findMany({
+      where,
+      include: { employee: { select: { id: true, fullName: true, employeeCode: true, designation: true, department: true } } },
+      orderBy: { date: 'desc' },
+      take: 500,
+    })
+    return NextResponse.json({ records })
+  } catch (e) {
+    return NextResponse.json({ error: 'Failed to load attendance' }, { status: 500 })
+  }
 }
 
 export async function PATCH(req: NextRequest) {

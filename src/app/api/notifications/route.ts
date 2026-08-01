@@ -6,21 +6,31 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
-  const cu = await getCurrentUser()
-  if (!cu) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const notifications = await db.notification.findMany({ where: { userId: cu.user.id }, orderBy: { createdAt: 'desc' }, take: 100 })
-  const unread = notifications.filter(n => !n.read).length
-  return NextResponse.json({ notifications, unread })
+  try {
+    const cu = await getCurrentUser()
+    if (!cu) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const notifications = await db.notification.findMany({ where: { userId: cu.user.id }, orderBy: { createdAt: 'desc' }, take: 100 })
+    const unread = notifications.filter(n => !n.read).length
+    return NextResponse.json({ notifications, unread })
+  } catch (e) {
+    return NextResponse.json({ error: 'Request failed' }, { status: 500 })
+  }
 }
 
 export async function PATCH(req: NextRequest) {
-  const cu = await getCurrentUser()
-  if (!cu) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const { id, all } = await req.json()
-  if (all) {
-    await db.notification.updateMany({ where: { userId: cu.user.id, read: false }, data: { read: true } })
-  } else if (id) {
-    await db.notification.update({ where: { id }, data: { read: true } })
+  try {
+    const cu = await getCurrentUser()
+    if (!cu) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const { id, all } = await req.json()
+    if (all) {
+      await db.notification.updateMany({ where: { userId: cu.user.id, read: false }, data: { read: true } })
+    } else if (id) {
+      const notif = await db.notification.findFirst({ where: { id, userId: cu.user.id } })
+      if (!notif) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+      await db.notification.update({ where: { id }, data: { read: true } })
+    }
+    return NextResponse.json({ ok: true })
+  } catch (e) {
+    return NextResponse.json({ error: 'Request failed' }, { status: 500 })
   }
-  return NextResponse.json({ ok: true })
 }

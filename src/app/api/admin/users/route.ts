@@ -1,21 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getCurrentUser, hashPassword, audit } from '@/lib/auth'
-import { canManageRole, ROLE_LABELS } from '@/lib/constants'
+import { ROLE_LABELS } from '@/lib/constants'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
-  const cu = await getCurrentUser()
-  if (!cu) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  if (cu.user.role !== 'OWNER') return NextResponse.json({ error: 'Only the Owner can manage users' }, { status: 403 })
-  const users = await db.user.findMany({
-    where: { role: { in: ['OWNER', 'SUPER_ADMIN', 'HR_MANAGER', 'CLIENT'] } },
-    orderBy: { createdAt: 'asc' },
-    select: { id: true, username: true, email: true, role: true, locked: true, mustResetPassword: true, lastLoginAt: true, createdAt: true, employee: { select: { id: true, fullName: true, employeeCode: true } } },
-  })
-  return NextResponse.json({ users })
+  try {
+    const cu = await getCurrentUser()
+    if (!cu) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (cu.user.role !== 'OWNER') return NextResponse.json({ error: 'Only the Owner can manage users' }, { status: 403 })
+    const users = await db.user.findMany({
+      where: { role: { in: ['OWNER', 'SUPER_ADMIN', 'HR_MANAGER', 'CLIENT'] } },
+      orderBy: { createdAt: 'asc' },
+      select: { id: true, username: true, email: true, role: true, locked: true, mustResetPassword: true, lastLoginAt: true, createdAt: true, employee: { select: { id: true, fullName: true, employeeCode: true } } },
+    })
+    return NextResponse.json({ users })
+  } catch (e) {
+    return NextResponse.json({ error: 'Request failed' }, { status: 500 })
+  }
 }
 
 export async function POST(req: NextRequest) {
