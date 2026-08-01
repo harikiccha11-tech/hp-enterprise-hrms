@@ -249,3 +249,48 @@ Stage Summary:
 - 5 major features added: HPAI AI Chatbot, Subscription Plans, Theme/Color changing, Language/i18n (3 languages), HPHRMS Branding
 - All features browser-verified working
 - System now has: 15 admin modules, 8 employee modules, client portal, AI assistant, multi-language, theming, subscription management
+
+---
+Task ID: 10-a
+Agent: i18n Layout Fix Agent
+Task: Fix all 3 layout components to use t() translation function for i18n.
+
+Work Log:
+- Added 50+ missing i18n keys to all 3 languages (en, hi, kn) in src/lib/i18n.ts
+- Fixed Kannada flag from '🇮🇳' to 'KA' text indicator
+- Converted AdminLayout.tsx: NAV_GROUPS const → getNavGroups(lang) function; added t() for all group titles, nav labels, descriptions, toast messages, notification UI, footer
+- Converted EmployeeLayout.tsx: NAV const → getNav(lang) function; added t() for all nav labels, descriptions, password reset banner, toast messages, notification UI, footer
+- Converted ClientLayout.tsx: NAV const → getNav(lang) function; added t() for all nav labels, descriptions, toast messages, notification UI, footer
+- All 3 components now subscribe to `lang` from useAuth() (which is useAppStore alias)
+- Nav items re-render when language changes because getNav/getNavGroups is called on each render with current lang
+
+Stage Summary:
+- All 3 layout components (Admin, Employee, Client) now fully i18n-ready
+- 50+ translation keys added covering nav groups, descriptions, notifications, toasts, footers
+- Brand name (© 2025 HP ENTERPRISE...) and role labels (Super Admin) kept in English as specified
+- Language switching in header will now immediately translate all sidebar nav, topbar, notification panel, and footer text
+
+---
+Task ID: 10-b
+Agent: Main Orchestrator
+Task: Verify all 5 features, fix critical bugs, create updated zip
+
+Work Log:
+- Verified HPAI chatbot: floating button opens chat panel with welcome message, send/clear/close buttons, HPAI Assistant header
+- Verified language switcher (EN/HI/KN) opens in all 3 portal headers
+- **BUG FOUND & FIXED**: Language switching was cosmetic — all 3 layouts (Admin, Employee, Client) used hardcoded English strings, not t() function
+- Delegated i18n fix to subagent (Task 10-a): converted NAV_GROUPS/NAV to functions using t(), added 50+ translation keys
+- **BUG FOUND & FIXED**: ThemeInit.tsx didn't sync lang/darkMode/themeColors from localStorage on app startup — added full sync logic
+- Verified Hindi translations work: डैशबोर्ड, कर्मचारी, उपस्थिति, छुट्टी अनुरोध, दस्तावेज़, वेतन, रिपोर्ट, सेटिंग्स
+- Verified Kannada translations work: ಡ್ಯಾಶ್ಬೋರ್ಡ್, ಉದ್ಯೋಗಿಗಳು, ಹಾಜರಾತಿ, ರಜೆ ವಿನಂತಿಗಳು, ದಾಖಲೆಗಳು, ವೇತನ
+- Verified Settings → Appearance tab: Dark mode toggle (tested on/off), Primary/Accent color pickers (#002B5C/#D4AF37), Reset to Default, Language cards, HPHRMS Branding (Company Name, Tagline, Admin Email)
+- Verified Settings → Subscription tab: 4 plans (Free/Starter/Professional/Enterprise), Current Plan badge on Professional, Upgrade/Downgrade buttons, Usage progress bars (Employees, Documents, AI Queries, Storage)
+- Lint: 0 errors, 5 warnings (expected @react-pdf/renderer alt-text)
+- Created clean zip: /tmp/hp-enterprise-hrms.zip (484KB, 226 files)
+
+Stage Summary:
+- 2 critical bugs fixed: i18n layouts not using t(), ThemeInit not syncing from localStorage
+- All 5 features verified working: HPAI, Language (3 langs), Theme/Color, Subscription, HPHRMS Branding
+- Dark mode toggle tested and confirmed working
+- Color picker (primary/accent) confirmed present with live preview
+- Final zip: /tmp/hp-enterprise-hrms.zip (484KB, 226 source files)

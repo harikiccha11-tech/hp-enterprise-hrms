@@ -46,6 +46,7 @@ import {
   Wallet,
   CalendarClock,
 } from 'lucide-react'
+import { t, type LangCode } from '@/lib/i18n'
 import { HpAiChat } from '@/components/shared/HpAiChat'
 import { LanguageSwitcher } from '@/components/shared/LanguageSwitcher'
 
@@ -177,12 +178,14 @@ function StatusBadge({ status }: { status: string }) {
 
 // ── Navigation ─────────────────────────────────────────────────────────────
 
-const NAV: NavItem[] = [
-  { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, desc: 'Overview & quick actions' },
-  { key: 'projects', label: 'Projects', icon: Briefcase, desc: 'Active & completed projects' },
-  { key: 'work-orders', label: 'Work Orders', icon: ClipboardList, desc: 'Service work orders' },
-  { key: 'invoices', label: 'Invoices', icon: FileText, desc: 'Billing & payments' },
-]
+function getNav(lang: LangCode): NavItem[] {
+  return [
+    { key: 'dashboard', label: t('client.dashboard', lang), icon: LayoutDashboard, desc: t('client.desc.dashboard', lang) },
+    { key: 'projects', label: t('client.projects', lang), icon: Briefcase, desc: t('client.desc.projects', lang) },
+    { key: 'work-orders', label: t('client.workOrders', lang), icon: ClipboardList, desc: t('client.desc.workOrders', lang) },
+    { key: 'invoices', label: t('client.invoices', lang), icon: FileText, desc: t('client.desc.invoices', lang) },
+  ]
+}
 
 // ── Stat Card ───────────────────────────────────────────────────────────────
 
@@ -625,7 +628,7 @@ function InvoicesView({ data, loading }: { data: DashboardData | null; loading: 
 // ── Main Component ──────────────────────────────────────────────────────────
 
 export function ClientLayout() {
-  const { user, logout } = useAuth()
+  const { user, logout, lang } = useAuth()
   const [active, setActive] = useState<ClientView>('dashboard')
   const [mobileOpen, setMobileOpen] = useState(false)
   const [data, setData] = useState<DashboardData | null>(null)
@@ -688,9 +691,9 @@ export function ClientLayout() {
       })
       setNotifications((arr) => arr.map((n) => ({ ...n, read: true })))
       setUnread(0)
-      toast.success('All notifications marked as read')
+      toast.success(t('nav.allMarkedRead', lang))
     } catch {
-      toast.error('Failed to update notifications')
+      toast.error(t('nav.notifFailed', lang))
     }
   }
 
@@ -708,10 +711,11 @@ export function ClientLayout() {
 
   const handleLogout = async () => {
     await logout()
-    toast.success('Signed out successfully')
+    toast.success(t('nav.signedOut', lang))
   }
 
-  const currentNav = NAV.find((n) => n.key === active)
+  const nav = getNav(lang)
+  const currentNav = nav.find((n) => n.key === active)
 
   // ── Sidebar inner (shared between desktop & mobile) ──
   const sidebarInner = (
@@ -723,7 +727,7 @@ export function ClientLayout() {
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto scroll-thin px-3 py-4 space-y-1">
-        {NAV.map((item) => {
+        {nav.map((item) => {
           const Icon = item.icon
           const isActive = active === item.key
           return (
@@ -773,7 +777,7 @@ export function ClientLayout() {
             size="sm"
             className="mt-3 w-full justify-start gap-2 text-blue-100/80 hover:bg-white/10 hover:text-white"
           >
-            <LogOut className="h-4 w-4" /> Sign Out
+            <LogOut className="h-4 w-4" /> {t('nav.signOut', lang)}
           </Button>
         </div>
       </div>
@@ -858,10 +862,10 @@ export function ClientLayout() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-80 p-0">
                   <div className="flex items-center justify-between border-b px-3 py-2.5">
-                    <p className="text-sm font-semibold text-[var(--navy)] dark:text-white">Notifications</p>
+                    <p className="text-sm font-semibold text-[var(--navy)] dark:text-white">{t('nav.notifications', lang)}</p>
                     {unread > 0 && (
                       <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={markAllRead}>
-                        Mark all read
+                        {t('nav.markAllRead', lang)}
                       </Button>
                     )}
                   </div>
@@ -869,7 +873,7 @@ export function ClientLayout() {
                     {notifications.length === 0 ? (
                       <div className="py-8 text-center text-sm text-muted-foreground">
                         <Bell className="mx-auto mb-2 h-6 w-6 opacity-50" />
-                        No notifications yet
+                        {t('nav.noNotifications', lang)}
                       </div>
                     ) : (
                       notifications.slice(0, 12).map((n) => (
@@ -931,7 +935,7 @@ export function ClientLayout() {
           <p>&copy; 2025 HP ENTERPRISE Safety Service &amp; Man Power Supply &bull; Client Portal</p>
           <p className="flex items-center gap-1.5">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-            All systems operational
+            {t('footer.systemsOperational', lang)}
           </p>
         </div>
       </footer>

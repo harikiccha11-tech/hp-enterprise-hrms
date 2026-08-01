@@ -32,6 +32,7 @@ import {
   ChevronRight,
   CheckCheck,
 } from 'lucide-react'
+import { t, type LangCode } from '@/lib/i18n'
 import { fmtDateTime, fmtRelative, initials } from './lib'
 import { Dashboard } from './modules/Dashboard'
 import { MyProfile } from './modules/MyProfile'
@@ -61,16 +62,18 @@ interface NavItem {
   desc: string
 }
 
-const NAV: NavItem[] = [
-  { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, desc: 'Overview & quick actions' },
-  { key: 'profile', label: 'My Profile', icon: UserCircle, desc: 'Personal & bank details' },
-  { key: 'attendance', label: 'Attendance', icon: Fingerprint, desc: 'Punch in/out, history' },
-  { key: 'leave', label: 'Apply Leave', icon: CalendarDays, desc: 'Leave applications & balance' },
-  { key: 'documents', label: 'Documents', icon: FileText, desc: 'Generated letters & IDs' },
-  { key: 'salary', label: 'Salary Slips', icon: Wallet, desc: 'Payslips & earnings' },
-  { key: 'notifications', label: 'Notifications', icon: Bell, desc: 'All alerts & updates' },
-  { key: 'password', label: 'Change Password', icon: KeyRound, desc: 'Account security' },
-]
+function getNav(lang: LangCode): NavItem[] {
+  return [
+    { key: 'dashboard', label: t('nav.dashboard', lang), icon: LayoutDashboard, desc: t('emp.desc.dashboard', lang) },
+    { key: 'profile', label: t('emp.myProfile', lang), icon: UserCircle, desc: t('emp.desc.profile', lang) },
+    { key: 'attendance', label: t('nav.attendance', lang), icon: Fingerprint, desc: t('emp.desc.attendance', lang) },
+    { key: 'leave', label: t('emp.applyLeave', lang), icon: CalendarDays, desc: t('emp.desc.leave', lang) },
+    { key: 'documents', label: t('nav.documents', lang), icon: FileText, desc: t('emp.desc.documents', lang) },
+    { key: 'salary', label: t('emp.salarySlips', lang), icon: Wallet, desc: t('emp.desc.salary', lang) },
+    { key: 'notifications', label: t('nav.notifications', lang), icon: Bell, desc: t('emp.desc.notifications', lang) },
+    { key: 'password', label: t('emp.changePassword', lang), icon: KeyRound, desc: t('emp.desc.password', lang) },
+  ]
+}
 
 interface NotificationLite {
   id: string
@@ -83,7 +86,7 @@ interface NotificationLite {
 }
 
 export function EmployeeLayout() {
-  const { user, logout } = useAuth()
+  const { user, logout, lang } = useAuth()
   const [active, setActive] = useState<ModuleKey>('dashboard')
   const [mobileOpen, setMobileOpen] = useState(false)
   const [notifications, setNotifications] = useState<NotificationLite[]>([])
@@ -173,9 +176,9 @@ export function EmployeeLayout() {
       })
       setNotifications((arr) => arr.map((n) => ({ ...n, read: true })))
       setUnread(0)
-      toast.success('All notifications marked as read')
+      toast.success(t('nav.allMarkedRead', lang))
     } catch {
-      toast.error('Failed to update notifications')
+      toast.error(t('nav.notifFailed', lang))
     }
   }
 
@@ -193,10 +196,11 @@ export function EmployeeLayout() {
 
   const handleLogout = async () => {
     await logout()
-    toast.success('Signed out successfully')
+    toast.success(t('nav.signedOut', lang))
   }
 
-  const currentNav = NAV.find((n) => n.key === active)
+  const nav = getNav(lang)
+  const currentNav = nav.find((n) => n.key === active)
 
   const sidebarInner = (
     <div className="flex h-full flex-col text-slate-200">
@@ -207,7 +211,7 @@ export function EmployeeLayout() {
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto scroll-thin px-3 py-4 space-y-1">
-        {NAV.map((item) => {
+        {nav.map((item) => {
           const Icon = item.icon
           const isActive = active === item.key
           return (
@@ -258,7 +262,7 @@ export function EmployeeLayout() {
             size="sm"
             className="mt-3 w-full justify-start gap-2 text-blue-100/80 hover:bg-white/10 hover:text-white"
           >
-            <LogOut className="h-4 w-4" /> Sign Out
+            <LogOut className="h-4 w-4" /> {t('nav.signOut', lang)}
           </Button>
         </div>
       </div>
@@ -342,10 +346,10 @@ export function EmployeeLayout() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-80 p-0">
                   <div className="flex items-center justify-between border-b px-3 py-2.5">
-                    <p className="text-sm font-semibold text-[var(--navy)] dark:text-white">Notifications</p>
+                    <p className="text-sm font-semibold text-[var(--navy)] dark:text-white">{t('nav.notifications', lang)}</p>
                     {unread > 0 && (
                       <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={markAllRead}>
-                        <CheckCheck className="mr-1 h-3.5 w-3.5" /> Mark all read
+                        <CheckCheck className="mr-1 h-3.5 w-3.5" /> {t('nav.markAllRead', lang)}
                       </Button>
                     )}
                   </div>
@@ -353,7 +357,7 @@ export function EmployeeLayout() {
                     {notifications.length === 0 ? (
                       <div className="py-8 text-center text-sm text-muted-foreground">
                         <Bell className="mx-auto mb-2 h-6 w-6 opacity-50" />
-                        No notifications yet
+                        {t('nav.noNotifications', lang)}
                       </div>
                     ) : (
                       notifications.slice(0, 12).map((n) => (
@@ -383,7 +387,7 @@ export function EmployeeLayout() {
                     className="w-full px-3 py-2.5 text-center text-xs font-semibold text-[var(--navy)] hover:bg-muted dark:text-[var(--gold-light)]"
                     onClick={() => { handleNavigate('notifications'); setBellOpen(false) }}
                   >
-                    View all notifications
+                    {t('nav.viewAllNotifs', lang)}
                   </button>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -401,10 +405,10 @@ export function EmployeeLayout() {
             <div className="flex items-center justify-between gap-3 border-b border-amber-500/30 bg-amber-500/10 px-4 py-2.5 sm:px-6">
               <div className="flex items-center gap-2 text-sm text-amber-800 dark:text-amber-300">
                 <ShieldAlert className="h-4 w-4 shrink-0" />
-                <span className="font-medium">For security, please change your password to continue.</span>
+                <span className="font-medium">{t('emp.mustReset', lang)}</span>
               </div>
               <Button size="sm" onClick={() => setActive('password')} className="bg-amber-600 hover:bg-amber-700 text-white">
-                Change now
+                {t('emp.changeNow', lang)}
               </Button>
             </div>
           )}
@@ -431,7 +435,7 @@ export function EmployeeLayout() {
           <p>© 2025 HP ENTERPRISE Safety Service & Man Power Supply • Employee Portal</p>
           <p className="flex items-center gap-1.5">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-            All systems operational
+            {t('footer.systemsOperational', lang)}
           </p>
         </div>
       </footer>

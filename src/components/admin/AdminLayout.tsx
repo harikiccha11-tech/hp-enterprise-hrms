@@ -25,6 +25,7 @@ import {
   ShieldCheck, ShieldAlert, Lock, Crown, UserCog,
 } from 'lucide-react'
 import { ROLE_LABELS } from '@/lib/constants'
+import { t, type LangCode } from '@/lib/i18n'
 import { fmtRelative, initials } from './lib'
 import { Dashboard } from './modules/Dashboard'
 import { Employees } from './modules/Employees'
@@ -58,43 +59,45 @@ interface NavItem {
   ownerOnly?: boolean
 }
 
-const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
-  {
-    title: 'Overview',
-    items: [
-      { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, desc: 'Key metrics & activity' },
-    ],
-  },
-  {
-    title: 'People',
-    items: [
-      { key: 'employees', label: 'Employees', icon: Users, desc: 'Applications & employee records' },
-      { key: 'attendance', label: 'Attendance', icon: Fingerprint, desc: 'Daily punch records' },
-      { key: 'leaves', label: 'Leave Requests', icon: CalendarDays, desc: 'Approve / reject leaves' },
-      { key: 'documents', label: 'Documents', icon: FileText, desc: 'Generate employee documents' },
-      { key: 'users', label: 'User Accounts', icon: UserCog, desc: 'Create Admin / HR accounts', ownerOnly: true },
-    ],
-  },
-  {
-    title: 'Operations',
-    items: [
-      { key: 'clients', label: 'Clients', icon: Building2, desc: 'Client master records' },
-      { key: 'projects', label: 'Projects', icon: FolderKanban, desc: 'Project assignments' },
-      { key: 'workorders', label: 'Work Orders', icon: ClipboardList, desc: 'Client work orders' },
-      { key: 'invoices', label: 'Invoices', icon: ReceiptText, desc: 'Billing & invoices' },
-      { key: 'announcements', label: 'Announcements', icon: Megaphone, desc: 'Company announcements' },
-    ],
-  },
-  {
-    title: 'Finance & System',
-    items: [
-      { key: 'payroll', label: 'Payroll', icon: Wallet, desc: 'Run payroll & slips', superAdminOnly: true },
-      { key: 'reports', label: 'Reports', icon: BarChart3, desc: 'Exportable reports' },
-      { key: 'audit', label: 'Audit Logs', icon: ScrollText, desc: 'Activity trail', superAdminOnly: true },
-      { key: 'settings', label: 'Settings', icon: Settings, desc: 'Payroll & leave config', ownerOnly: true },
-    ],
-  },
-]
+function getNavGroups(lang: LangCode): { title: string; items: NavItem[] }[] {
+  return [
+    {
+      title: t('nav.group.overview', lang),
+      items: [
+        { key: 'dashboard', label: t('nav.dashboard', lang), icon: LayoutDashboard, desc: t('nav.desc.dashboard', lang) },
+      ],
+    },
+    {
+      title: t('nav.group.people', lang),
+      items: [
+        { key: 'employees', label: t('nav.employees', lang), icon: Users, desc: t('nav.desc.employees', lang) },
+        { key: 'attendance', label: t('nav.attendance', lang), icon: Fingerprint, desc: t('nav.desc.attendance', lang) },
+        { key: 'leaves', label: t('nav.leaves', lang), icon: CalendarDays, desc: t('nav.desc.leaves', lang) },
+        { key: 'documents', label: t('nav.documents', lang), icon: FileText, desc: t('nav.desc.documents', lang) },
+        { key: 'users', label: t('nav.userAccounts', lang), icon: UserCog, desc: t('nav.desc.userAccounts', lang), ownerOnly: true },
+      ],
+    },
+    {
+      title: t('nav.group.operations', lang),
+      items: [
+        { key: 'clients', label: t('nav.clients', lang), icon: Building2, desc: t('nav.desc.clients', lang) },
+        { key: 'projects', label: t('nav.projects', lang), icon: FolderKanban, desc: t('nav.desc.projects', lang) },
+        { key: 'workorders', label: t('nav.workOrders', lang), icon: ClipboardList, desc: t('nav.desc.workOrders', lang) },
+        { key: 'invoices', label: t('nav.invoices', lang), icon: ReceiptText, desc: t('nav.desc.invoices', lang) },
+        { key: 'announcements', label: t('nav.announcements', lang), icon: Megaphone, desc: t('nav.desc.announcements', lang) },
+      ],
+    },
+    {
+      title: t('nav.group.finance', lang),
+      items: [
+        { key: 'payroll', label: t('nav.payroll', lang), icon: Wallet, desc: t('nav.desc.payroll', lang), superAdminOnly: true },
+        { key: 'reports', label: t('nav.reports', lang), icon: BarChart3, desc: t('nav.desc.reports', lang) },
+        { key: 'audit', label: t('nav.auditLogs', lang), icon: ScrollText, desc: t('nav.desc.auditLogs', lang), superAdminOnly: true },
+        { key: 'settings', label: t('nav.settings', lang), icon: Settings, desc: t('nav.desc.settings', lang), ownerOnly: true },
+      ],
+    },
+  ]
+}
 
 interface NotificationLite {
   id: string
@@ -107,7 +110,7 @@ interface NotificationLite {
 }
 
 export function AdminLayout() {
-  const { user, logout } = useAuth()
+  const { user, logout, lang } = useAuth()
   const [active, setActive] = useState<ModuleKey>('dashboard')
   const [mobileOpen, setMobileOpen] = useState(false)
   const [notifications, setNotifications] = useState<NotificationLite[]>([])
@@ -198,9 +201,9 @@ export function AdminLayout() {
       })
       setNotifications((arr) => arr.map((n) => ({ ...n, read: true })))
       setUnread(0)
-      toast.success('All notifications marked as read')
+      toast.success(t('nav.allMarkedRead', lang))
     } catch {
-      toast.error('Failed to update notifications')
+      toast.error(t('nav.notifFailed', lang))
     }
   }
 
@@ -218,11 +221,12 @@ export function AdminLayout() {
 
   const handleLogout = async () => {
     await logout()
-    toast.success('Signed out successfully')
+    toast.success(t('nav.signedOut', lang))
   }
 
   // Find current nav meta
-  const allItems = NAV_GROUPS.flatMap((g) => g.items)
+  const navGroups = getNavGroups(lang)
+  const allItems = navGroups.flatMap((g) => g.items)
   const currentNav = allItems.find((n) => n.key === active)
 
   const sidebarInner = (
@@ -250,7 +254,7 @@ export function AdminLayout() {
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto scroll-thin px-3 py-3 space-y-4" aria-label="Admin navigation">
-        {NAV_GROUPS.map((group) => {
+        {navGroups.map((group) => {
           const visibleItems = group.items.filter((it) => (!it.superAdminOnly || isSuperAdmin) && (!it.ownerOnly || isOwner))
           if (visibleItems.length === 0) return null
           return (
@@ -306,7 +310,7 @@ export function AdminLayout() {
             size="sm"
             className="mt-3 w-full justify-start gap-2 text-blue-100/80 hover:bg-white/10 hover:text-white"
           >
-            <LogOut className="h-4 w-4" /> Sign Out
+            <LogOut className="h-4 w-4" /> {t('nav.signOut', lang)}
           </Button>
         </div>
       </div>
@@ -394,10 +398,10 @@ export function AdminLayout() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-80 p-0">
                   <div className="flex items-center justify-between border-b px-3 py-2.5">
-                    <p className="text-sm font-semibold text-[var(--navy)] dark:text-white">Notifications</p>
+                    <p className="text-sm font-semibold text-[var(--navy)] dark:text-white">{t('nav.notifications', lang)}</p>
                     {unread > 0 && (
                       <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={markAllRead}>
-                        <CheckCheck className="mr-1 h-3.5 w-3.5" /> Mark all read
+                        <CheckCheck className="mr-1 h-3.5 w-3.5" /> {t('nav.markAllRead', lang)}
                       </Button>
                     )}
                   </div>
@@ -405,7 +409,7 @@ export function AdminLayout() {
                     {notifications.length === 0 ? (
                       <div className="py-8 text-center text-sm text-muted-foreground">
                         <Bell className="mx-auto mb-2 h-6 w-6 opacity-50" />
-                        No notifications yet
+                        {t('nav.noNotifications', lang)}
                       </div>
                     ) : (
                       notifications.slice(0, 12).map((n) => (
@@ -430,7 +434,7 @@ export function AdminLayout() {
                   </div>
                   <DropdownMenuSeparator className="my-0" />
                   <DropdownMenuLabel className="py-2 text-center text-xs font-semibold text-[var(--navy)] dark:text-[var(--gold-light)]">
-                    Live updates enabled
+                    {t('nav.liveUpdates', lang)}
                   </DropdownMenuLabel>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -472,7 +476,7 @@ export function AdminLayout() {
           <p>© 2025 HP ENTERPRISE Safety Service & Man Power Supply • Admin Console • CIN: U72900KA2015PTC112233</p>
           <p className="flex items-center gap-1.5">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-            All systems operational
+            {t('footer.systemsOperational', lang)}
           </p>
         </div>
       </footer>
