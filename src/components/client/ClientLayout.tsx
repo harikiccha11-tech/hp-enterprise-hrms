@@ -46,6 +46,8 @@ import {
   Wallet,
   CalendarClock,
 } from 'lucide-react'
+import { HpAiChat } from '@/components/shared/HpAiChat'
+import { LanguageSwitcher } from '@/components/shared/LanguageSwitcher'
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -827,6 +829,8 @@ export function ClientLayout() {
             </div>
 
             <div className="flex items-center gap-2 sm:gap-3">
+              <LanguageSwitcher />
+
               {/* Date / Time */}
               <div className="hidden md:flex flex-col items-end leading-tight">
                 <span className="text-xs font-medium text-[var(--navy)] dark:text-white">
@@ -931,6 +935,8 @@ export function ClientLayout() {
           </p>
         </div>
       </footer>
+
+      <HpAiChat />
 
       <Toaster richColors position="top-right" />
     </div>

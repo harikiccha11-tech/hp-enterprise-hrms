@@ -181,3 +181,71 @@ Stage Summary:
 - 1 seed bug fixed (password reset on re-run)
 - All fixes browser-verified
 - Final zip: /tmp/hp-enterprise-hrms.zip (477KB, 233 files)
+
+---
+Task ID: 7
+Agent: HPAI Build Agent
+Task: Build HPAI Chatbot (backend API + frontend widget) + Theme initialization
+
+Work Log:
+- Created /api/ai/chat route with z-ai-web-dev-sdk
+- Created HPAI floating chat widget component
+- Integrated into Admin, Employee, and Client layouts
+- Added ThemeInit component for dark mode/lang/color initialization
+
+Stage Summary:
+- HPAI chatbot working with streaming-style responses
+- Available to all authenticated users
+- Theme system initializes from localStorage on app load
+
+---
+Task ID: 8
+Agent: Settings & Subscription Agent
+Task: Build Settings tabs, Theme, Language, Branding, Subscription
+
+Work Log:
+- Extended Settings with Tabs (Payroll & Leave, Appearance, Subscription)
+- Built Theme mode toggle with dark/light preview
+- Built Brand Colors with color pickers and live preview
+- Built Language switcher with 3 languages (English, Hindi, Kannada)
+- Built HPHRMS Branding settings
+- Built Subscription plans grid with 4 tiers
+- Built Usage progress bars
+- Added language switcher to Admin, Employee, Client layout headers
+- Added new settings keys to backend
+
+Stage Summary:
+- Settings now has 3 tabs with full theme, language, branding, and subscription management
+- Language switcher available in all 3 portal headers
+- Subscription shows 4 plans with upgrade/downgrade flow
+
+---
+Task ID: 9
+Agent: Main Orchestrator
+Task: Build HPAI, Subscription, Theme, Language, Branding — browser verify & zip
+
+Work Log:
+- Created /src/lib/i18n.ts — full i18n system with English, Hindi, Kannada (200+ translation keys)
+- Updated /src/lib/store.ts — added language, darkMode, themeColors, hpaiOpen state with localStorage persistence
+- Created /src/app/api/ai/chat/route.ts — HPAI backend using z-ai-web-dev-sdk with conversation memory
+- Created /src/components/shared/HpAiChat.tsx — floating chat widget with markdown rendering
+- Created /src/components/shared/LanguageSwitcher.tsx — dropdown with 3 languages
+- Created /src/components/shared/ThemeInit.tsx — initializes theme from localStorage on app load
+- Extended Settings module with 3 tabs: Payroll & Leave, Appearance, Subscription
+- Appearance tab: Dark mode toggle, Brand color pickers, Language selector, HPHRMS branding
+- Subscription tab: 4 plans (Free/Starter/Professional/Enterprise), usage progress bars
+- Language switcher added to Admin, Employee, and Client layout headers
+- Browser E2E verification:
+  - ✅ Language switcher works (English → Hindi → Kannada)
+  - ✅ HPAI chatbot responds to HR queries with contextual answers
+  - ✅ Settings tabs switch correctly (Payroll, Appearance, Subscription)
+  - ✅ Appearance tab shows dark mode switch, color pickers, language cards, branding fields
+  - ✅ Subscription tab shows 4 plans with Current Plan badge
+  - ✅ All features work in Admin, Employee, and Client portals
+- Lint: 0 errors, 5 warnings (expected)
+- Final zip: /tmp/hp-enterprise-hrms.zip (492KB, 235 files)
+
+Stage Summary:
+- 5 major features added: HPAI AI Chatbot, Subscription Plans, Theme/Color changing, Language/i18n (3 languages), HPHRMS Branding
+- All features browser-verified working
+- System now has: 15 admin modules, 8 employee modules, client portal, AI assistant, multi-language, theming, subscription management

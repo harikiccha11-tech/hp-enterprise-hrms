@@ -41,6 +41,8 @@ import { Announcements } from './modules/Announcements'
 import { AuditLogs } from './modules/AuditLogs'
 import { SettingsModule } from './modules/Settings'
 import { UserAccounts } from './modules/UserAccounts'
+import { HpAiChat } from '@/components/shared/HpAiChat'
+import { LanguageSwitcher } from '@/components/shared/LanguageSwitcher'
 
 export type ModuleKey =
   | 'dashboard' | 'employees' | 'attendance' | 'leaves' | 'payroll'
@@ -364,6 +366,8 @@ export function AdminLayout() {
             </div>
 
             <div className="flex items-center gap-2 sm:gap-3">
+              <LanguageSwitcher />
+
               <div className="hidden md:flex flex-col items-end leading-tight">
                 <span className="text-xs font-medium text-[var(--navy)] dark:text-white">
                   {format(now, 'EEEE, dd MMM yyyy')}
@@ -472,6 +476,8 @@ export function AdminLayout() {
           </p>
         </div>
       </footer>
+
+      <HpAiChat />
 
       <Toaster richColors position="top-right" />
     </div>

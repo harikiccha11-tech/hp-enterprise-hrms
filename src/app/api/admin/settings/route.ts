@@ -11,6 +11,7 @@ const KEYS = [
   'payroll.workEndTime','payroll.lateGraceMinutes','payroll.overtimeRate',
   'leave.casualAnnual','leave.sickAnnual','leave.earnedAnnual','leave.carryForwardCap',
   'company.adminEmail',
+  'brand.companyName', 'brand.tagline',
 ]
 
 export async function GET() {

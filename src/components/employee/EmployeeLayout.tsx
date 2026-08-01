@@ -41,6 +41,8 @@ import { Documents } from './modules/Documents'
 import { SalarySlips } from './modules/SalarySlips'
 import { Notifications } from './modules/Notifications'
 import { ChangePassword } from './modules/ChangePassword'
+import { HpAiChat } from '@/components/shared/HpAiChat'
+import { LanguageSwitcher } from '@/components/shared/LanguageSwitcher'
 
 export type ModuleKey =
   | 'dashboard'
@@ -312,6 +314,8 @@ export function EmployeeLayout() {
             </div>
 
             <div className="flex items-center gap-2 sm:gap-3">
+              <LanguageSwitcher />
+
               <div className="hidden md:flex flex-col items-end leading-tight">
                 <span className="text-xs font-medium text-[var(--navy)] dark:text-white">
                   {format(now, 'EEEE, dd MMM yyyy')}
@@ -431,6 +435,8 @@ export function EmployeeLayout() {
           </p>
         </div>
       </footer>
+
+      <HpAiChat />
 
       <Toaster richColors position="top-right" />
     </div>
