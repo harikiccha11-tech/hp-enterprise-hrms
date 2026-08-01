@@ -359,3 +359,24 @@ Stage Summary:
 - All 3 portals verified working with correct permissions
 - Subscription system stores requests in database
 - Export/download features confirmed working across modules
+
+---
+Task ID: 2-fix-unauthorized
+Agent: Main Orchestrator
+Task: Fix Unauthorized issue on all portals, fix landing page STATS error, add second employee seed, create production zip
+
+Work Log:
+- Fixed page.tsx refresh race condition: Changed useEffect to use useRef guard so refresh() only runs once on mount
+- Fixed store.ts refresh(): Now uses set((s) => ...) to only clear user if there was one before (prevents race condition with login)
+- Simplified page.tsx routing: Removed `view !== 'app'` check, now just checks `!user`
+- Fixed seed.ts: Fixed HR Manager password (Hrmanager@123 → HrManager@123), moved `today` variable to top, added Priya Patil employee (HPE-0002) with login priya.patil / Employee@123
+- Re-seeded database with all 5 users: owner, superadmin, hrmanager, arjun.sharma, priya.patil, infosys.client
+- Browser verified all 3 portals: Admin (owner/Owner@123) → 15-module dashboard; Employee (arjun.sharma/Employee@123) → self-service portal with punch in/out; Client (infosys.client/Client@123) → project/invoice dashboard
+- Verified export CSV features in Employees, Attendance, Reports modules
+- Verified Document download and Profile export features
+- Created updated zip at /tmp/hp-enterprise-hrms.zip (41MB, 1741 files, excludes node_modules/.next/.git/upload/db)
+
+Stage Summary:
+- Root cause of Unauthorized: page.tsx useEffect called refresh() on every render cycle, causing race condition with setUser() from login
+- All 3 portal logins now work correctly from landing page
+- Production-ready zip created for deployment

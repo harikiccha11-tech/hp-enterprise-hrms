@@ -1,0 +1,1240 @@
+   195→                  return typeof v === 'string' ? esc(v) : (v ?? '')
+   196→                }).join(',') + '\n'
+   197→              }
+   198→              const blob = new Blob([csv], { type: 'text/csv' })
+   199→              const url = URL.createObjectURL(blob)
+   200→              const a = document.createElement('a')
+   201→              a.href = url; a.download = `employees_${new Date().toISOString().slice(0, 10)}.csv`
+   202→              a.click(); URL.revokeObjectURL(url)
+   203→            }}>
+   204→              <Download className="mr-1.5 h-3.5 w-3.5" /> Export CSV
+   205→            </Button>
+   206→          ) : undefined
+   207→        }
+   208→      />
+   209→
+   210→      <Card>
+   211→        <CardHeader className="pb-3">
+   212→          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+   213→            <Tabs value={status} onValueChange={setStatus}>
+   214→              <TabsList>
+   215→                {STATUS_TABS.map((t) => (
+   216→                  <TabsTrigger key={t.value} value={t.value} className="text-xs sm:text-sm">
+   217→                    {t.label}
+   218→                  </TabsTrigger>
+   219→                ))}
+   220→              </TabsList>
+   221→            </Tabs>
+   222→            <div className="relative w-full sm:w-72">
+   223→              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+   224→              <Input
+   225→                value={searchInput}
+   226→                onChange={(e) => setSearchInput(e.target.value)}
+   227→                placeholder="Search by name, code, email, mobile…"
+   228→                className="pl-9"
+   229→              />
+   230→            </div>
+   231→          </div>
+   232→        </CardHeader>
+   233→        <CardContent>
+   234→          {loading ? (
+   235→            <div className="space-y-2">
+   236→              {Array.from({ length: 6 }).map((_, i) => (
+   237→                <Skeleton key={i} className="h-14 w-full" />
+   238→              ))}
+   239→            </div>
+   240→          ) : list.length === 0 ? (
+   241→            <EmptyState icon={Users} title="No employees found" desc="Try adjusting filters or search query" />
+   242→          ) : (
+   243→            <div className="max-h-[60vh] overflow-y-auto scroll-thin rounded-lg border">
+   244→              <Table>
+   245→                <TableHeader className="sticky top-0 z-10 bg-card">
+   246→                  <TableRow>
+   247→                    <TableHead>Code</TableHead>
+   248→                    <TableHead>Name</TableHead>
+   249→                    <TableHead className="hidden md:table-cell">Designation</TableHead>
+   250→                    <TableHead className="hidden lg:table-cell">Department</TableHead>
+   251→                    <TableHead>Status</TableHead>
+   252→                    <TableHead className="text-right">Actions</TableHead>
+   253→                  </TableRow>
+   254→                </TableHeader>
+   255→                <TableBody>
+   256→                  {list.map((e) => (
+   257→                    <TableRow key={e.id} className="hover:bg-muted/40">
+   258→                      <TableCell className="font-mono text-xs">{e.employeeCode || '—'}</TableCell>
+   259→                      <TableCell>
+   260→                        <div className="flex items-center gap-2.5">
+   261→                          <Avatar className="h-8 w-8 ring-1 ring-[var(--gold)]/30">
+   262→                            <AvatarFallback className="bg-[var(--navy)]/10 text-[10px] font-bold text-[var(--navy)]">
+   263→                              {initials(e.fullName)}
+   264→                            </AvatarFallback>
+   265→                          </Avatar>
+   266→                          <div className="min-w-0">
+   267→                            <p className="truncate text-sm font-semibold text-[var(--navy)] dark:text-white">{e.fullName}</p>
+   268→                            <p className="truncate text-[11px] text-muted-foreground">{e.email}</p>
+   269→                          </div>
+   270→                        </div>
+   271→                      </TableCell>
+   272→                      <TableCell className="hidden md:table-cell text-sm">{e.designation || e.currentDesignation || '—'}</TableCell>
+   273→                      <TableCell className="hidden lg:table-cell text-sm">{e.department || '—'}</TableCell>
+   274→                      <TableCell><StatusBadge status={e.status} /></TableCell>
+   275→                      <TableCell className="text-right">
+   276→                        <div className="flex items-center justify-end gap-1.5">
+   277→                          {e.status === 'PENDING' && (
+   278→                            <>
+   279→                              <Button size="sm" variant="outline" className="h-8 gap-1 border-emerald-500/30 text-emerald-700 hover:bg-emerald-50"
+   280→                                onClick={() => setApproving(e)}
+   281→                              >
+   282→                                <Check className="h-3.5 w-3.5" /> Approve
+   283→                              </Button>
+   284→                              <Button size="sm" variant="outline" className="h-8 gap-1 border-red-500/30 text-red-700 hover:bg-red-50"
+   285→                                onClick={() => setRejecting(e)}
+   286→                              >
+   287→                                <X className="h-3.5 w-3.5" /> Reject
+   288→                              </Button>
+   289→                            </>
+   290→                          )}
+   291→                          <DropdownMenu>
+   292→                            <DropdownMenuTrigger asChild>
+   293→                              <Button size="sm" variant="ghost" className="h-8 w-8 p-0" aria-label="More actions">
+   294→                                <MoreVertical className="h-4 w-4" />
+   295→                              </Button>
+   296→                            </DropdownMenuTrigger>
+   297→                            <DropdownMenuContent align="end" className="w-52">
+   298→                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+   299→                              <DropdownMenuItem onClick={() => openDetail(e)}>
+   300→                                <Eye className="mr-2 h-4 w-4" /> View details
+   301→                              </DropdownMenuItem>
+   302→                              <DropdownMenuItem onClick={() => setEditing(e)}>
+   303→                                <Pencil className="mr-2 h-4 w-4" /> Edit
+   304→                              </DropdownMenuItem>
+   305→                              {e.status === 'APPROVED' && (
+   306→                                <>
+   307→                                  <DropdownMenuSeparator />
+   308→                                  <DropdownMenuItem onClick={() => setResetting(e)}>
+   309→                                    <KeyRound className="mr-2 h-4 w-4" /> Reset password
+   310→                                  </DropdownMenuItem>
+   311→                                  <DropdownMenuItem onClick={() => setLockToggling(e)}>
+   312→                                    {e.user?.locked
+   313→                                      ? <><Unlock className="mr-2 h-4 w-4" /> Unlock account</>
+   314→                                      : <><Lock className="mr-2 h-4 w-4" /> Lock account</>}
+   315→                                  </DropdownMenuItem>
+   316→                                </>
+   317→                              )}
+   318→                              {canDelete && (
+   319→                                <>
+   320→                                  <DropdownMenuSeparator />
+   321→                                  <DropdownMenuItem className="text-red-600 focus:text-red-700" onClick={() => setDeleting(e)}>
+   322→                                    <Trash2 className="mr-2 h-4 w-4" /> Delete
+   323→                                  </DropdownMenuItem>
+   324→                                </>
+   325→                              )}
+   326→                            </DropdownMenuContent>
+   327→                          </DropdownMenu>
+   328→                        </div>
+   329→                      </TableCell>
+   330→                    </TableRow>
+   331→                  ))}
+   332→                </TableBody>
+   333→              </Table>
+   334→            </div>
+   335→          )}
+   336→          {!loading && list.length > 0 && (
+   337→            <p className="mt-3 text-xs text-muted-foreground">
+   338→              Showing {list.length} employee{list.length > 1 ? 's' : ''}
+   339→            </p>
+   340→          )}
+   341→        </CardContent>
+   342→      </Card>
+   343→
+   344→      {/* Detail Dialog */}
+   345→      <Dialog open={!!viewing} onOpenChange={(o) => !o && setViewing(null)}>
+   346→        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto scroll-thin">
+   347→          <DialogHeader>
+   348→            <DialogTitle className="flex items-center gap-3">
+   349→              <Avatar className="h-10 w-10 ring-2 ring-[var(--gold)]/40">
+   350→                <AvatarFallback className="bg-[var(--navy)] text-[var(--gold)] text-sm font-bold">
+   351→                  {initials(viewing?.fullName || '')}
+   352→                </AvatarFallback>
+   353→              </Avatar>
+   354→              <div>
+   355→                <p>{viewing?.fullName}</p>
+   356→                <p className="text-xs font-normal text-muted-foreground">
+   357→                  {viewing?.employeeCode || 'Pending code'} • {viewing?.email}
+   358→                </p>
+   359→              </div>
+   360→            </DialogTitle>
+   361→            <DialogDescription className="sr-only">Full employee profile</DialogDescription>
+   362→          </DialogHeader>
+   363→
+   364→          {viewing && <ProfileBody emp={viewing} docs={viewingDocs} loadingDocs={loadingDocs} onDocsChange={(d) => setViewingDocs(d)} onScheduleInterview={() => setSchedulingInterview(viewing)} onAssignClient={() => setAssigningClient(viewing)} />}
+   365→
+   366→          <DialogFooter className="gap-2 sm:gap-2 flex-wrap">
+   367→            <Button variant="outline" size="sm" onClick={() => exportEmployeeProfile(viewing, viewingDocs)}>
+   368→              <Download className="mr-1 h-4 w-4" /> Export Profile
+   369→            </Button>
+   370→            <Button variant="outline" onClick={() => setViewing(null)}>Close</Button>
+   371→            {viewing?.status === 'PENDING' && (
+   372→              <>
+   373→                <Button variant="outline" className="border-red-500/30 text-red-700 hover:bg-red-50"
+   374→                  onClick={() => { setRejecting(viewing); setViewing(null) }}
+   375→                >
+   376→                  <X className="mr-1 h-4 w-4" /> Reject
+   377→                </Button>
+   378→                <Button className="bg-[var(--navy)] text-white hover:bg-[var(--navy-light)]"
+   379→                  onClick={() => { setApproving(viewing); setViewing(null) }}
+   380→                >
+   381→                  <Check className="mr-1 h-4 w-4" /> Approve
+   382→                </Button>
+   383→              </>
+   384→            )}
+   385→          </DialogFooter>
+   386→        </DialogContent>
+   387→      </Dialog>
+   388→
+   389→      {/* Approve Dialog */}
+   390→      {approving && (
+   391→        <ApproveDialog
+   392→          emp={approving}
+   393→          onClose={() => setApproving(null)}
+   394→          onSuccess={(c) => {
+   395→            setCreds({ username: c.username, tempPassword: c.tempPassword, empName: approving.fullName })
+   396→            setApproving(null)
+   397→            load()
+   398→          }}
+   399→        />
+   400→      )}
+   401→
+   402→      {/* Reject Dialog */}
+   403→      {rejecting && (
+   404→        <RejectDialog
+   405→          emp={rejecting}
+   406→          onClose={() => setRejecting(null)}
+   407→          onSuccess={() => { setRejecting(null); load() }}
+   408→        />
+   409→      )}
+   410→
+   411→      {/* Edit Dialog */}
+   412→      {editing && (
+   413→        <EditDialog
+   414→          emp={editing}
+   415→          onClose={() => setEditing(null)}
+   416→          onSuccess={() => { setEditing(null); load() }}
+   417→        />
+   418→      )}
+   419→
+   420→      {/* Reset password confirmation */}
+   421→      <AlertDialog open={!!resetting} onOpenChange={(o) => !o && setResetting(null)}>
+   422→        <AlertDialogContent>
+   423→          <AlertDialogHeader>
+   424→            <AlertDialogTitle>Reset password?</AlertDialogTitle>
+   425→            <AlertDialogDescription>
+   426→              This will generate a new temporary password for <strong>{resetting?.fullName}</strong>. The employee must reset it on next login.
+   427→            </AlertDialogDescription>
+   428→          </AlertDialogHeader>
+   429→          <AlertDialogFooter>
+   430→            <AlertDialogCancel>Cancel</AlertDialogCancel>
+   431→            <AlertDialogAction
+   432→              onClick={async () => {
+   433→                if (!resetting) return
+   434→                try {
+   435→                  const data = await api<{ tempPassword: string }>(`/api/admin/employees/${resetting.id}/reset-password`, { method: 'POST' })
+   436→                  setCreds({ username: resetting.user?.username || resetting.email, tempPassword: data.tempPassword, empName: resetting.fullName })
+   437→                  setResetting(null)
+   438→                  toast.success('Password reset successfully')
+   439→                } catch (e: any) {
+   440→                  toast.error(e.message || 'Reset failed')
+   441→                }
+   442→              }}
+   443→            >
+   444→              <KeyRound className="mr-1 h-4 w-4" /> Reset Password
+   445→            </AlertDialogAction>
+   446→          </AlertDialogFooter>
+   447→        </AlertDialogContent>
+   448→      </AlertDialog>
+   449→
+   450→      {/* Lock/unlock confirmation */}
+   451→      <AlertDialog open={!!lockToggling} onOpenChange={(o) => !o && setLockToggling(null)}>
+   452→        <AlertDialogContent>
+   453→          <AlertDialogHeader>
+   454→            <AlertDialogTitle>{lockToggling?.user?.locked ? 'Unlock account?' : 'Lock account?'}</AlertDialogTitle>
+   455→            <AlertDialogDescription>
+   456→              {lockToggling?.user?.locked
+   457→                ? `Unlock ${lockToggling?.fullName}'s login access. They will be able to sign in again.`
+   458→                : `Lock ${lockToggling?.fullName}'s login access. They will be unable to sign in until unlocked.`}
+   459→            </AlertDialogDescription>
+   460→          </AlertDialogHeader>
+   461→          <AlertDialogFooter>
+   462→            <AlertDialogCancel>Cancel</AlertDialogCancel>
+   463→            <AlertDialogAction
+   464→              onClick={async () => {
+   465→                if (!lockToggling) return
+   466→                const action = lockToggling.user?.locked ? 'unlock' : 'lock'
+   467→                try {
+   468→                  await api(`/api/admin/employees/${lockToggling.id}/reset-password`, {
+   469→                    method: 'PATCH', body: JSON.stringify({ action }),
+   470→                  })
+   471→                  toast.success(`Account ${action === 'lock' ? 'locked' : 'unlocked'}`)
+   472→                  setLockToggling(null); load()
+   473→                } catch (e: any) {
+   474→                  toast.error(e.message || 'Action failed')
+   475→                }
+   476→              }}
+   477→            >
+   478→              Confirm
+   479→            </AlertDialogAction>
+   480→          </AlertDialogFooter>
+   481→        </AlertDialogContent>
+   482→      </AlertDialog>
+   483→
+   484→      {/* Delete confirmation */}
+   485→      <AlertDialog open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)}>
+   486→        <AlertDialogContent>
+   487→          <AlertDialogHeader>
+   488→            <AlertDialogTitle className="text-red-700">Delete employee?</AlertDialogTitle>
+   489→            <AlertDialogDescription>
+   490→              This will permanently delete <strong>{deleting?.fullName}</strong> and their login account, attendance, documents, and related records. This action cannot be undone.
+   491→            </AlertDialogDescription>
+   492→          </AlertDialogHeader>
+   493→          <AlertDialogFooter>
+   494→            <AlertDialogCancel>Cancel</AlertDialogCancel>
+   495→            <AlertDialogAction
+   496→              className="bg-red-600 hover:bg-red-700"
+   497→              onClick={async () => {
+   498→                if (!deleting) return
+   499→                try {
+   500→                  await api(`/api/admin/employees/${deleting.id}`, { method: 'DELETE' })
+   501→                  toast.success('Employee deleted')
+   502→                  setDeleting(null); load()
+   503→                } catch (e: any) {
+   504→                  toast.error(e.message || 'Delete failed')
+   505→                }
+   506→              }}
+   507→            >
+   508→              <Trash2 className="mr-1 h-4 w-4" /> Delete Permanently
+   509→            </AlertDialogAction>
+   510→          </AlertDialogFooter>
+   511→        </AlertDialogContent>
+   512→      </AlertDialog>
+   513→
+   514→      {/* Schedule Interview Dialog */}
+   515→      {schedulingInterview && (
+   516→        <ScheduleInterviewDialog
+   517→          emp={schedulingInterview}
+   518→          onClose={() => setSchedulingInterview(null)}
+   519→          onSuccess={(updatedEmp) => {
+   520→            setViewing(updatedEmp)
+   521→            setSchedulingInterview(null)
+   522→            load()
+   523→          }}
+   524→        />
+   525→      )}
+   526→
+   527→      {/* Assign Client Dialog */}
+   528→      {assigningClient && (
+   529→        <AssignClientDialog
+   530→          emp={assigningClient}
+   531→          onClose={() => setAssigningClient(null)}
+   532→          onSuccess={() => {
+   533→            setAssigningClient(null)
+   534→            refreshDetail(assigningClient.id)
+   535→          }}
+   536→        />
+   537→      )}
+   538→
+   539→      {/* Credentials (success) Dialog */}
+   540→      <Dialog open={!!creds} onOpenChange={(o) => !o && setCreds(null)}>
+   541→        <DialogContent className="max-w-md">
+   542→          <DialogHeader>
+   543→            <DialogTitle className="flex items-center gap-2 text-[var(--navy)] dark:text-white">
+   544→              <UserCheck className="h-5 w-5 text-emerald-600" />
+   545→              Credentials Generated
+   546→            </DialogTitle>
+   547→            <DialogDescription>
+   548→              Login credentials for <strong>{creds?.empName}</strong>. Share securely with the employee.
+   549→            </DialogDescription>
+   550→          </DialogHeader>
+   551→          <div className="space-y-3">
+   552→            <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3">
+   553→              <div className="flex items-start gap-2 text-xs text-amber-800 dark:text-amber-300">
+   554→                <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0" />
+   555→                <p>
+   556→                  <strong>Important:</strong> The employee must reset this temporary password on first login. Save these credentials securely — they will not be shown again.
+   557→                </p>
+   558→              </div>
+   559→            </div>
+   560→            <div className="space-y-2">
+   561→              <CredField label="Username" value={creds?.username || ''} onCopy={() => copyCreds(creds?.username || '')} />
+   562→              <CredField label="Temporary Password" value={creds?.tempPassword || ''} onCopy={() => copyCreds(creds?.tempPassword || '')} mono />
+   563→            </div>
+   564→          </div>
+   565→          <DialogFooter>
+   566→            <Button
+   567→              className="bg-[var(--navy)] text-white hover:bg-[var(--navy-light)]"
+   568→              onClick={() => {
+   569→                copyCreds(`Username: ${creds?.username}\nTemporary Password: ${creds?.tempPassword}`)
+   570→              }}
+   571→            >
+   572→              <Copy className="mr-1 h-4 w-4" /> Copy both
+   573→            </Button>
+   574→            <Button variant="outline" onClick={() => setCreds(null)}>Done</Button>
+   575→          </DialogFooter>
+   576→        </DialogContent>
+   577→      </Dialog>
+   578→    </div>
+   579→  )
+   580→}
+   581→
+   582→// ============================================================
+   583→// Sub-components
+   584→// ============================================================
+   585→
+   586→function CredField({ label, value, onCopy, mono }: { label: string; value: string; onCopy: () => void; mono?: boolean }) {
+   587→  return (
+   588→    <div className="rounded-lg border p-3">
+   589→      <div className="flex items-center justify-between">
+   590→        <div className="min-w-0 flex-1">
+   591→          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</p>
+   592→          <p className={`mt-0.5 truncate text-sm font-bold text-[var(--navy)] dark:text-white ${mono ? 'font-mono' : ''}`}>
+   593→            {value}
+   594→          </p>
+   595→        </div>
+   596→        <Button size="sm" variant="ghost" onClick={onCopy} className="h-8 w-8 p-0" aria-label={`Copy ${label}`}>
+   597→          <Copy className="h-3.5 w-3.5" />
+   598→        </Button>
+   599→      </div>
+   600→    </div>
+   601→  )
+   602→}
+   603→
+   604→function InfoRow({ icon: Icon, label, value }: { icon: any; label: string; value: React.ReactNode }) {
+   605→  return (
+   606→    <div className="flex items-start gap-2.5 py-1.5">
+   607→      <Icon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+   608→      <div className="min-w-0 flex-1">
+   609→        <p className="text-[11px] uppercase tracking-wider text-muted-foreground">{label}</p>
+   610→        <p className="text-sm font-medium text-[var(--navy)] dark:text-white break-words">{value || '—'}</p>
+   611→      </div>
+   612→    </div>
+   613→  )
+   614→}
+   615→
+   616→function PipelineStep({ label, active, done, pending }: { label: string; active: boolean; done: boolean; pending?: boolean }) {
+   617→  return (
+   618→    <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-semibold ${
+   619→      done ? 'bg-emerald-500/15 text-emerald-700 border border-emerald-500/30'
+   620→      : pending ? 'bg-amber-500/15 text-amber-700 border border-amber-500/30'
+   621→      : active ? 'bg-[var(--navy)]/10 text-[var(--navy)] border border-[var(--navy)]/20'
+   622→      : 'bg-muted text-muted-foreground border border-border'
+   623→    }`}>
+   624→      {done ? <Check className="h-3 w-3" /> : pending ? <Clock className="h-3 w-3" /> : null}
+   625→      {label}
+   626→    </span>
+   627→  )
+   628→}
+   629→function PipelineArrow() {
+   630→  return <span className="text-muted-foreground text-xs">→</span>
+   631→}
+   632→
+   633→function Section({ title, icon: Icon, children }: { title: string; icon: any; children: React.ReactNode }) {
+   634→  return (
+   635→    <div className="rounded-lg border p-4">
+   636→      <div className="mb-3 flex items-center gap-2">
+   637→        <Icon className="h-4 w-4 text-[var(--gold)]" />
+   638→        <h4 className="text-sm font-semibold text-[var(--navy)] dark:text-white">{title}</h4>
+   639→      </div>
+   640→      <div className="grid grid-cols-1 gap-x-6 gap-y-1 sm:grid-cols-2">
+   641→        {children}
+   642→      </div>
+   643→    </div>
+   644→  )
+   645→}
+   646→
+   647→function ProfileBody({ emp, docs, loadingDocs, onDocsChange, onScheduleInterview, onAssignClient }: { emp: Employee; docs: { uploaded: EmployeeDoc[]; generated: GeneratedDoc[] }; loadingDocs: boolean; onDocsChange: (d: { uploaded: EmployeeDoc[]; generated: GeneratedDoc[] }) => void; onScheduleInterview: () => void; onAssignClient: () => void }) {
+   648→  const education = parseJSON<{ qualification?: string; specialization?: string; college?: string; year?: string }[]>(emp.educationJson, [])
+   649→  const disciplines = emp.disciplines?.split(',').map((s) => s.trim()).filter(Boolean) || []
+   650→  const skills = emp.skills?.split(',').map((s) => s.trim()).filter(Boolean) || []
+   651→
+   652→  return (
+   653→    <div className="space-y-4">
+   654→      <div className="flex flex-wrap items-center gap-2">
+   655→        <StatusBadge status={emp.status} />
+   656→        {emp.user?.locked && <Badge variant="outline" className="border-red-500/30 text-red-700"><Lock className="mr-1 h-3 w-3" /> Locked</Badge>}
+   657→        {emp.employmentType && <Badge variant="outline">{emp.employmentType}</Badge>}
+   658→        {emp.department && <Badge variant="outline">{emp.department}</Badge>}
+   659→        {emp.assignedClient ? (
+   660→          <Badge variant="outline" className="border-[var(--gold)]/40 text-[#8a6f24] cursor-pointer hover:bg-[var(--gold)]/10 transition-colors" onClick={onAssignClient}>
+   661→            <Building2 className="mr-1 h-3 w-3" /> {emp.assignedClient.clientName}
+   662→          </Badge>
+   663→        ) : (
+   664→          <Button variant="outline" size="sm" className="h-6 text-[10px] gap-1 border-dashed" onClick={onAssignClient}>
+   665→            <Building2 className="h-3 w-3" /> Assign Client
+   666→          </Button>
+   667→        )}
+   668→      </div>
+   669→
+   670→      {/* Hiring Pipeline */}
+   671→      <div className="rounded-lg border bg-muted/30 p-3">
+   672→        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">Hiring Pipeline</p>
+   673→        <div className="flex flex-wrap items-center gap-2">
+   674→          <PipelineStep label="Applied" active={true} done={true} />
+   675→          <PipelineArrow />
+   676→          <PipelineStep label="Docs Verified" active={true} done={!!emp.documentsVerified} />
+   677→          <PipelineArrow />
+   678→          <PipelineStep label="Interview" active={!!emp.interviewStatus} done={emp.interviewStatus === 'PASSED'} pending={emp.interviewStatus === 'SCHEDULED'} />
+   679→          <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-muted-foreground hover:text-[var(--navy)]" onClick={onScheduleInterview} aria-label="Schedule interview">
+   680→            <Pencil className="h-3 w-3" />
+   681→          </Button>
+   682→          <PipelineArrow />
+   683→          <PipelineStep label="Hired" active={emp.status === 'APPROVED'} done={emp.status === 'APPROVED'} />
+   684→          <PipelineArrow />
+   685→          <PipelineStep label="Client Assigned" active={!!emp.assignedClient} done={!!emp.assignedClient} />
+   686→        </div>
+   687→        {emp.interviewStatus && emp.interviewStatus !== 'NONE' && (
+   688→          <p className="mt-2 text-xs text-muted-foreground">
+   689→            Interview: <strong>{emp.interviewStatus}</strong>
+   690→            {emp.interviewDate ? ` on ${fmtDate(emp.interviewDate)}` : ''}
+   691→            {emp.interviewNotes ? ` — ${emp.interviewNotes}` : ''}
+   692→          </p>
+   693→        )}
+   694→      </div>
+   695→
+   696→      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+   697→        <Section title="Personal" icon={Users}>
+   698→          <InfoRow icon={Users} label="Father's Name" value={emp.fatherName} />
+   699→          <InfoRow icon={Users} label="Mother's Name" value={emp.motherName} />
+   700→          <InfoRow icon={Calendar} label="Date of Birth" value={emp.dob ? fmtDate(emp.dob) : null} />
+   701→          <InfoRow icon={Users} label="Gender" value={emp.gender} />
+   702→          <InfoRow icon={Droplet} label="Blood Group" value={emp.bloodGroup} />
+   703→          <InfoRow icon={Phone} label="Mobile" value={emp.mobile} />
+   704→          <InfoRow icon={Phone} label="Alternate Mobile" value={emp.alternateMobile} />
+   705→          <InfoRow icon={Mail} label="Email" value={emp.email} />
+   706→          <InfoRow icon={MapPin} label="Address" value={emp.address} />
+   707→          <InfoRow icon={Heart} label="Emergency Contact" value={emp.emergencyContact} />
+   708→        </Section>
+   709→
+   710→        <Section title="Identity" icon={IdCard}>
+   711→          <InfoRow icon={IdCard} label="Aadhaar" value={emp.aadhaar} />
+   712→          <InfoRow icon={IdCard} label="PAN" value={emp.pan} />
+   713→          <InfoRow icon={IdCard} label="UAN" value={emp.uan} />
+   714→          <InfoRow icon={IdCard} label="ESIC" value={emp.esic} />
+   715→          <InfoRow icon={IdCard} label="Passport" value={emp.passport} />
+   716→          <InfoRow icon={IdCard} label="Driving Licence" value={emp.drivingLicence} />
+   717→        </Section>
+   718→
+   719→        <Section title="Bank Details" icon={Building2}>
+   720→          <InfoRow icon={CreditCard} label="Account Holder" value={emp.bankHolder} />
+   721→          <InfoRow icon={Banknote} label="Bank Name" value={emp.bankName} />
+   722→          <InfoRow icon={Building2} label="Branch" value={emp.bankBranch} />
+   723→          <InfoRow icon={CreditCard} label="Account Number" value={emp.bankAccount} />
+   724→          <InfoRow icon={CreditCard} label="IFSC" value={emp.bankIfsc} />
+   725→        </Section>
+   726→
+   727→        <Section title="Employment" icon={Briefcase}>
+   728→          <InfoRow icon={Briefcase} label="Designation" value={emp.designation || emp.currentDesignation} />
+   729→          <InfoRow icon={Building2} label="Department" value={emp.department} />
+   730→          <InfoRow icon={Calendar} label="Join Date" value={emp.joinDate ? fmtDate(emp.joinDate) : null} />
+   731→          <InfoRow icon={Briefcase} label="Type" value={emp.employmentType} />
+   732→          <InfoRow icon={Wallet} label="Salary (CTC)" value={emp.salary ? formatINR(emp.salary) : null} />
+   733→          <InfoRow icon={Wallet} label="Basic" value={emp.basic ? formatINR(emp.basic) : null} />
+   734→          <InfoRow icon={Wallet} label="HRA" value={emp.hra ? formatINR(emp.hra) : null} />
+   735→          <InfoRow icon={Wallet} label="Allowances" value={emp.allowances ? formatINR(emp.allowances) : null} />
+   736→        </Section>
+   737→
+   738→        <Section title="Experience" icon={Briefcase}>
+   739→          <InfoRow icon={Briefcase} label="Total Experience" value={emp.totalExperience} />
+   740→          <InfoRow icon={Briefcase} label="Relevant Experience" value={emp.relevantExperience} />
+   741→          <InfoRow icon={Building2} label="Current Company" value={emp.currentCompany} />
+   742→          <InfoRow icon={Building2} label="Previous Company" value={emp.previousCompany} />
+   743→          <InfoRow icon={Wallet} label="Current Salary" value={emp.currentSalary} />
+   744→          <InfoRow icon={Wallet} label="Expected Salary" value={emp.expectedSalary} />
+   745→          <InfoRow icon={Clock} label="Notice Period" value={emp.noticePeriod} />
+   746→        </Section>
+   747→
+   748→        <Section title="Education & Skills" icon={GraduationCap}>
+   749→          {education.length > 0 ? (
+   750→            <div className="sm:col-span-2 space-y-2">
+   751→              {education.map((ed, i) => (
+   752→                <div key={i} className="rounded border p-2 text-xs">
+   753→                  <p className="font-semibold text-[var(--navy)] dark:text-white">
+   754→                    {ed.qualification || '—'}{ed.year ? ` (${ed.year})` : ''}
+   755→                  </p>
+   756→                  <p className="text-muted-foreground">
+   757→                    {[ed.specialization, ed.college].filter(Boolean).join(' • ')}
+   758→                  </p>
+   759→                </div>
+   760→              ))}
+   761→            </div>
+   762→          ) : (
+   763→            <InfoRow icon={GraduationCap} label="Education" value={null} />
+   764→          )}
+   765→          <div className="sm:col-span-2">
+   766→            <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Disciplines</p>
+   767→            <div className="mt-1 flex flex-wrap gap-1.5">
+   768→              {disciplines.length > 0 ? disciplines.map((d) => (
+   769→                <Badge key={d} variant="secondary" className="text-[10px]">{d}</Badge>
+   770→              )) : <span className="text-sm text-muted-foreground">—</span>}
+   771→            </div>
+   772→          </div>
+   773→          <div className="sm:col-span-2">
+   774→            <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Skills</p>
+   775→            <div className="mt-1 flex flex-wrap gap-1.5">
+   776→              {skills.length > 0 ? skills.map((s) => (
+   777→                <Badge key={s} variant="outline" className="text-[10px] border-[var(--gold)]/40 text-[#8a6f24]">{s}</Badge>
+   778→              )) : <span className="text-sm text-muted-foreground">—</span>}
+   779→            </div>
+   780→          </div>
+   781→        </Section>
+   782→      </div>
+   783→
+   784→      {/* Documents */}
+   785→      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+   786→        <Section title="Uploaded Documents — HR Verification" icon={FileText}>
+   787→          <div className="sm:col-span-2 space-y-1.5">
+   788→            {docs.uploaded.length === 0 ? (
+   789→              <p className="text-sm text-muted-foreground">No documents uploaded</p>
+   790→            ) : (
+   791→              <>
+   792→                <div className="flex items-center gap-2 mb-2">
+   793→                  {emp.documentsVerified ? (
+   794→                    <Badge variant="outline" className="border-emerald-500/40 text-emerald-700 bg-emerald-50"><CheckCheck className="mr-1 h-3 w-3" /> All documents verified</Badge>
+   795→                  ) : (
+   796→                    <Badge variant="outline" className="border-amber-500/40 text-amber-700 bg-amber-50"><Clock className="mr-1 h-3 w-3" /> Verification pending — {docs.uploaded.filter(d => d.verified).length}/{docs.uploaded.length} verified</Badge>
+   797→                  )}
+   798→                </div>
+   799→                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+   800→                  {docs.uploaded.map((d) => {
+   801→                    const fileName = d.filePath.split('/').pop()
+   802→                    const url = `/api/uploads/employees/${emp.id}/${fileName}`
+   803→                    const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(d.fileName)
+   804→                    const label = DOC_LABELS[d.documentType] || d.documentType
+   805→                    return (
+   806→                      <div key={d.id} className={`group flex items-center gap-2 rounded-lg border p-2 text-xs transition-colors ${d.verified ? 'border-emerald-500/30 bg-emerald-50/40' : 'hover:border-[var(--gold)] hover:bg-muted/60'}`}>
+   807→                        <a href={url} target="_blank" rel="noreferrer" className="flex items-center gap-2 flex-1 min-w-0">
+   808→                          {isImage ? (
+   809→                            <img src={url} alt={label} className="h-12 w-12 shrink-0 rounded object-cover border" />
+   810→                          ) : (
+   811→                            <div className="grid h-12 w-12 shrink-0 place-items-center rounded border bg-muted">
+   812→                              <FileText className="h-5 w-5 text-muted-foreground" />
+   813→                            </div>
+   814→                          )}
+   815→                          <span className="min-w-0 flex-1">
+   816→                            <span className="block truncate font-semibold text-[var(--navy)] dark:text-white">{label}</span>
+   817→                            <span className="block truncate text-muted-foreground">{d.fileName}</span>
+   818→                            {d.verified && <span className="block text-[10px] text-emerald-600 font-medium">✓ Verified{d.verifiedAt ? ` ${fmtDate(d.verifiedAt)}` : ''}</span>}
+   819→                          </span>
+   820→                        </a>
+   821→                        <Button
+   822→                          size="sm"
+   823→                          variant={d.verified ? 'outline' : 'default'}
+   824→                          className={`h-7 shrink-0 text-[10px] ${d.verified ? 'border-emerald-500/30 text-emerald-700' : 'bg-emerald-600 hover:bg-emerald-700 text-white'}`}
+   825→                          onClick={async (e) => {
+   826→                            e.preventDefault()
+   827→                            try {
+   828→                              const res = await fetch(`/api/admin/employees/${emp.id}/verify-doc`, {
+   829→                                method: 'POST', headers: { 'Content-Type': 'application/json' },
+   830→                                body: JSON.stringify({ docId: d.id, verified: !d.verified }),
+   831→                              })
+   832→                              if (!res.ok) throw new Error('Failed')
+   833→                              toast.success(d.verified ? `${label} unverified` : `${label} verified`)
+   834→                              // reload docs
+   835→                              const data = await api<{ docs: GeneratedDoc[]; uploaded: EmployeeDoc[] }>(`/api/admin/employees/${emp.id}/documents`)
+   836→                              onDocsChange({ uploaded: data.uploaded || [], generated: data.docs || [] })
+   837→                            } catch (e: any) { toast.error(e.message || 'Failed') }
+   838→                          }}
+   839→                        >
+   840→                          {d.verified ? <><X className="mr-0.5 h-3 w-3" /> Unverify</> : <><Check className="mr-0.5 h-3 w-3" /> Verify</>}
+   841→                        </Button>
+   842→                      </div>
+   843→                    )
+   844→                  })}
+   845→                </div>
+   846→              </>
+   847→            )}
+   848→          </div>
+   849→        </Section>
+   850→        <Section title="Generated Documents" icon={Award}>
+   851→          <div className="sm:col-span-2 space-y-1.5">
+   852→            {loadingDocs ? (
+   853→              <Skeleton className="h-8 w-full" />
+   854→            ) : docs.generated.length === 0 ? (
+   855→              <p className="text-sm text-muted-foreground">No documents generated yet</p>
+   856→            ) : (
+   857→              docs.generated.map((d) => (
+   858→                <a
+   859→                  key={d.id}
+   860→                  href={`/api/documents/${d.id}`}
+   861→                  target="_blank"
+   862→                  rel="noreferrer"
+   863→                  className="flex items-center justify-between rounded border p-2 text-xs transition-colors hover:bg-muted/60"
+   864→                >
+   865→                  <span className="flex items-center gap-2 truncate">
+   866→                    <Award className="h-3.5 w-3.5 text-[var(--gold)]" />
+   867→                    <span className="truncate font-medium text-[var(--navy)] dark:text-white">{d.title}</span>
+   868→                  </span>
+   869→                  <span className="flex items-center gap-2 text-muted-foreground">
+   870→                    {fmtDate(d.generatedAt)}
+   871→                    <Download className="h-3.5 w-3.5 text-[var(--gold)]" />
+   872→                  </span>
+   873→                </a>
+   874→              ))
+   875→            )}
+   876→          </div>
+   877→        </Section>
+   878→      </div>
+   879→
+   880→      {emp.status === 'REJECTED' && emp.rejectReason && (
+   881→        <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-3">
+   882→          <p className="text-xs font-semibold text-red-700">Rejection Reason</p>
+   883→          <p className="mt-1 text-sm text-red-700/80">{emp.rejectReason}</p>
+   884→        </div>
+   885→      )}
+   886→    </div>
+   887→  )
+   888→}
+   889→
+   890→function ApproveDialog({ emp, onClose, onSuccess }: {
+   891→  emp: Employee
+   892→  onClose: () => void
+   893→  onSuccess: (creds: { username: string; tempPassword: string }) => void
+   894→}) {
+   895→  const [designation, setDesignation] = useState(emp.currentDesignation || '')
+   896→  const [department, setDepartment] = useState(emp.department || 'Projects')
+   897→  const [salary, setSalary] = useState(String(emp.expectedSalary || '').replace(/[^0-9]/g, '') || '')
+   898→  const [joinDate, setJoinDate] = useState(new Date().toISOString().slice(0, 10))
+   899→  const [employmentType, setEmploymentType] = useState(emp.employmentType || 'Full-time')
+   900→  const [saving, setSaving] = useState(false)
+   901→
+   902→  const submit = async () => {
+   903→    if (!designation.trim() || !department || !salary || !joinDate) {
+   904→      toast.error('Please fill all required fields')
+   905→      return
+   906→    }
+   907→    setSaving(true)
+   908→    try {
+   909→      const data = await api<{ credentials: { username: string; tempPassword: string } }>(`/api/admin/employees/${emp.id}/approve`, {
+   910→        method: 'POST',
+   911→        body: JSON.stringify({
+   912→          designation: designation.trim(),
+   913→          department,
+   914→          salary: Number(salary),
+   915→          joinDate,
+   916→          employmentType,
+   917→        }),
+   918→      })
+   919→      toast.success(`${emp.fullName} approved successfully`)
+   920→      onSuccess(data.credentials)
+   921→    } catch (e: any) {
+   922→      toast.error(e.message || 'Approval failed')
+   923→    } finally {
+   924→      setSaving(false)
+   925→    }
+   926→  }
+   927→
+   928→  return (
+   929→    <Dialog open onOpenChange={(o) => !o && onClose()}>
+   930→      <DialogContent className="max-w-lg">
+   931→        <DialogHeader>
+   932→          <DialogTitle className="flex items-center gap-2">
+   933→            <UserCheck className="h-5 w-5 text-emerald-600" /> Approve Employee
+   934→          </DialogTitle>
+   935→          <DialogDescription>
+   936→            On approval, the system will generate an employee code, login credentials, and onboarding documents automatically.
+   937→          </DialogDescription>
+   938→        </DialogHeader>
+   939→        <div className="space-y-3">
+   940→          <div className="rounded-lg border p-3">
+   941→            <p className="text-xs text-muted-foreground">Approving</p>
+   942→            <p className="font-semibold text-[var(--navy)] dark:text-white">{emp.fullName}</p>
+   943→            <p className="text-xs text-muted-foreground">{emp.email}</p>
+   944→          </div>
+   945→          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+   946→            <div className="space-y-1.5">
+   947→              <Label htmlFor="ap-designation">Designation *</Label>
+   948→              <Input id="ap-designation" value={designation} onChange={(e) => setDesignation(e.target.value)} placeholder="e.g. Project Engineer" />
+   949→            </div>
+   950→            <div className="space-y-1.5">
+   951→              <Label htmlFor="ap-dept">Department *</Label>
+   952→              <Select value={department} onValueChange={setDepartment}>
+   953→                <SelectTrigger id="ap-dept"><SelectValue /></SelectTrigger>
+   954→                <SelectContent>
+   955→                  {DEPARTMENTS.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+   956→                </SelectContent>
+   957→              </Select>
+   958→            </div>
+   959→            <div className="space-y-1.5">
+   960→              <Label htmlFor="ap-salary">Monthly Salary (₹) *</Label>
+   961→              <Input id="ap-salary" type="number" value={salary} onChange={(e) => setSalary(e.target.value)} placeholder="e.g. 35000" />
+   962→            </div>
+   963→            <div className="space-y-1.5">
+   964→              <Label htmlFor="ap-join">Join Date *</Label>
+   965→              <Input id="ap-join" type="date" value={joinDate} onChange={(e) => setJoinDate(e.target.value)} />
+   966→            </div>
+   967→            <div className="space-y-1.5 sm:col-span-2">
+   968→              <Label htmlFor="ap-type">Employment Type</Label>
+   969→              <Select value={employmentType} onValueChange={setEmploymentType}>
+   970→                <SelectTrigger id="ap-type"><SelectValue /></SelectTrigger>
+   971→                <SelectContent>
+   972→                  <SelectItem value="Full-time">Full-time</SelectItem>
+   973→                  <SelectItem value="Contract">Contract</SelectItem>
+   974→                  <SelectItem value="Internship">Internship</SelectItem>
+   975→                  <SelectItem value="Part-time">Part-time</SelectItem>
+   976→                </SelectContent>
+   977→              </Select>
+   978→            </div>
+   979→          </div>
+   980→          <div className="rounded border border-emerald-500/30 bg-emerald-500/5 p-2.5 text-xs text-emerald-700">
+   981→            Salary structure (auto-calculated): Basic 50%, HRA 20%, Allowances 10%, Special 20%.
+   982→          </div>
+   983→        </div>
+   984→        <DialogFooter>
+   985→          <Button variant="outline" onClick={onClose}>Cancel</Button>
+   986→          <Button className="bg-emerald-600 text-white hover:bg-emerald-700" onClick={submit} disabled={saving}>
+   987→            {saving ? 'Approving…' : 'Approve & Generate Credentials'}
+   988→          </Button>
+   989→        </DialogFooter>
+   990→      </DialogContent>
+   991→    </Dialog>
+   992→  )
+   993→}
+   994→
+   995→function RejectDialog({ emp, onClose, onSuccess }: { emp: Employee; onClose: () => void; onSuccess: () => void }) {
+   996→  const [reason, setReason] = useState('')
+   997→  const [saving, setSaving] = useState(false)
+   998→
+   999→  const submit = async () => {
+  1000→    if (!reason.trim()) { toast.error('Please provide a reason'); return }
+  1001→    setSaving(true)
+  1002→    try {
+  1003→      await api(`/api/admin/employees/${emp.id}/reject`, {
+  1004→        method: 'POST', body: JSON.stringify({ reason: reason.trim() }),
+  1005→      })
+  1006→      toast.success('Application rejected')
+  1007→      onSuccess()
+  1008→    } catch (e: any) {
+  1009→      toast.error(e.message || 'Reject failed')
+  1010→    } finally { setSaving(false) }
+  1011→  }
+  1012→
+  1013→  return (
+  1014→    <Dialog open onOpenChange={(o) => !o && onClose()}>
+  1015→      <DialogContent className="max-w-md">
+  1016→        <DialogHeader>
+  1017→          <DialogTitle className="flex items-center gap-2 text-red-700">
+  1018→            <X className="h-5 w-5" /> Reject Application
+  1019→          </DialogTitle>
+  1020→          <DialogDescription>
+  1021→            Reject <strong>{emp.fullName}</strong>'s application. A reason will be recorded for audit.
+  1022→          </DialogDescription>
+  1023→        </DialogHeader>
+  1024→        <div className="space-y-2">
+  1025→          <Label htmlFor="rej-reason">Reason *</Label>
+  1026→          <Textarea
+  1027→            id="rej-reason"
+  1028→            value={reason}
+  1029→            onChange={(e) => setReason(e.target.value)}
+  1030→            placeholder="Provide a clear reason for rejection…"
+  1031→            rows={4}
+  1032→          />
+  1033→        </div>
+  1034→        <DialogFooter>
+  1035→          <Button variant="outline" onClick={onClose}>Cancel</Button>
+  1036→          <Button variant="destructive" onClick={submit} disabled={saving}>
+  1037→            {saving ? 'Rejecting…' : 'Reject Application'}
+  1038→          </Button>
+  1039→        </DialogFooter>
+  1040→      </DialogContent>
+  1041→    </Dialog>
+  1042→  )
+  1043→}
+  1044→
+  1045→function EditDialog({ emp, onClose, onSuccess }: { emp: Employee; onClose: () => void; onSuccess: () => void }) {
+  1046→  const [form, setForm] = useState({
+  1047→    fullName: emp.fullName || '',
+  1048→    email: emp.email || '',
+  1049→    mobile: emp.mobile || '',
+  1050→    alternateMobile: emp.alternateMobile || '',
+  1051→    address: emp.address || '',
+  1052→    emergencyContact: emp.emergencyContact || '',
+  1053→    designation: emp.designation || emp.currentDesignation || '',
+  1054→    department: emp.department || '',
+  1055→    employmentType: emp.employmentType || 'Full-time',
+  1056→    salary: emp.salary ? String(emp.salary) : '',
+  1057→    basic: emp.basic ? String(emp.basic) : '',
+  1058→    hra: emp.hra ? String(emp.hra) : '',
+  1059→    allowances: emp.allowances ? String(emp.allowances) : '',
+  1060→    specialAllowance: emp.specialAllowance ? String(emp.specialAllowance) : '',
+  1061→    bankHolder: emp.bankHolder || '',
+  1062→    bankName: emp.bankName || '',
+  1063→    bankBranch: emp.bankBranch || '',
+  1064→    bankAccount: emp.bankAccount || '',
+  1065→    bankIfsc: emp.bankIfsc || '',
+  1066→    status: emp.status || 'PENDING',
+  1067→  })
+  1068→  const [saving, setSaving] = useState(false)
+  1069→
+  1070→  const submit = async () => {
+  1071→    setSaving(true)
+  1072→    try {
+  1073→      const payload: any = { id: emp.id }
+  1074→      for (const [k, v] of Object.entries(form)) {
+  1075→        if (v !== '' && v !== null && v !== undefined) {
+  1076→          if (['salary', 'basic', 'hra', 'allowances', 'specialAllowance'].includes(k)) {
+  1077→            payload[k] = Number(v)
+  1078→          } else {
+  1079→            payload[k] = v
+  1080→          }
+  1081→        }
+  1082→      }
+  1083→      await api('/api/admin/employees', { method: 'PATCH', body: JSON.stringify(payload) })
+  1084→      toast.success('Employee updated')
+  1085→      onSuccess()
+  1086→    } catch (e: any) {
+  1087→      toast.error(e.message || 'Update failed')
+  1088→    } finally { setSaving(false) }
+  1089→  }
+  1090→
+  1091→  const set = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }))
+  1092→
+  1093→  return (
+  1094→    <Dialog open onOpenChange={(o) => !o && onClose()}>
+  1095→      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto scroll-thin">
+  1096→        <DialogHeader>
+  1097→          <DialogTitle className="flex items-center gap-2">
+  1098→            <Pencil className="h-5 w-5" /> Edit Employee
+  1099→          </DialogTitle>
+  1100→          <DialogDescription>{emp.fullName} • {emp.employeeCode || 'Pending'}</DialogDescription>
+  1101→        </DialogHeader>
+  1102→        <div className="space-y-4">
+  1103→          <div>
+  1104→            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Personal</p>
+  1105→            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+  1106→              <div className="space-y-1.5"><Label>Full Name</Label><Input value={form.fullName} onChange={(e) => set('fullName', e.target.value)} /></div>
+  1107→              <div className="space-y-1.5"><Label>Email</Label><Input value={form.email} onChange={(e) => set('email', e.target.value)} /></div>
+  1108→              <div className="space-y-1.5"><Label>Mobile</Label><Input value={form.mobile} onChange={(e) => set('mobile', e.target.value)} /></div>
+  1109→              <div className="space-y-1.5"><Label>Alternate Mobile</Label><Input value={form.alternateMobile} onChange={(e) => set('alternateMobile', e.target.value)} /></div>
+  1110→              <div className="space-y-1.5 sm:col-span-2"><Label>Address</Label><Input value={form.address} onChange={(e) => set('address', e.target.value)} /></div>
+  1111→              <div className="space-y-1.5"><Label>Emergency Contact</Label><Input value={form.emergencyContact} onChange={(e) => set('emergencyContact', e.target.value)} /></div>
+  1112→            </div>
+  1113→          </div>
+  1114→          <div>
+  1115→            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Employment</p>
+  1116→            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+  1117→              <div className="space-y-1.5"><Label>Designation</Label><Input value={form.designation} onChange={(e) => set('designation', e.target.value)} /></div>
+  1118→              <div className="space-y-1.5">
+  1119→                <Label>Department</Label>
+  1120→                <Select value={form.department} onValueChange={(v) => set('department', v)}>
+  1121→                  <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+  1122→                  <SelectContent>
+  1123→                    {DEPARTMENTS.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+  1124→                  </SelectContent>
+  1125→                </Select>
+  1126→              </div>
+  1127→              <div className="space-y-1.5">
+  1128→                <Label>Employment Type</Label>
+  1129→                <Select value={form.employmentType} onValueChange={(v) => set('employmentType', v)}>
+  1130→                  <SelectTrigger><SelectValue /></SelectTrigger>
+  1131→                  <SelectContent>
+  1132→                    <SelectItem value="Full-time">Full-time</SelectItem>
+  1133→                    <SelectItem value="Contract">Contract</SelectItem>
+  1134→                    <SelectItem value="Internship">Internship</SelectItem>
+  1135→                    <SelectItem value="Part-time">Part-time</SelectItem>
+  1136→                  </SelectContent>
+  1137→                </Select>
+  1138→              </div>
+  1139→              <div className="space-y-1.5">
+  1140→                <Label>Status</Label>
+  1141→                <Select value={form.status} onValueChange={(v) => set('status', v)}>
+  1142→                  <SelectTrigger><SelectValue /></SelectTrigger>
+  1143→                  <SelectContent>
+  1144→                    <SelectItem value="PENDING">Pending</SelectItem>
+  1145→                    <SelectItem value="APPROVED">Approved</SelectItem>
+  1146→                    <SelectItem value="REJECTED">Rejected</SelectItem>
+  1147→                    <SelectItem value="TERMINATED">Terminated</SelectItem>
+  1148→                  </SelectContent>
+  1149→                </Select>
+  1150→              </div>
+  1151→            </div>
+  1152→          </div>
+  1153→          <div>
+  1154→            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Salary Structure (Monthly ₹)</p>
+  1155→            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+  1156→              <div className="space-y-1.5"><Label>CTC</Label><Input type="number" value={form.salary} onChange={(e) => set('salary', e.target.value)} /></div>
+  1157→              <div className="space-y-1.5"><Label>Basic</Label><Input type="number" value={form.basic} onChange={(e) => set('basic', e.target.value)} /></div>
+  1158→              <div className="space-y-1.5"><Label>HRA</Label><Input type="number" value={form.hra} onChange={(e) => set('hra', e.target.value)} /></div>
+  1159→              <div className="space-y-1.5"><Label>Allowances</Label><Input type="number" value={form.allowances} onChange={(e) => set('allowances', e.target.value)} /></div>
+  1160→              <div className="space-y-1.5"><Label>Special Allow.</Label><Input type="number" value={form.specialAllowance} onChange={(e) => set('specialAllowance', e.target.value)} /></div>
+  1161→            </div>
+  1162→          </div>
+  1163→          <div>
+  1164→            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Bank Details</p>
+  1165→            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+  1166→              <div className="space-y-1.5"><Label>Account Holder</Label><Input value={form.bankHolder} onChange={(e) => set('bankHolder', e.target.value)} /></div>
+  1167→              <div className="space-y-1.5"><Label>Bank Name</Label><Input value={form.bankName} onChange={(e) => set('bankName', e.target.value)} /></div>
+  1168→              <div className="space-y-1.5"><Label>Branch</Label><Input value={form.bankBranch} onChange={(e) => set('bankBranch', e.target.value)} /></div>
+  1169→              <div className="space-y-1.5"><Label>Account Number</Label><Input value={form.bankAccount} onChange={(e) => set('bankAccount', e.target.value)} /></div>
+  1170→              <div className="space-y-1.5"><Label>IFSC</Label><Input value={form.bankIfsc} onChange={(e) => set('bankIfsc', e.target.value)} /></div>
+  1171→            </div>
+  1172→          </div>
+  1173→        </div>
+  1174→        <DialogFooter className="gap-2 sm:gap-2">
+  1175→          <Button variant="outline" onClick={onClose}>Cancel</Button>
+  1176→          <Button className="bg-[var(--navy)] text-white hover:bg-[var(--navy-light)]" onClick={submit} disabled={saving}>
+  1177→            {saving ? 'Saving…' : 'Save Changes'}
+  1178→          </Button>
+  1179→        </DialogFooter>
+  1180→      </DialogContent>
+  1181→    </Dialog>
+  1182→  )
+  1183→}
+  1184→
+  1185→// ============================================================
+  1186→// Schedule Interview Dialog
+  1187→// ============================================================
+  1188→
+  1189→const INTERVIEW_STATUSES = [
+  1190→  { value: 'SCHEDULED', label: 'Scheduled' },
+  1191→  { value: 'COMPLETED', label: 'Completed' },
+  1192→  { value: 'PASSED', label: 'Passed' },
+  1193→  { value: 'FAILED', label: 'Failed' },
+  1194→  { value: 'CANCELLED', label: 'Cancelled' },
+  1195→  { value: 'NONE', label: 'Not Set / Clear' },
+  1196→]
+  1197→
+  1198→function ScheduleInterviewDialog({ emp, onClose, onSuccess }: {
+  1199→  emp: Employee
+  1200→  onClose: () => void
+  1201→  onSuccess: (updatedEmp: Employee) => void
+  1202→}) {
+  1203→  const [status, setStatus] = useState(emp.interviewStatus || 'SCHEDULED')
+  1204→  const [interviewDate, setInterviewDate] = useState(
+  1205→    emp.interviewDate
+  1206→      ? new Date(emp.interviewDate).toISOString().slice(0, 16)
+  1207→      : new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 16)
+  1208→  )
+  1209→  const [notes, setNotes] = useState(emp.interviewNotes || '')
+  1210→  const [saving, setSaving] = useState(false)
+  1211→
+  1212→  const submit = async () => {
+  1213→    setSaving(true)
+  1214→    try {
+  1215→      const data = await api<{ ok: boolean; employee: Employee }>(`/api/admin/employees/${emp.id}/interview`, {
+  1216→        method: 'POST',
+  1217→        body: JSON.stringify({ status, interviewDate: interviewDate || null, notes: notes.trim() || null }),
+  1218→      })
+  1219→      toast.success(`Interview ${status === 'NONE' ? 'cleared' : `updated to ${status}`}`)
+  1220→      onSuccess(data.employee)
+  1221→    } catch (e: any) {
+  1222→      toast.error(e.message || 'Failed to update interview')
+  1223→    } finally { setSaving(false) }
+  1224→  }
+  1225→
+  1226→  return (
+  1227→    <Dialog open onOpenChange={(o) => !o && onClose()}>
+  1228→      <DialogContent className="max-w-md">
+  1229→        <DialogHeader>
+  1230→          <DialogTitle className="flex items-center gap-2">
+  1231→            <Calendar className="h-5 w-5 text-[var(--gold)]" /> Schedule Interview
+  1232→          </DialogTitle>
+  1233→          <DialogDescription>
+  1234→            Update interview status for <strong>{emp.fullName}</strong>
+  1235→          </DialogDescription>
+  1236→        </DialogHeader>
+  1237→        <div className="space-y-3">
+  1238→          <div className="rounded-lg border p-3">
+  1239→            <p className="text-xs text-muted-foreground">Employee</p>
+  1240→            <p className="font-semibold text-[var(--navy)] dark:text-white">{emp.fullName}</p>
+  1241→            <p className="text-xs text-muted-foreground">{emp.email}</p>
+  1242→          </div>
+  1243→          <div className="space-y-1.5">
+  1244→            <Label htmlFor="int-status">Interview Status *</Label>
+  1245→            <Select value={status} onValueChange={setStatus}>
+  1246→              <SelectTrigger id="int-status"><SelectValue /></SelectTrigger>
+  1247→              <SelectContent>
+  1248→                {INTERVIEW_STATUSES.map((s) => (
+  1249→                  <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+  1250→                ))}
+  1251→              </SelectContent>
+  1252→            </Select>
+  1253→          </div>
+  1254→          {status !== 'NONE' && (
+  1255→            <div className="space-y-1.5">
+  1256→              <Label htmlFor="int-date">Date & Time</Label>
+  1257→              <Input id="int-date" type="datetime-local" value={interviewDate} onChange={(e) => setInterviewDate(e.target.value)} />
+  1258→            </div>
+  1259→          )}
+  1260→          {status !== 'NONE' && (
+  1261→            <div className="space-y-1.5">
+  1262→              <Label htmlFor="int-notes">Notes</Label>
+  1263→              <Textarea
+  1264→                id="int-notes"
+  1265→                value={notes}
+  1266→                onChange={(e) => setNotes(e.target.value)}
+  1267→                placeholder="Interview feedback, panel notes…"
+  1268→                rows={3}
+  1269→              />
+  1270→            </div>
+  1271→          )}
+  1272→        </div>
+  1273→        <DialogFooter>
+  1274→          <Button variant="outline" onClick={onClose}>Cancel</Button>
+  1275→          <Button className="bg-[var(--navy)] text-white hover:bg-[var(--navy-light)]" onClick={submit} disabled={saving}>
+  1276→            {saving ? 'Saving…' : 'Save Interview'}
+  1277→          </Button>
+  1278→        </DialogFooter>
+  1279→      </DialogContent>
+  1280→    </Dialog>
+  1281→  )
+  1282→}
+  1283→
+  1284→// ============================================================
+  1285→// Assign Client Dialog
+  1286→// ============================================================
+  1287→
+  1288→function AssignClientDialog({ emp, onClose, onSuccess }: {
+  1289→  emp: Employee
+  1290→  onClose: () => void
+  1291→  onSuccess: () => void
+  1292→}) {
+  1293→  const [clients, setClients] = useState<{ id: string; clientName: string }[]>([])
+  1294→  const [projects, setProjects] = useState<{ id: string; projectName: string; clientId: string }[]>([])
+  1295→  const [clientId, setClientId] = useState(emp.assignedClient?.id || '')
+  1296→  const [projectId, setProjectId] = useState('')
+  1297→  const [loadingClients, setLoadingClients] = useState(true)
+  1298→  const [saving, setSaving] = useState(false)
+  1299→
+  1300→  useEffect(() => {
+  1301→    setLoadingClients(true)
+  1302→    Promise.all([
+  1303→      api<{ clients: { id: string; clientName: string }[] }>('/api/admin/clients').then((d) => d.clients || []).catch(() => []),
+  1304→      api<{ projects: { id: string; projectName: string; clientId: string }[] }>('/api/admin/projects').then((d) => d.projects || []).catch(() => []),
+  1305→    ]).then(([c, p]) => {
+  1306→      setClients(c)
+  1307→      setProjects(p)
+  1308→      setLoadingClients(false)
+  1309→    })
+  1310→  }, [])
+  1311→
+  1312→  const filteredProjects = clientId ? projects.filter((p) => p.clientId === clientId) : projects
+  1313→
+  1314→  const submit = async () => {
+  1315→    setSaving(true)
+  1316→    try {
+  1317→      const effectiveClientId = (clientId && clientId !== '__none__') ? clientId : null
+  1318→      const effectiveProjectId = projectId || null
+  1319→      await api(`/api/admin/employees/${emp.id}/assign-client`, {
+  1320→        method: 'POST',
+  1321→        body: JSON.stringify({ clientId: effectiveClientId, projectId: effectiveProjectId }),
+  1322→      })
+  1323→      toast.success(effectiveClientId ? `Assigned to ${clients.find((c) => c.id === effectiveClientId)?.clientName || 'client'}` : 'Client assignment removed')
+  1324→      onSuccess()
+  1325→    } catch (e: any) {
+  1326→      toast.error(e.message || 'Failed to assign client')
+  1327→    } finally { setSaving(false) }
+  1328→  }
+  1329→
+  1330→  return (
+  1331→    <Dialog open onOpenChange={(o) => !o && onClose()}>
+  1332→      <DialogContent className="max-w-md">
+  1333→        <DialogHeader>
+  1334→          <DialogTitle className="flex items-center gap-2">
+  1335→            <Building2 className="h-5 w-5 text-[var(--gold)]" /> Assign Client
+  1336→          </DialogTitle>
+  1337→          <DialogDescription>
+  1338→            Assign or change client for <strong>{emp.fullName}</strong>
+  1339→          </DialogDescription>
+  1340→        </DialogHeader>
+  1341→        <div className="space-y-3">
+  1342→          <div className="rounded-lg border p-3">
+  1343→            <p className="text-xs text-muted-foreground">Employee</p>
+  1344→            <p className="font-semibold text-[var(--navy)] dark:text-white">{emp.fullName}</p>
+  1345→            <p className="text-xs text-muted-foreground">{emp.email}</p>
+  1346→          </div>
+  1347→          {loadingClients ? (
+  1348→            <Skeleton className="h-10 w-full" />
+  1349→          ) : (
+  1350→            <>
+  1351→              <div className="space-y-1.5">
+  1352→                <Label htmlFor="ac-client">Client</Label>
+  1353→                <Select value={clientId} onValueChange={(v) => { setClientId(v); setProjectId('') }}>
+  1354→                  <SelectTrigger id="ac-client"><SelectValue placeholder="Select client…" /></SelectTrigger>
+  1355→                  <SelectContent>
+  1356→                    <SelectItem value="__none__">— No Client —</SelectItem>
+  1357→                    {clients.map((c) => (
+  1358→                      <SelectItem key={c.id} value={c.id}>{c.clientName}</SelectItem>
+  1359→                    ))}
+  1360→                  </SelectContent>
+  1361→                </Select>
+  1362→              </div>
+  1363→              {clientId && clientId !== '__none__' && filteredProjects.length > 0 && (
+  1364→                <div className="space-y-1.5">
+  1365→                  <Label htmlFor="ac-project">Project (optional)</Label>
+  1366→                  <Select value={projectId} onValueChange={setProjectId}>
+  1367→                    <SelectTrigger id="ac-project"><SelectValue placeholder="Select project…" /></SelectTrigger>
+  1368→                    <SelectContent>
+  1369→                      <SelectItem value="">— No Project —</SelectItem>
+  1370→                      {filteredProjects.map((p) => (
+  1371→                        <SelectItem key={p.id} value={p.id}>{p.projectName}</SelectItem>
+  1372→                      ))}
+  1373→                    </SelectContent>
+  1374→                  </Select>
+  1375→                </div>
+  1376→              )}
+  1377→            </>
+  1378→          )}
+  1379→        </div>
+  1380→        <DialogFooter>
+  1381→          <Button variant="outline" onClick={onClose}>Cancel</Button>
+  1382→          <Button className="bg-[var(--navy)] text-white hover:bg-[var(--navy-light)]" onClick={submit} disabled={saving || loadingClients}>
+  1383→            {saving ? 'Saving…' : 'Assign Client'}
+  1384→          </Button>
+  1385→        </DialogFooter>
+  1386→      </DialogContent>
+  1387→    </Dialog>
+  1388→  )
+  1389→}
+  1390→
+  1391→// Export employee profile as a printable HTML document (opens print dialog → save as PDF)
+  1392→function exportEmployeeProfile(emp: Employee | null, docs: { uploaded: EmployeeDoc[]; generated: GeneratedDoc[] }) {
+  1393→  if (!emp) return
+  1394→  const education = parseJSON<any[]>(emp.educationJson, [])
+  1395→  const disciplines = emp.disciplines?.split(',').filter(Boolean) || []
+  1396→  const skills = emp.skills?.split(',').filter(Boolean) || []
+  1397→  const win = window.open('', '_blank', 'width=900,height=700')
+  1398→  if (!win) { toast.error('Pop-up blocked — please allow pop-ups to export'); return }
+  1399→  const rows = (label: string, val: any) => `<tr><td style="padding:6px 10px;background:#f6f7fb;font-weight:600;color:#002B5C;width:35%;border:1px solid #dde3ee">${label}</td><td style="padding:6px 10px;border:1px solid #dde3ee">${val || '—'}</td></tr>`
+  1400→  win.document.write(`<!DOCTYPE html><html><head><title>${emp.fullName} — Profile</title>
+  1401→  <style>body{font-family:Arial,sans-serif;color:#0E1B33;margin:0;padding:40px}
+  1402→  .head{background:#002B5C;color:#fff;padding:20px 30px;border-bottom:3px solid #D4AF37;margin:-40px -40px 24px}
+  1403→  .head h1{margin:0;font-size:22px}.head p{margin:4px 0 0;color:#E8C96A;font-size:11px;letter-spacing:2px}
+  1404→  h2{color:#002B5C;font-size:14px;margin:20px 0 8px;border-left:3px solid #D4AF37;padding-left:8px}
+  1405→  table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:8px}
+  1406→  .badge{display:inline-block;background:#002B5C;color:#D4AF37;padding:2px 8px;border-radius:10px;font-size:10px;margin:2px}
+  1407→  .foot{margin-top:30px;border-top:1px solid #dde3ee;padding-top:10px;font-size:10px;color:#5A6A8A;text-align:center}
+  1408→  </style></head><body>
+  1409→  <div class="head"><h1>HP ENTERPRISE — Employee Profile</h1><p>SAFETY SERVICE &amp; MAN POWER SUPPLY</p></div>
+  1410→  <h2>Employment</h2>
+  1411→  <table>${rows('Employee Code', emp.employeeCode)}${rows('Full Name', emp.fullName)}${rows('Status', emp.status)}${rows('Designation', emp.designation || emp.currentDesignation)}${rows('Department', emp.department)}${rows('Join Date', emp.joinDate ? fmtDate(emp.joinDate) : '—')}${rows('Employment Type', emp.employmentType)}${rows('Salary (CTC)', emp.salary ? formatINR(emp.salary) : '—')}</table>
+  1412→  <h2>Personal Details</h2>
+  1413→  <table>${rows("Father's Name", emp.fatherName)}${rows("Mother's Name", emp.motherName)}${rows('Date of Birth', emp.dob ? fmtDate(emp.dob) : '—')}${rows('Gender', emp.gender)}${rows('Blood Group', emp.bloodGroup)}${rows('Mobile', emp.mobile)}${rows('Alternate Mobile', emp.alternateMobile)}${rows('Email', emp.email)}${rows('Address', emp.address)}${rows('Emergency Contact', emp.emergencyContact)}</table>
+  1414→  <h2>Identity</h2>
+  1415→  <table>${rows('Aadhaar', emp.aadhaar)}${rows('PAN', emp.pan)}${rows('UAN', emp.uan)}${rows('ESIC', emp.esic)}${rows('Passport', emp.passport)}${rows('Driving Licence', emp.drivingLicence)}</table>
+  1416→  <h2>Bank Details</h2>
+  1417→  <table>${rows('Account Holder', emp.bankHolder)}${rows('Bank Name', emp.bankName)}${rows('Branch', emp.bankBranch)}${rows('Account Number', emp.bankAccount)}${rows('IFSC', emp.bankIfsc)}</table>
+  1418→  <h2>Experience</h2>
+  1419→  <table>${rows('Current Designation', emp.currentDesignation)}${rows('Total Experience', emp.totalExperience)}${rows('Relevant Experience', emp.relevantExperience)}${rows('Current Company', emp.currentCompany)}${rows('Previous Company', emp.previousCompany)}${rows('Current Salary', emp.currentSalary)}${rows('Expected Salary', emp.expectedSalary)}${rows('Notice Period', emp.noticePeriod)}</table>
+  1420→  <h2>Education</h2>
+  1421→  <table>${education.length ? education.map((e:any,i:number)=>rows('Qualification '+(i+1), (e.qualification||'')+' '+(e.specialization||'')+' — '+(e.college||'')+' ('+(e.year||'')+')')).join('') : rows('Education', null)}</table>
+  1422→  <h2>Disciplines &amp; Skills</h2>
+  1423→  <p>${disciplines.map(d=>'<span class="badge">'+d+'</span>').join('')||'<span style="color:#999">—</span>'}</p>
+  1424→  <p style="margin-top:8px">${skills.map(s=>'<span class="badge" style="background:#D4AF37;color:#002B5C">'+s+'</span>').join('')||'<span style="color:#999">—</span>'}</p>
+  1425→  <h2>Uploaded Documents (${docs.uploaded.length})</h2>
+  1426→  <table>${docs.uploaded.length ? docs.uploaded.map(d=>rows((DOC_LABELS[d.documentType]||d.documentType), d.fileName)).join('') : rows('Documents', 'None')}</table>
+  1427→  <h2>Generated Documents (${docs.generated.length})</h2>
+  1428→  <table>${docs.generated.length ? docs.generated.map(d=>rows(d.title, fmtDate(d.generatedAt))).join('') : rows('Documents', 'None')}</table>
+  1429→  <div class="foot">HP ENTERPRISE Safety Service & Man Power Supply • Generated on ${new Date().toLocaleString('en-IN')} • Confidential</div>
+  1430→  </body></html>`)
+  1431→  win.document.close()
+  1432→  setTimeout(() => { win.print() }, 500)
+  1433→}
+  1434→

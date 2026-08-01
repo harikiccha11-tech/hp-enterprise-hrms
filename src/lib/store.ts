@@ -111,7 +111,16 @@ export const useAppStore = create<AppState>((set, get) => ({
       const res = await fetch('/api/auth/me', { cache: 'no-store' })
       if (res.ok) {
         const data = await res.json()
-        set({ user: data.user, view: 'app', loading: false })
+        if (data.user) {
+          set({ user: data.user, view: 'app', loading: false })
+        } else {
+          // Only clear user if there was one before (session expired)
+          // Don't clear if initial load had no user
+          set((s) => ({
+            ...(s.user ? { user: null, view: 'login' as const } : {}),
+            loading: false,
+          }))
+        }
       } else {
         set({ user: null, view: 'login', loading: false })
       }

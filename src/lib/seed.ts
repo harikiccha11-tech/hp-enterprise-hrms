@@ -4,6 +4,7 @@ import { hashPassword } from './auth'
 
 async function main() {
   console.log('Seeding HP ENTERPRISE Workforce...')
+  const today = new Date()
 
   // Settings
   const defaults: Record<string, string> = {
@@ -58,7 +59,7 @@ async function main() {
   console.log('Admin:', admin.username, '(password: Admin@123)')
 
   // HR Manager
-  const hrPass = await hashPassword('Hrmanager@123')
+  const hrPass = await hashPassword('HrManager@123')
   const hr = await db.user.upsert({
     where: { username: 'hrmanager' },
     update: { passwordHash: hrPass, mustResetPassword: false },
@@ -70,7 +71,7 @@ async function main() {
       mustResetPassword: false,
     },
   })
-  console.log('HR Manager:', hr.username, '(password: Hrmanager@123)')
+  console.log('HR Manager:', hr.username, '(password: HrManager@123)')
 
   // A sample approved employee + login
   const empPass = await hashPassword('Employee@123')
@@ -145,6 +146,107 @@ async function main() {
     await db.employee.update({ where: { id: emp.id }, data: { userId: empUser.id } })
   }
   console.log('Employee login: arjun.sharma / Employee@123')
+
+  // --- Second employee: Priya Patil ---
+  const priyaEmail = 'priya.patil@hpenterprise.co.in'
+  let priya = await db.employee.findFirst({ where: { email: priyaEmail } })
+  if (!priya) {
+    priya = await db.employee.create({
+      data: {
+        status: 'APPROVED',
+        fullName: 'Priya Patil',
+        fatherName: 'Dilip Patil',
+        motherName: 'Meena Patil',
+        dob: new Date('1995-08-22'),
+        gender: 'Female',
+        bloodGroup: 'O+',
+        mobile: '+91 87654 32109',
+        email: priyaEmail,
+        address: '15, JP Nagar Phase 7, Bengaluru, Karnataka 560078',
+        emergencyContact: '+91 99001 54321',
+        aadhaar: 'XXXX-XXXX-5678',
+        pan: 'FGHIJ5678K',
+        uan: '101987654321',
+        esic: '5678901234',
+        bankHolder: 'Priya Patil',
+        bankName: 'ICICI Bank',
+        bankBranch: 'JP Nagar',
+        bankAccount: '60100234567890',
+        bankIfsc: 'ICIC0002345',
+        educationJson: JSON.stringify([
+          { qualification: 'B.Com', specialization: 'Accounting & Finance', college: 'Christ University', year: '2017' },
+          { qualification: 'MBA HR', specialization: 'Human Resources', college: 'XIME Bangalore', year: '2019' },
+        ]),
+        currentDesignation: 'HR Executive',
+        totalExperience: '5 Years',
+        relevantExperience: '4 Years',
+        currentCompany: 'Manpower Group',
+        previousCompany: 'TeamLease Services',
+        currentSalary: '550000',
+        expectedSalary: '650000',
+        noticePeriod: '15 Days',
+        disciplines: 'HR,Administration,Compliance',
+        projectTypes: 'All',
+        skills: 'Payroll,Compliance,Recruitment,MS Office,Tally',
+        employeeCode: 'HPE-0002',
+        designation: 'HR Executive',
+        department: 'HR & Admin',
+        joinDate: new Date('2023-09-15'),
+        employmentType: 'Full-time',
+        salary: 55000,
+        basic: 27500,
+        hra: 11000,
+        allowances: 5500,
+        specialAllowance: 11000,
+        reviewedBy: admin.id,
+        reviewedAt: new Date(),
+      },
+    })
+  }
+  let priyaUser = await db.user.findUnique({ where: { email: priyaEmail } })
+  if (!priyaUser) {
+    priyaUser = await db.user.create({
+      data: {
+        username: 'priya.patil',
+        email: priyaEmail,
+        passwordHash: empPass,
+        role: 'EMPLOYEE',
+        mustResetPassword: false,
+      },
+    })
+    await db.employee.update({ where: { id: priya.id }, data: { userId: priyaUser.id } })
+  }
+  console.log('Employee login: priya.patil / Employee@123')
+
+  // Leave balance for Priya
+  await db.leaveBalance.upsert({
+    where: { employeeId: priya.id },
+    update: {},
+    create: { employeeId: priya.id, casual: 12, sick: 12, earned: 15 },
+  })
+
+  // Attendance for Priya
+  for (let i = 0; i < 5; i++) {
+    const d = new Date(today)
+    d.setDate(today.getDate() - i)
+    const exists = await db.attendance.findUnique({ where: { employeeId_date: { employeeId: priya.id, date: d } } })
+    if (!exists) {
+      const punchIn = new Date(d); punchIn.setHours(9, 15, 0, 0)
+      const punchOut = new Date(d); punchOut.setHours(18, 20, 0, 0)
+      await db.attendance.create({
+        data: {
+          employeeId: priya.id,
+          date: d,
+          punchIn,
+          punchOut,
+          workingHours: 9.1,
+          overtime: 0.0,
+          lateArrival: false,
+          status: 'PRESENT',
+        },
+      })
+    }
+  }
 
   // Leave balance
   await db.leaveBalance.upsert({
@@ -272,7 +374,6 @@ async function main() {
   }
 
   // Attendance for today + a few days for the employee
-  const today = new Date()
   for (let i = 0; i < 5; i++) {
     const d = new Date(today)
     d.setDate(today.getDate() - i)

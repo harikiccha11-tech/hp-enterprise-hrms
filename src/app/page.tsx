@@ -1,5 +1,5 @@
 'use client'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useAuth } from '@/lib/store'
 import { Landing } from '@/components/auth/Landing'
 import { AdminLayout } from '@/components/admin/AdminLayout'
@@ -8,10 +8,15 @@ import { ClientLayout } from '@/components/client/ClientLayout'
 import { BrandLogo } from '@/components/brand/BrandLogo'
 
 export default function Page() {
-  const { user, loading, view, refresh } = useAuth()
+  const { user, loading, refresh } = useAuth()
+  const mounted = useRef(false)
 
+  // Only call refresh once on initial mount — never re-run on re-renders
   useEffect(() => {
-    refresh()
+    if (!mounted.current) {
+      mounted.current = true
+      refresh()
+    }
   }, [refresh])
 
   if (loading) {
@@ -29,7 +34,7 @@ export default function Page() {
     )
   }
 
-  if (!user || view !== 'app') {
+  if (!user) {
     return <Landing />
   }
 
