@@ -40,15 +40,27 @@ Services: HR Management, Recruitment & Talent Acquisition, Manpower Supply, EHS 
 
 Keep responses concise (2-4 sentences max unless asked for details). Be friendly but professional. Use bullet points for lists. If unsure, advise the user to contact HR at hpenterpriseofficial11@gmail.com or call +91 73377 92436.`
 
-/* ─── Z.ai SDK (primary — always available locally) ─── */
+/* ─── Z.ai SDK (primary — always available locally, with retry) ─── */
 async function callZai(messages: { role: string; content: string }[]): Promise<string> {
   const ZAI = (await import('z-ai-web-dev-sdk')).default
-  const zai = await ZAI.create()
-  const completion = await zai.chat.completions.create({
-    messages,
-    thinking: { type: 'disabled' },
-  })
-  return completion.choices[0]?.message?.content || 'No response from AI.'
+  // Retry up to 2 times with delay
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const zai = await ZAI.create()
+      const completion = await zai.chat.completions.create({
+        messages,
+        thinking: { type: 'disabled' },
+      })
+      const text = completion.choices[0]?.message?.content
+      if (text) return text
+      throw new Error('Empty response from Z.ai')
+    } catch (e) {
+      console.error(`[HPAI] Z.ai attempt ${attempt + 1} failed:`, (e as Error)?.message)
+      if (attempt === 1) throw e
+      await new Promise((r) => setTimeout(r, 1000))
+    }
+  }
+  throw new Error('Z.ai SDK failed after retries')
 }
 
 /* ─── Gemini direct API (fallback for Vercel) ─── */

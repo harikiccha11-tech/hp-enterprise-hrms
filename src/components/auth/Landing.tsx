@@ -151,13 +151,13 @@ const PRICING_PLANS: PricingPlan[] = [
 // ── Social Links ─────────────────────────────────────────────────────────────
 
 const SOCIAL_ITEMS = [
-  { href: SOCIAL.instagram, icon: InstagramIcon, label: 'Instagram' },
-  { href: SOCIAL.linkedin, icon: LinkedInIcon, label: 'LinkedIn' },
-  { href: SOCIAL.facebook, icon: FacebookIcon, label: 'Facebook' },
-  { href: SOCIAL.twitter, icon: XTwitterIcon, label: 'X / Twitter' },
-  { href: SOCIAL.youtube, icon: YouTubeIcon, label: 'YouTube' },
-  { href: SOCIAL.threads, icon: ThreadsIcon, label: 'Threads' },
-  { href: SOCIAL.reddit, icon: RedditIcon, label: 'Reddit' },
+  { href: SOCIAL.instagram, icon: InstagramIcon, label: 'Instagram', color: '#E4405F', gradient: 'linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)' },
+  { href: SOCIAL.linkedin, icon: LinkedInIcon, label: 'LinkedIn', color: '#0A66C2' },
+  { href: SOCIAL.facebook, icon: FacebookIcon, label: 'Facebook', color: '#1877F2' },
+  { href: SOCIAL.twitter, icon: XTwitterIcon, label: 'X', color: '#000000' },
+  { href: SOCIAL.youtube, icon: YouTubeIcon, label: 'YouTube', color: '#FF0000' },
+  { href: SOCIAL.threads, icon: ThreadsIcon, label: 'Threads', color: '#000000' },
+  { href: SOCIAL.reddit, icon: RedditIcon, label: 'Reddit', color: '#FF4500' },
 ]
 
 // ── Portal Login Form ────────────────────────────────────────────────────────
@@ -547,6 +547,23 @@ export function Landing() {
                 <Button className="flex-1 text-sm font-semibold h-10" style={{ background: 'linear-gradient(135deg, var(--gold, #D4AF37), #E8C96A)', color: 'var(--navy, #002B5C)' }} onClick={() => { setView('subscribe'); setMobileMenu(false) }}>
                   Start Free Trial
                 </Button>
+              </div>
+              {/* Social links in mobile menu */}
+              <div className="flex items-center gap-2 px-4 pt-4 pb-1">
+                <span className="text-[11px] font-medium text-gray-400 uppercase tracking-wider mr-1">Follow us</span>
+                {SOCIAL_ITEMS.map((s) => (
+                  <a
+                    key={s.label}
+                    href={s.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex h-8 w-8 items-center justify-center rounded-md transition-all duration-200 hover:scale-110"
+                    style={{ color: s.color }}
+                    aria-label={s.label}
+                  >
+                    <s.icon className="h-3.5 w-3.5" />
+                  </a>
+                ))}
               </div>
             </div>
           </div>
@@ -1100,7 +1117,20 @@ export function Landing() {
                     href={s.href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex h-10 w-10 items-center justify-center rounded-lg text-gray-500 hover:text-[var(--gold,#D4AF37)] hover:bg-white/5 transition-all duration-200"
+                    className="group flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 transition-all duration-200 hover:scale-110 hover:shadow-lg"
+                    style={{ color: s.color }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = s.gradient || s.color
+                      e.currentTarget.style.color = '#fff'
+                      e.currentTarget.style.borderColor = 'transparent'
+                      e.currentTarget.style.boxShadow = `0 4px 14px ${s.color}40`
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'transparent'
+                      e.currentTarget.style.color = s.color
+                      e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'
+                      e.currentTarget.style.boxShadow = 'none'
+                    }}
                     aria-label={s.label}
                   >
                     <s.icon className="h-4 w-4" />

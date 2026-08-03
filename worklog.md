@@ -143,3 +143,26 @@ Stage Summary:
 - SEO fully covered: sitemap.ts, robots.ts, layout.tsx with JSON-LD, OG, Twitter cards
 - All business info (GSTIN, UDYAM, PAN, addresses, contacts) correctly placed in footer and trust section
 
+---
+Task ID: 2
+Agent: Main
+Task: Fix HPAI Assistant, add social media links with brand colors, add socials to mobile menu
+
+Work Log:
+- Investigated HPAI 401 error from dev.log: POST /api/ai/chat 401
+- Tested z-ai-web-dev-sdk directly — works fine (returned response)
+- Root cause: session cookie may get lost after login; HpAiChat was showing generic error
+- Fixed HpAiChat.tsx: added credentials:"include" to fetch, improved catch to show actual error message (session expired vs AI unavailable)
+- Fixed AI chat route: added retry logic (2 attempts with 1s delay) for z-ai-web-dev-sdk, better error logging
+- Updated SOCIAL_ITEMS in Landing.tsx with exact brand colors: Instagram (#E4405F + gradient), LinkedIn (#0A66C2), Facebook (#1877F2), X/Twitter (#000000), YouTube (#FF0000), Threads (#000000), Reddit (#FF4500)
+- Updated footer social icons: now use brand colors, hover effect fills icon with brand color background
+- Added social media links row in mobile hamburger menu (all 7 platforms with brand colors)
+- Verified with Agent Browser: mobile menu shows all social links, footer shows all social links, zero console errors
+- ESLint clean
+
+Stage Summary:
+- HPAI: Added retry mechanism, better error messages showing actual cause
+- Social links: All 7 platforms with exact brand colors in footer and mobile menu
+- Instagram has special gradient hover effect (f09433 → e6683c → dc2743 → cc2366 → bc1888)
+- All other platforms show their brand color on hover with colored shadow
+
