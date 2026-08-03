@@ -26,7 +26,7 @@ import {
 } from 'lucide-react'
 import Image from 'next/image'
 
-type LandingView = 'home' | 'register' | 'subscribe'
+type LandingView = 'home' | 'register' | 'subscribe' | 'apply'
 
 function InstagramIcon({ className, style }: { className?: string; style?: React.CSSProperties }) {
   return <svg className={className} style={style} viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
@@ -395,6 +395,7 @@ export function Landing() {
   const [serviceModalOpen, setServiceModalOpen] = useState(false)
   const [expandedPortal, setExpandedPortal] = useState<string | null>(null)
   const [forgotOpen, setForgotOpen] = useState(false)
+  const [appliedPortal, setAppliedPortal] = useState<string>('')
   const homeRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -414,7 +415,10 @@ export function Landing() {
     { id: 'portals', label: 'All Portals' }, { id: 'pricing', label: 'Pricing' }, { id: 'contact', label: 'Contact' },
   ]
 
+  const openApplyForm = useCallback((portalTitle: string) => { setAppliedPortal(portalTitle); setView('apply') }, [])
+
   if (view === 'register') return <RegistrationForm onBack={goHome} />
+  if (view === 'apply') return <RegistrationForm onBack={goHome} appliedFor={appliedPortal} />
   if (view === 'subscribe') return <SubscriptionForm onBack={goHome} />
 
   return (
@@ -698,13 +702,29 @@ export function Landing() {
                               </div>
                             </div>
                             {portal.requestAccess ? (
-                              <div className="flex gap-3">
-                                <a href={SOCIAL.whatsapp} target="_blank" rel="noopener noreferrer" className="flex-1 h-11 rounded-xl flex items-center justify-center gap-2 text-sm font-bold text-white transition-all hover:opacity-90" style={{ background: '#25D366' }}>
-                                  <WhatsAppIcon className="h-4 w-4" />Request Access
-                                </a>
-                                <a href={SOCIAL.recruitment} target="_blank" rel="noopener noreferrer" className="flex-1 h-11 rounded-xl flex items-center justify-center gap-2 text-sm font-bold text-white transition-all hover:opacity-90" style={{ background: portal.color }}>
-                                  <Send className="h-4 w-4" />Apply Now
-                                </a>
+                              <div className="space-y-3">
+                                <div className="rounded-xl bg-amber-50 border border-amber-200/60 p-4">
+                                  <p className="text-sm font-bold text-gray-900 mb-1.5">Apply to Join {portal.title}</p>
+                                  <p className="text-xs text-gray-600 leading-relaxed mb-3">Complete the onboarding form with all your personal details, identity documents, educational qualifications, experience, bank details, and upload all required documents.</p>
+                                  <div className="flex flex-wrap gap-1.5 mb-3">
+                                    {['Personal Info', 'Identity (Aadhaar/PAN)', 'Bank Details', 'Education', 'Experience', 'Documents Upload', 'Declaration'].map((item) => (
+                                      <span key={item} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 text-[10px] font-bold text-amber-800">
+                                        <Check className="h-2.5 w-2.5" />{item}
+                                      </span>
+                                    ))}
+                                  </div>
+                                  <Button onClick={() => openApplyForm(portal.title)} className="w-full h-11 font-bold text-sm text-white" style={{ background: portal.color }}>
+                                    <ClipboardList className="mr-2 h-4 w-4" />Fill Joining Application — All Documents
+                                  </Button>
+                                </div>
+                                <div className="flex gap-2">
+                                  <a href={SOCIAL.whatsapp} target="_blank" rel="noopener noreferrer" className="flex-1 h-10 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold text-white transition-all hover:opacity-90" style={{ background: '#25D366' }}>
+                                    <WhatsAppIcon className="h-3.5 w-3.5" />WhatsApp
+                                  </a>
+                                  <a href={`tel:${BRAND.phone}`} className="flex-1 h-10 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold text-white transition-all hover:opacity-90" style={{ background: '#002B5C' }}>
+                                    <Phone className="h-3.5 w-3.5" />Call Us
+                                  </a>
+                                </div>
                               </div>
                             ) : (
                               <PortalLoginCard portal={portal} onForgotPassword={() => setForgotOpen(true)} />

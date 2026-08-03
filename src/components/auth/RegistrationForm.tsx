@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
@@ -27,15 +28,15 @@ const STEPS = [
 
 interface Edu { qualification: string; specialization: string; college: string; year: string }
 
-export function RegistrationForm({ onBack }: { onBack: () => void }) {
+export function RegistrationForm({ onBack, appliedFor }: { onBack: () => void; appliedFor?: string }) {
   const [step, setStep] = useState(0)
   const [submitting, setSubmitting] = useState(false)
   const [done, setDone] = useState(false)
 
   // personal
   const [p, setP] = useState({
-    fullName: '', fatherName: '', motherName: '', dob: '', gender: '', bloodGroup: '',
-    mobile: '', alternateMobile: '', email: '', address: '', emergencyContact: '',
+    fullName: '', fatherName: '', motherName: '', dob: '', gender: '', maritalStatus: '', nationality: 'Indian', bloodGroup: '',
+    mobile: '', alternateMobile: '', email: '', address: '', permanentAddress: '', emergencyContact: '',
   })
   // identity
   const [idn, setIdn] = useState({ aadhaar: '', pan: '', uan: '', esic: '', passport: '', drivingLicence: '' })
@@ -95,6 +96,7 @@ export function RegistrationForm({ onBack }: { onBack: () => void }) {
     setSubmitting(true)
     try {
       const fd = new FormData()
+      if (appliedFor) fd.append('appliedPortal', appliedFor)
       Object.entries(p).forEach(([k, v]) => fd.append(k, v))
       Object.entries(idn).forEach(([k, v]) => fd.append(k, v))
       Object.entries(bank).forEach(([k, v]) => fd.append(k, v))
@@ -126,6 +128,9 @@ export function RegistrationForm({ onBack }: { onBack: () => void }) {
               <CheckCircle2 className="h-9 w-9 text-emerald-600" />
             </div>
             <h1 className="mt-5 text-2xl font-bold text-[var(--navy)]">Application Submitted!</h1>
+            {appliedFor && (
+              <Badge className="mt-3 px-4 py-1 text-sm font-bold" style={{ background: '#D4AF37', color: '#002B5C' }}>Applied for: {appliedFor}</Badge>
+            )}
             <p className="mt-2 text-muted-foreground">
               Thank you, {p.fullName.split(' ')[0]}. Your application has been received and is now pending review by our HR team. You will be notified at <span className="font-semibold text-[var(--navy)]">{p.email}</span> once your application is approved and your employee account is created.
             </p>
@@ -152,6 +157,9 @@ export function RegistrationForm({ onBack }: { onBack: () => void }) {
       <header className="sticky top-0 z-40 border-b bg-white/90 backdrop-blur dark:bg-[var(--navy-deep)]/90">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
           <BrandLogo />
+          {appliedFor && (
+            <Badge className="px-3 py-0.5 text-xs font-bold" style={{ background: '#D4AF37', color: '#002B5C' }}>Joining: {appliedFor}</Badge>
+          )}
           <Button variant="ghost" size="sm" onClick={onBack}><ArrowLeft className="mr-1 h-4 w-4" /> Back to Home</Button>
         </div>
       </header>
@@ -188,11 +196,14 @@ export function RegistrationForm({ onBack }: { onBack: () => void }) {
                   <Field label="Date of Birth"><Input type="date" value={p.dob} onChange={(e) => set(setP, 'dob', e.target.value)} /></Field>
                   <Field label="Gender"><Select value={p.gender} onValueChange={(v) => set(setP, 'gender', v)}><SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger><SelectContent>{GENDERS.map((g) => <SelectItem key={g} value={g}>{g}</SelectItem>)}</SelectContent></Select></Field>
                   <Field label="Blood Group"><Select value={p.bloodGroup} onValueChange={(v) => set(setP, 'bloodGroup', v)}><SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger><SelectContent>{BLOOD_GROUPS.map((b) => <SelectItem key={b} value={b}>{b}</SelectItem>)}</SelectContent></Select></Field>
+                  <Field label="Marital Status"><Select value={p.maritalStatus} onValueChange={(v) => set(setP, 'maritalStatus', v)}><SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger><SelectContent>{['Single', 'Married', 'Divorced', 'Widowed'].map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent></Select></Field>
+                  <Field label="Nationality"><Input value={p.nationality} onChange={(e) => set(setP, 'nationality', e.target.value)} /></Field>
                   <Field label="Mobile *"><Input value={p.mobile} onChange={(e) => set(setP, 'mobile', e.target.value)} placeholder="+91 98765 43210" /></Field>
                   <Field label="Alternate Mobile"><Input value={p.alternateMobile} onChange={(e) => set(setP, 'alternateMobile', e.target.value)} /></Field>
                   <Field label="Email *" full><Input type="email" value={p.email} onChange={(e) => set(setP, 'email', e.target.value)} placeholder="you@example.com" /></Field>
-                  <Field label="Address" full><Textarea value={p.address} onChange={(e) => set(setP, 'address', e.target.value)} rows={2} /></Field>
-                  <Field label="Emergency Contact"><Input value={p.emergencyContact} onChange={(e) => set(setP, 'emergencyContact', e.target.value)} placeholder="Name & phone" /></Field>
+                  <Field label="Current Address" full><Textarea value={p.address} onChange={(e) => set(setP, 'address', e.target.value)} rows={2} placeholder="Present residential address" /></Field>
+                  <Field label="Permanent Address" full><Textarea value={p.permanentAddress} onChange={(e) => set(setP, 'permanentAddress', e.target.value)} rows={2} placeholder="Permanent address (if different from current)" /></Field>
+                  <Field label="Emergency Contact (Name & Phone)" full><Input value={p.emergencyContact} onChange={(e) => set(setP, 'emergencyContact', e.target.value)} placeholder="e.g. Ramesh Kumar +91 98765 00000" /></Field>
                 </Grid>
               </Section>
             )}
@@ -209,10 +220,12 @@ export function RegistrationForm({ onBack }: { onBack: () => void }) {
                   <Field label="Driving Licence (Optional)"><Input value={idn.drivingLicence} onChange={(e) => set(setIdn, 'drivingLicence', e.target.value)} /></Field>
                 </Grid>
                 <div className="mt-6 grid gap-4 sm:grid-cols-2">
-                  <FileField label="Aadhaar Upload" field="aadhaarFile" files={files} setFiles={setFiles} />
-                  <FileField label="PAN Upload" field="panFile" files={files} setFiles={setFiles} />
+                  <FileField label="Aadhaar Card Upload" field="aadhaarFile" files={files} setFiles={setFiles} />
+                  <FileField label="PAN Card Upload" field="panFile" files={files} setFiles={setFiles} />
                   <FileField label="Passport Photo *" field="photoFile" files={files} setFiles={setFiles} />
-                  <FileField label="Signature" field="signatureFile" files={files} setFiles={setFiles} />
+                  <FileField label="Signature Upload" field="signatureFile" files={files} setFiles={setFiles} />
+                  <FileField label="Medical/Fitness Certificate" field="medicalFile" files={files} setFiles={setFiles} />
+                  <FileField label="Address Proof (Voter ID/Utility Bill)" field="addressProofFile" files={files} setFiles={setFiles} />
                 </div>
               </Section>
             )}
@@ -271,10 +284,10 @@ export function RegistrationForm({ onBack }: { onBack: () => void }) {
                   <Field label="Notice Period"><Input value={exp.noticePeriod} onChange={(e) => set(setExp, 'noticePeriod', e.target.value)} placeholder="30 Days" /></Field>
                 </Grid>
                 <div className="mt-6 grid gap-4 sm:grid-cols-2">
-                  <FileField label="Resume / CV" field="resumeFile" files={files} setFiles={setFiles} />
+                  <FileField label="Resume / CV *" field="resumeFile" files={files} setFiles={setFiles} />
                   <FileField label="Experience Certificates" field="experienceFile" files={files} setFiles={setFiles} />
-                  <FileField label="Last Salary Slip" field="salarySlipFile" files={files} setFiles={setFiles} />
-                  <FileField label="Relieving Letter" field="relievingFile" files={files} setFiles={setFiles} />
+                  <FileField label="Last 3 Months Salary Slips" field="salarySlipFile" files={files} setFiles={setFiles} />
+                  <FileField label="Relieving / Service Certificate" field="relievingFile" files={files} setFiles={setFiles} />
                 </div>
               </Section>
             )}
@@ -295,11 +308,15 @@ export function RegistrationForm({ onBack }: { onBack: () => void }) {
                   <Summary label="Full Name" value={p.fullName} />
                   <Summary label="Email" value={p.email} />
                   <Summary label="Mobile" value={p.mobile} />
+                  <Summary label="Gender" value={p.gender} />
+                  <Summary label="Marital Status" value={p.maritalStatus} />
                   <Summary label="Aadhaar" value={idn.aadhaar} />
                   <Summary label="PAN" value={idn.pan} />
                   <Summary label="Bank A/C" value={bank.bankAccount} />
+                  <Summary label="IFSC" value={bank.bankIfsc} />
                   <Summary label="Experience" value={exp.totalExperience} />
                   <Summary label="Current Company" value={exp.currentCompany} />
+                  <Summary label="Expected Salary" value={exp.expectedSalary} />
                   <Summary label="Disciplines" value={disciplines.join(', ') || '—'} />
                   <Summary label="Skills" value={skills.join(', ') || '—'} />
                   <Summary label="Education Entries" value={String(edu.length)} />

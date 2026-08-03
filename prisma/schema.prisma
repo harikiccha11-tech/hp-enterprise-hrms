@@ -50,11 +50,14 @@ model Employee {
   motherName      String?
   dob             DateTime?
   gender          String?
+  maritalStatus   String?
+  nationality     String?
   bloodGroup      String?
   mobile          String?
   alternateMobile String?
   email           String
   address         String?
+  permanentAddress String?
   emergencyContact String?
 
   // Identity
@@ -125,6 +128,7 @@ model Employee {
   interviewNotes  String?
   assignedClientId String?
   documentsVerified Boolean @default(false)
+  appliedPortal    String?
   assignedClient  Client?  @relation("AssignedClient", fields: [assignedClientId], references: [id])
 
   createdAt      DateTime @default(now())

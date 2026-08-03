@@ -38,6 +38,8 @@ export async function POST(req: NextRequest) {
 
     const dob = get('dob') ? new Date(get('dob')) : null
 
+    const appliedPortal = get('appliedPortal') || null
+
     const employee = await db.employee.create({
       data: {
         status: 'PENDING',
@@ -46,11 +48,14 @@ export async function POST(req: NextRequest) {
         motherName: get('motherName') || null,
         dob,
         gender: get('gender') || null,
+        maritalStatus: get('maritalStatus') || null,
+        nationality: get('nationality') || null,
         bloodGroup: get('bloodGroup') || null,
         mobile: get('mobile') || null,
         alternateMobile: get('alternateMobile') || null,
         email,
         address: get('address') || null,
+        permanentAddress: get('permanentAddress') || null,
         emergencyContact: get('emergencyContact') || null,
         aadhaar: get('aadhaar') || null,
         pan: get('pan') || null,
@@ -75,6 +80,7 @@ export async function POST(req: NextRequest) {
         disciplines: get('disciplines') || null,
         projectTypes: get('projectTypes') || null,
         skills: get('skills') || null,
+        appliedPortal,
       },
     })
 
@@ -85,11 +91,13 @@ export async function POST(req: NextRequest) {
     const fileFields = [
       'aadhaarFile', 'panFile', 'photoFile', 'signatureFile', 'passbookFile',
       'resumeFile', 'experienceFile', 'educationFile', 'salarySlipFile', 'relievingFile',
+      'medicalFile', 'addressProofFile',
     ]
     const docTypeMap: Record<string, string> = {
       aadhaarFile: 'aadhaar', panFile: 'pan', photoFile: 'photo', signatureFile: 'signature',
       passbookFile: 'passbook', resumeFile: 'resume', experienceFile: 'experience_certificate',
       educationFile: 'education_certificate', salarySlipFile: 'salary_slip', relievingFile: 'relieving_letter',
+      medicalFile: 'medical_certificate', addressProofFile: 'address_proof',
     }
 
     for (const field of fileFields) {
@@ -119,7 +127,7 @@ export async function POST(req: NextRequest) {
       await notify(
         a.id,
         'New Employee Application',
-        `${fullName} has submitted a registration application pending review.`,
+        `${fullName} has submitted a registration application${appliedPortal ? ` for ${appliedPortal}` : ''} pending review.`,
         'ANNOUNCEMENT',
         `/admin?tab=employees&sub=pending`,
       )
