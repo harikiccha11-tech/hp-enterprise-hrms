@@ -1,0 +1,862 @@
+     1→// HP Enterprise HRMS — Prisma Schema (SQLite)
+     2→
+     3→generator client {
+     4→  provider = "prisma-client-js"
+     5→}
+     6→
+     7→datasource db {
+     8→  provider = "sqlite"
+     9→  url      = "file:../db/custom.db"
+    10→}
+    11→
+    12→// ============================================================
+    13→// AUTH & USERS
+    14→// ============================================================
+    15→
+    16→model User {
+    17→  id               String   @id @default(cuid())
+    18→  username         String   @unique
+    19→  email            String   @unique
+    20→  passwordHash     String
+    21→  role             String   @default("EMPLOYEE") // OWNER | SUPER_ADMIN | HR_MANAGER | EMPLOYEE | CLIENT
+    22→  clientId         String?  // For CLIENT role users — links to Client record
+    23→  mustResetPassword Boolean @default(true)
+    24→  locked           Boolean  @default(false)
+    25→  lastLoginAt      DateTime?
+    26→  createdAt        DateTime @default(now())
+    27→  updatedAt        DateTime @updatedAt
+    28→
+    29→  employee       Employee?
+    30→  notifications  Notification[]
+    31→  auditLogs      AuditLog[]
+    32→  attendanceRecords Attendance[] @relation("AttendanceMarkedBy")
+    33→  leaveActions   LeaveAction[]
+    34→
+    35→  @@index([role])
+    36→}
+    37→
+    38→// ============================================================
+    39→// EMPLOYEES (registration -> approved)
+    40→// ============================================================
+    41→
+    42→model Employee {
+    43→  id              String   @id @default(cuid())
+    44→  employeeCode    String?  @unique // e.g. HPE-0042 — generated on approval
+    45→  status          String   @default("PENDING") // PENDING | APPROVED | REJECTED | TERMINATED
+    46→
+    47→  // Personal
+    48→  fullName        String
+    49→  fatherName      String?
+    50→  motherName      String?
+    51→  dob             DateTime?
+    52→  gender          String?
+    53→  bloodGroup      String?
+    54→  mobile          String?
+    55→  alternateMobile String?
+    56→  email           String
+    57→  address         String?
+    58→  emergencyContact String?
+    59→
+    60→  // Identity
+    61→  aadhaar         String?
+    62→  pan             String?
+    63→  uan             String?
+    64→  esic            String?
+    65→  passport        String?
+    66→  drivingLicence  String?
+    67→
+    68→  // Bank
+    69→  bankHolder      String?
+    70→  bankName        String?
+    71→  bankBranch      String?
+    72→  bankAccount     String?
+    73→  bankIfsc        String?
+    74→
+    75→  // Education (JSON string array of {qualification, specialization, college, year})
+    76→  educationJson   String?
+    77→
+    78→  // Experience
+    79→  currentDesignation String?
+    80→  totalExperience    String?
+    81→  relevantExperience String?
+    82→  currentCompany     String?
+    83→  previousCompany    String?
+    84→  currentSalary      String?
+    85→  expectedSalary     String?
+    86→  noticePeriod       String?
+    87→
+    88→  // Engineering disciplines / project experience / skills (comma separated)
+    89→  disciplines    String?
+    90→  projectTypes   String?
+    91→  skills         String?
+    92→
+    93→  // Employment
+    94→  designation    String?
+    95→  department     String?
+    96→  joinDate       DateTime?
+    97→  employmentType String? // Full-time / Contract
+    98→  salary         Float?
+    99→  // Salary structure (monthly) — used by payroll
+   100→  basic          Float?
+   101→  hra            Float?
+   102→  allowances     Float?
+   103→  specialAllowance Float?
+   104→
+   105→  // Links
+   106→  userId         String?  @unique
+   107→  user           User?    @relation(fields: [userId], references: [id])
+   108→  documents      EmployeeDocument[]
+   109→  attendance     Attendance[]
+   110→  leaves         Leave[]
+   111→  payrolls       Payroll[]
+   112→  salarySlips    SalarySlip[]
+   113→  generatedDocs  GeneratedDocument[]
+   114→  projectAssignments ProjectMember[]
+   115→  leaveBalance   LeaveBalance?
+   116→  onboardingTasks OnboardingTask[]
+   117→  offboardingTasks OffboardingTask[]
+   118→
+   119→  reviewedBy     String?
+   120→  reviewedAt     DateTime?
+   121→  rejectReason   String?
+   122→  // Interview & verification workflow
+   123→  interviewStatus String? // SCHEDULED | COMPLETED | PASSED | FAILED | NONE
+   124→  interviewDate   DateTime?
+   125→  interviewNotes  String?
+   126→  assignedClientId String?
+   127→  documentsVerified Boolean @default(false)
+   128→  assignedClient  Client?  @relation("AssignedClient", fields: [assignedClientId], references: [id])
+   129→
+   130→  createdAt      DateTime @default(now())
+   131→  updatedAt      DateTime @updatedAt
+   132→
+   133→  @@index([status])
+   134→}
+   135→
+   136→model EmployeeDocument {
+   137→  id           String   @id @default(cuid())
+   138→  employeeId   String
+   139→  documentType String // aadhaar | pan | photo | signature | passbook | resume | certificate ...
+   140→  fileName     String
+   141→  filePath     String
+   142→  mimeType     String?
+   143→  uploadedAt   DateTime @default(now())
+   144→  verified     Boolean  @default(false)
+   145→  verifiedBy   String?
+   146→  verifiedAt   DateTime?
+   147→  verifyNote   String?
+   148→
+   149→  employee     Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+   150→
+   151→  @@index([employeeId, documentType])
+   152→}
+   153→
+   154→// ============================================================
+   155→// ATTENDANCE
+   156→// ============================================================
+   157→
+   158→model Attendance {
+   159→  id          String   @id @default(cuid())
+   160→  employeeId  String
+   161→  date        DateTime
+   162→  punchIn     DateTime?
+   163→  punchOut    DateTime?
+   164→  workingHours Float?  // hours
+   165→  overtime    Float?   // hours
+   166→  lateArrival Boolean @default(false)
+   167→  status      String  @default("PRESENT") // PRESENT | ABSENT | LATE | HALF_DAY | LEAVE | HOLIDAY
+   168→  markedBy    String?
+   169→  markedById  String?
+   170→  // Geolocation captured on punch in/out (no continuous tracking)
+   171→  punchInLat      Float?
+   172→  punchInLng      Float?
+   173→  punchInAddress  String?
+   174→  punchOutLat     Float?
+   175→  punchOutLng     Float?
+   176→  punchOutAddress String?
+   177→  // Selfie photos captured on punch in/out
+   178→  punchInSelfie   String?
+   179→  punchOutSelfie  String?
+   180→
+   181→  employee    Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+   182→  markedByUser User?   @relation("AttendanceMarkedBy", fields: [markedById], references: [id])
+   183→
+   184→  @@unique([employeeId, date])
+   185→  @@index([date])
+   186→}
+   187→
+   188→// ============================================================
+   189→// LEAVE
+   190→// ============================================================
+   191→
+   192→model Leave {
+   193→  id          String   @id @default(cuid())
+   194→  employeeId  String
+   195→  leaveType   String // CL | SL | EL | PL | LOP | WFH
+   196→  fromDate    DateTime
+   197→  toDate      DateTime
+   198→  days        Float
+   199→  reason      String
+   200→  status      String @default("PENDING") // PENDING | APPROVED | REJECTED | CANCELLED
+   201→  appliedAt   DateTime @default(now())
+   202→  reviewedBy  String?
+   203→  reviewedAt  DateTime?
+   204→  comments    String?
+   205→
+   206→  employee    Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+   207→  actions     LeaveAction[]
+   208→
+   209→  @@index([employeeId, status])
+   210→}
+   211→
+   212→model LeaveAction {
+   213→  id        String   @id @default(cuid())
+   214→  leaveId   String
+   215→  userId    String
+   216→  action    String // APPROVED | REJECTED
+   217→  comments  String?
+   218→  at        DateTime @default(now())
+   219→
+   220→  leave     Leave @relation(fields: [leaveId], references: [id], onDelete: Cascade)
+   221→  user      User  @relation(fields: [userId], references: [id])
+   222→}
+   223→
+   224→model LeaveBalance {
+   225→  id          String  @id @default(cuid())
+   226→  employeeId  String  @unique
+   227→  casual      Float   @default(12)
+   228→  sick        Float   @default(12)
+   229→  earned      Float   @default(15)
+   230→  usedCasual  Float   @default(0)
+   231→  usedSick    Float   @default(0)
+   232→  usedEarned  Float   @default(0)
+   233→  carriedForward Float @default(0)
+   234→
+   235→  employee    Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+   236→}
+   237→
+   238→// ============================================================
+   239→// PAYROLL
+   240→// ============================================================
+   241→
+   242→model Payroll {
+   243→  id           String   @id @default(cuid())
+   244→  employeeId   String
+   245→  month        Int      // 1-12
+   246→  year         Int
+   247→  basic        Float
+   248→  hra          Float
+   249→  allowances   Float
+   250→  specialAllowance Float
+   251→  grossSalary  Float
+   252→  overtimePay  Float    @default(0)
+   253→  lopDays      Float    @default(0)
+   254→  lopAmount    Float    @default(0)
+   255→  pfEmployee   Float    @default(0)
+   256→  pfEmployer   Float    @default(0)
+   257→  esiEmployee  Float    @default(0)
+   258→  esiEmployer  Float    @default(0)
+   259→  professionalTax Float @default(0)
+   260→  netSalary    Float
+   261→  status       String   @default("GENERATED") // GENERATED | PAID | HELD
+   262→  processedAt  DateTime @default(now())
+   263→  processedBy  String?
+   264→
+   265→  salarySlip   SalarySlip?
+   266→  employee     Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+   267→
+   268→  @@unique([employeeId, month, year])
+   269→}
+   270→
+   271→model SalarySlip {
+   272→  id          String   @id @default(cuid())
+   273→  employeeId  String
+   274→  payrollId   String   @unique
+   275→  month       Int
+   276→  year        Int
+   277→  netSalary   Float
+   278→  generatedAt DateTime @default(now())
+   279→
+   280→  payroll     Payroll  @relation(fields: [payrollId], references: [id], onDelete: Cascade)
+   281→  employee    Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+   282→}
+   283→
+   284→model GeneratedDocument {
+   285→  id          String   @id @default(cuid())
+   286→  employeeId  String
+   287→  docType     String // offer_letter | appointment_letter | id_card | joining_letter | nda | experience_letter | relieving_letter | confirmation_letter | promotion_letter | transfer_letter | warning_letter | no_due_certificate | full_final_settlement
+   288→  title       String
+   289→  filePath    String?
+   290→  metaJson    String?
+   291→  generatedAt DateTime @default(now())
+   292→  generatedBy String?
+   293→
+   294→  employee    Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+   295→
+   296→  @@index([employeeId, docType])
+   297→}
+   298→
+   299→// ============================================================
+   300→// CLIENTS & PROJECTS
+   301→// ============================================================
+   302→
+   303→model Client {
+   304→  id           String   @id @default(cuid())
+   305→  clientName   String
+   306→  companyName  String?
+   307→  gst          String?
+   308→  email        String?
+   309→  phone        String?
+   310→  address      String?
+   311→  contactsJson String? // JSON array of contact persons
+   312→  createdAt    DateTime @default(now())
+   313→
+   314→  projects     Project[]
+   315→  workOrders   WorkOrder[]
+   316→  invoices     Invoice[]
+   317→  assignedEmployees Employee[] @relation("AssignedClient")
+   318→}
+   319→
+   320→model Project {
+   321→  id          String   @id @default(cuid())
+   322→  projectName String
+   323→  clientId    String
+   324→  site        String?
+   325→  startDate   DateTime?
+   326→  endDate     DateTime?
+   327→  status      String   @default("ACTIVE") // ACTIVE | COMPLETED | ON_HOLD
+   328→  description String?
+   329→  createdAt   DateTime @default(now())
+   330→
+   331→  client      Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+   332→  members     ProjectMember[]
+   333→  workOrders  WorkOrder[]
+   334→}
+   335→
+   336→model ProjectMember {
+   337→  id          String  @id @default(cuid())
+   338→  projectId   String
+   339→  employeeId  String
+   340→  role        String?
+   341→  assignedAt  DateTime @default(now())
+   342→
+   343→  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+   344→  employee    Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+   345→
+   346→  @@unique([projectId, employeeId])
+   347→}
+   348→
+   349→model WorkOrder {
+   350→  id          String   @id @default(cuid())
+   351→  woNumber    String
+   352→  clientId    String
+   353→  projectId   String?
+   354→  title       String
+   355→  value       Float
+   356→  startDate   DateTime?
+   357→  endDate     DateTime?
+   358→  status      String   @default("OPEN")
+   359→  createdAt   DateTime @default(now())
+   360→
+   361→  client      Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+   362→  project     Project? @relation(fields: [projectId], references: [id])
+   363→  invoices    Invoice[]
+   364→}
+   365→
+   366→model Invoice {
+   367→  id          String   @id @default(cuid())
+   368→  invoiceNumber String @unique
+   369→  clientId    String
+   370→  workOrderId String?
+   371→  amount      Float
+   372→  tax         Float    @default(0)
+   373→  total       Float
+   374→  status      String   @default("DRAFT") // DRAFT | SENT | PAID | OVERDUE
+   375→  issueDate   DateTime @default(now())
+   376→  dueDate     DateTime?
+   377→  filePath    String?
+   378→
+   379→  client      Client     @relation(fields: [clientId], references: [id], onDelete: Cascade)
+   380→  workOrder   WorkOrder? @relation(fields: [workOrderId], references: [id])
+   381→}
+   382→
+   383→// ============================================================
+   384→// NOTIFICATIONS & AUDIT
+   385→// ============================================================
+   386→
+   387→model Notification {
+   388→  id        String   @id @default(cuid())
+   389→  userId    String
+   390→  title     String
+   391→  message   String
+   392→  type      String   @default("INFO") // INFO | SUCCESS | WARNING | LEAVE | PAYROLL | DOCUMENT | ANNOUNCEMENT
+   393→  read      Boolean  @default(false)
+   394→  link      String?
+   395→  createdAt DateTime @default(now())
+   396→
+   397→  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+   398→
+   399→  @@index([userId, read])
+   400→}
+   401→
+   402→model AuditLog {
+   403→  id        String   @id @default(cuid())
+   404→  userId    String?
+   405→  action    String
+   406→  entity    String
+   407→  entityId  String?
+   408→  details   String?
+   409→  ip        String?
+   410→  at        DateTime @default(now())
+   411→
+   412→  user      User? @relation(fields: [userId], references: [id])
+   413→
+   414→  @@index([entity, at])
+   415→}
+   416→
+   417→// ============================================================
+   418→// SETTINGS
+   419→// ============================================================
+   420→
+   421→model Setting {
+   422→  id    String @id @default(cuid())
+   423→  key   String @unique
+   424→  value String
+   425→}
+   426→
+   427→model Announcement {
+   428→  id        String   @id @default(cuid())
+   429→  title     String
+   430→  body      String
+   431→  audience  String   @default("ALL") // ALL | EMPLOYEE | ADMIN
+   432→  postedBy  String?
+   433→  postedAt  DateTime @default(now())
+   434→}
+   435→
+   436→// ============================================================
+   437→// SUBSCRIPTION REQUESTS
+   438→// ============================================================
+   439→
+   440→model SubscriptionRequest {
+   441→  id          String   @id @default(cuid())
+   442→  companyName String
+   443→  contactName String
+   444→  email       String
+   445→  phone       String?
+   446→  address     String?
+   447→  plan        String   // free | starter | professional | enterprise
+   448→  employeeCount String?
+   449→  message     String?
+   450→  status      String   @default("NEW") // NEW | CONTACTED | CONVERTED | REJECTED
+   451→  createdAt   DateTime @default(now())
+   452→  updatedAt   DateTime @updatedAt
+   453→}
+   454→
+   455→// ============================================================
+   456→// ORGANIZATION STRUCTURE
+   457→// ============================================================
+   458→
+   459→model Department {
+   460→  id          String   @id @default(cuid())
+   461→  name        String   @unique
+   462→  code        String   @unique
+   463→  description String?
+   464→  headName    String?
+   465→  headEmail   String?
+   466→  status      String   @default("ACTIVE") // ACTIVE | INACTIVE
+   467→  createdAt   DateTime @default(now())
+   468→  updatedAt   DateTime @updatedAt
+   469→
+   470→  @@index([status])
+   471→}
+   472→
+   473→model Designation {
+   474→  id          String   @id @default(cuid())
+   475→  title       String   @unique
+   476→  level       String?  // Junior | Mid | Senior | Lead | Manager | Director
+   477→  department  String?
+   478→  minSalary   Float?
+   479→  maxSalary   Float?
+   480→  description String?
+   481→  status      String   @default("ACTIVE") // ACTIVE | INACTIVE
+   482→  createdAt   DateTime @default(now())
+   483→  updatedAt   DateTime @updatedAt
+   484→
+   485→  @@index([status])
+   486→}
+   487→
+   488→model Branch {
+   489→  id          String   @id @default(cuid())
+   490→  name        String
+   491→  code        String   @unique
+   492→  address     String?
+   493→  city        String?
+   494→  state       String?
+   495→  pincode     String?
+   496→  phone       String?
+   497→  email       String?
+   498→  isHead      Boolean  @default(false)
+   499→  status      String   @default("ACTIVE") // ACTIVE | INACTIVE
+   500→  createdAt   DateTime @default(now())
+   501→  updatedAt   DateTime @updatedAt
+   502→
+   503→  @@index([status])
+   504→}
+   505→
+   506→// ============================================================
+   507→// VENDORS
+   508→// ============================================================
+   509→
+   510→model Vendor {
+   511→  id          String   @id @default(cuid())
+   512→  vendorName  String
+   513→  companyName String?
+   514→  gst         String?
+   515→  email       String?
+   516→  phone       String?
+   517→  address     String?
+   518→  category    String?  // Equipment | Material | Service | Contractor | Consultant
+   519→  pan         String?
+   520→  bankName    String?
+   521→  bankAccount String?
+   522→  bankIfsc    String?
+   523→  rating      Float?   // 1-5
+   524→  status      String   @default("ACTIVE") // ACTIVE | INACTIVE | BLACKLISTED
+   525→  createdAt   DateTime @default(now())
+   526→  updatedAt   DateTime @updatedAt
+   527→
+   528→  @@index([status])
+   529→}
+   530→
+   531→// ============================================================
+   532→// RECRUITMENT
+   533→// ============================================================
+   534→
+   535→model JobPosting {
+   536→  id          String   @id @default(cuid())
+   537→  title       String
+   538→  department  String?
+   539→  designation String?
+   540→  location    String?
+   541→  type        String   @default("FULL_TIME") // FULL_TIME | CONTRACT | PART_TIME | INTERNSHIP
+   542→  experience   String?
+   543→  salaryMin   Float?
+   544→  salaryMax   Float?
+   545→  description String?
+   546→  requirements String?
+   547→  status      String   @default("OPEN") // DRAFT | OPEN | CLOSED | FILLED
+   548→  postedBy    String?
+   549→  postedAt    DateTime @default(now())
+   550→  closedAt    DateTime?
+   551→
+   552→  candidates  Candidate[]
+   553→
+   554→  @@index([status])
+   555→}
+   556→
+   557→model Candidate {
+   558→  id          String   @id @default(cuid())
+   559→  fullName    String
+   560→  email       String
+   561→  phone       String?
+   562→  resume      String?
+   563→  experience  String?
+   564→  currentCompany String?
+   565→  currentCtc  Float?
+   566→  expectedCtc Float?
+   567→  noticePeriod String?
+   568→  skills      String?
+   569→  source      String?  // Referral | JobPortal | LinkedIn | Website | WalkIn | Other
+   570→  status      String   @default("NEW") // NEW | SCREENING | SHORTLISTED | INTERVIEW | OFFERED | HIRED | REJECTED | WITHDRAWN
+   571→  jobPostingId String?
+   572→  remarks     String?
+   573→  appliedAt   DateTime @default(now())
+   574→  updatedAt   DateTime @updatedAt
+   575→
+   576→  jobPosting  JobPosting? @relation(fields: [jobPostingId], references: [id])
+   577→
+   578→  @@index([status])
+   579→}
+   580→
+   581→// ============================================================
+   582→// ONBOARDING & OFFBOARDING
+   583→// ============================================================
+   584→
+   585→model OnboardingTask {
+   586→  id          String   @id @default(cuid())
+   587→  employeeId  String
+   588→  task        String
+   589→  category    String?  // Documents | IT | HR | Finance | Training | General
+   590→  dueDate     DateTime?
+   591→  status      String   @default("PENDING") // PENDING | IN_PROGRESS | COMPLETED | SKIPPED
+   592→  completedBy String?
+   593→  completedAt DateTime?
+   594→  notes       String?
+   595→  createdAt   DateTime @default(now())
+   596→
+   597→  employee    Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+   598→
+   599→  @@index([employeeId, status])
+   600→}
+   601→
+   602→model OffboardingTask {
+   603→  id          String   @id @default(cuid())
+   604→  employeeId  String
+   605→  task        String
+   606→  category    String?  // Documents | IT | HR | Finance | Assets | General
+   607→  dueDate     DateTime?
+   608→  status      String   @default("PENDING") // PENDING | IN_PROGRESS | COMPLETED | SKIPPED
+   609→  completedBy String?
+   610→  completedAt DateTime?
+   611→  notes       String?
+   612→  createdAt   DateTime @default(now())
+   613→
+   614→  employee    Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+   615→
+   616→  @@index([employeeId, status])
+   617→}
+   618→
+   619→// ============================================================
+   620→// PERFORMANCE & GOALS
+   621→// ============================================================
+   622→
+   623→model PerformanceReview {
+   624→  id          String   @id @default(cuid())
+   625→  employeeId  String
+   626→  reviewPeriod String  // Q1 | Q2 | Q3 | Q4 | H1 | H2 | Annual
+   627→  year        Int
+   628→  rating      Float?   // 1-5
+   629→  strengths   String?
+   630→  improvements String?
+   631→  goals       String?
+   632→  feedback    String?
+   633→  reviewerId  String?
+   634→  reviewerName String?
+   635→  status      String   @default("DRAFT") // DRAFT | SUBMITTED | REVIEWED | COMPLETED
+   636→  reviewedAt  DateTime?
+   637→  createdAt   DateTime @default(now())
+   638→  updatedAt   DateTime @updatedAt
+   639→
+   640→  @@unique([employeeId, reviewPeriod, year])
+   641→  @@index([employeeId])
+   642→}
+   643→
+   644→model Goal {
+   645→  id          String   @id @default(cuid())
+   646→  employeeId  String
+   647→  title       String
+   648→  description String?
+   649→  category    String?  // Performance | Learning | Project | Personal
+   650→  priority    String   @default("MEDIUM") // LOW | MEDIUM | HIGH | CRITICAL
+   651→  progress    Float    @default(0) // 0-100
+   652→  targetDate  DateTime?
+   653→  status      String   @default("NOT_STARTED") // NOT_STARTED | IN_PROGRESS | ON_TRACK | AT_RISK | COMPLETED | CANCELLED
+   654→  weight      Float?   // For weighted goal scoring
+   655→  createdAt   DateTime @default(now())
+   656→  updatedAt   DateTime @updatedAt
+   657→
+   658→  @@index([employeeId, status])
+   659→}
+   660→
+   661→// ============================================================
+   662→// TRAINING & LEARNING
+   663→// ============================================================
+   664→
+   665→model TrainingCourse {
+   666→  id          String   @id @default(cuid())
+   667→  title       String
+   668→  description String?
+   669→  category    String?  // Safety | Technical | SoftSkills | Compliance | Leadership
+   670→  duration    String?  // e.g. "2 hours", "3 days"
+   671→  mode        String?  // Online | Offline | Hybrid
+   672→  instructor  String?
+   673→  maxParticipants Int?
+   674→  status      String   @default("ACTIVE") // ACTIVE | INACTIVE | ARCHIVED
+   675→  createdAt   DateTime @default(now())
+   676→  updatedAt   DateTime @updatedAt
+   677→
+   678→  enrollments TrainingEnrollment[]
+   679→
+   680→  @@index([status])
+   681→}
+   682→
+   683→model TrainingEnrollment {
+   684→  id          String   @id @default(cuid())
+   685→  courseId    String
+   686→  employeeId  String
+   687→  status      String   @default("ENROLLED") // ENROLLED | IN_PROGRESS | COMPLETED | FAILED | CANCELLED
+   688→  enrolledAt  DateTime @default(now())
+   689→  completedAt DateTime?
+   690→  score       Float?   // 0-100
+   691→  certificatePath String?
+   692→  feedback    String?
+   693→
+   694→  course      TrainingCourse @relation(fields: [courseId], references: [id], onDelete: Cascade)
+   695→
+   696→  @@unique([courseId, employeeId])
+   697→  @@index([employeeId])
+   698→}
+   699→
+   700→// ============================================================
+   701→// EXPENSES
+   702→// ============================================================
+   703→
+   704→model Expense {
+   705→  id          String   @id @default(cuid())
+   706→  employeeId  String
+   707→  category    String   // Travel | Food | Accommodation | Medical | Communication | Equipment | Other
+   708→  amount      Float
+   709→  description String
+   710→  date        DateTime
+   711→  receiptPath String?
+   712→  status      String   @default("PENDING") // PENDING | APPROVED | REJECTED | REIMBURSED
+   713→  approvedBy  String?
+   714→  approvedAt  DateTime?
+   715→  remarks     String?
+   716→  createdAt   DateTime @default(now())
+   717→  updatedAt   DateTime @updatedAt
+   718→
+   719→  @@index([employeeId, status])
+   720→  @@index([status])
+   721→}
+   722→
+   723→// ============================================================
+   724→// ASSETS & INVENTORY
+   725→// ============================================================
+   726→
+   727→model Asset {
+   728→  id          String   @id @default(cuid())
+   729→  name        String
+   730→  category    String   // Laptop | Desktop | Phone | Vehicle | Equipment | Furniture | Other
+   731→  serialNumber String?
+   732→  make        String?
+   733→  model       String?
+   734→  purchaseDate DateTime?
+   735→  purchaseCost Float?
+   736→  currentValue  Float?
+   737→  warrantyExpiry DateTime?
+   738→  status      String   @default("AVAILABLE") // AVAILABLE | ASSIGNED | IN_REPAIR | DISPOSED | LOST
+   739→  location    String?
+   740→  notes       String?
+   741→  createdAt   DateTime @default(now())
+   742→  updatedAt   DateTime @updatedAt
+   743→
+   744→  assignments AssetAssignment[]
+   745→
+   746→  @@index([status])
+   747→}
+   748→
+   749→model AssetAssignment {
+   750→  id          String   @id @default(cuid())
+   751→  assetId     String
+   752→  employeeId  String
+   753→  assignedAt  DateTime @default(now())
+   754→  returnedAt  DateTime?
+   755→  condition   String?  // Good | Fair | Damaged
+   756→  notes       String?
+   757→
+   758→  asset       Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+   759→
+   760→  @@index([employeeId])
+   761→}
+   762→
+   763→// ============================================================
+   764→// AI KNOWLEDGE BASE
+   765→// ============================================================
+   766→
+   767→model KnowledgeBase {
+   768→  id          String   @id @default(cuid())
+   769→  category    String
+   770→  question    String
+   771→  answer      String
+   772→  tags        String?
+   773→  keywords    String?
+   774→  enabled     Boolean  @default(true)
+   775→  sortOrder   Int      @default(0)
+   776→  createdAt   DateTime @default(now())
+   777→  updatedAt   DateTime @updatedAt
+   778→
+   779→  @@index([category])
+   780→}
+   781→
+   782→// ============================================================
+   783→// TEMPLATES
+   784→// ============================================================
+   785→
+   786→model EmailTemplate {
+   787→  id          String   @id @default(cuid())
+   788→  name        String   @unique
+   789→  subject     String
+   790→  body        String   // HTML body
+   791→  variables   String?  // JSON array of variable placeholders
+   792→  category    String?  // onboarding | leave | payroll | general
+   793→  status      String   @default("ACTIVE") // ACTIVE | INACTIVE
+   794→  createdAt   DateTime @default(now())
+   795→  updatedAt   DateTime @updatedAt
+   796→}
+   797→
+   798→model NotificationTemplate {
+   799→  id          String   @id @default(cuid())
+   800→  name        String   @unique
+   801→  title       String
+   802→  body        String
+   803→  type        String?  // push | email | sms | in_app
+   804→  category    String?  // leave | payroll | attendance | general
+   805→  status      String   @default("ACTIVE") // ACTIVE | INACTIVE
+   806→  createdAt   DateTime @default(now())
+   807→  updatedAt   DateTime @updatedAt
+   808→}
+   809→
+   810→// ============================================================
+   811→// SUBSCRIPTION PLANS
+   812→// ============================================================
+   813→
+   814→model SubscriptionPlan {
+   815→  id          String   @id @default(cuid())
+   816→  name        String   @unique
+   817→  description String?
+   818→  priceINR    Float?
+   819→  priceUSD    Float?
+   820→  interval    String   @default("MONTHLY") // MONTHLY | YEARLY
+   821→  maxEmployees Int?
+   822→  features    String?  // JSON array of features
+   823→  status      String   @default("ACTIVE") // ACTIVE | INACTIVE
+   824→  trialDays   Int      @default(14)
+   825→  sortOrder   Int      @default(0)
+   826→  isPopular   Boolean  @default(false)
+   827→  createdAt   DateTime @default(now())
+   828→  updatedAt   DateTime @updatedAt
+   829→}
+   830→
+   831→// ============================================================
+   832→// FEATURE FLAGS & SYSTEM
+   833→// ============================================================
+   834→
+   835→model FeatureFlag {
+   836→  id          String   @id @default(cuid())
+   837→  key         String   @unique
+   838→  name        String
+   839→  description String?
+   840→  enabled     Boolean  @default(false)
+   841→  environments String? // JSON array: ["production", "staging"]
+   842→  createdAt   DateTime @default(now())
+   843→  updatedAt   DateTime @updatedAt
+   844→}
+   845→
+   846→model PaymentGateway {
+   847→  id          String   @id @default(cuid())
+   848→  name        String   @unique
+   849→  type        String   // razorpay | stripe | upi | bank_transfer
+   850→  apiKey      String?
+   851→  apiSecret   String?
+   852→  merchantId  String?
+   853→  isDefault   Boolean  @default(false)
+   854→  upiId       String?  // For UPI
+   855→  bankName    String?
+   856→  bankAccount String?
+   857→  bankIfsc    String?
+   858→  status      String   @default("ACTIVE") // ACTIVE | INACTIVE
+   859→  createdAt   DateTime @default(now())
+   860→  updatedAt   DateTime @updatedAt
+   861→}
+   862→

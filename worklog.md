@@ -674,3 +674,40 @@ Stage Summary:
 - Z.ai SDK used as primary AI provider (reliable in local environment)
 - All official company branding and social links integrated into landing page footer
 - bcryptjs dependency removed from roles API (uses existing auth.ts hashPassword)
+---
+Task ID: 3
+Agent: full-stack-developer
+Task: Premium Landing page redesign for HPHRMS
+
+Work Log:
+- Read and analyzed existing Landing.tsx (534 lines) to preserve all functional sub-components
+- Identified all required imports, sub-components (PortalLoginForm, SubscriptionForm), and view routing logic
+- Designed and wrote complete premium Landing.tsx (~770 lines) with architect-level UX/UI
+- Implemented 9 sections in order: GST Trust Bar, Navigation, Hero, Stats, Modules Grid, Portals, Pricing, CTA, Footer
+- Created inline SVG components for all 6 social icons (WhatsApp, Instagram, LinkedIn, YouTube, X/Twitter, Facebook)
+- Built custom useAnimatedCounter hook with easing for stats section (IntersectionObserver-triggered)
+- Implemented responsive mobile menu with hamburger toggle
+- Applied premium color scheme: Navy (#002B5C), Gold (#D4AF37), Deep Navy (#001A3D), Navy Light (#0A4488)
+- Used CSS custom properties (--navy, --gold, --navy-light, --navy-deep) throughout
+- Applied glassmorphism effects with backdrop-blur on nav, login cards, and overlays
+- Added smooth hover animations (scale, translate-y, shadow transitions) on all interactive cards
+- Made GST: 29AAGCH4521K1ZP prominent at the very top in gold trust bar with shield/award icons
+- Removed all CIN references (verified with rg word-boundary search)
+- No SOCIAL import from constants - all 6 social URLs inlined directly as strings
+- Website https://hpserve.site shown prominently in hero section and footer
+- HPHRMS name used prominently as main headline with gold gradient
+- Implemented dark mode support using dark: classes and CSS variable references
+- Sticky footer implemented with flex-col layout
+- Preserved PortalLoginForm (posts to /api/auth/login, calls setUser on success)
+- Preserved SubscriptionForm (posts to /api/subscription/request)
+- Preserved RegistrationForm integration
+- Maintained same View type routing: 'home' | 'login-admin' | 'login-employee' | 'login-client' | 'register' | 'subscribe'
+- Ran bun run lint - passed with zero errors
+- Verified dev.log shows clean compilation
+
+Stage Summary:
+- Complete premium landing page rewrite delivered with GST trust bar, animated stats counter, 15 module cards, 3 portal cards, 4 pricing plans, professional footer with inline social links
+- Zero lint errors, clean compilation
+- All CIN references removed, GST number prominently displayed
+- Mobile-first responsive design with hamburger nav
+- Dark mode fully supported

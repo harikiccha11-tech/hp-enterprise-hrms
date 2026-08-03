@@ -1,0 +1,310 @@
+   226→
+   227→// ── Main Landing Component ─────────────────────────────────────────────────
+   228→
+   229→type View = 'home' | 'login-admin' | 'login-employee' | 'login-client' | 'register' | 'subscribe'
+   230→
+   231→export function Landing() {
+   232→  const [mode, setMode] = useState<View>('home')
+   233→  const { darkMode, setDarkMode, themeColors, setThemeColors, lang } = useAppStore()
+   234→
+   235→  // Portal login views
+   236→  if (mode === 'login-admin') return <PortalLoginForm portal={PORTALS[0]} onBack={() => setMode('home')} />
+   237→  if (mode === 'login-employee') return <PortalLoginForm portal={PORTALS[1]} onBack={() => setMode('home')} />
+   238→  if (mode === 'login-client') return <PortalLoginForm portal={PORTALS[2]} onBack={() => setMode('home')} />
+   239→  if (mode === 'register') return <RegistrationForm onBack={() => setMode('home')} />
+   240→  if (mode === 'subscribe') return <SubscriptionForm onBack={() => setMode('home')} />
+   241→
+   242→  return (
+   243→    <div className="min-h-screen flex flex-col">
+   244→      {/* ═══ TOP NAV ═══ */}
+   245→      <header className="sticky top-0 z-50 border-b bg-white/80 backdrop-blur-md dark:bg-[var(--navy-deep)]/80">
+   246→        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
+   247→          <div className="flex items-center gap-3">
+   248→            <BrandLogo />
+   249→          </div>
+   250→          <nav className="flex items-center gap-1.5 sm:gap-2">
+   251→            <LanguageSwitcher />
+   252→            <button onClick={() => setDarkMode(!darkMode)} className="grid h-8 w-8 place-items-center rounded-md border bg-background text-[var(--navy)] dark:text-white hover:bg-muted transition-colors" aria-label="Toggle dark mode">
+   253→              {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+   254→            </button>
+   255→            <Button variant="ghost" size="sm" onClick={() => setMode('subscribe')} className="hidden sm:flex gap-1.5"><CreditCard className="h-4 w-4" /> Subscribe</Button>
+   256→            <Button variant="ghost" size="sm" onClick={() => setMode('register')} className="hidden sm:flex">Apply Now</Button>
+   257→          </nav>
+   258→        </div>
+   259→      </header>
+   260→
+   261→      {/* ═══ HERO ═══ */}
+   262→      <section className="relative overflow-hidden">
+   263→        <div className="absolute inset-0 hpe-sidebar-gradient" />
+   264→        <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at 20% 30%, #C9A961 0, transparent 40%), radial-gradient(circle at 80% 70%, #16306B 0, transparent 45%)' }} />
+   265→        <div className="relative mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:py-28 text-center text-white">
+   266→          <Badge className="mb-4 border-[var(--gold)]/40 bg-[var(--gold)]/10 text-[var(--gold-light)] hover:bg-[var(--gold)]/15">
+   267→            <Sparkles className="mr-1 h-3.5 w-3.5" /> AI-Powered Human Resource Management System
+   268→          </Badge>
+   269→          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black tracking-tight">
+   270→            <span className="text-gradient-gold">HPHRMS</span>
+   271→          </h1>
+   272→          <p className="mt-2 text-xl sm:text-2xl font-medium text-blue-100/90">HP ENTERPRISE Safety Service &amp; Man Power Supply</p>
+   273→          <p className="mt-4 max-w-2xl mx-auto text-base text-blue-100/80 leading-relaxed">
+   274→            The complete workforce management platform — from AI-powered HR assistance to automated payroll,
+   275→            attendance tracking, 16+ document types, and real-time coordination across Admin, Employee, and Client portals.
+   276→          </p>
+   277→          <div className="mt-6 flex flex-wrap justify-center gap-2">
+   278→            {['HPAI Assistant', '3 Portals', '15+ Modules', 'Multi-language', 'CSV Export', 'PDF Documents'].map((tag) => (
+   279→              <span key={tag} className="inline-flex items-center gap-1 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-blue-100">{tag}</span>
+   280→            ))}
+   281→          </div>
+   282→          <div className="mt-10 grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-xl mx-auto">
+   283→            {STATS.map((s) => (
+   284→              <div key={s.l} className="rounded-lg border border-white/10 bg-white/5 p-3">
+   285→                <p className="text-2xl font-black text-[var(--gold)]">{s.v}</p>
+   286→                <p className="text-[10px] uppercase tracking-wide text-blue-100/70 mt-0.5">{s.l}</p>
+   287→              </div>
+   288→            ))}
+   289→          </div>
+   290→        </div>
+   291→      </section>
+   292→
+   293→      {/* ═══ 3 PORTALS ═══ */}
+   294→      <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
+   295→        <div className="text-center">
+   296→          <Badge variant="outline" className="mb-3 border-[var(--gold)]/30 text-[#8a6f24]">Multi-Portal</Badge>
+   297→          <h2 className="text-3xl font-bold text-[var(--navy)] dark:text-white">3 Portals — Choose Your Access</h2>
+   298→          <p className="mt-2 text-muted-foreground">Click any portal to sign in with the appropriate credentials.</p>
+   299→        </div>
+   300→        <div className="mt-10 grid gap-5 md:grid-cols-3">
+   301→          {PORTALS.map((p) => {
+   302→            const Icon = p.icon
+   303→            return (
+   304→              <Card key={p.key} className="relative overflow-hidden lift cursor-pointer group" onClick={() => setMode('login-' + p.key)}>
+   305→                <div className="h-1.5" style={{ backgroundColor: p.color }} />
+   306→                <CardContent className="p-6">
+   307→                  <div className="flex items-center gap-3">
+   308→                    <div className="grid h-12 w-12 place-items-center rounded-xl shrink-0" style={{ backgroundColor: p.color + '15' }}>
+   309→                      <Icon className="h-6 w-6" style={{ color: p.color }} />
+   310→                    </div>
+   311→                    <div>
+   312→                      <h3 className="text-lg font-bold text-[var(--navy)] dark:text-white">{p.title}</h3>
+   313→                      <p className="text-xs text-muted-foreground">{p.subtitle}</p>
+   314→                    </div>
+   315→                    <ArrowRight className="ml-auto h-5 w-5 text-muted-foreground group-hover:text-[var(--gold)] group-hover:translate-x-1 transition-all" />
+   316→                  </div>
+   317→                  <ul className="mt-4 space-y-2">
+   318→                    {p.features.map((f) => (
+   319→                      <li key={f} className="flex items-start gap-2 text-sm"><Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-500" />{f}</li>
+   320→                    ))}
+   321→                  </ul>
+   322→
+   323→                </CardContent>
+   324→              </Card>
+   325→            )
+   326→          })}
+   327→        </div>
+   328→        <div className="mt-6 text-center">
+   329→          <button onClick={() => setMode('register')} className="text-sm text-[var(--navy)] dark:text-[var(--gold)] hover:underline">
+   330→            New applicant? Submit your job application here <ArrowRight className="inline h-3.5 w-3.5" />
+   331→          </button>
+   332→        </div>
+   333→      </section>
+   334→
+   335→      {/* ═══ ALL MODULES ═══ */}
+   336→      <section className="border-y bg-muted/30">
+   337→        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
+   338→          <div className="text-center">
+   339→            <Badge variant="outline" className="mb-3 border-[var(--gold)]/30 text-[#8a6f24]">Complete Platform</Badge>
+   340→            <h2 className="text-3xl font-bold text-[var(--navy)] dark:text-white">15+ Modules — Everything Your Workforce Needs</h2>
+   341→          </div>
+   342→          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+   343→            {ALL_MODULES.map((m) => {
+   344→              const Icon = m.icon
+   345→              return (
+   346→                <div key={m.title} className="rounded-xl border bg-card p-4 lift group cursor-default">
+   347→                  <div className="grid h-10 w-10 place-items-center rounded-lg bg-[var(--navy)] dark:bg-[var(--navy-light)]">
+   348→                    <Icon className="h-5 w-5 text-[var(--gold)]" />
+   349→                  </div>
+   350→                  <h3 className="mt-3 text-sm font-bold text-[var(--navy)] dark:text-white group-hover:text-[var(--gold)] transition-colors">{m.title}</h3>
+   351→                  <p className="mt-1 text-xs text-muted-foreground leading-relaxed">{m.desc}</p>
+   352→                </div>
+   353→              )
+   354→            })}
+   355→          </div>
+   356→        </div>
+   357→      </section>
+   358→
+   359→      {/* ═══ HPAI SECTION ═══ */}
+   360→      <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
+   361→        <div className="grid gap-10 lg:grid-cols-2 items-center">
+   362→          <div>
+   363→            <Badge className="mb-3 bg-[var(--navy)] text-white border-0"><Sparkles className="mr-1 h-3.5 w-3.5" /> AI-Powered</Badge>
+   364→            <h2 className="text-3xl font-bold text-[var(--navy)] dark:text-white">Meet <span className="text-gradient-gold">HPAI</span> — Your HR Assistant</h2>
+   365→            <p className="mt-3 text-muted-foreground leading-relaxed">HPAI (HP AI) is an intelligent chatbot built into HPHRMS. Ask about leave policies, payroll queries, attendance rules, document requests, or company policies — get instant answers in English, Hindi, or Kannada.</p>
+   366→            <div className="mt-6 space-y-3">
+   367→              {['Leave policies & balance inquiries', 'Payroll breakdowns (PF, ESI, professional tax)', 'Attendance rules & overtime calculations', 'Document generation requests', 'Safety compliance & EHS guidelines', 'Multi-language support (English, Hindi, Kannada)'].map((item) => (
+   368→                <div key={item} className="flex items-center gap-2.5">
+   369→                  <div className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-emerald-500/10"><Check className="h-3 w-3 text-emerald-600" /></div>
+   370→                  <span className="text-sm">{item}</span>
+   371→                </div>
+   372→              ))}
+   373→            </div>
+   374→          </div>
+   375→          {/* Mock chat */}
+   376→          <div className="rounded-2xl border bg-card shadow-xl overflow-hidden max-w-md mx-auto lg:mx-0 lg:ml-auto w-full">
+   377→            <div className="flex items-center gap-2 bg-gradient-to-r from-[var(--navy)] to-[var(--navy-light)] px-4 py-3">
+   378→              <div className="grid h-8 w-8 place-items-center rounded-full bg-[var(--gold)]"><Sparkles className="h-4 w-4 text-[var(--navy)]" /></div>
+   379→              <div><p className="text-sm font-bold text-white">HPAI Assistant</p><p className="text-[10px] text-blue-200/70 flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-emerald-400" /> Online</p></div>
+   380→            </div>
+   381→            <div className="p-4 space-y-3 min-h-[220px]">
+   382→              <div className="flex gap-2"><div className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[var(--gold)] text-[10px] font-bold text-[var(--navy)]">AI</div><div className="rounded-2xl rounded-bl-md bg-muted px-3 py-2 text-xs leading-relaxed max-w-[85%]">Hello! I am <strong>HPAI</strong>. How can I help you today?</div></div>
+   383→              <div className="flex justify-end"><div className="rounded-2xl rounded-br-md bg-[var(--navy)] text-white px-3 py-2 text-xs leading-relaxed max-w-[85%]">What is the casual leave policy?</div></div>
+   384→              <div className="flex gap-2"><div className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[var(--gold)] text-[10px] font-bold text-[var(--navy)]">AI</div><div className="rounded-2xl rounded-bl-md bg-muted px-3 py-2 text-xs leading-relaxed max-w-[85%]"><strong>CL:</strong> 12 days/year. Max 3 consecutive. Manager approval for &gt;2 days. No carry forward.</div></div>
+   385→              <div className="flex justify-end"><div className="rounded-2xl rounded-br-md bg-[var(--navy)] text-white px-3 py-2 text-xs leading-relaxed max-w-[85%]">How much PF is deducted?</div></div>
+   386→              <div className="flex gap-2"><div className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[var(--gold)] text-[10px] font-bold text-[var(--navy)]">AI</div><div className="rounded-2xl rounded-bl-md bg-muted px-3 py-2 text-xs leading-relaxed max-w-[85%]"><strong>PF:</strong> 12% of basic (employee). Employer: 12% + 3.67% EPF + 0.5% EDLI + 8.33% EPS.</div></div>
+   387→            </div>
+   388→            <div className="border-t px-3 py-2.5 flex items-center gap-2">
+   389→              <div className="flex-1 rounded-lg border bg-background px-3 py-2 text-xs text-muted-foreground">Ask HPAI anything about HR...</div>
+   390→              <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-[var(--navy)] text-white"><ArrowRight className="h-3.5 w-3.5" /></div>
+   391→            </div>
+   392→          </div>
+   393→        </div>
+   394→      </section>
+   395→
+   396→      {/* ═══ PRICING ═══ */}
+   397→      <section className="border-y bg-muted/30" id="pricing">
+   398→        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
+   399→          <div className="text-center">
+   400→            <Badge variant="outline" className="mb-3 border-[var(--gold)]/30 text-[#8a6f24]">Pricing</Badge>
+   401→            <h2 className="text-3xl font-bold text-[var(--navy)] dark:text-white">Choose Your Plan</h2>
+   402→            <p className="mt-2 text-muted-foreground">Scale HPHRMS as your workforce grows. Subscribe and our team will contact you.</p>
+   403→          </div>
+   404→          <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+   405→            {PLANS.map((plan) => (
+   406→              <Card key={plan.key} className={cn('relative flex flex-col transition-all', (plan as any).popular && 'border-[var(--gold)] shadow-lg shadow-[var(--gold)]/10 scale-[1.02]')}>
+   407→                {(plan as any).popular && (<div className="absolute -top-2.5 left-1/2 -translate-x-1/2"><Badge className="bg-[var(--gold)] text-[var(--navy)] border-0 gap-1"><Crown className="h-3 w-3" /> Most Popular</Badge></div>)}
+   408→                <CardHeader className="pb-2"><CardTitle className="text-lg">{plan.name}</CardTitle></CardHeader>
+   409→                <CardContent className="flex flex-1 flex-col gap-4">
+   410→                  <div>
+   411→                    <span className="text-3xl font-bold text-[var(--navy)] dark:text-white">{plan.price === 0 ? 'Free' : 'Rs ' + plan.price.toLocaleString('en-IN')}</span>
+   412→                    {plan.price > 0 && <span className="text-sm text-muted-foreground">/month</span>}
+   413→                  </div>
+   414→                  <ul className="flex-1 space-y-2">{plan.features.map((f) => (<li key={f} className="flex items-start gap-2 text-sm"><Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />{f}</li>))}</ul>
+   415→                  <Button className={cn('w-full', (plan as any).popular ? 'bg-[var(--navy)] text-white hover:bg-[var(--navy-light)]' : 'border border-[var(--navy)]/30 text-[var(--navy)] hover:bg-[var(--navy)]/5')} onClick={() => setMode('subscribe')}>
+   416→                    {plan.price === 0 ? 'Get Started' : 'Subscribe Now'}
+   417→                  </Button>
+   418→                </CardContent>
+   419→              </Card>
+   420→            ))}
+   421→          </div>
+   422→        </div>
+   423→      </section>
+   424→
+   425→      {/* ═══ THEME CUSTOMIZATION ═══ */}
+   426→      <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
+   427→        <div className="grid gap-10 lg:grid-cols-2 items-center">
+   428→          <div>
+   429→            <Badge className="mb-3 bg-[var(--navy)] text-white border-0"><Palette className="mr-1 h-3.5 w-3.5" /> Customization</Badge>
+   430→            <h2 className="text-3xl font-bold text-[var(--navy)] dark:text-white">Your Brand, Your Colors</h2>
+   431→            <p className="mt-3 text-muted-foreground leading-relaxed">Change primary & accent colors, toggle dark/light mode, and switch languages — all in real-time. Try it below!</p>
+   432→            <div className="mt-6 space-y-4">
+   433→              <div className="flex items-center gap-6">
+   434→                <div className="flex items-center gap-2">
+   435→                  <input type="color" value={themeColors.primary} onChange={(e) => setThemeColors({ ...themeColors, primary: e.target.value })} className="w-10 h-10 rounded-lg cursor-pointer border border-border" />
+   436→                  <div><p className="text-xs font-semibold">Primary</p><p className="text-[10px] text-muted-foreground font-mono">{themeColors.primary}</p></div>
+   437→                </div>
+   438→                <div className="flex items-center gap-2">
+   439→                  <input type="color" value={themeColors.accent} onChange={(e) => setThemeColors({ ...themeColors, accent: e.target.value })} className="w-10 h-10 rounded-lg cursor-pointer border border-border" />
+   440→                  <div><p className="text-xs font-semibold">Accent</p><p className="text-[10px] text-muted-foreground font-mono">{themeColors.accent}</p></div>
+   441→                </div>
+   442→              </div>
+   443→              <div className="flex items-center justify-between rounded-lg border p-3">
+   444→                <div className="flex items-center gap-2">{darkMode ? <Moon className="h-4 w-4 text-[var(--gold)]" /> : <Sun className="h-4 w-4 text-[var(--gold)]" />}<span className="text-sm font-medium">{darkMode ? 'Dark Mode' : 'Light Mode'}</span></div>
+   445→                <Switch checked={darkMode} onCheckedChange={setDarkMode} />
+   446→              </div>
+   447→              <div className="flex items-center gap-2 rounded-lg border p-3">
+   448→                <Globe className="h-4 w-4 text-[var(--gold)]" /><span className="text-sm font-medium">Language: </span>
+   449→                <div className="flex gap-1 ml-1">{LANGUAGES.map((l) => (<span key={l.code} className={cn('rounded-md px-2 py-0.5 text-xs font-medium', lang === l.code ? 'bg-[var(--gold)]/15 text-[var(--navy)] dark:text-[var(--gold)]' : 'bg-muted text-muted-foreground')}>{l.flag} {l.native}</span>))}</div>
+   450→              </div>
+   451→            </div>
+   452→          </div>
+   453→          {/* Preview */}
+   454→          <div className="rounded-2xl border bg-card shadow-lg overflow-hidden max-w-md mx-auto lg:mx-0 lg:ml-auto w-full">
+   455→            <div className="flex items-center justify-between px-4 py-2.5 border-b">
+   456→              <div className="flex gap-1.5"><div className="h-3 w-3 rounded-full bg-red-400" /><div className="h-3 w-3 rounded-full bg-amber-400" /><div className="h-3 w-3 rounded-full bg-emerald-400" /></div>
+   457→              <span className="text-[10px] text-muted-foreground font-mono">hphrms.hpenterprise.co.in</span>
+   458→              <button onClick={() => setDarkMode(!darkMode)} className="grid h-6 w-6 place-items-center rounded border hover:bg-muted transition-colors">{darkMode ? <Sun className="h-3 w-3" /> : <Moon className="h-3 w-3" />}</button>
+   459→            </div>
+   460→            <div className="p-4 space-y-3 transition-colors duration-300" style={{ backgroundColor: darkMode ? '#0A1F44' : '#FFFFFF' }}>
+   461→              <div className="flex items-center gap-3"><div className="h-8 w-8 rounded-lg" style={{ backgroundColor: themeColors.primary }} /><div className="space-y-1"><div className="h-2.5 w-24 rounded-full" style={{ backgroundColor: darkMode ? '#D4AF37' : themeColors.primary, opacity: 0.7 }} /><div className="h-1.5 w-16 rounded-full" style={{ backgroundColor: darkMode ? '#1B2F5A' : '#EEF1F8' }} /></div></div>
+   462→              <div className="grid grid-cols-3 gap-2">{[0, 1, 2].map((i) => (<div key={i} className="rounded-lg border p-2" style={{ borderColor: darkMode ? '#1B2F5A' : '#DDE3EE', backgroundColor: darkMode ? '#16306B' : '#F6F7FB' }}><div className="h-2 w-10 rounded-full mb-1.5" style={{ backgroundColor: darkMode ? '#D4AF37' : themeColors.primary, opacity: 0.5 }} /><div className="h-1.5 w-14 rounded-full" style={{ backgroundColor: darkMode ? '#1B2F5A' : '#DDE3EE' }} /><div className="h-1.5 w-8 rounded-full mt-1" style={{ backgroundColor: darkMode ? '#1B2F5A' : '#DDE3EE' }} /></div>))}</div>
+   463→              <div className="flex gap-2"><div className="h-7 w-16 rounded-md text-[9px] flex items-center justify-center font-medium text-white" style={{ backgroundColor: themeColors.primary }}>Button</div><div className="h-7 w-16 rounded-md text-[9px] flex items-center justify-center" style={{ backgroundColor: darkMode ? '#16306B' : '#EEF1F8', color: darkMode ? '#E6EBF5' : '#0A1F44' }}>Cancel</div></div>
+   464→            </div>
+   465→          </div>
+   466→        </div>
+   467→      </section>
+   468→
+   469→      {/* ═══ CTA ═══ */}
+   470→      <section className="relative overflow-hidden">
+   471→        <div className="absolute inset-0 hpe-sidebar-gradient" />
+   472→        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 50% 50%, #C9A961 0, transparent 50%)' }} />
+   473→        <div className="relative mx-auto max-w-3xl px-4 py-20 sm:px-6 text-center text-white">
+   474→          <h2 className="text-3xl font-bold sm:text-4xl">Ready to Transform Your Workforce Management?</h2>
+   475→          <p className="mt-4 text-lg text-blue-100/90">Join hundreds of companies using HPHRMS to manage their manpower, safety services, and HR operations.</p>
+   476→          <div className="mt-8 flex flex-wrap justify-center gap-3">
+   477→            <Button size="lg" onClick={() => setMode('register')} className="hpe-gold-bar text-[var(--navy)] hover:opacity-90 font-bold">Get Started Free <ArrowRight className="ml-2 h-4 w-4" /></Button>
+   478→            <Button size="lg" onClick={() => setMode('subscribe')} variant="outline" className="border-white/30 bg-white/5 text-white hover:bg-white/10 hover:text-white"><CreditCard className="mr-2 h-4 w-4" /> Subscribe Now</Button>
+   479→          </div>
+   480→        </div>
+   481→      </section>
+   482→
+   483→      {/* ═══ FOOTER ═══ */}
+   484→      <footer className="mt-auto border-t bg-white dark:bg-[var(--navy-deep)]">
+   485→        <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6">
+   486→          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+   487→            <div>
+   488→              <BrandLogo />
+   489→              <p className="mt-3 text-xs text-muted-foreground leading-relaxed">{BRAND.taglineFull}</p>
+   490→              <p className="mt-2 text-xs text-muted-foreground">Managing Director: {BRAND.managingDirector}</p>
+   491→              <p className="text-xs text-muted-foreground">EHS Director: {BRAND.ehsDirector}</p>
+   492→              <div className="mt-3 flex gap-2"><Badge variant="outline" className="text-[10px] border-[var(--gold)]/30 text-[#8a6f24]">CIN: {BRAND.cin}</Badge></div>
+   493→            </div>
+   494→            <div>
+   495→              <h4 className="text-sm font-bold mb-3">Platform</h4>
+   496→              <ul className="space-y-2 text-xs text-muted-foreground">{['Dashboard', 'Employees', 'Attendance', 'Payroll', 'Documents', 'Reports'].map((i) => <li key={i}>{i}</li>)}</ul>
+   497→            </div>
+   498→            <div>
+   499→              <h4 className="text-sm font-bold mb-3">Features</h4>
+   500→              <ul className="space-y-2 text-xs text-muted-foreground">
+   501→                <li className="flex items-center gap-1.5"><Sparkles className="h-3 w-3 text-[var(--gold)]" /> HPAI Assistant</li>
+   502→                <li className="flex items-center gap-1.5"><Globe className="h-3 w-3 text-[var(--gold)]" /> Multi-Language</li>
+   503→                <li className="flex items-center gap-1.5"><Palette className="h-3 w-3 text-[var(--gold)]" /> Theme Customization</li>
+   504→                <li className="flex items-center gap-1.5"><CreditCard className="h-3 w-3 text-[var(--gold)]" /> Subscription Plans</li>
+   505→                <li className="flex items-center gap-1.5"><ShieldCheck className="h-3 w-3 text-[var(--gold)]" /> Role-Based Access</li>
+   506→                <li className="flex items-center gap-1.5"><BarChart3 className="h-3 w-3 text-[var(--gold)]" /> CSV & PDF Export</li>
+   507→              </ul>
+   508→            </div>
+   509→            <div>
+   510→              <h4 className="text-sm font-bold mb-3">Contact & Social</h4>
+   511→              <ul className="space-y-2 text-xs text-muted-foreground">
+   512→                <li className="flex items-center gap-1.5"><Globe className="h-3 w-3" /> <a href="https://hpserve.site" target="_blank" rel="noreferrer" className="hover:text-[var(--gold)] transition-colors">hpserve.site</a></li>
+   513→                <li className="flex items-center gap-1.5"><Send className="h-3 w-3" /> {BRAND.email}</li>
+   514→                <li className="flex items-center gap-1.5"><Headphones className="h-3 w-3" /> MD: {BRAND.mdPhone}</li>
+   515→                <li className="flex items-center gap-1.5"><Headphones className="h-3 w-3" /> EHS: {BRAND.ehsPhone}</li>
+   516→              </ul>
+   517→              <div className="mt-3 flex flex-wrap gap-2">
+   518→                <a href="https://wa.me/message/65PDYODAFJZAN1" target="_blank" rel="noreferrer" className="grid h-7 w-7 place-items-center rounded-md bg-muted hover:bg-emerald-100 hover:text-emerald-700 transition-colors" aria-label="WhatsApp"><svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg></a>
+   519→                <a href="https://www.instagram.com/hpenterpirse" target="_blank" rel="noreferrer" className="grid h-7 w-7 place-items-center rounded-md bg-muted hover:bg-pink-100 hover:text-pink-600 transition-colors" aria-label="Instagram"><svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg></a>
+   520→                <a href="https://www.linkedin.com/in/hariprasad-np-4408a8423" target="_blank" rel="noreferrer" className="grid h-7 w-7 place-items-center rounded-md bg-muted hover:bg-blue-100 hover:text-blue-700 transition-colors" aria-label="LinkedIn"><svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg></a>
+   521→                <a href="https://www.youtube.com/@HPEnterpriseIndia" target="_blank" rel="noreferrer" className="grid h-7 w-7 place-items-center rounded-md bg-muted hover:bg-red-100 hover:text-red-600 transition-colors" aria-label="YouTube"><svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg></a>
+   522→                <a href="https://x.com/hpenterpri5nww" target="_blank" rel="noreferrer" className="grid h-7 w-7 place-items-center rounded-md bg-muted hover:bg-slate-100 hover:text-slate-800 transition-colors" aria-label="X/Twitter"><svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>
+   523→                <a href="https://www.facebook.com/share/1DNBdqGcvb/" target="_blank" rel="noreferrer" className="grid h-7 w-7 place-items-center rounded-md bg-muted hover:bg-blue-100 hover:text-blue-700 transition-colors" aria-label="Facebook"><svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></a>
+   524→              </div>
+   525→            </div>
+   526→          </div>
+   527→          <div className="mt-8 border-t pt-6 flex flex-col items-center justify-between gap-2 sm:flex-row">
+   528→            <p className="text-xs text-muted-foreground">{'\u00A9'} {new Date().getFullYear()} {BRAND.legalName}. All rights reserved.</p>
+   529→            <p className="text-xs text-muted-foreground flex items-center gap-1.5">Built with <span className="text-gradient-gold font-bold">HPHRMS</span> v2.0 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> All systems operational</p>
+   530→          </div>
+   531→        </div>
+   532→      </footer>
+   533→    </div>
+   534→  )
+   535→}
