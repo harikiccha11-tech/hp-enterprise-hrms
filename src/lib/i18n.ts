@@ -103,7 +103,7 @@ const T: Record<LangCode, Record<string, string>> = {
     'hpai.title': 'HPAI Assistant',
     'hpai.placeholder': 'Ask HPAI anything about HR, payroll, attendance…',
     'hpai.thinking': 'Thinking…',
-    'hpai.error': 'Something went wrong. Please try again.',
+    'hpai.error': 'AI is temporarily unavailable. Please try again in a moment.',
     'hpai.welcome': 'Hello! I am **HPAI**, your HR assistant. I can help with:\n• Leave policies & balances\n• Payroll queries\n• Attendance rules\n• Document requests\n• Company policies\n\nHow can I help you today?',
     // Subscription
     'sub.currentPlan': 'Current Plan',
