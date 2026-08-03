@@ -532,3 +532,27 @@ Stage Summary:
 - Home page portal section: clean card grid, click opens dedicated view
 - 3 new views: portal-pick (all portals), portal-login (single portal), apply-pick (apply departments)
 - Zero console errors, ESLint clean
+---
+Task ID: 14
+Agent: Main
+Task: Fix forgotOpen crash, HPAI session error, slow portal loading
+
+Work Log:
+- Fixed forgotOpen: removed duplicate ForgotPasswordDialog from Landing component (kept only in SinglePortalLoginView)
+- Fixed HPAI 'Session expired' error:
+  - Root cause 1: /api/ai/chat required authentication, but visitors aren't logged in
+  - Root cause 2: Duplicate `const userId = cu.user.id` remained on line 212 after adding anonymous fallback
+  - Changed POST handler to use anonymous-visitor ID when not logged in
+  - Changed DELETE handler to handle both logged-in and anonymous users
+  - Removed 'Session expired' special error message from HpAiChat client
+  - Fixed duplicate userId declaration
+- Fixed slow portal loading: removed motion.div entrance animation from SinglePortalLoginView
+- Added HpAiChat component to Landing page (was missing — FAB button did nothing before)
+- Removed duplicate Bot FAB from Landing.tsx (HpAiChat has its own)
+- Cleaned up unused imports (setHpaiOpen, hpaiOpen, showForgot)
+
+Stage Summary:
+- HPAI works for all visitors without login (uses anonymous-visitor ID)
+- Portal views load instantly (no entrance animation delay)
+- HPAI chat panel opens from Landing page with working FAB
+- Zero console errors, ESLint clean, browser verified

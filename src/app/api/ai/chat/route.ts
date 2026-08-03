@@ -192,8 +192,13 @@ async function callGemini(messages: { role: string; content: string }[]): Promis
 
 /* ─── POST handler ─── */
 export async function POST(req: NextRequest) {
-  const cu = await getCurrentUser()
-  if (!cu) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  let userId = 'anonymous-visitor'
+  try {
+    const cu = await getCurrentUser()
+    if (cu?.user?.id) userId = cu.user.id
+  } catch {
+    // Not logged in — use anonymous ID, HPAI still works
+  }
 
   try {
     const { message } = await req.json()
@@ -204,7 +209,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Message too long' }, { status: 400 })
     }
 
-    const userId = cu.user.id
     let history = conversations.get(userId) || [
       { role: 'system', content: SYSTEM_PROMPT },
     ]
@@ -256,8 +260,12 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE() {
-  const cu = await getCurrentUser()
-  if (!cu) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  if (cu.user.id) conversations.delete(cu.user.id)
+  try {
+    const cu = await getCurrentUser()
+    if (cu?.user?.id) conversations.delete(cu.user.id)
+    else conversations.delete('anonymous-visitor')
+  } catch {
+    conversations.delete('anonymous-visitor')
+  }
   return NextResponse.json({ ok: true })
 }

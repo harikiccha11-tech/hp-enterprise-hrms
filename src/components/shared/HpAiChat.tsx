@@ -89,10 +89,7 @@ export function HpAiChat() {
       setMessages((prev) => [...prev, { role: 'assistant', content: data.response }])
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Unknown error'
-      setMessages((prev) => [...prev, { role: 'assistant', content: msg.includes('Unauthorized') || msg.includes('401')
-        ? '⚠️ Session expired. Please log out and log in again to use HPAI.'
-        : `⚠️ ${t('hpai.error', lang)}\n\n(${msg})`
-      }])
+      setMessages((prev) => [...prev, { role: 'assistant', content: `⚠️ ${t('hpai.error', lang)}\n\n(${msg})` }])
     } finally {
       setLoading(false)
     }
