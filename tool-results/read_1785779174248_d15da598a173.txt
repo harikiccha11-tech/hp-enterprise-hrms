@@ -1,0 +1,1236 @@
+     1→'use client'
+     2→import { useState, useEffect, useRef, useCallback } from 'react'
+     3→import { useAppStore } from '@/lib/store'
+     4→import { BRAND, SERVICES, HPHRMS_FEATURES, TRUST_BADGES, SOCIAL } from '@/lib/constants'
+     5→import { BrandLogo } from '@/components/brand/BrandLogo'
+     6→import { RegistrationForm } from '@/components/auth/RegistrationForm'
+     7→import { ForgotPasswordDialog } from '@/components/auth/ForgotPasswordDialog'
+     8→import { LanguageSwitcher } from '@/components/shared/LanguageSwitcher'
+     9→import { HpAiChat } from '@/components/shared/HpAiChat'
+    10→import { Button } from '@/components/ui/button'
+    11→import { Input } from '@/components/ui/input'
+    12→import { Label } from '@/components/ui/label'
+    13→import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+    14→import { Badge } from '@/components/ui/badge'
+    15→import { Textarea } from '@/components/ui/textarea'
+    16→import { toast } from 'sonner'
+    17→import { cn } from '@/lib/utils'
+    18→import { motion, useInView, AnimatePresence } from 'framer-motion'
+    19→import {
+    20→  Building2, ShieldCheck, Users, FileText, Clock, Wallet, ArrowRight, ArrowLeft, Lock, User as UserIcon,
+    21→  Sparkles, Crown, Check, Bot,
+    22→  CalendarDays, ClipboardList, BarChart3,
+    23→  Settings, UserCog, Zap, Shield, Bell, Star, Headphones, Send, Loader2,
+    24→  Phone, Mail, MapPin, ChevronRight, Menu, X, Award, Globe2,
+    25→  HardHat, Truck, DollarSign, MonitorSmartphone,
+    26→  type LucideIcon, Eye, Target, Wrench, UserPlus, Briefcase, FileUp, GraduationCap, Landmark, Search,
+    27→} from 'lucide-react'
+    28→import Image from 'next/image'
+    29→
+    30→type LandingView = 'home' | 'register' | 'subscribe' | 'apply' | 'apply-pick' | 'portal-pick' | 'portal-login'
+    31→
+    32→function InstagramIcon({ className, style }: { className?: string; style?: React.CSSProperties }) {
+    33→  return <svg className={className} style={style} viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+    34→}
+    35→function LinkedInIcon({ className, style }: { className?: string; style?: React.CSSProperties }) {
+    36→  return <svg className={className} style={style} viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+    37→}
+    38→function FacebookIcon({ className, style }: { className?: string; style?: React.CSSProperties }) {
+    39→  return <svg className={className} style={style} viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+    40→}
+    41→function TwitterXIcon({ className, style }: { className?: string; style?: React.CSSProperties }) {
+    42→  return <svg className={className} style={style} viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+    43→}
+    44→function YouTubeIcon({ className, style }: { className?: string; style?: React.CSSProperties }) {
+    45→  return <svg className={className} style={style} viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+    46→}
+    47→function ThreadsIcon({ className, style }: { className?: string; style?: React.CSSProperties }) {
+    48→  return <svg className={className} style={style} viewBox="0 0 24 24" fill="currentColor"><path d="M12.186 24h-.007c-3.581-.024-6.334-1.205-8.184-3.509C2.35 18.44 1.5 15.586 1.472 12.01v-.017c.03-3.579.879-6.43 2.525-8.482C5.845 1.205 8.6.024 12.18 0h.014c2.746.02 5.043.725 6.826 2.098 1.677 1.29 2.858 3.13 3.509 5.467l-2.04.569c-1.104-3.96-3.898-5.984-8.304-6.015-2.91.022-5.11.936-6.54 2.717C4.307 6.504 3.616 8.914 3.589 12c.027 3.086.718 5.496 2.057 7.164 1.43 1.783 3.631 2.698 6.54 2.717 2.623-.02 4.358-.631 5.796-2.045 1.647-1.619 1.618-3.593 1.09-4.798-.31-.71-.873-1.3-1.634-1.75-.192 1.352-.622 2.446-1.284 3.272-.886 1.102-2.14 1.704-3.73 1.79-1.202.065-2.361-.218-3.259-.797-1.063-.684-1.685-1.74-1.752-2.976-.065-1.218.42-2.33 1.366-3.129.906-.763 2.143-1.192 3.678-1.274 1.062-.058 2.043.042 2.928.291-.082-.584-.262-1.058-.534-1.411-.4-.521-1.08-.838-2.077-.965l.249-2.022c1.45.178 2.556.713 3.287 1.591.505.605.847 1.37 1.024 2.281.936-.655 1.637-1.441 2.11-2.383.67-1.33.716-2.712.14-3.716-.68-1.19-2.282-1.868-4.505-2.012l.127-2.03c2.868.18 5.064 1.165 6.19 2.878.866 1.326.949 3.04.23 4.715-.48 1.126-1.258 2.078-2.32 2.857.084.228.16.465.226.714.31 1.157.27 3.395-1.7 5.327-1.766 1.735-3.868 2.58-6.42 2.6zM10.67 14.22c-.987.053-1.787.296-2.376.722-.566.41-.825.93-.79 1.5.033.58.35 1.07.895 1.42.47.295 1.077.434 1.712.4.954-.05 1.656-.38 2.139-.98.344-.425.576-1.01.7-1.75-.633-.147-1.34-.21-2.28-.312z"/></svg>
+    49→}
+    50→function RedditIcon({ className, style }: { className?: string; style?: React.CSSProperties }) {
+    51→  return <svg className={className} style={style} viewBox="0 0 24 24" fill="currentColor"><path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z"/></svg>
+    52→}
+    53→function WhatsAppIcon({ className, style }: { className?: string; style?: React.CSSProperties }) {
+    54→  return <svg className={className} style={style} viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+    55→}
+    56→
+    57→const SOCIAL_ITEMS: { label: string; icon: LucideIcon; href: string; color: string }[] = [
+    58→  { label: 'Website', icon: Globe2, href: SOCIAL.website, color: '#002B5C' },
+    59→  { label: 'HPHRMS', icon: MonitorSmartphone, href: SOCIAL.hphrms, color: '#002B5C' },
+    60→  { label: 'Instagram', icon: InstagramIcon, href: SOCIAL.instagram, color: '#E4405F' },
+    61→  { label: 'Threads', icon: ThreadsIcon, href: SOCIAL.threads, color: '#000000' },
+    62→  { label: 'LinkedIn', icon: LinkedInIcon, href: SOCIAL.linkedin, color: '#0A66C2' },
+    63→  { label: 'Facebook', icon: FacebookIcon, href: SOCIAL.facebook, color: '#1877F2' },
+    64→  { label: 'Twitter / X', icon: TwitterXIcon, href: SOCIAL.twitter, color: '#000000' },
+    65→  { label: 'YouTube', icon: YouTubeIcon, href: SOCIAL.youtube, color: '#FF0000' },
+    66→  { label: 'Reddit', icon: RedditIcon, href: SOCIAL.reddit, color: '#FF4500' },
+    67→  { label: 'WhatsApp', icon: WhatsAppIcon, href: SOCIAL.whatsapp, color: '#25D366' },
+    68→]
+    69→
+    70→interface ServiceDetail {
+    71→  title: string; short: string; icon: LucideIcon; image: string
+    72→  description: string; benefits: string[]; industries: string[]; process: string[]
+    73→}
+    74→
+    75→const SERVICE_DETAILS: ServiceDetail[] = [
+    76→  { title: 'Human Resource Management', short: 'Complete workforce lifecycle management powered by AI', icon: Users, image: '/service-hr.png',
+    77→    description: 'Our comprehensive HR management service covers the entire employee lifecycle from onboarding to exit. We handle employee records, performance tracking, policy compliance, and organizational development.',
+    78→    benefits: ['End-to-end employee lifecycle management', 'AI-powered performance analytics', 'Compliance with Indian labour laws', 'Employee engagement & retention programs', 'Organizational structure optimization'],
+    79→    industries: ['IT & Technology', 'Construction & Infrastructure', 'Manufacturing', 'Healthcare', 'BFSI'],
+    80→    process: ['Workforce assessment & planning', 'HR policy design & implementation', 'Employee onboarding & documentation', 'Ongoing HR operations & support', 'Performance reviews & analytics'],
+    81→  },
+    82→  { title: 'Recruitment & Talent Acquisition', short: 'End-to-end hiring pipeline with smart screening', icon: Target, image: '/service-recruitment.png',
+    83→    description: 'We manage the complete recruitment cycle from job posting and candidate sourcing to interviewing, offer negotiation, and onboarding. Our AI-powered ATS helps you find the right talent faster.',
+    84→    benefits: ['AI-powered applicant tracking system (ATS)', 'Multi-channel candidate sourcing', 'Structured interview frameworks', 'Background verification support', 'Faster time-to-hire with smart screening'],
+    85→    industries: ['IT & Technology', 'Construction', 'Manufacturing', 'Healthcare', 'BFSI', 'Logistics'],
+    86→    process: ['Requirement gathering & job description', 'Candidate sourcing & screening', 'Interview coordination & assessment', 'Offer negotiation & acceptance', 'Onboarding & documentation'],
+    87→  },
+    88→  { title: 'Safety (EHS) Consultancy', short: 'Environmental, Health & Safety compliance solutions', icon: HardHat, image: '/service-safety.png',
+    89→    description: 'Our EHS consultancy ensures your organization meets all safety regulations and standards. From safety audits to training programs, we build a culture of safety at your workplace.',
+    90→    benefits: ['Comprehensive safety audits & inspections', 'Regulatory compliance management', 'Safety training & certification programs', 'Incident investigation & reporting', 'Emergency response planning'],
+    91→    industries: ['Construction', 'Manufacturing', 'Oil & Gas', 'Chemical Plants', 'Mining', 'Infrastructure'],
+    92→    process: ['Site assessment & hazard identification', 'Safety audit & gap analysis', 'Compliance plan development', 'Training implementation', 'Ongoing monitoring & support'],
+    93→  },
+    94→  { title: 'Engineering & Project Support', short: 'Multi-discipline engineering for construction & industrial projects', icon: Wrench, image: '/service-engineering.png',
+    95→    description: 'We provide skilled engineering professionals across all disciplines for construction, industrial, and infrastructure projects.',
+    96→    benefits: ['Multi-discipline engineering professionals', 'Project planning & scheduling support', 'Quality assurance & quality control', 'Construction management services', 'Technical documentation & reporting'],
+    97→    industries: ['Construction', 'Infrastructure', 'Industrial Plants', 'Oil & Gas', 'Power Generation', 'Metro & Rail'],
+    98→    process: ['Project requirement analysis', 'Resource planning & deployment', 'Engineering execution & monitoring', 'Quality control & documentation', 'Project handover & close-out'],
+    99→  },
+   100→  { title: 'Payroll Management', short: 'Accurate, compliant payroll processing for your workforce', icon: Wallet, image: '/service-payroll.png',
+   101→    description: 'Our payroll management service handles salary processing, statutory compliance (PF, ESI, PT, TDS), and payslip generation.',
+   102→    benefits: ['Timely monthly payroll processing', 'Statutory compliance (PF, ESI, PT, TDS)', 'Automated payslip generation', 'Leave & attendance integration', 'Year-end tax forms (Form 16)'],
+   103→    industries: ['All Industries', 'IT & Technology', 'Construction', 'Manufacturing', 'Healthcare'],
+   104→    process: ['Employee data verification', 'Attendance & leave processing', 'Salary calculation & statutory deductions', 'Payslip generation & distribution', 'Compliance filing & reporting'],
+   105→  },
+   106→  { title: 'Manpower Supply', short: 'Skilled & unskilled workforce deployment across India', icon: Truck, image: '/service-manpower.png',
+   107→    description: 'We supply skilled, semi-skilled, and unskilled manpower for construction, industrial, and service sectors across India.',
+   108→    benefits: ['Pan-India manpower deployment', 'Skilled & unskilled workforce', 'Rapid mobilization capability', 'Compliance-managed staffing', 'Flexible contract durations'],
+   109→    industries: ['Construction', 'Manufacturing', 'Logistics', 'Hospitality', 'Facility Management', 'Security Services'],
+   110→    process: ['Workforce requirement assessment', 'Candidate sourcing & screening', 'Documentation & compliance', 'Deployment & orientation', 'Ongoing management & support'],
+   111→  },
+   112→]
+   113→
+   114→interface PortalConfig {
+   115→  id: string; title: string; description: string; icon: LucideIcon
+   116→  features: string[]; role: string; color: string; requestAccess?: boolean
+   117→}
+   118→
+   119→const PORTALS: PortalConfig[] = [
+   120→  { id: 'owner', title: 'Owner Dashboard', description: 'Full system ownership with billing, company settings, and complete control over all modules.',
+   121→    icon: Crown, role: 'OWNER', color: '#D4AF37',
+   122→    features: ['Company Settings & Branding', 'Billing & Subscription Management', 'User & Role Management', 'Audit Logs & Activity Reports', 'System Configuration'],
+   123→  },
+   124→  { id: 'admin', title: 'Admin Console', description: 'Complete HR & workforce management dashboard with full operational control.',
+   125→    icon: Shield, role: 'SUPER_ADMIN', color: '#002B5C',
+   126→    features: ['Employee Management', 'Payroll & Attendance', 'Recruitment & ATS', 'Reports & Analytics', 'Document Management', 'Shift & Roster Management'],
+   127→  },
+   128→  { id: 'hr', title: 'HR Manager Portal', description: 'Day-to-day HR operations including recruitment, onboarding, and employee management.',
+   129→    icon: UserCog, role: 'HR_MANAGER', color: '#0A4488',
+   130→    features: ['Employee Onboarding', 'Leave Management', 'Recruitment Pipeline', 'Performance Tracking', 'Employee Grievances', 'Policy Management'],
+   131→  },
+   132→  { id: 'employee', title: 'Employee Portal', description: 'Self-service portal for all employees to manage their work life.',
+   133→    icon: UserIcon, role: 'EMPLOYEE', color: '#166534',
+   134→    features: ['View Payslips', 'Apply Leaves', 'Attendance History', 'Document Downloads', 'Profile Management', 'Task & Assignment View'],
+   135→  },
+   136→  { id: 'client', title: 'Client Portal', description: 'Dedicated access for business clients to track workforce and invoices.',
+   137→    icon: Building2, role: 'CLIENT', color: '#7C2D12',
+   138→    features: ['Workforce Dashboard', 'Invoice Management', 'Project Tracking', 'Compliance Reports', 'Support Tickets'],
+   139→  },
+   140→  { id: 'recruitment', title: 'Recruitment Portal', description: 'AI-powered recruitment portal for candidates and hiring managers.',
+   141→    icon: Target, role: 'CANDIDATE', color: '#6D28D9',
+   142→    features: ['Job Search & Apply', 'Application Tracking', 'Interview Scheduling', 'Offer Management', 'Candidate Assessment'], requestAccess: true,
+   143→  },
+   144→  { id: 'ehs', title: 'EHS Safety Portal', description: 'Safety compliance management, incident reporting, and audit tracking.',
+   145→    icon: HardHat, role: 'EHS', color: '#B45309',
+   146→    features: ['Safety Audit Management', 'Incident Reporting', 'Compliance Tracking', 'Safety Training Records', 'PPE Management', 'Emergency Protocols'], requestAccess: true,
+   147→  },
+   148→  { id: 'payroll', title: 'Payroll Portal', description: 'Dedicated payroll processing, statutory compliance, and salary management.',
+   149→    icon: DollarSign, role: 'FINANCE', color: '#0369A1',
+   150→    features: ['Salary Processing', 'PF/ESI/TDS Filing', 'Payslip Generation', 'Reimbursement Management', 'Tax Reports (Form 16)', 'Bank Integration'], requestAccess: true,
+   151→  },
+   152→  { id: 'manpower', title: 'Manpower Supply Portal', description: 'Manpower deployment tracking, vendor management, and workforce allocation.',
+   153→    icon: Truck, role: 'VENDOR', color: '#4338CA',
+   154→    features: ['Workforce Deployment', 'Vendor Management', 'Attendance & Billing', 'Contract Management', 'Site Allocation', 'Compliance Documents'], requestAccess: true,
+   155→  },
+   156→  { id: 'engineering', title: 'Engineering Portal', description: 'Engineering project support, resource planning, and discipline tracking.',
+   157→    icon: Wrench, role: 'MANAGER', color: '#0F766E',
+   158→    features: ['Project Resource Planning', 'Discipline Tracking', 'Site Progress Reports', 'QA/QC Management', 'Technical Documentation', 'Billing & Measurement'], requestAccess: true,
+   159→  },
+   160→]
+   161→
+   162→interface PricingPlan { name: string; price: string; period: string; description: string; popular?: boolean; features: string[] }
+   163→
+   164→const PRICING_PLANS: PricingPlan[] = [
+   165→  { name: 'Starter', price: '₹4,999', period: '/month', description: 'For small businesses getting started with HR digitization.', features: ['Up to 50 Employees', 'Basic HR Management', 'Attendance Tracking', 'Leave Management', 'Payslip Generation', 'Email Support'] },
+   166→  { name: 'Professional', price: '₹14,999', period: '/month', description: 'For growing companies that need complete workforce management.', popular: true, features: ['Up to 500 Employees', 'All Starter Features', 'Recruitment & ATS', 'Payroll Processing', 'PF/ESI Compliance', 'Multi-Branch Support', 'Reports & Analytics', 'Priority Support'] },
+   167→  { name: 'Enterprise', price: 'Custom', period: '', description: 'For large organizations with complex workforce requirements.', features: ['Unlimited Employees', 'All Professional Features', 'API Management', 'Custom Integrations', 'Dedicated Account Manager', 'SLA Guarantee', 'On-Premise Option', '24/7 Phone Support'] },
+   168→]
+   169→
+   170→const LUXURY_EASE = [0.22, 1, 0.36, 1] as const
+   171→
+   172→function Reveal({ children, delay = 0, direction = 'up', className = '' }: { children: React.ReactNode; delay?: number; direction?: 'up' | 'left' | 'right'; className?: string }) {
+   173→  const ref = useRef<HTMLDivElement>(null)
+   174→  const isInView = useInView(ref, { once: true, margin: '-40px' })
+   175→  const offsets = { up: { y: 50, x: 0 }, left: { y: 0, x: -50 }, right: { y: 0, x: 50 } }
+   176→  return (
+   177→    <motion.div ref={ref} className={className}
+   178→      initial={{ opacity: 0, ...offsets[direction] }}
+   179→      animate={isInView ? { opacity: 1, x: 0, y: 0 } : { opacity: 0, ...offsets[direction] }}
+   180→      transition={{ duration: 0.8, delay, ease: LUXURY_EASE }}
+   181→    >
+   182→      {children}
+   183→    </motion.div>
+   184→  )
+   185→}
+   186→
+   187→function SocialSideMenu() {
+   188→  const [expanded, setExpanded] = useState(false)
+   189→  return (
+   190→    <div className="fixed left-0 top-1/2 -translate-y-1/2 z-50 flex items-center">
+   191→      <AnimatePresence>
+   192→        {expanded && (
+   193→          <motion.div initial={{ width: 0, opacity: 0 }} animate={{ width: 'auto', opacity: 1 }} exit={{ width: 0, opacity: 0 }}
+   194→            className="overflow-hidden bg-white/95 backdrop-blur-md shadow-2xl rounded-r-2xl border border-l-0 border-gray-200"
+   195→          >
+   196→            <div className="flex flex-col py-3 px-2 gap-1">
+   197→              {SOCIAL_ITEMS.map((s) => (
+   198→                <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer"
+   199→                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors whitespace-nowrap" aria-label={s.label}>
+   200→                  <s.icon className="h-4 w-4 shrink-0" style={{ color: s.color }} />
+   201→                  <span className="text-gray-800 font-semibold">{s.label}</span>
+   202→                </a>
+   203→              ))}
+   204→            </div>
+   205→          </motion.div>
+   206→        )}
+   207→      </AnimatePresence>
+   208→      <button onClick={() => setExpanded(!expanded)}
+   209→        className="h-11 w-11 rounded-r-2xl bg-white shadow-xl border border-l-0 border-gray-200 flex items-center justify-center text-gray-600 hover:text-gray-900 transition-all duration-300"
+   210→        aria-label={expanded ? 'Close social menu' : 'Open social menu'}>
+   211→        {expanded ? <X className="h-4 w-4" /> : <Globe2 className="h-4 w-4" />}
+   212→      </button>
+   213→    </div>
+   214→  )
+   215→}
+   216→
+   217→function ServiceModal({ service, open, onClose }: { service: ServiceDetail | null; open: boolean; onClose: () => void }) {
+   218→  if (!service) return null
+   219→  const Icon = service.icon
+   220→  return (
+   221→    <AnimatePresence>
+   222→      {open && (
+   223→        <motion.div className="fixed inset-0 z-[100] flex items-center justify-center p-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+   224→          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+   225→          <motion.div className="relative z-10 bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+   226→            initial={{ scale: 0.92, opacity: 0, y: 30 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.92, opacity: 0, y: 30 }}
+   227→            transition={{ type: 'spring', stiffness: 280, damping: 28 }}>
+   228→            <div className="relative h-52 sm:h-60 overflow-hidden rounded-t-3xl">
+   229→              <Image src={service.image} alt={service.title} fill className="object-cover" />
+   230→              <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+   231→              <button onClick={onClose} className="absolute top-4 right-4 h-10 w-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/40 transition-colors">
+   232→                <X className="h-5 w-5" />
+   233→              </button>
+   234→              <div className="absolute bottom-5 left-6 flex items-center gap-3">
+   235→                <div className="h-12 w-12 rounded-2xl flex items-center justify-center shadow-lg" style={{ background: '#D4AF37' }}>
+   236→                  <Icon className="h-6 w-6" style={{ color: '#002B5C' }} />
+   237→                </div>
+   238→                <div>
+   239→                  <h3 className="text-xl font-bold text-white">{service.title}</h3>
+   240→                  <p className="text-sm text-gray-200 font-medium">{service.short}</p>
+   241→                </div>
+   242→              </div>
+   243→            </div>
+   244→            <div className="p-7 space-y-6">
+   245→              <p className="text-gray-800 leading-relaxed font-medium">{service.description}</p>
+   246→              <div>
+   247→                <h4 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-3">Key Benefits</h4>
+   248→                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+   249→                  {service.benefits.map((b) => (
+   250→                    <div key={b} className="flex items-start gap-2 text-sm text-gray-700 font-medium"><Check className="h-4 w-4 mt-0.5 shrink-0 text-emerald-600" />{b}</div>
+   251→                  ))}
+   252→                </div>
+   253→              </div>
+   254→              <div>
+   255→                <h4 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-3">Industries We Serve</h4>
+   256→                <div className="flex flex-wrap gap-2">
+   257→                  {service.industries.map((ind) => (<Badge key={ind} variant="outline" className="text-xs font-semibold border-gray-200 text-gray-700">{ind}</Badge>))}
+   258→                </div>
+   259→              </div>
+   260→              <div>
+   261→                <h4 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-3">Our Process</h4>
+   262→                <ol className="space-y-3">
+   263→                  {service.process.map((step, i) => (
+   264→                    <li key={i} className="flex items-start gap-3">
+   265→                      <span className="flex-shrink-0 h-7 w-7 rounded-full flex items-center justify-center text-xs font-bold text-white" style={{ background: '#002B5C' }}>{i + 1}</span>
+   266→                      <span className="text-sm text-gray-700 font-medium pt-0.5">{step}</span>
+   267→                    </li>
+   268→                  ))}
+   269→                </ol>
+   270→              </div>
+   271→              <div className="flex flex-col sm:flex-row gap-3 pt-2">
+   272→                <a href={SOCIAL.whatsapp} target="_blank" rel="noopener noreferrer" className="flex-1 h-12 rounded-2xl flex items-center justify-center gap-2 text-sm font-bold text-white transition-all hover:opacity-90" style={{ background: '#25D366' }}>
+   273→                  <WhatsAppIcon className="h-4 w-4" />Chat on WhatsApp
+   274→                </a>
+   275→                <a href={`tel:${BRAND.phone}`} className="flex-1 h-12 rounded-2xl flex items-center justify-center gap-2 text-sm font-bold text-white transition-all hover:opacity-90" style={{ background: '#002B5C' }}>
+   276→                  <Phone className="h-4 w-4" />Call {BRAND.phone}
+   277→                </a>
+   278→              </div>
+   279→            </div>
+   280→          </motion.div>
+   281→        </motion.div>
+   282→      )}
+   283→    </AnimatePresence>
+   284→  )
+   285→}
+   286→
+   287→function SubscriptionForm({ onBack }: { onBack: () => void }) {
+   288→  const [form, setForm] = useState({ companyName: '', contactName: '', email: '', phone: '', address: '', plan: '', employeeCount: '', message: '' })
+   289→  const [loading, setLoading] = useState(false)
+   290→  const [sent, setSent] = useState(false)
+   291→  const update = (f: string, v: string) => setForm((p) => ({ ...p, [f]: v }))
+   292→  const handleSubmit = async (e: React.FormEvent) => {
+   293→    e.preventDefault()
+   294→    if (!form.companyName.trim() || !form.contactName.trim() || !form.email.trim() || !form.phone.trim()) { toast.error('Please fill in all required fields'); return }
+   295→    setLoading(true)
+   296→    try {
+   297→      const res = await fetch('/api/subscription/request', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) })
+   298→      const data = await res.json()
+   299→      if (res.ok) { toast.success('Subscription request submitted!'); setSent(true) } else { toast.error(data.error || 'Failed to submit request') }
+   300→    } catch { toast.error('Network error. Please try again.') } finally { setLoading(false) }
+   301→  }
+   302→  if (sent) return (
+   303→    <section className="min-h-screen flex items-center justify-center px-4 bg-gray-50">
+   304→      <Card className="shadow-xl max-w-md w-full text-center"><CardContent className="py-12">
+   305→        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50"><Check className="h-8 w-8 text-emerald-600" /></div>
+   306→        <h2 className="text-2xl font-bold text-gray-900 mb-2">Request Submitted!</h2>
+   307→        <p className="text-gray-600 mb-6 font-medium">Our team will contact you within 24 hours.</p>
+   308→        <Button onClick={onBack} style={{ background: '#002B5C' }} className="text-white font-bold">Back to Home</Button>
+   309→      </CardContent></Card>
+   310→    </section>
+   311→  )
+   312→  return (
+   313→    <section className="min-h-screen py-20 px-4 bg-gray-50">
+   314→      <div className="max-w-2xl mx-auto">
+   315→        <div className="text-center mb-10">
+   316→          <Badge className="mb-4 px-4 py-1 text-sm font-bold" style={{ background: '#D4AF37', color: '#002B5C' }}>Get Started</Badge>
+   317→          <h2 className="text-3xl md:text-4xl font-bold text-gray-900">Request a Subscription</h2>
+   318→          <p className="text-gray-600 mt-2 font-medium">Fill in the details and our team will reach out to you.</p>
+   319→        </div>
+   320→        <Card className="shadow-lg"><CardContent className="pt-6">
+   321→          <form onSubmit={handleSubmit} className="space-y-4">
+   322→            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+   323→              <div className="space-y-2"><Label className="text-gray-800 text-sm font-bold">Company Name *</Label><Input placeholder="Your company" value={form.companyName} onChange={(e) => update('companyName', e.target.value)} /></div>
+   324→              <div className="space-y-2"><Label className="text-gray-800 text-sm font-bold">Contact Name *</Label><Input placeholder="Full name" value={form.contactName} onChange={(e) => update('contactName', e.target.value)} /></div>
+   325→            </div>
+   326→            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+   327→              <div className="space-y-2"><Label className="text-gray-800 text-sm font-bold">Email *</Label><Input type="email" placeholder="email@company.com" value={form.email} onChange={(e) => update('email', e.target.value)} /></div>
+   328→              <div className="space-y-2"><Label className="text-gray-800 text-sm font-bold">Phone *</Label><Input placeholder="+91 XXXXX XXXXX" value={form.phone} onChange={(e) => update('phone', e.target.value)} /></div>
+   329→            </div>
+   330→            <div className="space-y-2"><Label className="text-gray-800 text-sm font-bold">Address</Label><Input placeholder="Office address" value={form.address} onChange={(e) => update('address', e.target.value)} /></div>
+   331→            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+   332→              <div className="space-y-2"><Label className="text-gray-800 text-sm font-bold">Plan</Label>
+   333→                <select value={form.plan} onChange={(e) => update('plan', e.target.value)} className="w-full h-11 rounded-md border border-gray-200 bg-white px-3 text-sm font-medium">
+   334→                  <option value="">Select plan</option><option value="free">Free</option><option value="starter">Starter</option><option value="professional">Professional</option><option value="enterprise">Enterprise</option>
+   335→                </select>
+   336→              </div>
+   337→              <div className="space-y-2"><Label className="text-gray-800 text-sm font-bold">Employee Count</Label><Input placeholder="e.g. 50" value={form.employeeCount} onChange={(e) => update('employeeCount', e.target.value)} /></div>
+   338→            </div>
+   339→            <div className="space-y-2"><Label className="text-gray-800 text-sm font-bold">Message</Label><Textarea placeholder="Tell us about your requirements..." rows={3} value={form.message} onChange={(e) => update('message', e.target.value)} /></div>
+   340→            <div className="flex gap-3 pt-2">
+   341→              <Button type="submit" className="flex-1 h-11 font-bold text-white" style={{ background: '#002B5C' }} disabled={loading}>{loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}Submit Request</Button>
+   342→              <Button type="button" variant="outline" onClick={onBack} className="font-bold">Cancel</Button>
+   343→            </div>
+   344→          </form>
+   345→        </CardContent></Card>
+   346→      </div>
+   347→    </section>
+   348→  )
+   349→}
+   350→
+   351→const APPLY_OPTIONS = [
+   352→  { id: 'general', title: 'General Application', description: 'Apply for any open position at HP Enterprise', icon: UserPlus, color: '#002B5C', tag: 'All Departments' },
+   353→  { id: 'recruitment', title: 'Recruitment Portal', description: 'Join our recruitment and talent acquisition team', icon: Target, color: '#6D28D9', tag: 'HR & Recruitment' },
+   354→  { id: 'ehs', title: 'EHS Safety Portal', description: 'Join the Environment, Health & Safety division', icon: HardHat, color: '#B45309', tag: 'Safety' },
+   355→  { id: 'payroll', title: 'Payroll Portal', description: 'Join the payroll processing and finance team', icon: DollarSign, color: '#0369A1', tag: 'Finance' },
+   356→  { id: 'manpower', title: 'Manpower Supply Portal', description: 'Join workforce deployment and vendor management', icon: Truck, color: '#4338CA', tag: 'Operations' },
+   357→  { id: 'engineering', title: 'Engineering Portal', description: 'Join engineering project support and planning', icon: Wrench, color: '#0F766E', tag: 'Engineering' },
+   358→]
+   359→
+   360→function SinglePortalLoginView({ portalId, onBack, onApply }: { portalId: string; onBack: () => void; onApply: () => void }) {
+   361→  const portal = PORTALS.find((p) => p.id === portalId)
+   362→  const { setUser } = useAppStore()
+   363→  const [username, setUsername] = useState('')
+   364→  const [password, setPassword] = useState('')
+   365→  const [loading, setLoading] = useState(false)
+   366→  const [forgotOpen, setForgotOpen] = useState(false)
+   367→  if (!portal) return <div>Portal not found</div>
+   368→  const Icon = portal.icon
+   369→  const handleSubmit = async (e: React.FormEvent) => {
+   370→    e.preventDefault()
+   371→    if (!username.trim() || !password.trim()) { toast.error('Please enter username and password'); return }
+   372→    setLoading(true)
+   373→    try {
+   374→      const res = await fetch('/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: username.trim(), password, role: portal.role }) })
+   375→      const data = await res.json()
+   376→      if (res.ok && data.user) { setUser(data.user); toast.success(`Welcome to ${portal.title}!`) }
+   377→      else { toast.error(data.error || 'Login failed. Please check your credentials.') }
+   378→    } catch { toast.error('Network error. Please try again.') } finally { setLoading(false) }
+   379→  }
+   380→  return (
+   381→    <div className="min-h-screen flex flex-col bg-gradient-to-b from-gray-50 to-white">
+   382→      <header className="sticky top-0 z-40 border-b bg-white/90 backdrop-blur">
+   383→        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
+   384→          <BrandLogo />
+   385→          <Button variant="ghost" size="sm" onClick={onBack}><ArrowLeft className="mr-1 h-4 w-4" /> All Portals</Button>
+   386→        </div>
+   387→      </header>
+   388→      <div className="flex-1 flex items-center justify-center px-4 py-10">
+   389→        <div className="w-full max-w-md">
+   390→          <div className="text-center mb-8">
+   391→            <div className="mx-auto mb-4 h-16 w-16 rounded-2xl flex items-center justify-center shadow-lg" style={{ background: portal.color }}>
+   392→              <Icon className="h-8 w-8 text-white" />
+   393→            </div>
+   394→            <h1 className="text-2xl font-extrabold text-gray-900 mb-1">{portal.title}</h1>
+   395→            <p className="text-sm text-gray-500 font-medium">Sign in to access your {portal.title}</p>
+   396→          </div>
+   397→          <Card className="shadow-xl border-gray-200">
+   398→            <CardContent className="pt-6">
+   399→              <form onSubmit={handleSubmit} className="space-y-4">
+   400→                <div className="space-y-2">
+   401→                  <Label htmlFor="portal-username" className="text-gray-800 text-xs font-bold uppercase tracking-wider">Username</Label>
+   402→                  <Input id="portal-username" placeholder="Enter your username" value={username} onChange={(e) => setUsername(e.target.value)} className="h-12 text-sm" autoComplete="username" />
+   403→                </div>
+   404→                <div className="space-y-2">
+   405→                  <div className="flex items-center justify-between">
+   406→                    <Label htmlFor="portal-password" className="text-gray-800 text-xs font-bold uppercase tracking-wider">Password</Label>
+   407→                    <button type="button" onClick={() => setForgotOpen(true)} className="text-[11px] font-bold hover:underline" style={{ color: portal.color }}>Forgot Password?</button>
+   408→                  </div>
+   409→                  <Input id="portal-password" type="password" placeholder="Enter your password" value={password} onChange={(e) => setPassword(e.target.value)} className="h-12 text-sm" autoComplete="current-password" />
+   410→                </div>
+   411→                <Button type="submit" className="w-full h-12 font-bold text-sm text-white" style={{ background: portal.color }} disabled={loading}>
+   412→                  {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Lock className="mr-2 h-4 w-4" />}Sign In to {portal.title}
+   413→                </Button>
+   414→              </form>
+   415→              <div className="mt-4 flex items-center gap-3">
+   416→                <div className="flex-1 h-px bg-gray-200" />
+   417→                <span className="text-[11px] text-gray-400 font-bold uppercase">or</span>
+   418→                <div className="flex-1 h-px bg-gray-200" />
+   419→              </div>
+   420→              <div className="mt-4 grid grid-cols-2 gap-2">
+   421→                <a href={SOCIAL.whatsapp} target="_blank" rel="noopener noreferrer" className="h-10 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold text-white transition-all hover:opacity-90" style={{ background: '#25D366' }}>
+   422→                  <WhatsAppIcon className="h-3.5 w-3.5" />WhatsApp
+   423→                </a>
+   424→                <a href={`tel:${BRAND.phone}`} className="h-10 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold text-white transition-all hover:opacity-90" style={{ background: portal.color }}>
+   425→                  <Phone className="h-3.5 w-3.5" />Call Support
+   426→                </a>
+   427→              </div>
+   428→              {portal.requestAccess && (
+   429→                <div className="mt-4 rounded-xl bg-amber-50 border border-amber-200/60 p-4">
+   430→                  <p className="text-xs font-bold text-gray-800 mb-2">Don&apos;t have an account?</p>
+   431→                  <Button onClick={onApply} className="w-full h-10 font-bold text-sm text-white" style={{ background: '#166534' }}>
+   432→                    <UserPlus className="mr-2 h-4 w-4" />Apply to Join {portal.title}
+   433→                  </Button>
+   434→                </div>
+   435→              )}
+   436→            </CardContent>
+   437→          </Card>
+   438→          <div className="mt-6 flex flex-wrap gap-1.5 justify-center">
+   439→            {portal.features.map((f) => (
+   440→              <span key={f} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white border border-gray-200 text-[10px] font-bold text-gray-500">
+   441→                <Check className="h-2.5 w-2.5" style={{ color: portal.color }} />{f}
+   442→              </span>
+   443→            ))}
+   444→          </div>
+   445→          <p className="mt-4 text-center text-[11px] text-gray-400 font-medium">{BRAND.name} &middot; GSTIN: {BRAND.gstin}</p>
+   446→          <ForgotPasswordDialog open={forgotOpen} onOpenChange={setForgotOpen} />
+   447→        </div>
+   448→      </div>
+   449→    </div>
+   450→  )
+   451→}
+   452→
+   453→function PortalPickerView({ onPick, onBack }: { onPick: (title: string) => void; onBack: () => void }) {
+   454→  const [hovered, setHovered] = useState<string | null>(null)
+   455→  return (
+   456→    <div className="min-h-screen flex flex-col bg-gradient-to-b from-gray-50 to-white">
+   457→      <header className="sticky top-0 z-40 border-b bg-white/90 backdrop-blur">
+   458→        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
+   459→          <BrandLogo />
+   460→          <Button variant="ghost" size="sm" onClick={onBack}><ArrowLeft className="mr-1 h-4 w-4" /> Back to Home</Button>
+   461→        </div>
+   462→      </header>
+   463→      <div className="mx-auto w-full max-w-5xl flex-1 px-4 py-10 sm:py-16">
+   464→        <div className="text-center mb-10">
+   465→          <Badge className="mb-4 px-4 py-1 text-sm font-bold" style={{ background: '#D4AF37', color: '#002B5C' }}><UserPlus className="h-3.5 w-3.5 mr-1.5" />Join HP Enterprise</Badge>
+   466→          <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-3">Where Do You Want to Join?</h1>
+   467→          <p className="text-gray-600 text-lg font-medium max-w-2xl mx-auto">Select the department or portal you are applying for. You will fill a complete onboarding form with all your details and documents.</p>
+   468→        </div>
+   469→        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+   470→          {APPLY_OPTIONS.map((opt) => {
+   471→            const Icon = opt.icon
+   472→            const isHovered = hovered === opt.id
+   473→            return (
+   474→              <motion.button key={opt.id}
+   475→                onClick={() => onPick(opt.title)}
+   476→                onMouseEnter={() => setHovered(opt.id)}
+   477→                onMouseLeave={() => setHovered(null)}
+   478→                whileHover={{ y: -4, scale: 1.02 }}
+   479→                whileTap={{ scale: 0.98 }}
+   480→                className="relative text-left rounded-2xl border-2 bg-white p-6 shadow-sm transition-all duration-300 group cursor-pointer"
+   481→                style={{ borderColor: isHovered ? opt.color : '#E5E7EB', boxShadow: isHovered ? `0 10px 30px ${opt.color}20` : undefined }}
+   482→              >
+   483→                <div className="flex items-start justify-between mb-4">
+   484→                  <div className="h-14 w-14 rounded-2xl flex items-center justify-center shadow-md" style={{ background: opt.color }}>
+   485→                    <Icon className="h-7 w-7 text-white" />
+   486→                  </div>
+   487→                  <Badge variant="outline" className="text-[10px] font-bold px-2 py-0.5" style={{ borderColor: `${opt.color}40`, color: opt.color }}>{opt.tag}</Badge>
+   488→                </div>
+   489→                <h3 className="text-lg font-bold text-gray-900 mb-1.5">{opt.title}</h3>
+   490→                <p className="text-sm text-gray-500 font-medium leading-relaxed mb-4">{opt.description}</p>
+   491→                <div className="flex items-center gap-1.5 text-sm font-bold" style={{ color: opt.color }}>
+   492→                  Select & Fill Application <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+   493→                </div>
+   494→              </motion.button>
+   495→            )
+   496→          })}
+   497→        </div>
+   498→        <div className="mt-10 rounded-2xl bg-amber-50 border border-amber-200/60 p-6">
+   499→          <div className="flex items-start gap-3">
+   500→            <div className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: '#D4AF37' }}><ClipboardList className="h-5 w-5" style={{ color: '#002B5C' }} /></div>
+   501→            <div>
+   502→              <h3 className="font-bold text-gray-900 mb-1">Complete Onboarding Form — 7 Steps</h3>
+   503→              <div className="flex flex-wrap gap-2 mt-2">
+   504→                {[`Personal Details`, `Identity (Aadhaar/PAN)`, `Bank Details`, `Education`, `Experience`, `Documents Upload (14 files)`, `Declaration`].map((step) => (
+   505→                  <span key={step} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-100 text-[11px] font-bold text-amber-800">
+   506→                    <Check className="h-2.5 w-2.5" />{step}
+   507→                  </span>
+   508→                ))}
+   509→              </div>
+   510→            </div>
+   511→          </div>
+   512→        </div>
+   513→        <div className="mt-4 flex items-center justify-center gap-2 text-xs text-gray-400 font-medium">
+   514→          <Building2 className="h-3.5 w-3.5" /> {BRAND.name} · GSTIN: {BRAND.gstin}
+   515→        </div>
+   516→      </div>
+   517→    </div>
+   518→  )
+   519→}
+   520→
+   521→const LOGIN_PORTALS = PORTALS.filter((p) => !p.requestAccess)
+   522→const APPLY_PORTALS = PORTALS.filter((p) => p.requestAccess)
+   523→
+   524→function PortalLoginPickerView({ onBack, onSelect, onApply }: { onBack: () => void; onSelect: (id: string) => void; onApply: () => void }) {
+   525→  const [search, setSearch] = useState('')
+   526→  const filteredLogin = LOGIN_PORTALS.filter((p) => !search || p.title.toLowerCase().includes(search.toLowerCase()) || p.description.toLowerCase().includes(search.toLowerCase()))
+   527→  const filteredApply = APPLY_PORTALS.filter((p) => !search || p.title.toLowerCase().includes(search.toLowerCase()) || p.description.toLowerCase().includes(search.toLowerCase()))
+   528→  const hasResults = filteredLogin.length > 0 || filteredApply.length > 0
+   529→  return (
+   530→    <div className="min-h-screen flex flex-col bg-gradient-to-b from-gray-50 to-white">
+   531→      <header className="sticky top-0 z-40 border-b bg-white/90 backdrop-blur">
+   532→        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
+   533→          <BrandLogo />
+   534→          <Button variant="ghost" size="sm" onClick={onBack}><ArrowLeft className="mr-1 h-4 w-4" /> Back to Home</Button>
+   535→        </div>
+   536→      </header>
+   537→      <div className="mx-auto w-full max-w-6xl flex-1 px-4 py-10 sm:py-16">
+   538→        <div className="text-center mb-10">
+   539→          <Badge className="mb-4 px-4 py-1 text-sm font-bold" style={{ background: '#D4AF37', color: '#002B5C' }}><Shield className="h-3.5 w-3.5 mr-1.5" />All Portals</Badge>
+   540→          <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-3">Select Your Portal</h1>
+   541→          <p className="text-gray-600 text-lg font-medium max-w-2xl mx-auto mb-6">Choose from {PORTALS.length} specialized portals. Sign in or apply to join.</p>
+   542→          <div className="max-w-md mx-auto relative">
+   543→            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+   544→            <Input placeholder="Search portals..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10 h-11" />
+   545→          </div>
+   546→        </div>
+   547→        {!hasResults && (
+   548→          <div className="text-center py-12">
+   549→            <p className="text-gray-400 font-medium">No portals found matching your search.</p>
+   550→          </div>
+   551→        )}
+   552→        {filteredLogin.length > 0 && (
+   553→          <div className="mb-10">
+   554→            <div className="flex items-center gap-2 mb-5">
+   555→              <div className="h-8 w-8 rounded-lg flex items-center justify-center" style={{ background: '#002B5C' }}><Lock className="h-4 w-4 text-white" /></div>
+   556→              <h2 className="text-lg font-extrabold text-gray-900">Login Portals</h2>
+   557→              <span className="text-xs font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{filteredLogin.length}</span>
+   558→            </div>
+   559→            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+   560→              {filteredLogin.map((portal) => {
+   561→                const Icon = portal.icon
+   562→                return (
+   563→                  <motion.button key={portal.id} onClick={() => onSelect(portal.id)} whileHover={{ y: -3 }} whileTap={{ scale: 0.98 }}
+   564→                    className="text-left rounded-2xl border-2 border-gray-200 bg-white p-6 shadow-sm hover:shadow-lg transition-all duration-300 group cursor-pointer" style={{ borderColor: undefined }}>
+   565→                    <div className="h-14 w-14 rounded-2xl flex items-center justify-center shadow-md mb-4" style={{ background: portal.color }}>
+   566→                      <Icon className="h-7 w-7 text-white" />
+   567→                    </div>
+   568→                    <h3 className="text-lg font-bold text-gray-900 mb-1">{portal.title}</h3>
+   569→                    <p className="text-sm text-gray-500 font-medium leading-relaxed mb-3">{portal.description}</p>
+   570→                    <div className="flex flex-wrap gap-1.5 mb-4">
+   571→                      {portal.features.slice(0, 3).map((f) => (
+   572→                        <span key={f} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 text-[10px] font-bold text-gray-600">
+   573→                          <Check className="h-2.5 w-2.5" />{f}
+   574→                        </span>
+   575→                      ))}
+   576→                      {portal.features.length > 3 && <span className="text-[10px] font-bold text-gray-400">+{portal.features.length - 3} more</span>}
+   577→                    </div>
+   578→                    <div className="flex items-center gap-1.5 text-sm font-bold" style={{ color: portal.color }}>
+   579→                      <Lock className="h-3.5 w-3.5" />Sign In <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform" />
+   580→                    </div>
+   581→                  </motion.button>
+   582→                )
+   583→              })}
+   584→            </div>
+   585→          </div>
+   586→        )}
+   587→        {filteredApply.length > 0 && (
+   588→          <div className="mb-8">
+   589→            <div className="flex items-center gap-2 mb-5">
+   590→              <div className="h-8 w-8 rounded-lg flex items-center justify-center" style={{ background: '#166534' }}><UserPlus className="h-4 w-4 text-white" /></div>
+   591→              <h2 className="text-lg font-extrabold text-gray-900">Apply to Join Portals</h2>
+   592→              <span className="text-xs font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{filteredApply.length}</span>
+   593→            </div>
+   594→            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+   595→              {filteredApply.map((portal) => {
+   596→                const Icon = portal.icon
+   597→                return (
+   598→                  <motion.button key={portal.id} onClick={() => onSelect(portal.id)} whileHover={{ y: -3 }} whileTap={{ scale: 0.98 }}
+   599→                    className="text-left rounded-2xl border-2 border-green-200 bg-white p-6 shadow-sm hover:shadow-lg hover:border-green-400 transition-all duration-300 group cursor-pointer">
+   600→                    <div className="flex items-start justify-between mb-4">
+   601→                      <div className="h-14 w-14 rounded-2xl flex items-center justify-center shadow-md" style={{ background: portal.color }}>
+   602→                        <Icon className="h-7 w-7 text-white" />
+   603→                      </div>
+   604→                      <Badge className="text-[10px] font-bold px-2 py-0.5" style={{ background: '#166534', color: '#fff' }}>Apply</Badge>
+   605→                    </div>
+   606→                    <h3 className="text-lg font-bold text-gray-900 mb-1">{portal.title}</h3>
+   607→                    <p className="text-sm text-gray-500 font-medium leading-relaxed mb-3">{portal.description}</p>
+   608→                    <div className="flex flex-wrap gap-1.5 mb-4">
+   609→                      {portal.features.slice(0, 3).map((f) => (
+   610→                        <span key={f} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-50 text-[10px] font-bold text-green-700">
+   611→                          <Check className="h-2.5 w-2.5" />{f}
+   612→                        </span>
+   613→                      ))}
+   614→                      {portal.features.length > 3 && <span className="text-[10px] font-bold text-gray-400">+{portal.features.length - 3} more</span>}
+   615→                    </div>
+   616→                    <div className="flex items-center gap-1.5 text-sm font-bold" style={{ color: '#166534' }}>
+   617→                      <UserPlus className="h-3.5 w-3.5" />Apply & Fill Form <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform" />
+   618→                    </div>
+   619→                  </motion.button>
+   620→                )
+   621→              })}
+   622→            </div>
+   623→          </div>
+   624→        )}
+   625→        <div className="text-center pt-4">
+   626→          <p className="text-sm text-gray-500 font-medium mb-3">Or apply for any department directly?</p>
+   627→          <Button size="lg" className="h-11 font-bold text-white" style={{ background: '#166534' }} onClick={onApply}>
+   628→            <UserPlus className="mr-2 h-4 w-4" />Apply to Join HP Enterprise
+   629→          </Button>
+   630→        </div>
+   631→      </div>
+   632→    </div>
+   633→  )
+   634→}
+   635→
+   636→export function Landing() {
+   637→  const { setUser } = useAppStore()
+   638→  const [view, setView] = useState<LandingView>('home')
+   639→  const [mobileMenu, setMobileMenu] = useState(false)
+   640→  const [scrolled, setScrolled] = useState(false)
+   641→  const [activeService, setActiveService] = useState<ServiceDetail | null>(null)
+   642→  const [serviceModalOpen, setServiceModalOpen] = useState(false)
+   643→  const [appliedPortal, setAppliedPortal] = useState<string>('')
+   644→  const [selectedPortalId, setSelectedPortalId] = useState<string>('')
+   645→  const homeRef = useRef<HTMLDivElement>(null)
+   646→
+   647→  useEffect(() => {
+   648→    document.documentElement.style.scrollBehavior = 'smooth'
+   649→    const h = () => setScrolled(window.scrollY > 60)
+   650→    window.addEventListener('scroll', h, { passive: true })
+   651→    return () => window.removeEventListener('scroll', h)
+   652→  }, [])
+   653→
+   654→  const scrollTo = useCallback((id: string) => { setMobileMenu(false); const el = document.getElementById(id); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }) }, [])
+   655→  const goHome = useCallback(() => { setView('home'); window.scrollTo({ top: 0, behavior: 'smooth' }) }, [])
+   656→  const openServiceModal = useCallback((s: ServiceDetail) => { setActiveService(s); setServiceModalOpen(true) }, [])
+   657→
+   658→
+   659→  const NAV_LINKS = [
+   660→    { id: 'features', label: 'Features' }, { id: 'services', label: 'Services' },
+   661→    { id: 'join', label: 'Join Now' }, { id: 'portals', label: 'All Portals' }, { id: 'pricing', label: 'Pricing' }, { id: 'contact', label: 'Contact' },
+   662→  ]
+   663→
+   664→  const openApplyForm = useCallback((portalTitle?: string) => { if (portalTitle) { setAppliedPortal(portalTitle); setView('apply') } else { setView('apply-pick') } }, [])
+   665→
+   666→  if (view === 'register') return <RegistrationForm onBack={goHome} />
+   667→  if (view === 'apply') return <RegistrationForm onBack={goHome} appliedFor={appliedPortal} />
+   668→  if (view === 'apply-pick') return <PortalPickerView onPick={(title) => { setAppliedPortal(title); setView('apply') }} onBack={goHome} />
+   669→  if (view === 'portal-pick') return <PortalLoginPickerView onBack={goHome} onSelect={(id) => { setSelectedPortalId(id); setView('portal-login') }} onApply={() => openApplyForm()} />
+   670→  if (view === 'portal-login') return <SinglePortalLoginView portalId={selectedPortalId} onBack={() => setView('portal-pick')} onApply={() => { const p = PORTALS.find((pp) => pp.id === selectedPortalId); openApplyForm(p?.title) }} />
+   671→  if (view === 'subscribe') return <SubscriptionForm onBack={goHome} />
+   672→
+   673→  return (
+   674→    <div ref={homeRef} className="min-h-screen flex flex-col" style={{ background: '#FFFFFF' }}>
+   675→      <SocialSideMenu />
+   676→      <ServiceModal service={activeService} open={serviceModalOpen} onClose={() => setServiceModalOpen(false)} />
+   677→
+   678→      <nav className={cn('sticky top-0 z-40 w-full transition-all duration-500', scrolled ? 'bg-white/90 shadow-lg shadow-gray-200/50 backdrop-blur-xl' : 'bg-white/50 backdrop-blur-sm')} role="navigation" aria-label="Main navigation">
+   679→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+   680→          <div className="flex items-center justify-between h-[76px]">
+   681→            <button onClick={goHome} className="flex items-center gap-2.5 shrink-0" aria-label="HPHRMS Home">
+   682→              <BrandLogo size={38} />
+   683→              <div className="flex flex-col">
+   684→                <span className="font-extrabold text-[16px] tracking-tight leading-tight text-gray-900">HPHRMS</span>
+   685→                <span className="text-[10px] font-bold tracking-[0.2em] uppercase leading-tight text-gray-400">by HP Enterprise</span>
+   686→              </div>
+   687→            </button>
+   688→            <div className="hidden lg:flex items-center gap-1">
+   689→              {NAV_LINKS.map((link) => (
+   690→                <button key={link.id} onClick={() => scrollTo(link.id)} className="px-4 py-2.5 rounded-xl text-[13px] font-bold text-gray-500 hover:text-gray-900 hover:bg-gray-100/80 transition-all duration-300">{link.label}</button>
+   691→              ))}
+   692→            </div>
+   693→            <div className="hidden lg:flex items-center gap-3">
+   694→              <LanguageSwitcher />
+   695→              <Button variant="ghost" className="text-sm font-bold h-10 text-gray-600 hover:text-gray-900 hover:bg-gray-100 px-5" onClick={() => setView('portal-pick')}>Login</Button>
+   696→              <Button className="text-sm font-bold h-10 px-5 rounded-xl text-white shadow-md hover:shadow-lg transition-all duration-300" style={{ background: '#166534' }} onClick={() => openApplyForm()}>Apply to Join</Button>
+   697→              <Button className="text-sm font-bold h-10 px-6 rounded-xl text-gray-900 shadow-md shadow-amber-200/50 hover:shadow-lg transition-all duration-300" style={{ background: '#D4AF37' }} onClick={() => setView('subscribe')}>Start Free Trial</Button>
+   698→            </div>
+   699→            <button className="lg:hidden p-2 rounded-xl text-gray-600" onClick={() => setMobileMenu(!mobileMenu)} aria-label={mobileMenu ? 'Close menu' : 'Open menu'} aria-expanded={mobileMenu}>
+   700→              {mobileMenu ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+   701→            </button>
+   702→          </div>
+   703→        </div>
+   704→        <AnimatePresence>
+   705→          {mobileMenu && (
+   706→            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.4, ease: LUXURY_EASE }} className="lg:hidden overflow-hidden bg-white/95 backdrop-blur-xl border-t border-gray-100 shadow-xl">
+   707→              <div className="px-4 py-5 space-y-1">
+   708→                {NAV_LINKS.map((link) => (
+   709→                  <button key={link.id} onClick={() => scrollTo(link.id)} className="block w-full text-left px-4 py-3 rounded-xl text-sm font-bold text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors capitalize">{link.label}</button>
+   710→                ))}
+   711→                <div className="pt-3 flex flex-col gap-2">
+   712→                  <Button variant="outline" className="w-full text-sm font-bold" onClick={() => { setView('portal-pick'); setMobileMenu(false) }}>Login to Portal</Button>
+   713→                  <Button className="w-full text-sm font-bold text-white" style={{ background: '#166534' }} onClick={() => { openApplyForm(); setMobileMenu(false) }}>Apply to Join</Button>
+   714→                  <Button className="w-full text-sm font-bold text-gray-900" style={{ background: '#D4AF37' }} onClick={() => { setView('subscribe'); setMobileMenu(false) }}>Start Free Trial</Button>
+   715→                </div>
+   716→              </div>
+   717→            </motion.div>
+   718→          )}
+   719→        </AnimatePresence>
+   720→      </nav>
+   721→
+   722→      {/* Hero Section */}
+   723→      <section className="relative overflow-hidden bg-white">
+   724→        <div className="absolute inset-0" style={{ background: 'linear-gradient(160deg, #F8FAFC 0%, #FEFCE8 30%, #FFFFFF 60%, #F0FDF4 100%)' }} />
+   725→        <div className="absolute top-0 right-0 w-[600px] h-[600px] rounded-full opacity-30 blur-3xl" style={{ background: 'radial-gradient(circle, #D4AF37 0%, transparent 70%)' }} />
+   726→        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full opacity-20 blur-3xl" style={{ background: 'radial-gradient(circle, #002B5C 0%, transparent 70%)' }} />
+   727→        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 sm:py-32 lg:py-40">
+   728→          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+   729→            <div className="space-y-8">
+   730→              <Reveal>
+   731→                <Badge className="px-4 py-1.5 text-sm font-bold shadow-sm" style={{ background: '#D4AF37', color: '#002B5C' }}>
+   732→                  <Sparkles className="h-3.5 w-3.5 mr-1.5" />AI-Powered Workforce Solutions
+   733→                </Badge>
+   734→              </Reveal>
+   735→              <Reveal delay={0.1}>
+   736→                <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.1]" style={{ color: '#002B5C' }}>
+   737→                  {BRAND.tagline}
+   738→                </h1>
+   739→              </Reveal>
+   740→              <Reveal delay={0.2}>
+   741→                <p className="text-lg sm:text-xl text-gray-600 font-medium leading-relaxed max-w-xl">
+   742→                  {BRAND.subTagline}. From HR management to EHS consultancy, engineering support to payroll — we deliver excellence across every vertical.
+   743→                </p>
+   744→              </Reveal>
+   745→              <Reveal delay={0.3}>
+   746→                <div className="flex flex-col sm:flex-row gap-3">
+   747→                  <Button size="lg" className="h-13 text-base font-bold px-8 rounded-2xl text-white shadow-lg shadow-gray-900/20 hover:shadow-xl transition-all duration-300" style={{ background: '#002B5C' }} onClick={() => setView('portal-pick')}>
+   748→                    Access Portals <ArrowRight className="ml-2 h-4 w-4" />
+   749→                  </Button>
+   750→                  <Button size="lg" className="h-13 text-base font-bold px-8 rounded-2xl text-white shadow-lg shadow-emerald-900/20 hover:shadow-xl transition-all duration-300" style={{ background: '#166534' }} onClick={() => openApplyForm()}>
+   751→                    <UserPlus className="mr-2 h-5 w-5" />Apply to Join
+   752→                  </Button>
+   753→                  <Button size="lg" className="h-13 text-base font-bold px-8 rounded-2xl text-gray-900 shadow-md shadow-amber-200/50 hover:shadow-lg transition-all duration-300" style={{ background: '#D4AF37' }} onClick={() => setView('subscribe')}>
+   754→                    Start Free Trial <Zap className="ml-2 h-4 w-4" />
+   755→                  </Button>
+   756→                </div>
+   757→              </Reveal>
+   758→              <Reveal delay={0.4}>
+   759→                <div className="flex items-center gap-3 pt-2">
+   760→                  <div className="flex -space-x-2">
+   761→                    {[1, 2, 3, 4].map((i) => (
+   762→                      <div key={i} className="h-9 w-9 rounded-full border-2 border-white shadow-md flex items-center justify-center text-[11px] font-bold text-white" style={{ background: ['#002B5C', '#0A4488', '#D4AF37', '#166534'][i - 1] }}>
+   763→                        {['HP', 'HR', 'EHS', 'EN'][i - 1]}
+   764→                      </div>
+   765→                    ))}
+   766→                  </div>
+   767→                  <div>
+   768→                    <p className="text-sm font-bold text-gray-900">10+ Specialized Portals</p>
+   769→                    <p className="text-xs text-gray-500 font-medium">One platform, complete workforce management</p>
+   770→                  </div>
+   771→                </div>
+   772→              </Reveal>
+   773→            </div>
+   774→            <Reveal delay={0.2} direction="right">
+   775→              <div className="relative">
+   776→                <div className="rounded-3xl overflow-hidden shadow-2xl shadow-gray-900/10 border border-gray-100 bg-gradient-to-br from-gray-50 to-gray-100 p-8 flex items-center justify-center min-h-[400px]">
+   777→                  <div className="grid grid-cols-3 gap-3 w-full max-w-md">
+   778→                    {HPHRMS_FEATURES.slice(0, 9).map((f, idx) => {
+   779→                      const ics: LucideIcon[] = [Bot, Users, Target, Clock, CalendarDays, Wallet, UserIcon, Settings, FileText]
+   780→                      const Ic = ics[idx]
+   781→                      return (
+   782→                        <div key={f} className="bg-white rounded-xl p-3 shadow-sm border border-gray-100 flex flex-col items-center gap-1.5">
+   783→                          <Ic className="h-5 w-5" style={{ color: idx % 2 === 0 ? '#002B5C' : '#D4AF37' }} />
+   784→                          <span className="text-[9px] font-bold text-gray-500 text-center leading-tight">{f.split(' ').slice(0, 2).join(' ')}</span>
+   785→                        </div>
+   786→                      )
+   787→                    })}
+   788→                  </div>
+   789→                </div>
+   790→                <div className="absolute -bottom-4 -left-4 bg-white rounded-2xl shadow-xl p-4 border border-gray-100">
+   791→                  <div className="flex items-center gap-3">
+   792→                    <div className="h-10 w-10 rounded-xl flex items-center justify-center" style={{ background: '#D4AF37' }}><Bot className="h-5 w-5 text-white" /></div>
+   793→                    <div>
+   794→                      <p className="text-xs font-bold text-gray-900">HP AI Assistant</p>
+   795→                      <p className="text-[11px] text-gray-500 font-medium">Always ready to help</p>
+   796→                    </div>
+   797→                  </div>
+   798→                </div>
+   799→                <div className="absolute -top-4 -right-4 bg-white rounded-2xl shadow-xl p-4 border border-gray-100">
+   800→                  <div className="flex items-center gap-3">
+   801→                    <div className="h-10 w-10 rounded-xl flex items-center justify-center bg-emerald-100"><ShieldCheck className="h-5 w-5 text-emerald-600" /></div>
+   802→                    <div>
+   803→                      <p className="text-xs font-bold text-gray-900">Enterprise Security</p>
+   804→                      <p className="text-[11px] text-gray-500 font-medium">Bank-grade encryption</p>
+   805→                    </div>
+   806→                  </div>
+   807→                </div>
+   808→              </div>
+   809→            </Reveal>
+   810→          </div>
+   811→        </div>
+   812→      </section>
+   813→
+   814→      {/* Trust Badges */}
+   815→      <section className="relative z-10 -mt-8">
+   816→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+   817→          <Reveal>
+   818→            <div className="bg-white rounded-2xl shadow-lg shadow-gray-200/50 border border-gray-100 p-6">
+   819→              <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3">
+   820→                {TRUST_BADGES.map((badge) => (
+   821→                  <div key={badge} className="flex items-center gap-2 text-sm font-semibold text-gray-600">
+   822→                    <Award className="h-4 w-4 text-amber-500" />
+   823→                    {badge}
+   824→                  </div>
+   825→                ))}
+   826→              </div>
+   827→            </div>
+   828→          </Reveal>
+   829→        </div>
+   830→      </section>
+   831→
+   832→      {/* Features Section */}
+   833→      <section id="features" className="py-20 sm:py-28 bg-gray-50/50">
+   834→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+   835→          <Reveal>
+   836→            <div className="text-center max-w-2xl mx-auto mb-16">
+   837→              <Badge className="mb-4 px-4 py-1 text-sm font-bold" style={{ background: '#D4AF37', color: '#002B5C' }}>Features</Badge>
+   838→              <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-4">Everything You Need to Manage Your Workforce</h2>
+   839→              <p className="text-gray-600 text-lg font-medium">HPHRMS is packed with powerful features designed for modern Indian businesses.</p>
+   840→            </div>
+   841→          </Reveal>
+   842→          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+   843→            {HPHRMS_FEATURES.map((feature, i) => {
+   844→              const icons: LucideIcon[] = [Bot, Users, Target, Clock, CalendarDays, Wallet, UserIcon, Settings, FileText, BarChart3, Building2, Shield]
+   845→              const FeatureIcon = icons[i % icons.length]
+   846→              return (
+   847→                <Reveal key={feature} delay={i * 0.05}>
+   848→                  <div className="group bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-lg hover:border-amber-200/60 transition-all duration-300 hover:-translate-y-1">
+   849→                    <div className="h-11 w-11 rounded-xl flex items-center justify-center mb-4 shadow-sm" style={{ background: '#002B5C' }}>
+   850→                      <FeatureIcon className="h-5 w-5 text-white" />
+   851→                    </div>
+   852→                    <h3 className="font-bold text-gray-900 mb-1.5">{feature}</h3>
+   853→                    <p className="text-sm text-gray-500 font-medium leading-relaxed">Comprehensive {feature.toLowerCase()} capabilities for your organization.</p>
+   854→                  </div>
+   855→                </Reveal>
+   856→              )
+   857→            })}
+   858→          </div>
+   859→        </div>
+   860→      </section>
+   861→
+   862→      {/* Services Section */}
+   863→      <section id="services" className="py-20 sm:py-28 bg-white">
+   864→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+   865→          <Reveal>
+   866→            <div className="text-center max-w-2xl mx-auto mb-16">
+   867→              <Badge className="mb-4 px-4 py-1 text-sm font-bold" style={{ background: '#D4AF37', color: '#002B5C' }}>Our Services</Badge>
+   868→              <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-4">End-to-End Workforce Solutions</h2>
+   869→              <p className="text-gray-600 text-lg font-medium">From hiring to payroll, safety to engineering — we cover every aspect of workforce management.</p>
+   870→            </div>
+   871→          </Reveal>
+   872→          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+   873→            {SERVICE_DETAILS.map((service, i) => {
+   874→              const Icon = service.icon
+   875→              return (
+   876→                <Reveal key={service.title} delay={i * 0.08}>
+   877→                  <div className="group bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer" onClick={() => openServiceModal(service)}>
+   878→                    <div className="relative h-48 overflow-hidden">
+   879→                      <Image src={service.image} alt={service.title} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
+   880→                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+   881→                      <div className="absolute bottom-4 left-4 right-4">
+   882→                        <div className="flex items-center gap-2 mb-1">
+   883→                          <div className="h-8 w-8 rounded-lg flex items-center justify-center" style={{ background: '#D4AF37' }}>
+   884→                            <Icon className="h-4 w-4" style={{ color: '#002B5C' }} />
+   885→                          </div>
+   886→                          <h3 className="text-lg font-bold text-white">{service.title}</h3>
+   887→                        </div>
+   888→                        <p className="text-sm text-gray-200 font-medium">{service.short}</p>
+   889→                      </div>
+   890→                    </div>
+   891→                    <div className="p-5">
+   892→                      <div className="flex flex-wrap gap-2 mb-4">
+   893→                        {service.industries.slice(0, 3).map((ind) => (
+   894→                          <Badge key={ind} variant="secondary" className="text-[11px] font-semibold px-2.5 py-0.5">{ind}</Badge>
+   895→                        ))}
+   896→                        {service.industries.length > 3 && <Badge variant="secondary" className="text-[11px] font-semibold px-2.5 py-0.5">+{service.industries.length - 3}</Badge>}
+   897→                      </div>
+   898→                      <div className="flex items-center gap-1.5 text-sm font-bold" style={{ color: '#002B5C' }}>
+   899→                        Learn More <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+   900→                      </div>
+   901→                    </div>
+   902→                  </div>
+   903→                </Reveal>
+   904→              )
+   905→            })}
+   906→          </div>
+   907→        </div>
+   908→      </section>
+   909→
+   910→      {/* Join Our Team Banner */}
+   911→      <section id="join" className="py-20 sm:py-24 bg-white">
+   912→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+   913→          <Reveal>
+   914→            <div className="relative overflow-hidden rounded-3xl" style={{ background: 'linear-gradient(135deg, #002B5C 0%, #0A4488 50%, #166534 100%)' }}>
+   915→              <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 20% 80%, #D4AF37 0%, transparent 50%), radial-gradient(circle at 80% 20%, #D4AF37 0%, transparent 50%)' }} />
+   916→              <div className="relative z-10 px-8 sm:px-12 lg:px-16 py-14 sm:py-20">
+   917→                <div className="grid lg:grid-cols-2 gap-10 items-center">
+   918→                  <div className="space-y-6">
+   919→                    <Badge className="px-4 py-1.5 text-sm font-bold shadow-sm" style={{ background: '#D4AF37', color: '#002B5C' }}>
+   920→                      <UserPlus className="h-3.5 w-3.5 mr-1.5" />We're Hiring
+   921→                    </Badge>
+   922→                    <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white leading-tight">Join HP Enterprise — Build Your Career</h2>
+   923→                    <p className="text-lg text-gray-200 font-medium leading-relaxed max-w-lg">Apply with your complete profile — personal details, education, experience, identity documents, bank details, and more. One form, everything we need.</p>
+   924→                    <div className="flex flex-wrap gap-3 pt-2">
+   925→                      <Button size="lg" className="h-13 text-base font-bold px-8 rounded-2xl text-white shadow-xl hover:shadow-2xl transition-all duration-300" style={{ background: '#D4AF37', color: '#002B5C' }} onClick={() => openApplyForm()}>
+   926→                        <UserPlus className="mr-2 h-5 w-5" />Apply Now — Fill All Details
+   927→                      </Button>
+   928→                      <a href={SOCIAL.whatsapp} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center h-13 px-6 rounded-2xl text-sm font-bold text-white bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20 transition-all duration-300">
+   929→                        <WhatsAppIcon className="mr-2 h-4 w-4" />Chat on WhatsApp
+   930→                      </a>
+   931→                    </div>
+   932→                  </div>
+   933→                  <div className="grid grid-cols-2 gap-4">
+   934→                    {[
+   935→                      { icon: UserIcon, title: 'Personal Details', desc: 'Name, DOB, Gender, Address, Emergency Contact' },
+   936→                      { icon: FileText, title: 'Identity Documents', desc: 'Aadhaar, PAN, Passport Photo, Medical Cert' },
+   937→                      { icon: Landmark, title: 'Bank Details', desc: 'Account, IFSC, Passbook Upload' },
+   938→                      { icon: GraduationCap, title: 'Education', desc: 'Multiple Qualifications with Certificates' },
+   939→                      { icon: Briefcase, title: 'Experience & Salary', desc: 'Company, Designation, CTC, Notice Period' },
+   940→                      { icon: FileUp, title: 'All Documents', desc: 'Resume, Salary Slips, Relieving, Address Proof' },
+   941→                    ].map((item) => (
+   942→                      <div key={item.title} className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/10 hover:bg-white/15 transition-colors">
+   943→                        <item.icon className="h-6 w-6 mb-2" style={{ color: '#D4AF37' }} />
+   944→                        <h3 className="text-sm font-bold text-white mb-1">{item.title}</h3>
+   945→                        <p className="text-[11px] text-gray-300 font-medium leading-relaxed">{item.desc}</p>
+   946→                      </div>
+   947→                    ))}
+   948→                  </div>
+   949→                </div>
+   950→              </div>
+   951→            </div>
+   952→          </Reveal>
+   953→        </div>
+   954→      </section>
+   955→
+   956→      {/* Portals Section */}
+   957→      <section id="portals" className="py-20 sm:py-28 bg-gray-50/50">
+   958→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+   959→          <Reveal>
+   960→            <div className="text-center max-w-2xl mx-auto mb-16">
+   961→              <Badge className="mb-4 px-4 py-1 text-sm font-bold" style={{ background: '#D4AF37', color: '#002B5C' }}>All Portals</Badge>
+   962→              <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-4">Access Your Dedicated Portal</h2>
+   963→              <p className="text-gray-600 text-lg font-medium">Each role gets a tailored experience. Select your portal and sign in.</p>
+   964→            </div>
+   965→          </Reveal>
+   966→          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+   967→            {PORTALS.map((portal, i) => {
+   968→              const Icon = portal.icon
+   969→              return (
+   970→                <Reveal key={portal.id} delay={i * 0.04}>
+   971→                  <motion.button onClick={() => { setSelectedPortalId(portal.id); setView('portal-login') }} whileHover={{ y: -3 }} whileTap={{ scale: 0.98 }}
+   972→                    className={cn('text-left rounded-2xl border-2 bg-white p-5 shadow-sm hover:shadow-lg transition-all duration-300 group cursor-pointer w-full', portal.requestAccess ? 'border-green-200 hover:border-green-400' : 'border-gray-200 hover:border-gray-400')}>
+   973→                    <div className="h-12 w-12 rounded-2xl flex items-center justify-center shadow-md mb-3" style={{ background: portal.color }}>
+   974→                      <Icon className="h-6 w-6 text-white" />
+   975→                    </div>
+   976→                    <h3 className="text-sm font-bold text-gray-900 mb-0.5 leading-tight">{portal.title}</h3>
+   977→                    <p className="text-xs text-gray-500 font-medium leading-relaxed mb-3 line-clamp-2">{portal.description}</p>
+   978→                    <div className="flex items-center gap-1 text-xs font-bold" style={{ color: portal.requestAccess ? '#166534' : portal.color }}>
+   979→                      {portal.requestAccess ? <UserPlus className="h-3 w-3" /> : <Lock className="h-3 w-3" />}
+   980→                      {portal.requestAccess ? 'Apply to Join' : 'Sign In'}
+   981→                      <ArrowRight className="h-3 w-3 ml-auto group-hover:translate-x-1 transition-transform" />
+   982→                    </div>
+   983→                  </motion.button>
+   984→                </Reveal>
+   985→              )
+   986→            })}
+   987→          </div>
+   988→        </div>
+   989→      </section>
+   990→
+   991→      {/* Pricing Section */}
+   992→      <section id="pricing" className="py-20 sm:py-28 bg-white">
+   993→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+   994→          <Reveal>
+   995→            <div className="text-center max-w-2xl mx-auto mb-16">
+   996→              <Badge className="mb-4 px-4 py-1 text-sm font-bold" style={{ background: '#D4AF37', color: '#002B5C' }}>Pricing</Badge>
+   997→              <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-4">Simple, Transparent Pricing</h2>
+   998→              <p className="text-gray-600 text-lg font-medium">Choose the plan that fits your business. No hidden fees, no surprises.</p>
+   999→            </div>
+  1000→          </Reveal>
+  1001→          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+  1002→            {PRICING_PLANS.map((plan, i) => (
+  1003→              <Reveal key={plan.name} delay={i * 0.1}>
+  1004→                <div className={cn(
+  1005→                  'relative bg-white rounded-2xl p-6 border-2 transition-all duration-300 hover:-translate-y-1',
+  1006→                  plan.popular ? 'border-amber-400 shadow-xl shadow-amber-100/50 scale-[1.02]' : 'border-gray-200 shadow-md hover:shadow-lg'
+  1007→                )}>
+  1008→                  {plan.popular && (
+  1009→                    <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
+  1010→                      <Badge className="px-4 py-1 text-sm font-bold shadow-sm" style={{ background: '#D4AF37', color: '#002B5C' }}>Most Popular</Badge>
+  1011→                    </div>
+  1012→                  )}
+  1013→                  <div className="text-center mb-6">
+  1014→                    <h3 className="text-xl font-bold text-gray-900 mb-2">{plan.name}</h3>
+  1015→                    <div className="flex items-baseline justify-center gap-1">
+  1016→                      <span className="text-3xl font-extrabold" style={{ color: '#002B5C' }}>{plan.price}</span>
+  1017→                      {plan.period && <span className="text-gray-500 font-medium">{plan.period}</span>}
+  1018→                    </div>
+  1019→                    <p className="text-sm text-gray-500 font-medium mt-2">{plan.description}</p>
+  1020→                  </div>
+  1021→                  <ul className="space-y-3 mb-6">
+  1022→                    {plan.features.map((f) => (
+  1023→                      <li key={f} className="flex items-center gap-2.5 text-sm text-gray-700 font-medium">
+  1024→                        <Check className="h-4 w-4 shrink-0 text-emerald-600" />{f}
+  1025→                      </li>
+  1026→                    ))}
+  1027→                  </ul>
+  1028→                  <Button
+  1029→                    className={cn('w-full h-11 font-bold text-sm transition-all duration-300', plan.popular ? 'text-gray-900 shadow-md shadow-amber-200/50 hover:shadow-lg' : 'text-white hover:opacity-90')}
+  1030→                    style={{ background: plan.popular ? '#D4AF37' : '#002B5C' }}
+  1031→                    onClick={() => setView('subscribe')}
+  1032→                  >
+  1033→                    {plan.price === 'Custom' ? 'Contact Sales' : 'Get Started'} <ArrowRight className="ml-2 h-4 w-4" />
+  1034→                  </Button>
+  1035→                </div>
+  1036→              </Reveal>
+  1037→            ))}
+  1038→          </div>
+  1039→        </div>
+  1040→      </section>
+  1041→
+  1042→      {/* Contact Section */}
+  1043→      <section id="contact" className="py-20 sm:py-28 bg-gray-50/50">
+  1044→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+  1045→          <Reveal>
+  1046→            <div className="text-center max-w-2xl mx-auto mb-16">
+  1047→              <Badge className="mb-4 px-4 py-1 text-sm font-bold" style={{ background: '#D4AF37', color: '#002B5C' }}>Contact Us</Badge>
+  1048→              <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-4">Get In Touch</h2>
+  1049→              <p className="text-gray-600 text-lg font-medium">Have questions? We would love to hear from you. Reach out to us anytime.</p>
+  1050→            </div>
+  1051→          </Reveal>
+  1052→          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+  1053→            <Reveal delay={0.1}>
+  1054→              <a href={`tel:${BRAND.phone}`} className="block bg-white rounded-2xl p-6 border border-gray-200 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 text-center">
+  1055→                <div className="mx-auto h-14 w-14 rounded-2xl flex items-center justify-center mb-4" style={{ background: '#002B5C' }}>
+  1056→                  <Phone className="h-6 w-6 text-white" />
+  1057→                </div>
+  1058→                <h3 className="font-bold text-gray-900 mb-1">Call Us</h3>
+  1059→                <p className="text-sm text-gray-500 font-medium">{BRAND.phone}</p>
+  1060→                <p className="text-sm text-gray-400 font-medium mt-1">Mon–Sat, 9 AM–7 PM</p>
+  1061→              </a>
+  1062→            </Reveal>
+  1063→            <Reveal delay={0.2}>
+  1064→              <a href={`mailto:${BRAND.email}`} className="block bg-white rounded-2xl p-6 border border-gray-200 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 text-center">
+  1065→                <div className="mx-auto h-14 w-14 rounded-2xl flex items-center justify-center mb-4" style={{ background: '#0A4488' }}>
+  1066→                  <Mail className="h-6 w-6 text-white" />
+  1067→                </div>
+  1068→                <h3 className="font-bold text-gray-900 mb-1">Email Us</h3>
+  1069→                <p className="text-sm text-gray-500 font-medium">{BRAND.email}</p>
+  1070→                <p className="text-sm text-gray-400 font-medium mt-1">We reply within 24 hours</p>
+  1071→              </a>
+  1072→            </Reveal>
+  1073→            <Reveal delay={0.3}>
+  1074→              <a href={SOCIAL.whatsapp} target="_blank" rel="noopener noreferrer" className="block bg-white rounded-2xl p-6 border border-gray-200 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 text-center">
+  1075→                <div className="mx-auto h-14 w-14 rounded-2xl flex items-center justify-center mb-4" style={{ background: '#25D366' }}>
+  1076→                  <WhatsAppIcon className="h-6 w-6 text-white" />
+  1077→                </div>
+  1078→                <h3 className="font-bold text-gray-900 mb-1">WhatsApp</h3>
+  1079→                <p className="text-sm text-gray-500 font-medium">Chat with us instantly</p>
+  1080→                <p className="text-sm text-gray-400 font-medium mt-1">Quick response guaranteed</p>
+  1081→              </a>
+  1082→            </Reveal>
+  1083→          </div>
+  1084→          <Reveal delay={0.35}>
+  1085→            <div className="mt-12 bg-white rounded-2xl p-8 border border-gray-200 shadow-sm max-w-5xl mx-auto">
+  1086→              <h3 className="text-lg font-bold text-gray-900 mb-6">Leadership</h3>
+  1087→              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+  1088→                <div className="flex items-start gap-4 p-4 rounded-xl bg-gray-50 border border-gray-100">
+  1089→                  <div className="h-14 w-14 rounded-2xl flex items-center justify-center shrink-0 shadow-sm" style={{ background: '#002B5C' }}>
+  1090→                    <Crown className="h-6 w-6 text-white" />
+  1091→                  </div>
+  1092→                  <div>
+  1093→                    <p className="font-bold text-gray-900 text-base">{BRAND.managingDirector}</p>
+  1094→                    <p className="text-sm text-gray-500 font-medium">Managing Director</p>
+  1095→                    <a href={`tel:${BRAND.mdPhone}`} className="inline-flex items-center gap-1.5 mt-2 text-xs font-bold" style={{ color: '#002B5C' }}>
+  1096→                      <Phone className="h-3 w-3" />{BRAND.mdPhone}
+  1097→                    </a>
+  1098→                  </div>
+  1099→                </div>
+  1100→                <div className="flex items-start gap-4 p-4 rounded-xl bg-gray-50 border border-gray-100">
+  1101→                  <div className="h-14 w-14 rounded-2xl flex items-center justify-center shrink-0 shadow-sm" style={{ background: '#B45309' }}>
+  1102→                    <HardHat className="h-6 w-6 text-white" />
+  1103→                  </div>
+  1104→                  <div>
+  1105→                    <p className="font-bold text-gray-900 text-base">{BRAND.ehsDirector}</p>
+  1106→                    <p className="text-sm text-gray-500 font-medium">EHS Director</p>
+  1107→                    <a href={`tel:${BRAND.ehsPhone}`} className="inline-flex items-center gap-1.5 mt-2 text-xs font-bold" style={{ color: '#B45309' }}>
+  1108→                      <Phone className="h-3 w-3" />{BRAND.ehsPhone}
+  1109→                    </a>
+  1110→                  </div>
+  1111→                </div>
+  1112→              </div>
+  1113→            </div>
+  1114→          </Reveal>
+  1115→          <Reveal delay={0.4}>
+  1116→            <div className="mt-6 bg-white rounded-2xl p-8 border border-gray-200 shadow-sm max-w-5xl mx-auto">
+  1117→              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+  1118→                <div>
+  1119→                  <h3 className="text-lg font-bold text-gray-900 mb-4">Office Locations</h3>
+  1120→                  <div className="space-y-4">
+  1121→                    <div className="flex items-start gap-3">
+  1122→                      <MapPin className="h-5 w-5 mt-0.5 shrink-0" style={{ color: '#002B5C' }} />
+  1123→                      <div>
+  1124→                        <p className="text-sm font-bold text-gray-900">Head Office</p>
+  1125→                        <p className="text-sm text-gray-500 font-medium">{BRAND.headOffice.full}</p>
+  1126→                      </div>
+  1127→                    </div>
+  1128→                    <div className="flex items-start gap-3">
+  1129→                      <MapPin className="h-5 w-5 mt-0.5 shrink-0" style={{ color: '#0A4488' }} />
+  1130→                      <div>
+  1131→                        <p className="text-sm font-bold text-gray-900">Branch Office</p>
+  1132→                        <p className="text-sm text-gray-500 font-medium">{BRAND.branchOffice.full}</p>
+  1133→                      </div>
+  1134→                    </div>
+  1135→                  </div>
+  1136→                </div>
+  1137→                <div>
+  1138→                  <h3 className="text-lg font-bold text-gray-900 mb-4">Business Details</h3>
+  1139→                  <div className="space-y-2.5">
+  1140→                    <div className="flex items-center gap-3">
+  1141→                      <FileText className="h-4 w-4 text-gray-400" />
+  1142→                      <span className="text-sm text-gray-600 font-medium">GSTIN: {BRAND.gstin}</span>
+  1143→                    </div>
+  1144→                    <div className="flex items-center gap-3">
+  1145→                      <FileText className="h-4 w-4 text-gray-400" />
+  1146→                      <span className="text-sm text-gray-600 font-medium">UDYAM: {BRAND.udyam}</span>
+  1147→                    </div>
+  1148→                    <div className="flex items-center gap-3">
+  1149→                      <FileText className="h-4 w-4 text-gray-400" />
+  1150→                      <span className="text-sm text-gray-600 font-medium">PAN: {BRAND.pan}</span>
+  1151→                    </div>
+  1152→                    <div className="flex items-center gap-3">
+  1153→                      <UserIcon className="h-4 w-4 text-gray-400" />
+  1154→                      <span className="text-sm text-gray-600 font-medium">Managing Director: {BRAND.managingDirector}</span>
+  1155→                    </div>
+  1156→                  </div>
+  1157→                </div>
+  1158→              </div>
+  1159→            </div>
+  1160→          </Reveal>
+  1161→        </div>
+  1162→      </section>
+  1163→
+  1164→      {/* Footer */}
+  1165→      <footer className="mt-auto" style={{ background: '#002B5C' }}>
+  1166→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+  1167→          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+  1168→            <div className="sm:col-span-2 lg:col-span-1">
+  1169→              <div className="flex items-center gap-2.5 mb-4">
+  1170→                <BrandLogo size={34} />
+  1171→                <div className="flex flex-col">
+  1172→                  <span className="font-extrabold text-[15px] tracking-tight leading-tight text-white">HPHRMS</span>
+  1173→                  <span className="text-[9px] font-bold tracking-[0.2em] uppercase leading-tight text-gray-400">by HP Enterprise</span>
+  1174→                </div>
+  1175→              </div>
+  1176→              <p className="text-sm text-gray-300 font-medium leading-relaxed mb-4">{BRAND.taglineFull}</p>
+  1177→              <div className="flex items-center gap-2">
+  1178→                {SOCIAL_ITEMS.slice(2).map((s) => (
+  1179→                  <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer" className="h-9 w-9 rounded-lg bg-white/10 flex items-center justify-center text-gray-300 hover:bg-white/20 hover:text-white transition-colors" aria-label={s.label}>
+  1180→                    <s.icon className="h-4 w-4" />
+  1181→                  </a>
+  1182→                ))}
+  1183→              </div>
+  1184→            </div>
+  1185→            <div>
+  1186→              <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-4">Services</h4>
+  1187→              <ul className="space-y-2">
+  1188→                {SERVICE_DETAILS.map((s) => (
+  1189→                  <li key={s.title}>
+  1190→                    <button onClick={() => openServiceModal(s)} className="text-sm text-gray-300 hover:text-white font-medium transition-colors text-left">{s.title}</button>
+  1191→                  </li>
+  1192→                ))}
+  1193→              </ul>
+  1194→            </div>
+  1195→            <div>
+  1196→              <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-4">Quick Links</h4>
+  1197→              <ul className="space-y-2">
+  1198→                {NAV_LINKS.map((link) => (
+  1199→                  <li key={link.id}>
+  1200→                    <button onClick={() => scrollTo(link.id)} className="text-sm text-gray-300 hover:text-white font-medium transition-colors text-left">{link.label}</button>
+  1201→                  </li>
+  1202→                ))}
+  1203→                <li>
+  1204→                  <button onClick={() => setView('subscribe')} className="text-sm text-gray-300 hover:text-white font-medium transition-colors text-left">Start Free Trial</button>
+  1205→                </li>
+  1206→              </ul>
+  1207→            </div>
+  1208→            <div>
+  1209→              <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-4">Contact</h4>
+  1210→              <ul className="space-y-3">
+  1211→                <li className="flex items-start gap-2.5">
+  1212→                  <Phone className="h-4 w-4 mt-0.5 shrink-0 text-gray-400" />
+  1213→                  <a href={`tel:${BRAND.phone}`} className="text-sm text-gray-300 hover:text-white font-medium transition-colors">{BRAND.phone}</a>
+  1214→                </li>
+  1215→                <li className="flex items-start gap-2.5">
+  1216→                  <Mail className="h-4 w-4 mt-0.5 shrink-0 text-gray-400" />
+  1217→                  <a href={`mailto:${BRAND.email}`} className="text-sm text-gray-300 hover:text-white font-medium transition-colors">{BRAND.email}</a>
+  1218→                </li>
+  1219→                <li className="flex items-start gap-2.5">
+  1220→                  <MapPin className="h-4 w-4 mt-0.5 shrink-0 text-gray-400" />
+  1221→                  <span className="text-sm text-gray-300 font-medium">{BRAND.headOffice.city}, {BRAND.headOffice.state}</span>
+  1222→                </li>
+  1223→              </ul>
+  1224→            </div>
+  1225→          </div>
+  1226→          <div className="mt-10 pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
+  1227→            <p className="text-sm text-gray-400 font-medium">&copy; {new Date().getFullYear()} {BRAND.legalName}. All rights reserved.</p>
+  1228→            <p className="text-sm text-gray-400 font-medium">GSTIN: {BRAND.gstin} &middot; UDYAM: {BRAND.udyam}</p>
+  1229→          </div>
+  1230→        </div>
+  1231→      </footer>
+  1232→
+  1233→      <HpAiChat />
+  1234→    </div>
+  1235→  )
+  1236→}
