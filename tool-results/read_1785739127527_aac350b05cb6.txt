@@ -1,0 +1,447 @@
+    80→    try {
+    81→      const res = await fetch('/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, password }) })
+    82→      const data = await res.json()
+    83→      if (!res.ok) { toast.error(data.error || 'Invalid credentials'); return }
+    84→      setUser(data.user)
+    85→      toast.success('Welcome back, ' + data.user.username + '!')
+    86→    } catch { toast.error('Network error') } finally { setLoading(false) }
+    87→  }
+    88→
+    89→  return (
+    90→    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background">
+    91→      <div className="w-full max-w-md">
+    92→        <button onClick={onBack} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors">
+    93→          <ArrowRight className="h-4 w-4 rotate-180" /> Back to HPHRMS
+    94→        </button>
+    95→        <Card className="border-0 shadow-xl">
+    96→          <CardHeader className="text-center pb-2">
+    97→            <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl" style={{ backgroundColor: portal.color }}>
+    98→              <Icon className="h-7 w-7 text-white" />
+    99→            </div>
+   100→            <CardTitle className="text-xl mt-3">{portal.title}</CardTitle>
+   101→            <CardDescription>{portal.subtitle}</CardDescription>
+   102→          </CardHeader>
+   103→          <CardContent>
+   104→            <form onSubmit={handleLogin} className="space-y-4">
+   105→              <div className="space-y-1.5">
+   106→                <Label>Username</Label>
+   107→                <div className="relative">
+   108→                  <UserIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+   109→                  <Input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Enter username" className="pl-9" autoComplete="username" autoFocus />
+   110→                </div>
+   111→              </div>
+   112→              <div className="space-y-1.5">
+   113→                <div className="flex items-center justify-between"><Label>Password</Label><ForgotPasswordDialog /></div>
+   114→                <div className="relative">
+   115→                  <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+   116→                  <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Enter password" className="pl-9" autoComplete="current-password" />
+   117→                </div>
+   118→              </div>
+   119→              <Button type="submit" disabled={loading} className="w-full text-white" style={{ backgroundColor: portal.color }}>
+   120→                {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Signing in...</> : <>Sign In to {portal.title}</>}
+   121→              </Button>
+   122→            </form>
+   123→            <div className="mt-4 rounded-lg border border-dashed p-3 text-center">
+   124→              <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Demo Credentials</p>
+   125→              <p className="text-xs font-mono font-semibold text-[var(--navy)] dark:text-[var(--gold)]">{portal.creds}</p>
+   126→            </div>
+   127→          </CardContent>
+   128→        </Card>
+   129→      </div>
+   130→    </div>
+   131→  )
+   132→}
+   133→
+   134→// ── Subscription Form ───────────────────────────────────────────────────────
+   135→
+   136→function SubscriptionForm({ onBack }: { onBack: () => void }) {
+   137→  const [form, setForm] = useState({ companyName: '', contactName: '', email: '', phone: '', address: '', plan: 'professional', employeeCount: '', message: '' })
+   138→  const [loading, setLoading] = useState(false)
+   139→  const set = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }))
+   140→
+   141→  async function handleSubmit(e: React.FormEvent) {
+   142→    e.preventDefault()
+   143→    setLoading(true)
+   144→    try {
+   145→      const res = await fetch('/api/subscription/request', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) })
+   146→      const data = await res.json()
+   147→      if (!res.ok) { toast.error(data.error || 'Submission failed'); return }
+   148→      toast.success(data.message)
+   149→      onBack()
+   150→    } catch { toast.error('Network error') } finally { setLoading(false) }
+   151→  }
+   152→
+   153→  return (
+   154→    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background">
+   155→      <div className="w-full max-w-lg">
+   156→        <button onClick={onBack} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors">
+   157→          <ArrowRight className="h-4 w-4 rotate-180" /> Back to HPHRMS
+   158→        </button>
+   159→        <Card className="border-0 shadow-xl">
+   160→          <CardHeader>
+   161→            <div className="flex items-center gap-2">
+   162→              <Crown className="h-5 w-5 text-[var(--gold)]" />
+   163→              <CardTitle>Subscribe to HPHRMS</CardTitle>
+   164→            </div>
+   165→            <CardDescription>Fill in your company details and our team will contact you within 24 hours.</CardDescription>
+   166→          </CardHeader>
+   167→          <CardContent>
+   168→            <form onSubmit={handleSubmit} className="space-y-4">
+   169→              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+   170→                <div className="space-y-1.5">
+   171→                  <Label>Company Name *</Label>
+   172→                  <Input value={form.companyName} onChange={(e) => set('companyName', e.target.value)} placeholder="Acme Corp" required />
+   173→                </div>
+   174→                <div className="space-y-1.5">
+   175→                  <Label>Contact Person *</Label>
+   176→                  <Input value={form.contactName} onChange={(e) => set('contactName', e.target.value)} placeholder="John Doe" required />
+   177→                </div>
+   178→              </div>
+   179→              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+   180→                <div className="space-y-1.5">
+   181→                  <Label>Email *</Label>
+   182→                  <Input type="email" value={form.email} onChange={(e) => set('email', e.target.value)} placeholder="john@company.com" required />
+   183→                </div>
+   184→                <div className="space-y-1.5">
+   185→                  <Label>Phone</Label>
+   186→                  <Input value={form.phone} onChange={(e) => set('phone', e.target.value)} placeholder="+91 98765 43210" />
+   187→                </div>
+   188→              </div>
+   189→              <div className="space-y-1.5">
+   190→                <Label>Address</Label>
+   191→                <Input value={form.address} onChange={(e) => set('address', e.target.value)} placeholder="Office address" />
+   192→              </div>
+   193→              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+   194→                <div className="space-y-1.5">
+   195→                  <Label>Plan *</Label>
+   196→                  <Select value={form.plan} onValueChange={(v) => set('plan', v)}>
+   197→                    <SelectTrigger><SelectValue /></SelectTrigger>
+   198→                    <SelectContent>
+   199→                      {PLANS.map((p) => (
+   200→                        <SelectItem key={p.key} value={p.key}>
+   201→                          {p.name} {p.price > 0 ? '— Rs ' + p.price.toLocaleString('en-IN') + '/mo' : '— Free'}
+   202→                        </SelectItem>
+   203→                      ))}
+   204→                    </SelectContent>
+   205→                  </Select>
+   206→                </div>
+   207→                <div className="space-y-1.5">
+   208→                  <Label>Number of Employees</Label>
+   209→                  <Input value={form.employeeCount} onChange={(e) => set('employeeCount', e.target.value)} placeholder="e.g. 50" />
+   210→                </div>
+   211→              </div>
+   212→              <div className="space-y-1.5">
+   213→                <Label>Message / Requirements</Label>
+   214→                <Textarea value={form.message} onChange={(e) => set('message', e.target.value)} placeholder="Tell us about your requirements..." rows={3} />
+   215→              </div>
+   216→              <div className="flex gap-3 pt-2">
+   217→                <Button type="button" variant="outline" onClick={onBack} className="flex-1">Cancel</Button>
+   218→                <Button type="submit" disabled={loading} className="flex-1 bg-[var(--navy)] text-white hover:bg-[var(--navy-light)]">
+   219→                  {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Submitting...</> : <>Submit Request <Send className="ml-2 h-4 w-4" /></>}
+   220→                </Button>
+   221→              </div>
+   222→            </form>
+   223→          </CardContent>
+   224→        </Card>
+   225→      </div>
+   226→    </div>
+   227→  )
+   228→}
+   229→
+   230→// ── Main Landing Component ─────────────────────────────────────────────────
+   231→
+   232→type View = 'home' | 'login-admin' | 'login-employee' | 'login-client' | 'register' | 'subscribe'
+   233→
+   234→export function Landing() {
+   235→  const [mode, setMode] = useState<View>('home')
+   236→  const { darkMode, setDarkMode, themeColors, setThemeColors, lang } = useAppStore()
+   237→
+   238→  // Portal login views
+   239→  if (mode === 'login-admin') return <PortalLoginForm portal={PORTALS[0]} onBack={() => setMode('home')} />
+   240→  if (mode === 'login-employee') return <PortalLoginForm portal={PORTALS[1]} onBack={() => setMode('home')} />
+   241→  if (mode === 'login-client') return <PortalLoginForm portal={PORTALS[2]} onBack={() => setMode('home')} />
+   242→  if (mode === 'register') return <RegistrationForm onBack={() => setMode('home')} />
+   243→  if (mode === 'subscribe') return <SubscriptionForm onBack={() => setMode('home')} />
+   244→
+   245→  return (
+   246→    <div className="min-h-screen flex flex-col">
+   247→      {/* ═══ TOP NAV ═══ */}
+   248→      <header className="sticky top-0 z-50 border-b bg-white/80 backdrop-blur-md dark:bg-[var(--navy-deep)]/80">
+   249→        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
+   250→          <div className="flex items-center gap-3">
+   251→            <BrandLogo />
+   252→          </div>
+   253→          <nav className="flex items-center gap-1.5 sm:gap-2">
+   254→            <LanguageSwitcher />
+   255→            <button onClick={() => setDarkMode(!darkMode)} className="grid h-8 w-8 place-items-center rounded-md border bg-background text-[var(--navy)] dark:text-white hover:bg-muted transition-colors" aria-label="Toggle dark mode">
+   256→              {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+   257→            </button>
+   258→            <Button variant="ghost" size="sm" onClick={() => setMode('subscribe')} className="hidden sm:flex gap-1.5"><CreditCard className="h-4 w-4" /> Subscribe</Button>
+   259→            <Button variant="ghost" size="sm" onClick={() => setMode('register')} className="hidden sm:flex">Apply Now</Button>
+   260→          </nav>
+   261→        </div>
+   262→      </header>
+   263→
+   264→      {/* ═══ HERO ═══ */}
+   265→      <section className="relative overflow-hidden">
+   266→        <div className="absolute inset-0 hpe-sidebar-gradient" />
+   267→        <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at 20% 30%, #C9A961 0, transparent 40%), radial-gradient(circle at 80% 70%, #16306B 0, transparent 45%)' }} />
+   268→        <div className="relative mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:py-28 text-center text-white">
+   269→          <Badge className="mb-4 border-[var(--gold)]/40 bg-[var(--gold)]/10 text-[var(--gold-light)] hover:bg-[var(--gold)]/15">
+   270→            <Sparkles className="mr-1 h-3.5 w-3.5" /> AI-Powered Human Resource Management System
+   271→          </Badge>
+   272→          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black tracking-tight">
+   273→            <span className="text-gradient-gold">HPHRMS</span>
+   274→          </h1>
+   275→          <p className="mt-2 text-xl sm:text-2xl font-medium text-blue-100/90">HP ENTERPRISE Safety Service &amp; Man Power Supply</p>
+   276→          <p className="mt-4 max-w-2xl mx-auto text-base text-blue-100/80 leading-relaxed">
+   277→            The complete workforce management platform — from AI-powered HR assistance to automated payroll,
+   278→            attendance tracking, 16+ document types, and real-time coordination across Admin, Employee, and Client portals.
+   279→          </p>
+   280→          <div className="mt-6 flex flex-wrap justify-center gap-2">
+   281→            {['HPAI Assistant', '3 Portals', '15+ Modules', 'Multi-language', 'CSV Export', 'PDF Documents'].map((tag) => (
+   282→              <span key={tag} className="inline-flex items-center gap-1 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-blue-100">{tag}</span>
+   283→            ))}
+   284→          </div>
+   285→          <div className="mt-10 grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-xl mx-auto">
+   286→            {STATS.map((s) => (
+   287→              <div key={s.l} className="rounded-lg border border-white/10 bg-white/5 p-3">
+   288→                <p className="text-2xl font-black text-[var(--gold)]">{s.v}</p>
+   289→                <p className="text-[10px] uppercase tracking-wide text-blue-100/70 mt-0.5">{s.l}</p>
+   290→              </div>
+   291→            ))}
+   292→          </div>
+   293→        </div>
+   294→      </section>
+   295→
+   296→      {/* ═══ 3 PORTALS ═══ */}
+   297→      <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
+   298→        <div className="text-center">
+   299→          <Badge variant="outline" className="mb-3 border-[var(--gold)]/30 text-[#8a6f24]">Multi-Portal</Badge>
+   300→          <h2 className="text-3xl font-bold text-[var(--navy)] dark:text-white">3 Portals — Choose Your Access</h2>
+   301→          <p className="mt-2 text-muted-foreground">Click any portal to sign in with the appropriate credentials.</p>
+   302→        </div>
+   303→        <div className="mt-10 grid gap-5 md:grid-cols-3">
+   304→          {PORTALS.map((p) => {
+   305→            const Icon = p.icon
+   306→            return (
+   307→              <Card key={p.key} className="relative overflow-hidden lift cursor-pointer group" onClick={() => setMode('login-' + p.key)}>
+   308→                <div className="h-1.5" style={{ backgroundColor: p.color }} />
+   309→                <CardContent className="p-6">
+   310→                  <div className="flex items-center gap-3">
+   311→                    <div className="grid h-12 w-12 place-items-center rounded-xl shrink-0" style={{ backgroundColor: p.color + '15' }}>
+   312→                      <Icon className="h-6 w-6" style={{ color: p.color }} />
+   313→                    </div>
+   314→                    <div>
+   315→                      <h3 className="text-lg font-bold text-[var(--navy)] dark:text-white">{p.title}</h3>
+   316→                      <p className="text-xs text-muted-foreground">{p.subtitle}</p>
+   317→                    </div>
+   318→                    <ArrowRight className="ml-auto h-5 w-5 text-muted-foreground group-hover:text-[var(--gold)] group-hover:translate-x-1 transition-all" />
+   319→                  </div>
+   320→                  <ul className="mt-4 space-y-2">
+   321→                    {p.features.map((f) => (
+   322→                      <li key={f} className="flex items-start gap-2 text-sm"><Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-500" />{f}</li>
+   323→                    ))}
+   324→                  </ul>
+   325→                  <div className="mt-4 rounded-lg border border-dashed p-2.5 text-center bg-muted/30">
+   326→                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Demo</p>
+   327→                    <p className="text-xs font-mono font-semibold text-[var(--navy)] dark:text-[var(--gold)] mt-0.5">{p.creds}</p>
+   328→                  </div>
+   329→                </CardContent>
+   330→              </Card>
+   331→            )
+   332→          })}
+   333→        </div>
+   334→        <div className="mt-6 text-center">
+   335→          <button onClick={() => setMode('register')} className="text-sm text-[var(--navy)] dark:text-[var(--gold)] hover:underline">
+   336→            New applicant? Submit your job application here <ArrowRight className="inline h-3.5 w-3.5" />
+   337→          </button>
+   338→        </div>
+   339→      </section>
+   340→
+   341→      {/* ═══ ALL MODULES ═══ */}
+   342→      <section className="border-y bg-muted/30">
+   343→        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
+   344→          <div className="text-center">
+   345→            <Badge variant="outline" className="mb-3 border-[var(--gold)]/30 text-[#8a6f24]">Complete Platform</Badge>
+   346→            <h2 className="text-3xl font-bold text-[var(--navy)] dark:text-white">15+ Modules — Everything Your Workforce Needs</h2>
+   347→          </div>
+   348→          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+   349→            {ALL_MODULES.map((m) => {
+   350→              const Icon = m.icon
+   351→              return (
+   352→                <div key={m.title} className="rounded-xl border bg-card p-4 lift group cursor-default">
+   353→                  <div className="grid h-10 w-10 place-items-center rounded-lg bg-[var(--navy)] dark:bg-[var(--navy-light)]">
+   354→                    <Icon className="h-5 w-5 text-[var(--gold)]" />
+   355→                  </div>
+   356→                  <h3 className="mt-3 text-sm font-bold text-[var(--navy)] dark:text-white group-hover:text-[var(--gold)] transition-colors">{m.title}</h3>
+   357→                  <p className="mt-1 text-xs text-muted-foreground leading-relaxed">{m.desc}</p>
+   358→                </div>
+   359→              )
+   360→            })}
+   361→          </div>
+   362→        </div>
+   363→      </section>
+   364→
+   365→      {/* ═══ HPAI SECTION ═══ */}
+   366→      <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
+   367→        <div className="grid gap-10 lg:grid-cols-2 items-center">
+   368→          <div>
+   369→            <Badge className="mb-3 bg-[var(--navy)] text-white border-0"><Sparkles className="mr-1 h-3.5 w-3.5" /> AI-Powered</Badge>
+   370→            <h2 className="text-3xl font-bold text-[var(--navy)] dark:text-white">Meet <span className="text-gradient-gold">HPAI</span> — Your HR Assistant</h2>
+   371→            <p className="mt-3 text-muted-foreground leading-relaxed">HPAI (HP AI) is an intelligent chatbot built into HPHRMS. Ask about leave policies, payroll queries, attendance rules, document requests, or company policies — get instant answers in English, Hindi, or Kannada.</p>
+   372→            <div className="mt-6 space-y-3">
+   373→              {['Leave policies & balance inquiries', 'Payroll breakdowns (PF, ESI, professional tax)', 'Attendance rules & overtime calculations', 'Document generation requests', 'Safety compliance & EHS guidelines', 'Multi-language support (English, Hindi, Kannada)'].map((item) => (
+   374→                <div key={item} className="flex items-center gap-2.5">
+   375→                  <div className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-emerald-500/10"><Check className="h-3 w-3 text-emerald-600" /></div>
+   376→                  <span className="text-sm">{item}</span>
+   377→                </div>
+   378→              ))}
+   379→            </div>
+   380→          </div>
+   381→          {/* Mock chat */}
+   382→          <div className="rounded-2xl border bg-card shadow-xl overflow-hidden max-w-md mx-auto lg:mx-0 lg:ml-auto w-full">
+   383→            <div className="flex items-center gap-2 bg-gradient-to-r from-[var(--navy)] to-[var(--navy-light)] px-4 py-3">
+   384→              <div className="grid h-8 w-8 place-items-center rounded-full bg-[var(--gold)]"><Sparkles className="h-4 w-4 text-[var(--navy)]" /></div>
+   385→              <div><p className="text-sm font-bold text-white">HPAI Assistant</p><p className="text-[10px] text-blue-200/70 flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-emerald-400" /> Online</p></div>
+   386→            </div>
+   387→            <div className="p-4 space-y-3 min-h-[220px]">
+   388→              <div className="flex gap-2"><div className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[var(--gold)] text-[10px] font-bold text-[var(--navy)]">AI</div><div className="rounded-2xl rounded-bl-md bg-muted px-3 py-2 text-xs leading-relaxed max-w-[85%]">Hello! I am <strong>HPAI</strong>. How can I help you today?</div></div>
+   389→              <div className="flex justify-end"><div className="rounded-2xl rounded-br-md bg-[var(--navy)] text-white px-3 py-2 text-xs leading-relaxed max-w-[85%]">What is the casual leave policy?</div></div>
+   390→              <div className="flex gap-2"><div className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[var(--gold)] text-[10px] font-bold text-[var(--navy)]">AI</div><div className="rounded-2xl rounded-bl-md bg-muted px-3 py-2 text-xs leading-relaxed max-w-[85%]"><strong>CL:</strong> 12 days/year. Max 3 consecutive. Manager approval for &gt;2 days. No carry forward.</div></div>
+   391→              <div className="flex justify-end"><div className="rounded-2xl rounded-br-md bg-[var(--navy)] text-white px-3 py-2 text-xs leading-relaxed max-w-[85%]">How much PF is deducted?</div></div>
+   392→              <div className="flex gap-2"><div className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[var(--gold)] text-[10px] font-bold text-[var(--navy)]">AI</div><div className="rounded-2xl rounded-bl-md bg-muted px-3 py-2 text-xs leading-relaxed max-w-[85%]"><strong>PF:</strong> 12% of basic (employee). Employer: 12% + 3.67% EPF + 0.5% EDLI + 8.33% EPS.</div></div>
+   393→            </div>
+   394→            <div className="border-t px-3 py-2.5 flex items-center gap-2">
+   395→              <div className="flex-1 rounded-lg border bg-background px-3 py-2 text-xs text-muted-foreground">Ask HPAI anything about HR...</div>
+   396→              <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-[var(--navy)] text-white"><ArrowRight className="h-3.5 w-3.5" /></div>
+   397→            </div>
+   398→          </div>
+   399→        </div>
+   400→      </section>
+   401→
+   402→      {/* ═══ PRICING ═══ */}
+   403→      <section className="border-y bg-muted/30" id="pricing">
+   404→        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
+   405→          <div className="text-center">
+   406→            <Badge variant="outline" className="mb-3 border-[var(--gold)]/30 text-[#8a6f24]">Pricing</Badge>
+   407→            <h2 className="text-3xl font-bold text-[var(--navy)] dark:text-white">Choose Your Plan</h2>
+   408→            <p className="mt-2 text-muted-foreground">Scale HPHRMS as your workforce grows. Subscribe and our team will contact you.</p>
+   409→          </div>
+   410→          <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+   411→            {PLANS.map((plan) => (
+   412→              <Card key={plan.key} className={cn('relative flex flex-col transition-all', (plan as any).popular && 'border-[var(--gold)] shadow-lg shadow-[var(--gold)]/10 scale-[1.02]')}>
+   413→                {(plan as any).popular && (<div className="absolute -top-2.5 left-1/2 -translate-x-1/2"><Badge className="bg-[var(--gold)] text-[var(--navy)] border-0 gap-1"><Crown className="h-3 w-3" /> Most Popular</Badge></div>)}
+   414→                <CardHeader className="pb-2"><CardTitle className="text-lg">{plan.name}</CardTitle></CardHeader>
+   415→                <CardContent className="flex flex-1 flex-col gap-4">
+   416→                  <div>
+   417→                    <span className="text-3xl font-bold text-[var(--navy)] dark:text-white">{plan.price === 0 ? 'Free' : 'Rs ' + plan.price.toLocaleString('en-IN')}</span>
+   418→                    {plan.price > 0 && <span className="text-sm text-muted-foreground">/month</span>}
+   419→                  </div>
+   420→                  <ul className="flex-1 space-y-2">{plan.features.map((f) => (<li key={f} className="flex items-start gap-2 text-sm"><Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />{f}</li>))}</ul>
+   421→                  <Button className={cn('w-full', (plan as any).popular ? 'bg-[var(--navy)] text-white hover:bg-[var(--navy-light)]' : 'border border-[var(--navy)]/30 text-[var(--navy)] hover:bg-[var(--navy)]/5')} onClick={() => setMode('subscribe')}>
+   422→                    {plan.price === 0 ? 'Get Started' : 'Subscribe Now'}
+   423→                  </Button>
+   424→                </CardContent>
+   425→              </Card>
+   426→            ))}
+   427→          </div>
+   428→        </div>
+   429→      </section>
+   430→
+   431→      {/* ═══ THEME CUSTOMIZATION ═══ */}
+   432→      <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
+   433→        <div className="grid gap-10 lg:grid-cols-2 items-center">
+   434→          <div>
+   435→            <Badge className="mb-3 bg-[var(--navy)] text-white border-0"><Palette className="mr-1 h-3.5 w-3.5" /> Customization</Badge>
+   436→            <h2 className="text-3xl font-bold text-[var(--navy)] dark:text-white">Your Brand, Your Colors</h2>
+   437→            <p className="mt-3 text-muted-foreground leading-relaxed">Change primary & accent colors, toggle dark/light mode, and switch languages — all in real-time. Try it below!</p>
+   438→            <div className="mt-6 space-y-4">
+   439→              <div className="flex items-center gap-6">
+   440→                <div className="flex items-center gap-2">
+   441→                  <input type="color" value={themeColors.primary} onChange={(e) => setThemeColors({ ...themeColors, primary: e.target.value })} className="w-10 h-10 rounded-lg cursor-pointer border border-border" />
+   442→                  <div><p className="text-xs font-semibold">Primary</p><p className="text-[10px] text-muted-foreground font-mono">{themeColors.primary}</p></div>
+   443→                </div>
+   444→                <div className="flex items-center gap-2">
+   445→                  <input type="color" value={themeColors.accent} onChange={(e) => setThemeColors({ ...themeColors, accent: e.target.value })} className="w-10 h-10 rounded-lg cursor-pointer border border-border" />
+   446→                  <div><p className="text-xs font-semibold">Accent</p><p className="text-[10px] text-muted-foreground font-mono">{themeColors.accent}</p></div>
+   447→                </div>
+   448→              </div>
+   449→              <div className="flex items-center justify-between rounded-lg border p-3">
+   450→                <div className="flex items-center gap-2">{darkMode ? <Moon className="h-4 w-4 text-[var(--gold)]" /> : <Sun className="h-4 w-4 text-[var(--gold)]" />}<span className="text-sm font-medium">{darkMode ? 'Dark Mode' : 'Light Mode'}</span></div>
+   451→                <Switch checked={darkMode} onCheckedChange={setDarkMode} />
+   452→              </div>
+   453→              <div className="flex items-center gap-2 rounded-lg border p-3">
+   454→                <Globe className="h-4 w-4 text-[var(--gold)]" /><span className="text-sm font-medium">Language: </span>
+   455→                <div className="flex gap-1 ml-1">{LANGUAGES.map((l) => (<span key={l.code} className={cn('rounded-md px-2 py-0.5 text-xs font-medium', lang === l.code ? 'bg-[var(--gold)]/15 text-[var(--navy)] dark:text-[var(--gold)]' : 'bg-muted text-muted-foreground')}>{l.flag} {l.native}</span>))}</div>
+   456→              </div>
+   457→            </div>
+   458→          </div>
+   459→          {/* Preview */}
+   460→          <div className="rounded-2xl border bg-card shadow-lg overflow-hidden max-w-md mx-auto lg:mx-0 lg:ml-auto w-full">
+   461→            <div className="flex items-center justify-between px-4 py-2.5 border-b">
+   462→              <div className="flex gap-1.5"><div className="h-3 w-3 rounded-full bg-red-400" /><div className="h-3 w-3 rounded-full bg-amber-400" /><div className="h-3 w-3 rounded-full bg-emerald-400" /></div>
+   463→              <span className="text-[10px] text-muted-foreground font-mono">hphrms.hpenterprise.co.in</span>
+   464→              <button onClick={() => setDarkMode(!darkMode)} className="grid h-6 w-6 place-items-center rounded border hover:bg-muted transition-colors">{darkMode ? <Sun className="h-3 w-3" /> : <Moon className="h-3 w-3" />}</button>
+   465→            </div>
+   466→            <div className="p-4 space-y-3 transition-colors duration-300" style={{ backgroundColor: darkMode ? '#0A1F44' : '#FFFFFF' }}>
+   467→              <div className="flex items-center gap-3"><div className="h-8 w-8 rounded-lg" style={{ backgroundColor: themeColors.primary }} /><div className="space-y-1"><div className="h-2.5 w-24 rounded-full" style={{ backgroundColor: darkMode ? '#D4AF37' : themeColors.primary, opacity: 0.7 }} /><div className="h-1.5 w-16 rounded-full" style={{ backgroundColor: darkMode ? '#1B2F5A' : '#EEF1F8' }} /></div></div>
+   468→              <div className="grid grid-cols-3 gap-2">{[0, 1, 2].map((i) => (<div key={i} className="rounded-lg border p-2" style={{ borderColor: darkMode ? '#1B2F5A' : '#DDE3EE', backgroundColor: darkMode ? '#16306B' : '#F6F7FB' }}><div className="h-2 w-10 rounded-full mb-1.5" style={{ backgroundColor: darkMode ? '#D4AF37' : themeColors.primary, opacity: 0.5 }} /><div className="h-1.5 w-14 rounded-full" style={{ backgroundColor: darkMode ? '#1B2F5A' : '#DDE3EE' }} /><div className="h-1.5 w-8 rounded-full mt-1" style={{ backgroundColor: darkMode ? '#1B2F5A' : '#DDE3EE' }} /></div>))}</div>
+   469→              <div className="flex gap-2"><div className="h-7 w-16 rounded-md text-[9px] flex items-center justify-center font-medium text-white" style={{ backgroundColor: themeColors.primary }}>Button</div><div className="h-7 w-16 rounded-md text-[9px] flex items-center justify-center" style={{ backgroundColor: darkMode ? '#16306B' : '#EEF1F8', color: darkMode ? '#E6EBF5' : '#0A1F44' }}>Cancel</div></div>
+   470→            </div>
+   471→          </div>
+   472→        </div>
+   473→      </section>
+   474→
+   475→      {/* ═══ CTA ═══ */}
+   476→      <section className="relative overflow-hidden">
+   477→        <div className="absolute inset-0 hpe-sidebar-gradient" />
+   478→        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 50% 50%, #C9A961 0, transparent 50%)' }} />
+   479→        <div className="relative mx-auto max-w-3xl px-4 py-20 sm:px-6 text-center text-white">
+   480→          <h2 className="text-3xl font-bold sm:text-4xl">Ready to Transform Your Workforce Management?</h2>
+   481→          <p className="mt-4 text-lg text-blue-100/90">Join hundreds of companies using HPHRMS to manage their manpower, safety services, and HR operations.</p>
+   482→          <div className="mt-8 flex flex-wrap justify-center gap-3">
+   483→            <Button size="lg" onClick={() => setMode('register')} className="hpe-gold-bar text-[var(--navy)] hover:opacity-90 font-bold">Get Started Free <ArrowRight className="ml-2 h-4 w-4" /></Button>
+   484→            <Button size="lg" onClick={() => setMode('subscribe')} variant="outline" className="border-white/30 bg-white/5 text-white hover:bg-white/10 hover:text-white"><CreditCard className="mr-2 h-4 w-4" /> Subscribe Now</Button>
+   485→          </div>
+   486→        </div>
+   487→      </section>
+   488→
+   489→      {/* ═══ FOOTER ═══ */}
+   490→      <footer className="mt-auto border-t bg-white dark:bg-[var(--navy-deep)]">
+   491→        <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6">
+   492→          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+   493→            <div>
+   494→              <BrandLogo />
+   495→              <p className="mt-3 text-xs text-muted-foreground leading-relaxed">{BRAND.taglineFull}</p>
+   496→              <div className="mt-3 flex gap-2"><Badge variant="outline" className="text-[10px] border-[var(--gold)]/30 text-[#8a6f24]">ISO 27001 Ready</Badge></div>
+   497→            </div>
+   498→            <div>
+   499→              <h4 className="text-sm font-bold mb-3">Platform</h4>
+   500→              <ul className="space-y-2 text-xs text-muted-foreground">{['Dashboard', 'Employees', 'Attendance', 'Payroll', 'Documents', 'Reports'].map((i) => <li key={i}>{i}</li>)}</ul>
+   501→            </div>
+   502→            <div>
+   503→              <h4 className="text-sm font-bold mb-3">Features</h4>
+   504→              <ul className="space-y-2 text-xs text-muted-foreground">
+   505→                <li className="flex items-center gap-1.5"><Sparkles className="h-3 w-3 text-[var(--gold)]" /> HPAI Assistant</li>
+   506→                <li className="flex items-center gap-1.5"><Globe className="h-3 w-3 text-[var(--gold)]" /> Multi-Language</li>
+   507→                <li className="flex items-center gap-1.5"><Palette className="h-3 w-3 text-[var(--gold)]" /> Theme Customization</li>
+   508→                <li className="flex items-center gap-1.5"><CreditCard className="h-3 w-3 text-[var(--gold)]" /> Subscription Plans</li>
+   509→                <li className="flex items-center gap-1.5"><ShieldCheck className="h-3 w-3 text-[var(--gold)]" /> Role-Based Access</li>
+   510→                <li className="flex items-center gap-1.5"><BarChart3 className="h-3 w-3 text-[var(--gold)]" /> CSV & PDF Export</li>
+   511→              </ul>
+   512→            </div>
+   513→            <div>
+   514→              <h4 className="text-sm font-bold mb-3">Contact</h4>
+   515→              <ul className="space-y-2 text-xs text-muted-foreground"><li>{BRAND.address}</li><li>{BRAND.phone}</li><li>{BRAND.email}</li><li>{BRAND.website}</li><li className="mt-1">CIN: {BRAND.cin}</li></ul>
+   516→            </div>
+   517→          </div>
+   518→          <div className="mt-8 border-t pt-6 flex flex-col items-center justify-between gap-2 sm:flex-row">
+   519→            <p className="text-xs text-muted-foreground">{'\u00A9'} {new Date().getFullYear()} {BRAND.legalName}. All rights reserved.</p>
+   520→            <p className="text-xs text-muted-foreground flex items-center gap-1.5">Built with <span className="text-gradient-gold font-bold">HPHRMS</span> v2.0 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> All systems operational</p>
+   521→          </div>
+   522→        </div>
+   523→      </footer>
+   524→    </div>
+   525→  )
+   526→}
