@@ -874,7 +874,6 @@ export function Landing() {
                             {!portal.requestAccess ? (
                               <PortalLoginCard portal={portal} onForgotPassword={() => setForgotOpen(true)} />
                             ) : (
-                              /* Request access section */}
                               <div className="space-y-3">
                                 <div className="p-4 rounded-xl bg-amber-50 border border-amber-200">
                                   <p className="text-sm font-semibold text-amber-900 mb-1">Access Required</p>
