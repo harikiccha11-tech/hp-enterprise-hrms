@@ -333,3 +333,31 @@ Stage Summary:
 - ALL text is visible and readable in both light and dark modes
 - GitHub push successful: 04abb03..79ef0c0 main -> main
 - Vercel deployment needs user's Vercel token (not available in this environment)
+
+---
+Task ID: 8
+Agent: Main
+Task: Complete landing page redesign - premium light theme, all 10 portals inline, luxury scrolling, final version
+
+Work Log:
+- Fixed JSX comment parsing error (line 877 `/* comment */}` → removed)
+- Completely rewrote Landing.tsx with premium light color scheme
+- Removed all dark navy/charcoal blue backgrounds from main content areas
+- Hero section: light gradient (warm whites, subtle gold/blue radial glows) with dark text
+- All sections: white or very light gray backgrounds, dark gray/black text
+- Added CSS smooth scroll behavior globally
+- Implemented luxury easing curve `[0.22, 1, 0.36, 1]` for all Reveal animations
+- Expanded PORTALS from 3 to 10: Owner, Admin, HR Manager, Employee, Client, Recruitment, EHS, Payroll, Manpower, Engineering
+- All portals show inline on main landing page (no separate navigation)
+- Login portals (5): Owner, Admin, HR, Employee, Client have inline login forms
+- Request-access portals (5): Recruitment, EHS, Payroll, Manpower, Engineering have WhatsApp/Apply buttons
+- Replaced missing hero-dashboard.png with feature grid widget
+- Footer remains dark navy (#002B5C) with light text (only dark element)
+- Verified all 10 portals visible, text readable, no console errors
+
+Stage Summary:
+- File: /home/z/my-project/src/components/auth/Landing.tsx (~945 lines)
+- All text now uses dark colors (gray-900, gray-800, gray-700) on light backgrounds
+- Zero dark backgrounds on any content section
+- 10 portals with inline expand/collapse, all on single page
+- Browser verified: all portals render, login forms expand, text is visible

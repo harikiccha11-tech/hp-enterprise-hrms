@@ -1,0 +1,473 @@
+     1→     1→'use client'
+     2→     2→import { useState, useEffect, useRef, useCallback } from 'react'
+     3→     3→import { useAppStore } from '@/lib/store'
+     4→     4→import { BRAND, SERVICES, HPHRMS_FEATURES, TRUST_BADGES, SOCIAL } from '@/lib/constants'
+     5→     5→import { BrandLogo } from '@/components/brand/BrandLogo'
+     6→     6→import { RegistrationForm } from '@/components/auth/RegistrationForm'
+     7→     7→import { ForgotPasswordDialog } from '@/components/auth/ForgotPasswordDialog'
+     8→     8→import { LanguageSwitcher } from '@/components/shared/LanguageSwitcher'
+     9→     9→import { Button } from '@/components/ui/button'
+    10→    10→import { Input } from '@/components/ui/input'
+    11→    11→import { Label } from '@/components/ui/label'
+    12→    12→import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+    13→    13→import { Badge } from '@/components/ui/badge'
+    14→    14→import { Textarea } from '@/components/ui/textarea'
+    15→    15→import { toast } from 'sonner'
+    16→    16→import { cn } from '@/lib/utils'
+    17→    17→import { motion, useInView, AnimatePresence } from 'framer-motion'
+    18→    18→import {
+    19→    19→  Building2, ShieldCheck, Users, FileText, Clock, Wallet, ArrowRight, Lock, User as UserIcon,
+    20→    20→  Sparkles, Crown, Check, Bot,
+    21→    21→  CalendarDays, ClipboardList, BarChart3,
+    22→    22→  Settings, UserCog, Zap, Shield, Bell, Star, Headphones, Send, Loader2,
+    23→    23→  Phone, Mail, MapPin, ChevronRight, Menu, X, Award, Globe2,
+    24→    24→  HardHat, Truck, DollarSign, MonitorSmartphone,
+    25→    25→  type LucideIcon, Eye, Target, Wrench,
+    26→    26→} from 'lucide-react'
+    27→    27→import Image from 'next/image'
+    28→    28→
+    29→    29→type LandingView = 'home' | 'register' | 'subscribe'
+    30→    30→
+    31→    31→function InstagramIcon({ className, style }: { className?: string; style?: React.CSSProperties }) {
+    32→    32→  return <svg className={className} style={style} viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+    33→    33→}
+    34→    34→function LinkedInIcon({ className, style }: { className?: string; style?: React.CSSProperties }) {
+    35→    35→  return <svg className={className} style={style} viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+    36→    36→}
+    37→    37→function FacebookIcon({ className, style }: { className?: string; style?: React.CSSProperties }) {
+    38→    38→  return <svg className={className} style={style} viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+    39→    39→}
+    40→    40→function TwitterXIcon({ className, style }: { className?: string; style?: React.CSSProperties }) {
+    41→    41→  return <svg className={className} style={style} viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+    42→    42→}
+    43→    43→function YouTubeIcon({ className, style }: { className?: string; style?: React.CSSProperties }) {
+    44→    44→  return <svg className={className} style={style} viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+    45→    45→}
+    46→    46→function ThreadsIcon({ className, style }: { className?: string; style?: React.CSSProperties }) {
+    47→    47→  return <svg className={className} style={style} viewBox="0 0 24 24" fill="currentColor"><path d="M12.186 24h-.007c-3.581-.024-6.334-1.205-8.184-3.509C2.35 18.44 1.5 15.586 1.472 12.01v-.017c.03-3.579.879-6.43 2.525-8.482C5.845 1.205 8.6.024 12.18 0h.014c2.746.02 5.043.725 6.826 2.098 1.677 1.29 2.858 3.13 3.509 5.467l-2.04.569c-1.104-3.96-3.898-5.984-8.304-6.015-2.91.022-5.11.936-6.54 2.717C4.307 6.504 3.616 8.914 3.589 12c.027 3.086.718 5.496 2.057 7.164 1.43 1.783 3.631 2.698 6.54 2.717 2.623-.02 4.358-.631 5.796-2.045 1.647-1.619 1.618-3.593 1.09-4.798-.31-.71-.873-1.3-1.634-1.75-.192 1.352-.622 2.446-1.284 3.272-.886 1.102-2.14 1.704-3.73 1.79-1.202.065-2.361-.218-3.259-.797-1.063-.684-1.685-1.74-1.752-2.976-.065-1.218.42-2.33 1.366-3.129.906-.763 2.143-1.192 3.678-1.274 1.062-.058 2.043.042 2.928.291-.082-.584-.262-1.058-.534-1.411-.4-.521-1.08-.838-2.077-.965l.249-2.022c1.45.178 2.556.713 3.287 1.591.505.605.847 1.37 1.024 2.281.936-.655 1.637-1.441 2.11-2.383.67-1.33.716-2.712.14-3.716-.68-1.19-2.282-1.868-4.505-2.012l.127-2.03c2.868.18 5.064 1.165 6.19 2.878.866 1.326.949 3.04.23 4.715-.48 1.126-1.258 2.078-2.32 2.857.084.228.16.465.226.714.31 1.157.27 3.395-1.7 5.327-1.766 1.735-3.868 2.58-6.42 2.6zM10.67 14.22c-.987.053-1.787.296-2.376.722-.566.41-.825.93-.79 1.5.033.58.35 1.07.895 1.42.47.295 1.077.434 1.712.4.954-.05 1.656-.38 2.139-.98.344-.425.576-1.01.7-1.75-.633-.147-1.34-.21-2.28-.312z"/></svg>
+    48→    48→}
+    49→    49→function RedditIcon({ className, style }: { className?: string; style?: React.CSSProperties }) {
+    50→    50→  return <svg className={className} style={style} viewBox="0 0 24 24" fill="currentColor"><path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z"/></svg>
+    51→    51→}
+    52→    52→function WhatsAppIcon({ className, style }: { className?: string; style?: React.CSSProperties }) {
+    53→    53→  return <svg className={className} style={style} viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+    54→    54→}
+    55→    55→
+    56→    56→const SOCIAL_ITEMS: { label: string; icon: LucideIcon; href: string; color: string }[] = [
+    57→    57→  { label: 'Website', icon: Globe2, href: SOCIAL.website, color: '#002B5C' },
+    58→    58→  { label: 'HPHRMS', icon: MonitorSmartphone, href: SOCIAL.hphrms, color: '#002B5C' },
+    59→    59→  { label: 'Instagram', icon: InstagramIcon, href: SOCIAL.instagram, color: '#E4405F' },
+    60→    60→  { label: 'Threads', icon: ThreadsIcon, href: SOCIAL.threads, color: '#000000' },
+    61→    61→  { label: 'LinkedIn', icon: LinkedInIcon, href: SOCIAL.linkedin, color: '#0A66C2' },
+    62→    62→  { label: 'Facebook', icon: FacebookIcon, href: SOCIAL.facebook, color: '#1877F2' },
+    63→    63→  { label: 'Twitter / X', icon: TwitterXIcon, href: SOCIAL.twitter, color: '#000000' },
+    64→    64→  { label: 'YouTube', icon: YouTubeIcon, href: SOCIAL.youtube, color: '#FF0000' },
+    65→    65→  { label: 'Reddit', icon: RedditIcon, href: SOCIAL.reddit, color: '#FF4500' },
+    66→    66→  { label: 'WhatsApp', icon: WhatsAppIcon, href: SOCIAL.whatsapp, color: '#25D366' },
+    67→    67→]
+    68→    68→
+    69→    69→interface ServiceDetail {
+    70→    70→  title: string; short: string; icon: LucideIcon; image: string
+    71→    71→  description: string; benefits: string[]; industries: string[]; process: string[]
+    72→    72→}
+    73→    73→
+    74→    74→const SERVICE_DETAILS: ServiceDetail[] = [
+    75→    75→  { title: 'Human Resource Management', short: 'Complete workforce lifecycle management powered by AI', icon: Users, image: '/service-hr.png',
+    76→    76→    description: 'Our comprehensive HR management service covers the entire employee lifecycle from onboarding to exit. We handle employee records, performance tracking, policy compliance, and organizational development.',
+    77→    77→    benefits: ['End-to-end employee lifecycle management', 'AI-powered performance analytics', 'Compliance with Indian labour laws', 'Employee engagement & retention programs', 'Organizational structure optimization'],
+    78→    78→    industries: ['IT & Technology', 'Construction & Infrastructure', 'Manufacturing', 'Healthcare', 'BFSI'],
+    79→    79→    process: ['Workforce assessment & planning', 'HR policy design & implementation', 'Employee onboarding & documentation', 'Ongoing HR operations & support', 'Performance reviews & analytics'],
+    80→    80→  },
+    81→    81→  { title: 'Recruitment & Talent Acquisition', short: 'End-to-end hiring pipeline with smart screening', icon: Target, image: '/service-recruitment.png',
+    82→    82→    description: 'We manage the complete recruitment cycle from job posting and candidate sourcing to interviewing, offer negotiation, and onboarding. Our AI-powered ATS helps you find the right talent faster.',
+    83→    83→    benefits: ['AI-powered applicant tracking system (ATS)', 'Multi-channel candidate sourcing', 'Structured interview frameworks', 'Background verification support', 'Faster time-to-hire with smart screening'],
+    84→    84→    industries: ['IT & Technology', 'Construction', 'Manufacturing', 'Healthcare', 'BFSI', 'Logistics'],
+    85→    85→    process: ['Requirement gathering & job description', 'Candidate sourcing & screening', 'Interview coordination & assessment', 'Offer negotiation & acceptance', 'Onboarding & documentation'],
+    86→    86→  },
+    87→    87→  { title: 'Safety (EHS) Consultancy', short: 'Environmental, Health & Safety compliance solutions', icon: HardHat, image: '/service-safety.png',
+    88→    88→    description: 'Our EHS consultancy ensures your organization meets all safety regulations and standards. From safety audits to training programs, we build a culture of safety at your workplace.',
+    89→    89→    benefits: ['Comprehensive safety audits & inspections', 'Regulatory compliance management', 'Safety training & certification programs', 'Incident investigation & reporting', 'Emergency response planning'],
+    90→    90→    industries: ['Construction', 'Manufacturing', 'Oil & Gas', 'Chemical Plants', 'Mining', 'Infrastructure'],
+    91→    91→    process: ['Site assessment & hazard identification', 'Safety audit & gap analysis', 'Compliance plan development', 'Training implementation', 'Ongoing monitoring & support'],
+    92→    92→  },
+    93→    93→  { title: 'Engineering & Project Support', short: 'Multi-discipline engineering for construction & industrial projects', icon: Wrench, image: '/service-engineering.png',
+    94→    94→    description: 'We provide skilled engineering professionals across all disciplines for construction, industrial, and infrastructure projects.',
+    95→    95→    benefits: ['Multi-discipline engineering professionals', 'Project planning & scheduling support', 'Quality assurance & quality control', 'Construction management services', 'Technical documentation & reporting'],
+    96→    96→    industries: ['Construction', 'Infrastructure', 'Industrial Plants', 'Oil & Gas', 'Power Generation', 'Metro & Rail'],
+    97→    97→    process: ['Project requirement analysis', 'Resource planning & deployment', 'Engineering execution & monitoring', 'Quality control & documentation', 'Project handover & close-out'],
+    98→    98→  },
+    99→    99→  { title: 'Payroll Management', short: 'Accurate, compliant payroll processing for your workforce', icon: Wallet, image: '/service-payroll.png',
+   100→   100→    description: 'Our payroll management service handles salary processing, statutory compliance (PF, ESI, PT, TDS), and payslip generation.',
+   101→   101→    benefits: ['Timely monthly payroll processing', 'Statutory compliance (PF, ESI, PT, TDS)', 'Automated payslip generation', 'Leave & attendance integration', 'Year-end tax forms (Form 16)'],
+   102→   102→    industries: ['All Industries', 'IT & Technology', 'Construction', 'Manufacturing', 'Healthcare'],
+   103→   103→    process: ['Employee data verification', 'Attendance & leave processing', 'Salary calculation & statutory deductions', 'Payslip generation & distribution', 'Compliance filing & reporting'],
+   104→   104→  },
+   105→   105→  { title: 'Manpower Supply', short: 'Skilled & unskilled workforce deployment across India', icon: Truck, image: '/service-manpower.png',
+   106→   106→    description: 'We supply skilled, semi-skilled, and unskilled manpower for construction, industrial, and service sectors across India.',
+   107→   107→    benefits: ['Pan-India manpower deployment', 'Skilled & unskilled workforce', 'Rapid mobilization capability', 'Compliance-managed staffing', 'Flexible contract durations'],
+   108→   108→    industries: ['Construction', 'Manufacturing', 'Logistics', 'Hospitality', 'Facility Management', 'Security Services'],
+   109→   109→    process: ['Workforce requirement assessment', 'Candidate sourcing & screening', 'Documentation & compliance', 'Deployment & orientation', 'Ongoing management & support'],
+   110→   110→  },
+   111→   111→]
+   112→   112→
+   113→   113→interface PortalConfig {
+   114→   114→  id: string; title: string; description: string; icon: LucideIcon
+   115→   115→  features: string[]; role: string; color: string; requestAccess?: boolean
+   116→   116→}
+   117→   117→
+   118→   118→const PORTALS: PortalConfig[] = [
+   119→   119→  { id: 'owner', title: 'Owner Dashboard', description: 'Full system ownership with billing, company settings, and complete control over all modules.',
+   120→   120→    icon: Crown, role: 'OWNER', color: '#D4AF37',
+   121→   121→    features: ['Company Settings & Branding', 'Billing & Subscription Management', 'User & Role Management', 'Audit Logs & Activity Reports', 'System Configuration'],
+   122→   122→  },
+   123→   123→  { id: 'admin', title: 'Admin Console', description: 'Complete HR & workforce management dashboard with full operational control.',
+   124→   124→    icon: Shield, role: 'SUPER_ADMIN', color: '#002B5C',
+   125→   125→    features: ['Employee Management', 'Payroll & Attendance', 'Recruitment & ATS', 'Reports & Analytics', 'Document Management', 'Shift & Roster Management'],
+   126→   126→  },
+   127→   127→  { id: 'hr', title: 'HR Manager Portal', description: 'Day-to-day HR operations including recruitment, onboarding, and employee management.',
+   128→   128→    icon: UserCog, role: 'HR_MANAGER', color: '#0A4488',
+   129→   129→    features: ['Employee Onboarding', 'Leave Management', 'Recruitment Pipeline', 'Performance Tracking', 'Employee Grievances', 'Policy Management'],
+   130→   130→  },
+   131→   131→  { id: 'employee', title: 'Employee Portal', description: 'Self-service portal for all employees to manage their work life.',
+   132→   132→    icon: UserIcon, role: 'EMPLOYEE', color: '#166534',
+   133→   133→    features: ['View Payslips', 'Apply Leaves', 'Attendance History', 'Document Downloads', 'Profile Management', 'Task & Assignment View'],
+   134→   134→  },
+   135→   135→  { id: 'client', title: 'Client Portal', description: 'Dedicated access for business clients to track workforce and invoices.',
+   136→   136→    icon: Building2, role: 'CLIENT', color: '#7C2D12',
+   137→   137→    features: ['Workforce Dashboard', 'Invoice Management', 'Project Tracking', 'Compliance Reports', 'Support Tickets'],
+   138→   138→  },
+   139→   139→  { id: 'recruitment', title: 'Recruitment Portal', description: 'AI-powered recruitment portal for candidates and hiring managers.',
+   140→   140→    icon: Target, role: 'CANDIDATE', color: '#6D28D9',
+   141→   141→    features: ['Job Search & Apply', 'Application Tracking', 'Interview Scheduling', 'Offer Management', 'Candidate Assessment'], requestAccess: true,
+   142→   142→  },
+   143→   143→  { id: 'ehs', title: 'EHS Safety Portal', description: 'Safety compliance management, incident reporting, and audit tracking.',
+   144→   144→    icon: HardHat, role: 'EHS', color: '#B45309',
+   145→   145→    features: ['Safety Audit Management', 'Incident Reporting', 'Compliance Tracking', 'Safety Training Records', 'PPE Management', 'Emergency Protocols'], requestAccess: true,
+   146→   146→  },
+   147→   147→  { id: 'payroll', title: 'Payroll Portal', description: 'Dedicated payroll processing, statutory compliance, and salary management.',
+   148→   148→    icon: DollarSign, role: 'FINANCE', color: '#0369A1',
+   149→   149→    features: ['Salary Processing', 'PF/ESI/TDS Filing', 'Payslip Generation', 'Reimbursement Management', 'Tax Reports (Form 16)', 'Bank Integration'], requestAccess: true,
+   150→   150→  },
+   151→   151→  { id: 'manpower', title: 'Manpower Supply Portal', description: 'Manpower deployment tracking, vendor management, and workforce allocation.',
+   152→   152→    icon: Truck, role: 'VENDOR', color: '#4338CA',
+   153→   153→    features: ['Workforce Deployment', 'Vendor Management', 'Attendance & Billing', 'Contract Management', 'Site Allocation', 'Compliance Documents'], requestAccess: true,
+   154→   154→  },
+   155→   155→  { id: 'engineering', title: 'Engineering Portal', description: 'Engineering project support, resource planning, and discipline tracking.',
+   156→   156→    icon: Wrench, role: 'MANAGER', color: '#0F766E',
+   157→   157→    features: ['Project Resource Planning', 'Discipline Tracking', 'Site Progress Reports', 'QA/QC Management', 'Technical Documentation', 'Billing & Measurement'], requestAccess: true,
+   158→   158→  },
+   159→   159→]
+   160→   160→
+   161→   161→interface PricingPlan { name: string; price: string; period: string; description: string; popular?: boolean; features: string[] }
+   162→   162→
+   163→   163→const PRICING_PLANS: PricingPlan[] = [
+   164→   164→  { name: 'Starter', price: '₹4,999', period: '/month', description: 'For small businesses getting started with HR digitization.', features: ['Up to 50 Employees', 'Basic HR Management', 'Attendance Tracking', 'Leave Management', 'Payslip Generation', 'Email Support'] },
+   165→   165→  { name: 'Professional', price: '₹14,999', period: '/month', description: 'For growing companies that need complete workforce management.', popular: true, features: ['Up to 500 Employees', 'All Starter Features', 'Recruitment & ATS', 'Payroll Processing', 'PF/ESI Compliance', 'Multi-Branch Support', 'Reports & Analytics', 'Priority Support'] },
+   166→   166→  { name: 'Enterprise', price: 'Custom', period: '', description: 'For large organizations with complex workforce requirements.', features: ['Unlimited Employees', 'All Professional Features', 'API Management', 'Custom Integrations', 'Dedicated Account Manager', 'SLA Guarantee', 'On-Premise Option', '24/7 Phone Support'] },
+   167→   167→]
+   168→   168→
+   169→   169→const LUXURY_EASE = [0.22, 1, 0.36, 1] as const
+   170→   170→
+   171→   171→function Reveal({ children, delay = 0, direction = 'up', className = '' }: { children: React.ReactNode; delay?: number; direction?: 'up' | 'left' | 'right'; className?: string }) {
+   172→   172→  const ref = useRef<HTMLDivElement>(null)
+   173→   173→  const isInView = useInView(ref, { once: true, margin: '-40px' })
+   174→   174→  const offsets = { up: { y: 50, x: 0 }, left: { y: 0, x: -50 }, right: { y: 0, x: 50 } }
+   175→   175→  return (
+   176→   176→    <motion.div ref={ref} className={className}
+   177→   177→      initial={{ opacity: 0, ...offsets[direction] }}
+   178→   178→      animate={isInView ? { opacity: 1, x: 0, y: 0 } : { opacity: 0, ...offsets[direction] }}
+   179→   179→      transition={{ duration: 0.8, delay, ease: LUXURY_EASE }}
+   180→   180→    >
+   181→   181→      {children}
+   182→   182→    </motion.div>
+   183→   183→  )
+   184→   184→}
+   185→   185→
+   186→   186→function SocialSideMenu() {
+   187→   187→  const [expanded, setExpanded] = useState(false)
+   188→   188→  return (
+   189→   189→    <div className="fixed left-0 top-1/2 -translate-y-1/2 z-50 flex items-center">
+   190→   190→      <AnimatePresence>
+   191→   191→        {expanded && (
+   192→   192→          <motion.div initial={{ width: 0, opacity: 0 }} animate={{ width: 'auto', opacity: 1 }} exit={{ width: 0, opacity: 0 }}
+   193→   193→            className="overflow-hidden bg-white/95 backdrop-blur-md shadow-2xl rounded-r-2xl border border-l-0 border-gray-200"
+   194→   194→          >
+   195→   195→            <div className="flex flex-col py-3 px-2 gap-1">
+   196→   196→              {SOCIAL_ITEMS.map((s) => (
+   197→   197→                <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer"
+   198→   198→                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors whitespace-nowrap" aria-label={s.label}>
+   199→   199→                  <s.icon className="h-4 w-4 shrink-0" style={{ color: s.color }} />
+   200→   200→                  <span className="text-gray-800 font-semibold">{s.label}</span>
+   201→   201→                </a>
+   202→   202→              ))}
+   203→   203→            </div>
+   204→   204→          </motion.div>
+   205→   205→        )}
+   206→   206→      </AnimatePresence>
+   207→   207→      <button onClick={() => setExpanded(!expanded)}
+   208→   208→        className="h-11 w-11 rounded-r-2xl bg-white shadow-xl border border-l-0 border-gray-200 flex items-center justify-center text-gray-600 hover:text-gray-900 transition-all duration-300"
+   209→   209→        aria-label={expanded ? 'Close social menu' : 'Open social menu'}>
+   210→   210→        {expanded ? <X className="h-4 w-4" /> : <Globe2 className="h-4 w-4" />}
+   211→   211→      </button>
+   212→   212→    </div>
+   213→   213→  )
+   214→   214→}
+   215→   215→
+   216→   216→function ServiceModal({ service, open, onClose }: { service: ServiceDetail | null; open: boolean; onClose: () => void }) {
+   217→   217→  if (!service) return null
+   218→   218→  const Icon = service.icon
+   219→   219→  return (
+   220→   220→    <AnimatePresence>
+   221→   221→      {open && (
+   222→   222→        <motion.div className="fixed inset-0 z-[100] flex items-center justify-center p-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+   223→   223→          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+   224→   224→          <motion.div className="relative z-10 bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+   225→   225→            initial={{ scale: 0.92, opacity: 0, y: 30 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.92, opacity: 0, y: 30 }}
+   226→   226→            transition={{ type: 'spring', stiffness: 280, damping: 28 }}>
+   227→   227→            <div className="relative h-52 sm:h-60 overflow-hidden rounded-t-3xl">
+   228→   228→              <Image src={service.image} alt={service.title} fill className="object-cover" />
+   229→   229→              <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+   230→   230→              <button onClick={onClose} className="absolute top-4 right-4 h-10 w-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/40 transition-colors">
+   231→   231→                <X className="h-5 w-5" />
+   232→   232→              </button>
+   233→   233→              <div className="absolute bottom-5 left-6 flex items-center gap-3">
+   234→   234→                <div className="h-12 w-12 rounded-2xl flex items-center justify-center shadow-lg" style={{ background: '#D4AF37' }}>
+   235→   235→                  <Icon className="h-6 w-6" style={{ color: '#002B5C' }} />
+   236→   236→                </div>
+   237→   237→                <div>
+   238→   238→                  <h3 className="text-xl font-bold text-white">{service.title}</h3>
+   239→   239→                  <p className="text-sm text-gray-200 font-medium">{service.short}</p>
+   240→   240→                </div>
+   241→   241→              </div>
+   242→   242→            </div>
+   243→   243→            <div className="p-7 space-y-6">
+   244→   244→              <p className="text-gray-800 leading-relaxed font-medium">{service.description}</p>
+   245→   245→              <div>
+   246→   246→                <h4 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-3">Key Benefits</h4>
+   247→   247→                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+   248→   248→                  {service.benefits.map((b) => (
+   249→   249→                    <div key={b} className="flex items-start gap-2 text-sm text-gray-700 font-medium"><Check className="h-4 w-4 mt-0.5 shrink-0 text-emerald-600" />{b}</div>
+   250→   250→                  ))}
+   251→   251→                </div>
+   252→   252→              </div>
+   253→   253→              <div>
+   254→   254→                <h4 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-3">Industries We Serve</h4>
+   255→   255→                <div className="flex flex-wrap gap-2">
+   256→   256→                  {service.industries.map((ind) => (<Badge key={ind} variant="outline" className="text-xs font-semibold border-gray-200 text-gray-700">{ind}</Badge>))}
+   257→   257→                </div>
+   258→   258→              </div>
+   259→   259→              <div>
+   260→   260→                <h4 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-3">Our Process</h4>
+   261→   261→                <ol className="space-y-3">
+   262→   262→                  {service.process.map((step, i) => (
+   263→   263→                    <li key={i} className="flex items-start gap-3">
+   264→   264→                      <span className="flex-shrink-0 h-7 w-7 rounded-full flex items-center justify-center text-xs font-bold text-white" style={{ background: '#002B5C' }}>{i + 1}</span>
+   265→   265→                      <span className="text-sm text-gray-700 font-medium pt-0.5">{step}</span>
+   266→   266→                    </li>
+   267→   267→                  ))}
+   268→   268→                </ol>
+   269→   269→              </div>
+   270→   270→              <div className="flex flex-col sm:flex-row gap-3 pt-2">
+   271→   271→                <a href={SOCIAL.whatsapp} target="_blank" rel="noopener noreferrer" className="flex-1 h-12 rounded-2xl flex items-center justify-center gap-2 text-sm font-bold text-white transition-all hover:opacity-90" style={{ background: '#25D366' }}>
+   272→   272→                  <WhatsAppIcon className="h-4 w-4" />Chat on WhatsApp
+   273→   273→                </a>
+   274→   274→                <a href={`tel:${BRAND.phone}`} className="flex-1 h-12 rounded-2xl flex items-center justify-center gap-2 text-sm font-bold text-white transition-all hover:opacity-90" style={{ background: '#002B5C' }}>
+   275→   275→                  <Phone className="h-4 w-4" />Call {BRAND.phone}
+   276→   276→                </a>
+   277→   277→              </div>
+   278→   278→            </div>
+   279→   279→          </motion.div>
+   280→   280→        </motion.div>
+   281→   281→      )}
+   282→   282→    </AnimatePresence>
+   283→   283→  )
+   284→   284→}
+   285→   285→
+   286→   286→function PortalLoginCard({ portal, onForgotPassword }: { portal: PortalConfig; onForgotPassword: () => void }) {
+   287→   287→  const { setUser } = useAppStore()
+   288→   288→  const [username, setUsername] = useState('')
+   289→   289→  const [password, setPassword] = useState('')
+   290→   290→  const [loading, setLoading] = useState(false)
+   291→   291→  const Icon = portal.icon
+   292→   292→
+   293→   293→  const handleSubmit = async (e: React.FormEvent) => {
+   294→   294→    e.preventDefault()
+   295→   295→    if (!username.trim() || !password.trim()) { toast.error('Please enter username and password'); return }
+   296→   296→    setLoading(true)
+   297→   297→    try {
+   298→   298→      const res = await fetch('/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: username.trim(), password }) })
+   299→   299→      const data = await res.json()
+   300→   300→      if (res.ok && data.user) { setUser(data.user); toast.success(`Welcome to ${portal.title}!`) }
+   301→   301→      else { toast.error(data.error || 'Login failed. Please check your credentials.') }
+   302→   302→    } catch { toast.error('Network error. Please try again.') } finally { setLoading(false) }
+   303→   303→  }
+   304→   304→
+   305→   305→  return (
+   306→   306→    <form onSubmit={handleSubmit} className="space-y-3">
+   307→   307→      <div className="space-y-1.5">
+   308→   308→        <Label htmlFor={`login-${portal.id}`} className="text-gray-800 text-xs font-bold uppercase tracking-wider">Username</Label>
+   309→   309→        <Input id={`login-${portal.id}`} placeholder="Enter your username" value={username} onChange={(e) => setUsername(e.target.value)} className="h-11 text-sm bg-white" autoComplete="username" />
+   310→   310→      </div>
+   311→   311→      <div className="space-y-1.5">
+   312→   312→        <div className="flex items-center justify-between">
+   313→   313→          <Label htmlFor={`pass-${portal.id}`} className="text-gray-800 text-xs font-bold uppercase tracking-wider">Password</Label>
+   314→   314→          <button type="button" onClick={onForgotPassword} className="text-[11px] font-bold hover:underline" style={{ color: portal.color }}>Forgot?</button>
+   315→   315→        </div>
+   316→   316→        <Input id={`pass-${portal.id}`} type="password" placeholder="Enter your password" value={password} onChange={(e) => setPassword(e.target.value)} className="h-11 text-sm bg-white" autoComplete="current-password" />
+   317→   317→      </div>
+   318→   318→      <Button type="submit" className="w-full h-11 font-bold text-sm text-white" style={{ background: portal.color }} disabled={loading}>
+   319→   319→        {loading ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <Lock className="mr-2 h-3.5 w-3.5" />}Sign In to {portal.title}
+   320→   320→      </Button>
+   321→   321→    </form>
+   322→   322→  )
+   323→   323→}
+   324→   324→
+   325→   325→function SubscriptionForm({ onBack }: { onBack: () => void }) {
+   326→   326→  const [form, setForm] = useState({ companyName: '', contactName: '', email: '', phone: '', address: '', plan: '', employeeCount: '', message: '' })
+   327→   327→  const [loading, setLoading] = useState(false)
+   328→   328→  const [sent, setSent] = useState(false)
+   329→   329→  const update = (f: string, v: string) => setForm((p) => ({ ...p, [f]: v }))
+   330→   330→  const handleSubmit = async (e: React.FormEvent) => {
+   331→   331→    e.preventDefault()
+   332→   332→    if (!form.companyName.trim() || !form.contactName.trim() || !form.email.trim() || !form.phone.trim()) { toast.error('Please fill in all required fields'); return }
+   333→   333→    setLoading(true)
+   334→   334→    try {
+   335→   335→      const res = await fetch('/api/subscription/request', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) })
+   336→   336→      const data = await res.json()
+   337→   337→      if (res.ok) { toast.success('Subscription request submitted!'); setSent(true) } else { toast.error(data.error || 'Failed to submit request') }
+   338→   338→    } catch { toast.error('Network error. Please try again.') } finally { setLoading(false) }
+   339→   339→  }
+   340→   340→  if (sent) return (
+   341→   341→    <section className="min-h-screen flex items-center justify-center px-4 bg-gray-50">
+   342→   342→      <Card className="shadow-xl max-w-md w-full text-center"><CardContent className="py-12">
+   343→   343→        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50"><Check className="h-8 w-8 text-emerald-600" /></div>
+   344→   344→        <h2 className="text-2xl font-bold text-gray-900 mb-2">Request Submitted!</h2>
+   345→   345→        <p className="text-gray-600 mb-6 font-medium">Our team will contact you within 24 hours.</p>
+   346→   346→        <Button onClick={onBack} style={{ background: '#002B5C' }} className="text-white font-bold">Back to Home</Button>
+   347→   347→      </CardContent></Card>
+   348→   348→    </section>
+   349→   349→  )
+   350→   350→  return (
+   351→   351→    <section className="min-h-screen py-20 px-4 bg-gray-50">
+   352→   352→      <div className="max-w-2xl mx-auto">
+   353→   353→        <div className="text-center mb-10">
+   354→   354→          <Badge className="mb-4 px-4 py-1 text-sm font-bold" style={{ background: '#D4AF37', color: '#002B5C' }}>Get Started</Badge>
+   355→   355→          <h2 className="text-3xl md:text-4xl font-bold text-gray-900">Request a Subscription</h2>
+   356→   356→          <p className="text-gray-600 mt-2 font-medium">Fill in the details and our team will reach out to you.</p>
+   357→   357→        </div>
+   358→   358→        <Card className="shadow-lg"><CardContent className="pt-6">
+   359→   359→          <form onSubmit={handleSubmit} className="space-y-4">
+   360→   360→            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+   361→   361→              <div className="space-y-2"><Label className="text-gray-800 text-sm font-bold">Company Name *</Label><Input placeholder="Your company" value={form.companyName} onChange={(e) => update('companyName', e.target.value)} /></div>
+   362→   362→              <div className="space-y-2"><Label className="text-gray-800 text-sm font-bold">Contact Name *</Label><Input placeholder="Full name" value={form.contactName} onChange={(e) => update('contactName', e.target.value)} /></div>
+   363→   363→            </div>
+   364→   364→            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+   365→   365→              <div className="space-y-2"><Label className="text-gray-800 text-sm font-bold">Email *</Label><Input type="email" placeholder="email@company.com" value={form.email} onChange={(e) => update('email', e.target.value)} /></div>
+   366→   366→              <div className="space-y-2"><Label className="text-gray-800 text-sm font-bold">Phone *</Label><Input placeholder="+91 XXXXX XXXXX" value={form.phone} onChange={(e) => update('phone', e.target.value)} /></div>
+   367→   367→            </div>
+   368→   368→            <div className="space-y-2"><Label className="text-gray-800 text-sm font-bold">Address</Label><Input placeholder="Office address" value={form.address} onChange={(e) => update('address', e.target.value)} /></div>
+   369→   369→            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+   370→   370→              <div className="space-y-2"><Label className="text-gray-800 text-sm font-bold">Plan</Label>
+   371→   371→                <select value={form.plan} onChange={(e) => update('plan', e.target.value)} className="w-full h-11 rounded-md border border-gray-200 bg-white px-3 text-sm font-medium">
+   372→   372→                  <option value="">Select plan</option><option value="free">Free</option><option value="starter">Starter</option><option value="professional">Professional</option><option value="enterprise">Enterprise</option>
+   373→   373→                </select>
+   374→   374→              </div>
+   375→   375→              <div className="space-y-2"><Label className="text-gray-800 text-sm font-bold">Employee Count</Label><Input placeholder="e.g. 50" value={form.employeeCount} onChange={(e) => update('employeeCount', e.target.value)} /></div>
+   376→   376→            </div>
+   377→   377→            <div className="space-y-2"><Label className="text-gray-800 text-sm font-bold">Message</Label><Textarea placeholder="Tell us about your requirements..." rows={3} value={form.message} onChange={(e) => update('message', e.target.value)} /></div>
+   378→   378→            <div className="flex gap-3 pt-2">
+   379→   379→              <Button type="submit" className="flex-1 h-11 font-bold text-white" style={{ background: '#002B5C' }} disabled={loading}>{loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}Submit Request</Button>
+   380→   380→              <Button type="button" variant="outline" onClick={onBack} className="font-bold">Cancel</Button>
+   381→   381→            </div>
+   382→   382→          </form>
+   383→   383→        </CardContent></Card>
+   384→   384→      </div>
+   385→   385→    </section>
+   386→   386→  )
+   387→   387→}
+   388→   388→
+   389→   389→export function Landing() {
+   390→   390→  const { setUser, hpaiOpen, setHpaiOpen } = useAppStore()
+   391→   391→  const [view, setView] = useState<LandingView>('home')
+   392→   392→  const [mobileMenu, setMobileMenu] = useState(false)
+   393→   393→  const [scrolled, setScrolled] = useState(false)
+   394→   394→  const [activeService, setActiveService] = useState<ServiceDetail | null>(null)
+   395→   395→  const [serviceModalOpen, setServiceModalOpen] = useState(false)
+   396→   396→  const [expandedPortal, setExpandedPortal] = useState<string | null>(null)
+   397→   397→  const [forgotOpen, setForgotOpen] = useState(false)
+   398→   398→  const homeRef = useRef<HTMLDivElement>(null)
+   399→   399→
+   400→   400→  useEffect(() => {
+   401→   401→    document.documentElement.style.scrollBehavior = 'smooth'
+   402→   402→    const h = () => setScrolled(window.scrollY > 60)
+   403→   403→    window.addEventListener('scroll', h, { passive: true })
+   404→   404→    return () => window.removeEventListener('scroll', h)
+   405→   405→  }, [])
+   406→   406→
+   407→   407→  const scrollTo = useCallback((id: string) => { setMobileMenu(false); const el = document.getElementById(id); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }) }, [])
+   408→   408→  const goHome = useCallback(() => { setView('home'); window.scrollTo({ top: 0, behavior: 'smooth' }) }, [])
+   409→   409→  const openServiceModal = useCallback((s: ServiceDetail) => { setActiveService(s); setServiceModalOpen(true) }, [])
+   410→   410→  const togglePortal = useCallback((id: string) => { setExpandedPortal((p) => (p === id ? null : id)) }, [])
+   411→   411→
+   412→   412→  const NAV_LINKS = [
+   413→   413→    { id: 'features', label: 'Features' }, { id: 'services', label: 'Services' },
+   414→   414→    { id: 'portals', label: 'All Portals' }, { id: 'pricing', label: 'Pricing' }, { id: 'contact', label: 'Contact' },
+   415→   415→  ]
+   416→   416→
+   417→   417→  if (view === 'register') return <RegistrationForm onBack={goHome} />
+   418→   418→  if (view === 'subscribe') return <SubscriptionForm onBack={goHome} />
+   419→   419→
+   420→   420→  return (
+   421→   421→    <div ref={homeRef} className="min-h-screen flex flex-col" style={{ background: '#FFFFFF' }}>
+   422→   422→      <SocialSideMenu />
+   423→   423→      <ServiceModal service={activeService} open={serviceModalOpen} onClose={() => setServiceModalOpen(false)} />
+   424→   424→      <ForgotPasswordDialog open={forgotOpen} onOpenChange={setForgotOpen} />
+   425→   425→
+   426→   426→      <nav className={cn('sticky top-0 z-40 w-full transition-all duration-500', scrolled ? 'bg-white/90 shadow-lg shadow-gray-200/50 backdrop-blur-xl' : 'bg-white/50 backdrop-blur-sm')} role="navigation" aria-label="Main navigation">
+   427→   427→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+   428→   428→          <div className="flex items-center justify-between h-[76px]">
+   429→   429→            <button onClick={goHome} className="flex items-center gap-2.5 shrink-0" aria-label="HPHRMS Home">
+   430→   430→              <BrandLogo size={38} />
+   431→   431→              <div className="flex flex-col">
+   432→   432→                <span className="font-extrabold text-[16px] tracking-tight leading-tight text-gray-900">HPHRMS</span>
+   433→   433→                <span className="text-[10px] font-bold tracking-[0.2em] uppercase leading-tight text-gray-400">by HP Enterprise</span>
+   434→   434→              </div>
+   435→   435→            </button>
+   436→   436→            <div className="hidden lg:flex items-center gap-1">
+   437→   437→              {NAV_LINKS.map((link) => (
+   438→   438→                <button key={link.id} onClick={() => scrollTo(link.id)} className="px-4 py-2.5 rounded-xl text-[13px] font-bold text-gray-500 hover:text-gray-900 hover:bg-gray-100/80 transition-all duration-300">{link.label}</button>
+   439→   439→              ))}
+   440→   440→            </div>
+   441→   441→            <div className="hidden lg:flex items-center gap-3">
+   442→   442→              <LanguageSwitcher />
+   443→   443→              <Button variant="ghost" className="text-sm font-bold h-10 text-gray-600 hover:text-gray-900 hover:bg-gray-100 px-5" onClick={() => scrollTo('portals')}>Login</Button>
+   444→   444→              <Button className="text-sm font-bold h-10 px-6 rounded-xl text-gray-900 shadow-md shadow-amber-200/50 hover:shadow-lg transition-all duration-300" style={{ background: '#D4AF37' }} onClick={() => setView('subscribe')}>Start Free Trial</Button>
+   445→   445→            </div>
+   446→   446→            <button className="lg:hidden p-2 rounded-xl text-gray-600" onClick={() => setMobileMenu(!mobileMenu)} aria-label={mobileMenu ? 'Close menu' : 'Open menu'} aria-expanded={mobileMenu}>
+   447→   447→              {mobileMenu ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+   448→   448→            </button>
+   449→   449→          </div>
+   450→   450→        </div>
+   451→   451→        <AnimatePresence>
+   452→   452→          {mobileMenu && (
+   453→   453→            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.4, ease: LUXURY_EASE }} className="lg:hidden overflow-hidden bg-white/95 backdrop-blur-xl border-t border-gray-100 shadow-xl">
+   454→   454→              <div className="px-4 py-5 space-y-1">
+   455→   455→                {NAV_LINKS.map((link) => (
+   456→   456→                  <button key={link.id} onClick={() => scrollTo(link.id)} className="block w-full text-left px-4 py-3 rounded-xl text-sm font-bold text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors capitalize">{link.label}</button>
+   457→   457→                ))}
+   458→   458→                <div className="pt-3 flex flex-col gap-2">
+   459→   459→                  <Button variant="outline" className="w-full text-sm font-bold" onClick={() => { scrollTo('portals'); setMobileMenu(false) }}>Login to Portal</Button>
+   460→   460→                  <Button className="w-full text-sm font-bold text-gray-900" style={{ background: '#D4AF37' }} onClick={() => { setView('subscribe'); setMobileMenu(false) }}>Start Free Trial</Button>
+   461→   461→                </div>
+   462→   462→              </div>
+   463→   463→            </motion.div>
+   464→   464→          )}
+   465→   465→        </AnimatePresence>
+   466→   466→      </nav>
+   467→   467→
+   468→   468→      <section className="relative overflow-hidden bg-white">
+   469→   469→        <div className="absolute inset-0" style={{ background: 'linear-gradient(160deg, #F8FAFC 0%, #FEFCE8 30%, #FFFFFF 60%, #F0FDF4 100%)' }} />
+   470→   470→        <div className="absolute top-0 right-0 w-[600px] h-[600px] rounded-full opacity-30 blur-3xl" style={{ background: 'radial-gradient(circle, #D4AF37 0%, transparent 70%)' }} />
+   471→   471→        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full opacity-20 blur-3xl" style={{ background: 'radial-gradient(circle, #002B5C 0%, transparent 70%)' }} />
+   472→   472→        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 sm:py-32 lg:py-40">
+   473→   473→          <div className=
