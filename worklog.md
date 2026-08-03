@@ -398,3 +398,29 @@ Stage Summary:
 - Portal context (e.g. "Joining: Recruitment Portal") shown in form header and success page
 - `appliedPortal` stored in DB for admin tracking
 - Browser verified: Recruitment → form opens with correct badge, EHS → correct badge, Employee → login form unchanged, zero console errors
+
+---
+Task ID: 10
+Agent: Main
+Task: Add prominent Apply to Join CTAs everywhere on main landing page
+
+Work Log:
+- Added green "Apply to Join" button to desktop nav bar (between Login and Start Free Trial)
+- Added green "Apply to Join" button to mobile hamburger menu
+- Added green "Apply to Join" button (with UserPlus icon) to hero section — 3 buttons now: Access Portals, Apply to Join, Start Free Trial
+- Added "Join Now" link to main navigation bar
+- Added full-width "Join Our Team" banner section between Services and Portals:
+  - Dark gradient background (navy → blue → green)
+  - "We're Hiring" gold badge
+  - "Join HP Enterprise — Build Your Career" heading
+  - Description listing all form contents
+  - Gold "Apply Now — Fill All Details" CTA button
+  - WhatsApp backup link
+  - 6 info cards: Personal Details, Identity Documents, Bank Details, Education, Experience & Salary, All Documents
+- Added GraduationCap, Landmark icons to imports
+- Browser verified: all CTAs visible on desktop and mobile, all open the full 7-step onboarding form, zero console errors
+
+Stage Summary:
+- "Apply to Join" visible in 5+ places: Hero, Nav, Mobile Menu, Join Banner, Request-Access Portals
+- "Join Our Team" banner section is a prominent visual CTA with 6 cards listing every detail the form collects
+- Every click opens the complete onboarding form with all documents

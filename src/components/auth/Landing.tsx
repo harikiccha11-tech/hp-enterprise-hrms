@@ -22,7 +22,7 @@ import {
   Settings, UserCog, Zap, Shield, Bell, Star, Headphones, Send, Loader2,
   Phone, Mail, MapPin, ChevronRight, Menu, X, Award, Globe2,
   HardHat, Truck, DollarSign, MonitorSmartphone,
-  type LucideIcon, Eye, Target, Wrench,
+  type LucideIcon, Eye, Target, Wrench, UserPlus, Briefcase, FileUp, GraduationCap, Landmark,
 } from 'lucide-react'
 import Image from 'next/image'
 
@@ -412,7 +412,7 @@ export function Landing() {
 
   const NAV_LINKS = [
     { id: 'features', label: 'Features' }, { id: 'services', label: 'Services' },
-    { id: 'portals', label: 'All Portals' }, { id: 'pricing', label: 'Pricing' }, { id: 'contact', label: 'Contact' },
+    { id: 'join', label: 'Join Now' }, { id: 'portals', label: 'All Portals' }, { id: 'pricing', label: 'Pricing' }, { id: 'contact', label: 'Contact' },
   ]
 
   const openApplyForm = useCallback((portalTitle: string) => { setAppliedPortal(portalTitle); setView('apply') }, [])
@@ -445,6 +445,7 @@ export function Landing() {
             <div className="hidden lg:flex items-center gap-3">
               <LanguageSwitcher />
               <Button variant="ghost" className="text-sm font-bold h-10 text-gray-600 hover:text-gray-900 hover:bg-gray-100 px-5" onClick={() => scrollTo('portals')}>Login</Button>
+              <Button className="text-sm font-bold h-10 px-5 rounded-xl text-white shadow-md hover:shadow-lg transition-all duration-300" style={{ background: '#166534' }} onClick={() => openApplyForm('General')}>Apply to Join</Button>
               <Button className="text-sm font-bold h-10 px-6 rounded-xl text-gray-900 shadow-md shadow-amber-200/50 hover:shadow-lg transition-all duration-300" style={{ background: '#D4AF37' }} onClick={() => setView('subscribe')}>Start Free Trial</Button>
             </div>
             <button className="lg:hidden p-2 rounded-xl text-gray-600" onClick={() => setMobileMenu(!mobileMenu)} aria-label={mobileMenu ? 'Close menu' : 'Open menu'} aria-expanded={mobileMenu}>
@@ -461,6 +462,7 @@ export function Landing() {
                 ))}
                 <div className="pt-3 flex flex-col gap-2">
                   <Button variant="outline" className="w-full text-sm font-bold" onClick={() => { scrollTo('portals'); setMobileMenu(false) }}>Login to Portal</Button>
+                  <Button className="w-full text-sm font-bold text-white" style={{ background: '#166534' }} onClick={() => { setAppliedPortal('General'); setView('apply'); setMobileMenu(false) }}>Apply to Join</Button>
                   <Button className="w-full text-sm font-bold text-gray-900" style={{ background: '#D4AF37' }} onClick={() => { setView('subscribe'); setMobileMenu(false) }}>Start Free Trial</Button>
                 </div>
               </div>
@@ -493,9 +495,12 @@ export function Landing() {
                 </p>
               </Reveal>
               <Reveal delay={0.3}>
-                <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex flex-col sm:flex-row gap-3">
                   <Button size="lg" className="h-13 text-base font-bold px-8 rounded-2xl text-white shadow-lg shadow-gray-900/20 hover:shadow-xl transition-all duration-300" style={{ background: '#002B5C' }} onClick={() => scrollTo('portals')}>
                     Access Portals <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                  <Button size="lg" className="h-13 text-base font-bold px-8 rounded-2xl text-white shadow-lg shadow-emerald-900/20 hover:shadow-xl transition-all duration-300" style={{ background: '#166534' }} onClick={() => openApplyForm('General')}>
+                    <UserPlus className="mr-2 h-5 w-5" />Apply to Join
                   </Button>
                   <Button size="lg" className="h-13 text-base font-bold px-8 rounded-2xl text-gray-900 shadow-md shadow-amber-200/50 hover:shadow-lg transition-all duration-300" style={{ background: '#D4AF37' }} onClick={() => setView('subscribe')}>
                     Start Free Trial <Zap className="ml-2 h-4 w-4" />
@@ -651,6 +656,52 @@ export function Landing() {
               )
             })}
           </div>
+        </div>
+      </section>
+
+      {/* Join Our Team Banner */}
+      <section id="join" className="py-20 sm:py-24 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <Reveal>
+            <div className="relative overflow-hidden rounded-3xl" style={{ background: 'linear-gradient(135deg, #002B5C 0%, #0A4488 50%, #166534 100%)' }}>
+              <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 20% 80%, #D4AF37 0%, transparent 50%), radial-gradient(circle at 80% 20%, #D4AF37 0%, transparent 50%)' }} />
+              <div className="relative z-10 px-8 sm:px-12 lg:px-16 py-14 sm:py-20">
+                <div className="grid lg:grid-cols-2 gap-10 items-center">
+                  <div className="space-y-6">
+                    <Badge className="px-4 py-1.5 text-sm font-bold shadow-sm" style={{ background: '#D4AF37', color: '#002B5C' }}>
+                      <UserPlus className="h-3.5 w-3.5 mr-1.5" />We're Hiring
+                    </Badge>
+                    <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white leading-tight">Join HP Enterprise — Build Your Career</h2>
+                    <p className="text-lg text-gray-200 font-medium leading-relaxed max-w-lg">Apply with your complete profile — personal details, education, experience, identity documents, bank details, and more. One form, everything we need.</p>
+                    <div className="flex flex-wrap gap-3 pt-2">
+                      <Button size="lg" className="h-13 text-base font-bold px-8 rounded-2xl text-white shadow-xl hover:shadow-2xl transition-all duration-300" style={{ background: '#D4AF37', color: '#002B5C' }} onClick={() => openApplyForm('General')}>
+                        <UserPlus className="mr-2 h-5 w-5" />Apply Now — Fill All Details
+                      </Button>
+                      <a href={SOCIAL.whatsapp} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center h-13 px-6 rounded-2xl text-sm font-bold text-white bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20 transition-all duration-300">
+                        <WhatsAppIcon className="mr-2 h-4 w-4" />Chat on WhatsApp
+                      </a>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    {[
+                      { icon: UserIcon, title: 'Personal Details', desc: 'Name, DOB, Gender, Address, Emergency Contact' },
+                      { icon: FileText, title: 'Identity Documents', desc: 'Aadhaar, PAN, Passport Photo, Medical Cert' },
+                      { icon: Landmark, title: 'Bank Details', desc: 'Account, IFSC, Passbook Upload' },
+                      { icon: GraduationCap, title: 'Education', desc: 'Multiple Qualifications with Certificates' },
+                      { icon: Briefcase, title: 'Experience & Salary', desc: 'Company, Designation, CTC, Notice Period' },
+                      { icon: FileUp, title: 'All Documents', desc: 'Resume, Salary Slips, Relieving, Address Proof' },
+                    ].map((item) => (
+                      <div key={item.title} className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/10 hover:bg-white/15 transition-colors">
+                        <item.icon className="h-6 w-6 mb-2" style={{ color: '#D4AF37' }} />
+                        <h3 className="text-sm font-bold text-white mb-1">{item.title}</h3>
+                        <p className="text-[11px] text-gray-300 font-medium leading-relaxed">{item.desc}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Reveal>
         </div>
       </section>
 
