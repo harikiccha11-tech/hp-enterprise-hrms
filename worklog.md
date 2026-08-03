@@ -424,3 +424,28 @@ Stage Summary:
 - "Apply to Join" visible in 5+ places: Hero, Nav, Mobile Menu, Join Banner, Request-Access Portals
 - "Join Our Team" banner section is a prominent visual CTA with 6 cards listing every detail the form collects
 - Every click opens the complete onboarding form with all documents
+
+---
+Task ID: 11
+Agent: Main
+Task: Add portal picker view — click Apply shows all portals to choose from
+
+Work Log:
+- Added `PortalPickerView` component with 6 portal options: General, Recruitment, EHS, Payroll, Manpower, Engineering
+- Each card shows: icon, department tag, title, description, hover effect with color-matched border/shadow
+- Added `apply-pick` to LandingView union type
+- Changed `openApplyForm` to accept optional `portalTitle`: with arg → direct to form, without arg → shows picker
+- Updated all 'Apply to Join' buttons (nav, hero, banner, mobile menu) to call `openApplyForm()` with no arg
+- Portal-specific buttons (inside expanded request-access cards) still call `openApplyForm(portal.title)` directly
+- Added ArrowLeft to lucide imports
+- Browser verified:
+  - Hero/nav/banner 'Apply to Join' → Portal Picker with 6 options
+  - Click 'EHS Safety Portal' in picker → Form with 'Joining: EHS Safety Portal'
+  - Expanded portal cards 'Fill Joining Application' → Form directly (no picker)
+  - Back to Home works from picker and form
+  - Zero console errors
+
+Stage Summary:
+- User flow: Click 'Apply to Join' anywhere → See all 6 portal options → Pick one → Full 7-step onboarding form
+- Direct flow: Click specific portal's 'Fill Joining Application' → Full form directly (portal pre-selected)
+- All 6 options: General Application, Recruitment Portal, EHS Safety Portal, Payroll Portal, Manpower Supply Portal, Engineering Portal

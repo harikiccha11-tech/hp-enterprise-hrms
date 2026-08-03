@@ -16,7 +16,7 @@ import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { motion, useInView, AnimatePresence } from 'framer-motion'
 import {
-  Building2, ShieldCheck, Users, FileText, Clock, Wallet, ArrowRight, Lock, User as UserIcon,
+  Building2, ShieldCheck, Users, FileText, Clock, Wallet, ArrowRight, ArrowLeft, Lock, User as UserIcon,
   Sparkles, Crown, Check, Bot,
   CalendarDays, ClipboardList, BarChart3,
   Settings, UserCog, Zap, Shield, Bell, Star, Headphones, Send, Loader2,
@@ -26,7 +26,7 @@ import {
 } from 'lucide-react'
 import Image from 'next/image'
 
-type LandingView = 'home' | 'register' | 'subscribe' | 'apply'
+type LandingView = 'home' | 'register' | 'subscribe' | 'apply' | 'apply-pick'
 
 function InstagramIcon({ className, style }: { className?: string; style?: React.CSSProperties }) {
   return <svg className={className} style={style} viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
@@ -386,6 +386,83 @@ function SubscriptionForm({ onBack }: { onBack: () => void }) {
   )
 }
 
+const APPLY_OPTIONS = [
+  { id: 'general', title: 'General Application', description: 'Apply for any open position at HP Enterprise', icon: UserPlus, color: '#002B5C', tag: 'All Departments' },
+  { id: 'recruitment', title: 'Recruitment Portal', description: 'Join our recruitment and talent acquisition team', icon: Target, color: '#6D28D9', tag: 'HR & Recruitment' },
+  { id: 'ehs', title: 'EHS Safety Portal', description: 'Join the Environment, Health & Safety division', icon: HardHat, color: '#B45309', tag: 'Safety' },
+  { id: 'payroll', title: 'Payroll Portal', description: 'Join the payroll processing and finance team', icon: DollarSign, color: '#0369A1', tag: 'Finance' },
+  { id: 'manpower', title: 'Manpower Supply Portal', description: 'Join workforce deployment and vendor management', icon: Truck, color: '#4338CA', tag: 'Operations' },
+  { id: 'engineering', title: 'Engineering Portal', description: 'Join engineering project support and planning', icon: Wrench, color: '#0F766E', tag: 'Engineering' },
+]
+
+function PortalPickerView({ onPick, onBack }: { onPick: (title: string) => void; onBack: () => void }) {
+  const [hovered, setHovered] = useState<string | null>(null)
+  return (
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-gray-50 to-white">
+      <header className="sticky top-0 z-40 border-b bg-white/90 backdrop-blur">
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
+          <BrandLogo />
+          <Button variant="ghost" size="sm" onClick={onBack}><ArrowLeft className="mr-1 h-4 w-4" /> Back to Home</Button>
+        </div>
+      </header>
+      <div className="mx-auto w-full max-w-5xl flex-1 px-4 py-10 sm:py-16">
+        <div className="text-center mb-10">
+          <Badge className="mb-4 px-4 py-1 text-sm font-bold" style={{ background: '#D4AF37', color: '#002B5C' }}><UserPlus className="h-3.5 w-3.5 mr-1.5" />Join HP Enterprise</Badge>
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-3">Where Do You Want to Join?</h1>
+          <p className="text-gray-600 text-lg font-medium max-w-2xl mx-auto">Select the department or portal you are applying for. You will fill a complete onboarding form with all your details and documents.</p>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {APPLY_OPTIONS.map((opt) => {
+            const Icon = opt.icon
+            const isHovered = hovered === opt.id
+            return (
+              <motion.button key={opt.id}
+                onClick={() => onPick(opt.title)}
+                onMouseEnter={() => setHovered(opt.id)}
+                onMouseLeave={() => setHovered(null)}
+                whileHover={{ y: -4, scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="relative text-left rounded-2xl border-2 bg-white p-6 shadow-sm transition-all duration-300 group cursor-pointer"
+                style={{ borderColor: isHovered ? opt.color : '#E5E7EB', boxShadow: isHovered ? `0 10px 30px ${opt.color}20` : undefined }}
+              >
+                <div className="flex items-start justify-between mb-4">
+                  <div className="h-14 w-14 rounded-2xl flex items-center justify-center shadow-md" style={{ background: opt.color }}>
+                    <Icon className="h-7 w-7 text-white" />
+                  </div>
+                  <Badge variant="outline" className="text-[10px] font-bold px-2 py-0.5" style={{ borderColor: `${opt.color}40`, color: opt.color }}>{opt.tag}</Badge>
+                </div>
+                <h3 className="text-lg font-bold text-gray-900 mb-1.5">{opt.title}</h3>
+                <p className="text-sm text-gray-500 font-medium leading-relaxed mb-4">{opt.description}</p>
+                <div className="flex items-center gap-1.5 text-sm font-bold" style={{ color: opt.color }}>
+                  Select & Fill Application <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                </div>
+              </motion.button>
+            )
+          })}
+        </div>
+        <div className="mt-10 rounded-2xl bg-amber-50 border border-amber-200/60 p-6">
+          <div className="flex items-start gap-3">
+            <div className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: '#D4AF37' }}><ClipboardList className="h-5 w-5" style={{ color: '#002B5C' }} /></div>
+            <div>
+              <h3 className="font-bold text-gray-900 mb-1">Complete Onboarding Form — 7 Steps</h3>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {[`Personal Details`, `Identity (Aadhaar/PAN)`, `Bank Details`, `Education`, `Experience`, `Documents Upload (14 files)`, `Declaration`].map((step) => (
+                  <span key={step} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-100 text-[11px] font-bold text-amber-800">
+                    <Check className="h-2.5 w-2.5" />{step}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="mt-4 flex items-center justify-center gap-2 text-xs text-gray-400 font-medium">
+          <Building2 className="h-3.5 w-3.5" /> {BRAND.name} · GSTIN: {BRAND.gstin}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export function Landing() {
   const { setUser, hpaiOpen, setHpaiOpen } = useAppStore()
   const [view, setView] = useState<LandingView>('home')
@@ -415,10 +492,11 @@ export function Landing() {
     { id: 'join', label: 'Join Now' }, { id: 'portals', label: 'All Portals' }, { id: 'pricing', label: 'Pricing' }, { id: 'contact', label: 'Contact' },
   ]
 
-  const openApplyForm = useCallback((portalTitle: string) => { setAppliedPortal(portalTitle); setView('apply') }, [])
+  const openApplyForm = useCallback((portalTitle?: string) => { if (portalTitle) { setAppliedPortal(portalTitle); setView('apply') } else { setView('apply-pick') } }, [])
 
   if (view === 'register') return <RegistrationForm onBack={goHome} />
   if (view === 'apply') return <RegistrationForm onBack={goHome} appliedFor={appliedPortal} />
+  if (view === 'apply-pick') return <PortalPickerView onPick={(title) => { setAppliedPortal(title); setView('apply') }} onBack={goHome} />
   if (view === 'subscribe') return <SubscriptionForm onBack={goHome} />
 
   return (
@@ -445,7 +523,7 @@ export function Landing() {
             <div className="hidden lg:flex items-center gap-3">
               <LanguageSwitcher />
               <Button variant="ghost" className="text-sm font-bold h-10 text-gray-600 hover:text-gray-900 hover:bg-gray-100 px-5" onClick={() => scrollTo('portals')}>Login</Button>
-              <Button className="text-sm font-bold h-10 px-5 rounded-xl text-white shadow-md hover:shadow-lg transition-all duration-300" style={{ background: '#166534' }} onClick={() => openApplyForm('General')}>Apply to Join</Button>
+              <Button className="text-sm font-bold h-10 px-5 rounded-xl text-white shadow-md hover:shadow-lg transition-all duration-300" style={{ background: '#166534' }} onClick={() => openApplyForm()}>Apply to Join</Button>
               <Button className="text-sm font-bold h-10 px-6 rounded-xl text-gray-900 shadow-md shadow-amber-200/50 hover:shadow-lg transition-all duration-300" style={{ background: '#D4AF37' }} onClick={() => setView('subscribe')}>Start Free Trial</Button>
             </div>
             <button className="lg:hidden p-2 rounded-xl text-gray-600" onClick={() => setMobileMenu(!mobileMenu)} aria-label={mobileMenu ? 'Close menu' : 'Open menu'} aria-expanded={mobileMenu}>
@@ -462,7 +540,7 @@ export function Landing() {
                 ))}
                 <div className="pt-3 flex flex-col gap-2">
                   <Button variant="outline" className="w-full text-sm font-bold" onClick={() => { scrollTo('portals'); setMobileMenu(false) }}>Login to Portal</Button>
-                  <Button className="w-full text-sm font-bold text-white" style={{ background: '#166534' }} onClick={() => { setAppliedPortal('General'); setView('apply'); setMobileMenu(false) }}>Apply to Join</Button>
+                  <Button className="w-full text-sm font-bold text-white" style={{ background: '#166534' }} onClick={() => { openApplyForm(); setMobileMenu(false) }}>Apply to Join</Button>
                   <Button className="w-full text-sm font-bold text-gray-900" style={{ background: '#D4AF37' }} onClick={() => { setView('subscribe'); setMobileMenu(false) }}>Start Free Trial</Button>
                 </div>
               </div>
@@ -499,7 +577,7 @@ export function Landing() {
                   <Button size="lg" className="h-13 text-base font-bold px-8 rounded-2xl text-white shadow-lg shadow-gray-900/20 hover:shadow-xl transition-all duration-300" style={{ background: '#002B5C' }} onClick={() => scrollTo('portals')}>
                     Access Portals <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
-                  <Button size="lg" className="h-13 text-base font-bold px-8 rounded-2xl text-white shadow-lg shadow-emerald-900/20 hover:shadow-xl transition-all duration-300" style={{ background: '#166534' }} onClick={() => openApplyForm('General')}>
+                  <Button size="lg" className="h-13 text-base font-bold px-8 rounded-2xl text-white shadow-lg shadow-emerald-900/20 hover:shadow-xl transition-all duration-300" style={{ background: '#166534' }} onClick={() => openApplyForm()}>
                     <UserPlus className="mr-2 h-5 w-5" />Apply to Join
                   </Button>
                   <Button size="lg" className="h-13 text-base font-bold px-8 rounded-2xl text-gray-900 shadow-md shadow-amber-200/50 hover:shadow-lg transition-all duration-300" style={{ background: '#D4AF37' }} onClick={() => setView('subscribe')}>
@@ -674,7 +752,7 @@ export function Landing() {
                     <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white leading-tight">Join HP Enterprise — Build Your Career</h2>
                     <p className="text-lg text-gray-200 font-medium leading-relaxed max-w-lg">Apply with your complete profile — personal details, education, experience, identity documents, bank details, and more. One form, everything we need.</p>
                     <div className="flex flex-wrap gap-3 pt-2">
-                      <Button size="lg" className="h-13 text-base font-bold px-8 rounded-2xl text-white shadow-xl hover:shadow-2xl transition-all duration-300" style={{ background: '#D4AF37', color: '#002B5C' }} onClick={() => openApplyForm('General')}>
+                      <Button size="lg" className="h-13 text-base font-bold px-8 rounded-2xl text-white shadow-xl hover:shadow-2xl transition-all duration-300" style={{ background: '#D4AF37', color: '#002B5C' }} onClick={() => openApplyForm()}>
                         <UserPlus className="mr-2 h-5 w-5" />Apply Now — Fill All Details
                       </Button>
                       <a href={SOCIAL.whatsapp} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center h-13 px-6 rounded-2xl text-sm font-bold text-white bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20 transition-all duration-300">
