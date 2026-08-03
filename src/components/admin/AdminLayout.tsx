@@ -55,6 +55,8 @@ import { Branches } from './modules/Branches'
 // New modules - Operations
 import { Vendors } from './modules/Vendors'
 import { Assets } from './modules/Assets'
+import { ApiManagement } from './modules/ApiManagement'
+import { FleetManagement } from './modules/FleetManagement'
 // New modules - HR Lifecycle
 import { Recruitment } from './modules/Recruitment'
 import { Onboarding } from './modules/Onboarding'
@@ -92,6 +94,7 @@ export type ModuleKey =
   | 'performance' | 'goals' | 'training'
   // Operations
   | 'clients' | 'projects' | 'workorders' | 'vendors' | 'assets' | 'invoices'
+  | 'api-management' | 'fleet-management'
   // Finance
   | 'payroll' | 'expenses' | 'reports'
   // Communications
@@ -162,6 +165,8 @@ function getNavGroups(lang: LangCode): { title: string; items: NavItem[] }[] {
         { key: 'vendors', label: 'Vendors', icon: Truck, desc: 'Vendor management' },
         { key: 'assets', label: 'Assets', icon: Package, desc: 'Asset tracking & assignment' },
         { key: 'invoices', label: t('nav.invoices', lang), icon: ReceiptText, desc: t('nav.desc.invoices', lang) },
+        { key: 'api-management', label: 'API Management', icon: Key, desc: 'API keys, webhooks & integrations', superAdminOnly: true },
+        { key: 'fleet-management', label: 'Fleet Management', icon: Truck, desc: 'Vehicle fleet tracking & maintenance' },
       ],
     },
     {
@@ -463,6 +468,8 @@ export function AdminLayout() {
               {active === 'vendors' && <Vendors refreshKey={refreshKey} canDelete={isSuperAdmin} />}
               {active === 'assets' && <Assets refreshKey={refreshKey} />}
               {active === 'invoices' && <Invoices refreshKey={refreshKey} />}
+              {active === 'api-management' && <ApiManagement refreshKey={refreshKey} />}
+              {active === 'fleet-management' && <FleetManagement refreshKey={refreshKey} />}
 
               {/* Finance */}
               {active === 'payroll' && <Payroll refreshKey={refreshKey} isSuperAdmin={isSuperAdmin} />}

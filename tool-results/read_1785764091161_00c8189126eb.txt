@@ -1,0 +1,447 @@
+     1→   727→      </section>
+     2→   728→
+     3→   729→      {/* ══════════════════════════════════════════════════════════════════════
+     4→   730→          SERVICES — Enterprise Solutions
+     5→   731→         ══════════════════════════════════════════════════════════════════════ */}
+     6→   732→      <section id="services" className="py-20 sm:py-28 relative overflow-hidden" style={{ background: 'linear-gradient(160deg, #060a18 0%, #0c1429 50%, #101d3a 100%)' }} aria-label="Our services">
+     7→   733→        {/* Background decoration */}
+     8→   734→        <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+     9→   735→          <div className="absolute top-0 left-1/3 w-[500px] h-[500px] rounded-full opacity-[0.05] blur-[120px]" style={{ background: 'radial-gradient(circle, var(--gold, #D4AF37) 0%, transparent 70%)' }} />
+    10→   736→          <div className="absolute -bottom-20 right-1/4 w-[400px] h-[400px] rounded-full opacity-[0.06] blur-[100px]" style={{ background: 'radial-gradient(circle, #1e3a8a 0%, transparent 70%)' }} />
+    11→   737→        </div>
+    12→   738→
+    13→   739→        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    14→   740→          <div className="text-center mb-16">
+    15→   741→            <Badge className="mb-4 px-4 py-1 text-sm" style={{ background: 'rgba(212,175,55,0.1)', color: 'var(--gold, #D4AF37)', border: '1px solid rgba(212,175,55,0.2)' }}>Enterprise Solutions</Badge>
+    16→   742→            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white tracking-tight">
+    17→   743→              Comprehensive
+    18→   744→              <span className="bg-clip-text text-transparent" style={{ backgroundImage: 'linear-gradient(135deg, var(--gold, #D4AF37), #E8C96A)' }}> Business Services </span>
+    19→   745→              by HP Enterprise
+    20→   746→            </h2>
+    21→   747→            <p className="mt-4 text-gray-400 max-w-2xl mx-auto text-lg">
+    22→   748→              From manpower supply to safety consultancy — end-to-end workforce solutions for every industry.
+    23→   749→            </p>
+    24→   750→          </div>
+    25→   751→          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+    26→   752→            {SERVICES.map((service, i) => {
+    27→   753→              const Icon = SERVICE_ICONS[i] || Settings
+    28→   754→              return (
+    29→   755→                <div
+    30→   756→                  key={i}
+    31→   757→                  className="group p-5 rounded-2xl transition-all duration-300 hover:-translate-y-1 cursor-default"
+    32→   758→                  style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
+    33→   759→                  onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.07)'; e.currentTarget.style.borderColor = 'rgba(212,175,55,0.2)' }}
+    34→   760→                  onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)' }}
+    35→   761→                >
+    36→   762→                  <div className="flex items-start gap-4">
+    37→   763→                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg" style={{ background: 'rgba(212,175,55,0.1)' }}>
+    38→   764→                      <Icon className="h-5 w-5" style={{ color: 'var(--gold, #D4AF37)' }} />
+    39→   765→                    </div>
+    40→   766→                    <h3 className="text-sm font-semibold text-gray-200 group-hover:text-white transition-colors leading-snug">
+    41→   767→                      {service}
+    42→   768→                    </h3>
+    43→   769→                  </div>
+    44→   770→                </div>
+    45→   771→              )
+    46→   772→            })}
+    47→   773→          </div>
+    48→   774→        </div>
+    49→   775→      </section>
+    50→   776→
+    51→   777→      {/* ══════════════════════════════════════════════════════════════════════
+    52→   778→          PRICING
+    53→   779→         ══════════════════════════════════════════════════════════════════════ */}
+    54→   780→      <section id="pricing" className="py-20 sm:py-28 bg-white" aria-label="Pricing plans">
+    55→   781→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    56→   782→          <div className="text-center mb-16">
+    57→   783→            <Badge className="mb-4 px-4 py-1 text-sm" style={{ background: 'rgba(212,175,55,0.08)', color: 'var(--gold, #D4AF37)', border: '1px solid rgba(212,175,55,0.15)' }}>Pricing</Badge>
+    58→   784→            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-gray-900 tracking-tight">
+    59→   785→              Simple, Transparent
+    60→   786→              <span className="bg-clip-text text-transparent" style={{ backgroundImage: 'linear-gradient(135deg, var(--navy, #002B5C), var(--navy-light, #0A4488))' }}> Pricing </span>
+    61→   787→            </h2>
+    62→   788→            <p className="mt-4 text-gray-500 max-w-2xl mx-auto text-lg">
+    63→   789→              Start free. Scale as you grow. All plans include GST invoices and professional support.
+    64→   790→            </p>
+    65→   791→          </div>
+    66→   792→          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 items-start">
+    67→   793→            {PRICING_PLANS.map((plan, i) => (
+    68→   794→              <div
+    69→   795→                key={i}
+    70→   796→                className={cn(
+    71→   797→                  'rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl',
+    72→   798→                  plan.popular
+    73→   799→                    ? 'relative bg-gradient-to-b from-[var(--navy,#002B5C)] to-[var(--navy-light,#0A4488)] text-white shadow-2xl shadow-[var(--navy,#002B5C)]/20 scale-[1.03] ring-2 ring-[var(--gold,#D4AF37)]/30'
+    74→   800→                    : 'bg-white border border-gray-200 hover:border-gray-300',
+    75→   801→                )}
+    76→   802→              >
+    77→   803→                {plan.popular && (
+    78→   804→                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider" style={{ background: 'linear-gradient(135deg, var(--gold, #D4AF37), #E8C96A)', color: 'var(--navy, #002B5C)' }}>
+    79→   805→                    Most Popular
+    80→   806→                  </div>
+    81→   807→                )}
+    82→   808→                <h3 className={cn('text-lg font-bold', plan.popular ? 'text-white' : 'text-gray-900')}>{plan.name}</h3>
+    83→   809→                <p className={cn('text-sm mt-1', plan.popular ? 'text-gray-300' : 'text-gray-500')}>{plan.description}</p>
+    84→   810→                <div className="mt-5 mb-6">
+    85→   811→                  <span className={cn('text-4xl font-extrabold', plan.popular ? 'text-white' : 'text-gray-900')}>{plan.price}</span>
+    86→   812→                  {plan.period && <span className={cn('text-sm ml-1', plan.popular ? 'text-gray-300' : 'text-gray-400')}>{plan.period}</span>}
+    87→   813→                </div>
+    88→   814→                <ul className="space-y-2.5 mb-8">
+    89→   815→                  {plan.features.map((f, j) => (
+    90→   816→                    <li key={j} className="flex items-start gap-2.5 text-sm">
+    91→   817→                      <Check className={cn('h-4 w-4 mt-0.5 shrink-0', plan.popular ? 'text-[var(--gold,#D4AF37)]' : 'text-emerald-500')} />
+    92→   818→                      <span className={plan.popular ? 'text-gray-200' : 'text-gray-600'}>{f}</span>
+    93→   819→                    </li>
+    94→   820→                  ))}
+    95→   821→                </ul>
+    96→   822→                <Button
+    97→   823→                  className={cn(
+    98→   824→                    'w-full h-10 font-semibold rounded-lg',
+    99→   825→                    plan.popular
+   100→   826→                      ? 'text-white'
+   101→   827→                      : 'border-gray-200 text-gray-700 hover:border-[var(--navy,#002B5C)] hover:text-[var(--navy,#002B5C)]',
+   102→   828→                  )}
+   103→   829→                  style={plan.popular ? { background: 'linear-gradient(135deg, var(--gold, #D4AF37), #E8C96A)', color: 'var(--navy, #002B5C)' } : undefined}
+   104→   830→                  variant={plan.popular ? 'default' : 'outline'}
+   105→   831→                  onClick={() => setView('subscribe')}
+   106→   832→                >
+   107→   833→                  {plan.price === '₹0' ? 'Get Started Free' : plan.price === 'Custom' ? 'Contact Sales' : 'Get Started'}
+   108→   834→                  <ArrowRight className="ml-2 h-3.5 w-3.5" />
+   109→   835→                </Button>
+   110→   836→              </div>
+   111→   837→            ))}
+   112→   838→          </div>
+   113→   839→        </div>
+   114→   840→      </section>
+   115→   841→
+   116→   842→      {/* ══════════════════════════════════════════════════════════════════════
+   117→   843→          TRUST & COMPLIANCE
+   118→   844→         ══════════════════════════════════════════════════════════════════════ */}
+   119→   845→      <section id="trust" className="py-20 sm:py-28 bg-gray-50" aria-label="Trust and compliance">
+   120→   846→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+   121→   847→          <div className="text-center mb-16">
+   122→   848→            <Badge className="mb-4 px-4 py-1 text-sm" style={{ background: 'rgba(212,175,55,0.08)', color: 'var(--gold, #D4AF37)', border: '1px solid rgba(212,175,55,0.15)' }}>Trusted & Compliant</Badge>
+   123→   849→            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-gray-900 tracking-tight">
+   124→   850→              Trust &
+   125→   851→              <span className="bg-clip-text text-transparent" style={{ backgroundImage: 'linear-gradient(135deg, var(--navy, #002B5C), var(--navy-light, #0A4488))' }}> Compliance </span>
+   126→   852→            </h2>
+   127→   853→            <p className="mt-4 text-gray-500 max-w-2xl mx-auto text-lg">
+   128→   854→              Registered, verified, and compliant — your data and business are in safe hands.
+   129→   855→            </p>
+   130→   856→          </div>
+   131→   857→          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+   132→   858→            {/* GSTIN Card */}
+   133→   859→            <div className="rounded-2xl p-8 bg-white border border-gray-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 text-center">
+   134→   860→              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl" style={{ background: 'linear-gradient(135deg, var(--navy, #002B5C), var(--navy-light, #0A4488))' }}>
+   135→   861→                <ShieldCheck className="h-8 w-8 text-[var(--gold,#D4AF37)]" />
+   136→   862→              </div>
+   137→   863→              <h3 className="text-lg font-bold text-gray-900">GST Registered</h3>
+   138→   864→              <p className="mt-2 text-sm text-gray-500">GSTIN</p>
+   139→   865→              <p className="mt-1 text-base font-mono font-bold text-gray-900 tracking-wide">{BRAND.gstin}</p>
+   140→   866→            </div>
+   141→   867→            {/* UDYAM Card */}
+   142→   868→            <div className="rounded-2xl p-8 bg-white border border-gray-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 text-center">
+   143→   869→              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl" style={{ background: 'linear-gradient(135deg, var(--navy, #002B5C), var(--navy-light, #0A4488))' }}>
+   144→   870→                <Award className="h-8 w-8 text-[var(--gold,#D4AF37)]" />
+   145→   871→              </div>
+   146→   872→              <h3 className="text-lg font-bold text-gray-900">UDYAM Registered</h3>
+   147→   873→              <p className="mt-2 text-sm text-gray-500">MSME Registration</p>
+   148→   874→              <p className="mt-1 text-base font-mono font-bold text-gray-900 tracking-wide">{BRAND.udyam}</p>
+   149→   875→            </div>
+   150→   876→            {/* PAN Card */}
+   151→   877→            <div className="rounded-2xl p-8 bg-white border border-gray-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 text-center">
+   152→   878→              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl" style={{ background: 'linear-gradient(135deg, var(--navy, #002B5C), var(--navy-light, #0A4488))' }}>
+   153→   879→                <FileText className="h-8 w-8 text-[var(--gold,#D4AF37)]" />
+   154→   880→              </div>
+   155→   881→              <h3 className="text-lg font-bold text-gray-900">PAN Verified</h3>
+   156→   882→              <p className="mt-2 text-sm text-gray-500">Permanent Account Number</p>
+   157→   883→              <p className="mt-1 text-base font-mono font-bold text-gray-900 tracking-wide">{BRAND.pan}</p>
+   158→   884→            </div>
+   159→   885→          </div>
+   160→   886→        </div>
+   161→   887→      </section>
+   162→   888→
+   163→   889→      {/* ══════════════════════════════════════════════════════════════════════
+   164→   890→          PORTAL ACCESS
+   165→   891→         ══════════════════════════════════════════════════════════════════════ */}
+   166→   892→      <section id="portal" className="py-20 sm:py-28 bg-white" aria-label="Portal access">
+   167→   893→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+   168→   894→          <div className="text-center mb-16">
+   169→   895→            <Badge className="mb-4 px-4 py-1 text-sm" style={{ background: 'rgba(212,175,55,0.08)', color: 'var(--gold, #D4AF37)', border: '1px solid rgba(212,175,55,0.15)' }}>Secure Access</Badge>
+   170→   896→            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-gray-900 tracking-tight">
+   171→   897→              Choose Your
+   172→   898→              <span className="bg-clip-text text-transparent" style={{ backgroundImage: 'linear-gradient(135deg, var(--navy, #002B5C), var(--navy-light, #0A4488))' }}> Portal </span>
+   173→   899→            </h2>
+   174→   900→            <p className="mt-4 text-gray-500 max-w-2xl mx-auto text-lg">
+   175→   901→              Sign in to your dedicated portal and manage operations seamlessly.
+   176→   902→            </p>
+   177→   903→          </div>
+   178→   904→          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+   179→   905→            {PORTALS.map((portal) => {
+   180→   906→              const Icon = portal.icon
+   181→   907→              return (
+   182→   908→                <div
+   183→   909→                  key={portal.id}
+   184→   910→                  className="group rounded-2xl p-6 bg-gray-50/80 border border-gray-100 hover:bg-white hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer"
+   185→   911→                  onClick={() => setView(portal.id)}
+   186→   912→                >
+   187→   913→                  <div className="flex items-center gap-3 mb-4">
+   188→   914→                    <div className="flex h-12 w-12 items-center justify-center rounded-xl" style={{ background: 'linear-gradient(135deg, var(--navy, #002B5C), var(--navy-light, #0A4488))' }}>
+   189→   915→                      <Icon className="h-6 w-6 text-[var(--gold,#D4AF37)]" />
+   190→   916→                    </div>
+   191→   917→                    <div>
+   192→   918→                      <h3 className="text-lg font-bold text-gray-900">{portal.title}</h3>
+   193→   919→                      <p className="text-sm text-gray-500">{portal.description}</p>
+   194→   920→                    </div>
+   195→   921→                  </div>
+   196→   922→                  <ul className="space-y-2 mb-6">
+   197→   923→                    {portal.features.map((f, i) => (
+   198→   924→                      <li key={i} className="flex items-center gap-2 text-sm text-gray-600">
+   199→   925→                        <Check className="h-3.5 w-3.5 shrink-0 text-emerald-500" />
+   200→   926→                        {f}
+   201→   927→                      </li>
+   202→   928→                    ))}
+   203→   929→                  </ul>
+   204→   930→                  <Button
+   205→   931→                    className="w-full h-10 font-semibold rounded-lg text-white"
+   206→   932→                    style={{ background: 'linear-gradient(135deg, var(--navy, #002B5C), var(--navy-light, #0A4488))' }}
+   207→   933→                    onClick={(e) => { e.stopPropagation(); setView(portal.id) }}
+   208→   934→                  >
+   209→   935→                    <Lock className="mr-2 h-4 w-4" />
+   210→   936→                    Sign In
+   211→   937→                    <ArrowRight className="ml-auto h-3.5 w-3.5" />
+   212→   938→                  </Button>
+   213→   939→                </div>
+   214→   940→              )
+   215→   941→            })}
+   216→   942→          </div>
+   217→   943→          <div className="text-center mt-6">
+   218→   944→            <button onClick={() => setView('register')} className="text-sm text-gray-400 hover:text-[var(--navy,#002B5C)] transition-colors underline-offset-4 hover:underline">
+   219→   945→              New here? Create an account →
+   220→   946→            </button>
+   221→   947→          </div>
+   222→   948→        </div>
+   223→   949→      </section>
+   224→   950→
+   225→   951→      {/* ══════════════════════════════════════════════════════════════════════
+   226→   952→          CONTACT
+   227→   953→         ══════════════════════════════════════════════════════════════════════ */}
+   228→   954→      <section id="contact" className="py-20 sm:py-28 relative overflow-hidden" style={{ background: 'linear-gradient(160deg, #060a18 0%, #0c1429 50%, #101d3a 100%)' }} aria-label="Contact information">
+   229→   955→        <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+   230→   956→          <div className="absolute -bottom-32 -left-32 w-[500px] h-[500px] rounded-full opacity-[0.05] blur-[120px]" style={{ background: 'radial-gradient(circle, var(--gold, #D4AF37) 0%, transparent 70%)' }} />
+   231→   957→        </div>
+   232→   958→        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+   233→   959→          <div className="text-center mb-16">
+   234→   960→            <Badge className="mb-4 px-4 py-1 text-sm" style={{ background: 'rgba(212,175,55,0.1)', color: 'var(--gold, #D4AF37)', border: '1px solid rgba(212,175,55,0.2)' }}>Get in Touch</Badge>
+   235→   961→            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white tracking-tight">
+   236→   962→              Let&apos;s Build Something
+   237→   963→              <span className="bg-clip-text text-transparent" style={{ backgroundImage: 'linear-gradient(135deg, var(--gold, #D4AF37), #E8C96A)' }}> Great Together </span>
+   238→   964→            </h2>
+   239→   965→            <p className="mt-4 text-gray-400 max-w-2xl mx-auto text-lg">
+   240→   966→              Reach out for workforce solutions, partnerships, or support.
+   241→   967→            </p>
+   242→   968→          </div>
+   243→   969→          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+   244→   970→            {/* Phone Cards */}
+   245→   971→            <a href={"tel:" + BRAND.phone.replace(/\s/g, '')} className="group p-6 rounded-2xl transition-all duration-300 hover:-translate-y-1" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+   246→   972→              <div className="flex h-12 w-12 items-center justify-center rounded-xl mb-4" style={{ background: 'rgba(212,175,55,0.1)' }}>
+   247→   973→                <Phone className="h-6 w-6 text-[var(--gold,#D4AF37)]" />
+   248→   974→              </div>
+   249→   975→              <h3 className="text-sm font-medium text-gray-400 mb-1">Business Phone</h3>
+   250→   976→              <p className="text-lg font-bold text-white group-hover:text-[var(--gold,#D4AF37)] transition-colors">{BRAND.phone}</p>
+   251→   977→            </a>
+   252→   978→            <a href={"tel:" + BRAND.hrPhone.replace(/\s/g, '')} className="group p-6 rounded-2xl transition-all duration-300 hover:-translate-y-1" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+   253→   979→              <div className="flex h-12 w-12 items-center justify-center rounded-xl mb-4" style={{ background: 'rgba(212,175,55,0.1)' }}>
+   254→   980→                <Headphones className="h-6 w-6 text-[var(--gold,#D4AF37)]" />
+   255→   981→              </div>
+   256→   982→              <h3 className="text-sm font-medium text-gray-400 mb-1">HR Contact</h3>
+   257→   983→              <p className="text-lg font-bold text-white group-hover:text-[var(--gold,#D4AF37)] transition-colors">{BRAND.hrPhone}</p>
+   258→   984→            </a>
+   259→   985→            <a href={"mailto:" + BRAND.email} className="group p-6 rounded-2xl transition-all duration-300 hover:-translate-y-1" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+   260→   986→              <div className="flex h-12 w-12 items-center justify-center rounded-xl mb-4" style={{ background: 'rgba(212,175,55,0.1)' }}>
+   261→   987→                <Mail className="h-6 w-6 text-[var(--gold,#D4AF37)]" />
+   262→   988→              </div>
+   263→   989→              <h3 className="text-sm font-medium text-gray-400 mb-1">Email</h3>
+   264→   990→              <p className="text-base font-bold text-white group-hover:text-[var(--gold,#D4AF37)] transition-colors break-all">{BRAND.email}</p>
+   265→   991→            </a>
+   266→   992→          </div>
+   267→   993→
+   268→   994→          {/* Offices + CTA row */}
+   269→   995→          <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+   270→   996→            {/* Head Office */}
+   271→   997→            <div className="p-6 rounded-2xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+   272→   998→              <div className="flex h-12 w-12 items-center justify-center rounded-xl mb-4" style={{ background: 'rgba(212,175,55,0.1)' }}>
+   273→   999→                <MapPin className="h-6 w-6 text-[var(--gold,#D4AF37)]" />
+   274→  1000→              </div>
+   275→  1001→              <h3 className="text-sm font-semibold text-white mb-2">Head Office</h3>
+   276→  1002→              <p className="text-sm text-gray-400 leading-relaxed">{BRAND.headOffice.full}</p>
+   277→  1003→            </div>
+   278→  1004→            {/* Branch Office */}
+   279→  1005→            <div className="p-6 rounded-2xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+   280→  1006→              <div className="flex h-12 w-12 items-center justify-center rounded-xl mb-4" style={{ background: 'rgba(212,175,55,0.1)' }}>
+   281→  1007→                <MapPin className="h-6 w-6 text-[var(--gold,#D4AF37)]" />
+   282→  1008→              </div>
+   283→  1009→              <h3 className="text-sm font-semibold text-white mb-2">Branch Office</h3>
+   284→  1010→              <p className="text-sm text-gray-400 leading-relaxed">{BRAND.branchOffice.full}</p>
+   285→  1011→            </div>
+   286→  1012→            {/* CTA Card */}
+   287→  1013→            <div className="rounded-2xl p-6 flex flex-col justify-center" style={{ background: 'linear-gradient(135deg, var(--navy, #002B5C), var(--navy-light, #0A4488))' }}>
+   288→  1014→              <h3 className="text-xl font-bold text-white mb-3">Ready to Transform Your Workforce?</h3>
+   289→  1015→              <p className="text-gray-300 text-sm mb-5">Get a free consultation and see how HPHRMS can streamline your HR operations.</p>
+   290→  1016→              <div className="space-y-2.5">
+   291→  1017→                <a href={SOCIAL.whatsapp} target="_blank" rel="noopener noreferrer">
+   292→  1018→                  <Button className="w-full h-10 font-semibold" style={{ background: 'linear-gradient(135deg, var(--gold, #D4AF37), #E8C96A)', color: 'var(--navy, #002B5C)' }}>
+   293→  1019→                    Chat on WhatsApp
+   294→  1020→                    <ExternalLink className="ml-2 h-3.5 w-3.5" />
+   295→  1021→                  </Button>
+   296→  1022→                </a>
+   297→  1023→                <a href={SOCIAL.recruitment} target="_blank" rel="noopener noreferrer">
+   298→  1024→                  <Button variant="outline" className="w-full h-10 font-medium border-white/20 text-white hover:bg-white/10 hover:text-white">
+   299→  1025→                    Recruitment Form
+   300→  1026→                    <ExternalLink className="ml-2 h-3.5 w-3.5" />
+   301→  1027→                  </Button>
+   302→  1028→                </a>
+   303→  1029→              </div>
+   304→  1030→            </div>
+   305→  1031→          </div>
+   306→  1032→        </div>
+   307→  1033→      </section>
+   308→  1034→
+   309→  1035→      {/* ══════════════════════════════════════════════════════════════════════
+   310→  1036→          FOOTER
+   311→  1037→         ══════════════════════════════════════════════════════════════════════ */}
+   312→  1038→      <footer className="bg-[#060a18] border-t border-white/5" role="contentinfo">
+   313→  1039→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+   314→  1040→          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-12">
+   315→  1041→            {/* Column 1 — Brand */}
+   316→  1042→            <div>
+   317→  1043→              <div className="flex items-center gap-2.5 mb-4">
+   318→  1044→                <BrandLogo size={32} />
+   319→  1045→                <div className="flex flex-col">
+   320→  1046→                  <span className="font-extrabold text-[15px] text-white tracking-tight">HPHRMS</span>
+   321→  1047→                  <span className="text-[10px] font-medium tracking-widest uppercase text-gray-500">by HP Enterprise</span>
+   322→  1048→                </div>
+   323→  1049→              </div>
+   324→  1050→              <p className="text-sm text-gray-400 mb-4 leading-relaxed">{BRAND.tagline}</p>
+   325→  1051→              <a href={BRAND.website} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-[var(--gold,#D4AF37)] transition-colors">
+   326→  1052→                <Globe2 className="h-4 w-4" />
+   327→  1053→                hpserve.site
+   328→  1054→                <ExternalLink className="h-3 w-3" />
+   329→  1055→              </a>
+   330→  1056→            </div>
+   331→  1057→
+   332→  1058→            {/* Column 2 — Quick Links */}
+   333→  1059→            <div>
+   334→  1060→              <h4 className="text-xs font-semibold text-white uppercase tracking-widest mb-5">Quick Links</h4>
+   335→  1061→              <ul className="space-y-3">
+   336→  1062→                {[
+   337→  1063→                  { id: 'features', label: 'Features' },
+   338→  1064→                  { id: 'pricing', label: 'Pricing' },
+   339→  1065→                  { id: 'services', label: 'Services' },
+   340→  1066→                  { id: 'trust', label: 'Trust & Compliance' },
+   341→  1067→                  { id: 'contact', label: 'Contact Us' },
+   342→  1068→                ].map((link) => (
+   343→  1069→                  <li key={link.id}>
+   344→  1070→                    <button onClick={() => scrollTo(link.id)} className="text-sm text-gray-400 hover:text-[var(--gold,#D4AF37)] transition-colors inline-flex items-center gap-1.5">
+   345→  1071→                      <ChevronRight className="h-3 w-3" />{link.label}
+   346→  1072→                    </button>
+   347→  1073→                  </li>
+   348→  1074→                ))}
+   349→  1075→                <li>
+   350→  1076→                  <a href={SOCIAL.recruitment} target="_blank" rel="noopener noreferrer" className="text-sm text-gray-400 hover:text-[var(--gold,#D4AF37)] transition-colors inline-flex items-center gap-1.5">
+   351→  1077→                    <ChevronRight className="h-3 w-3" />Recruitment Form
+   352→  1078→                  </a>
+   353→  1079→                </li>
+   354→  1080→              </ul>
+   355→  1081→            </div>
+   356→  1082→
+   357→  1083→            {/* Column 3 — Contact */}
+   358→  1084→            <div>
+   359→  1085→              <h4 className="text-xs font-semibold text-white uppercase tracking-widest mb-5">Contact</h4>
+   360→  1086→              <ul className="space-y-3">
+   361→  1087→                <li className="flex items-start gap-2.5 text-sm text-gray-400">
+   362→  1088→                  <Phone className="h-4 w-4 mt-0.5 shrink-0 text-[var(--gold,#D4AF37)]" />
+   363→  1089→                  <span>{BRAND.phone}</span>
+   364→  1090→                </li>
+   365→  1091→                <li className="flex items-start gap-2.5 text-sm text-gray-400">
+   366→  1092→                  <Headphones className="h-4 w-4 mt-0.5 shrink-0 text-[var(--gold,#D4AF37)]" />
+   367→  1093→                  <span>{BRAND.hrPhone}</span>
+   368→  1094→                </li>
+   369→  1095→                <li className="flex items-start gap-2.5 text-sm text-gray-400">
+   370→  1096→                  <Mail className="h-4 w-4 mt-0.5 shrink-0 text-[var(--gold,#D4AF37)]" />
+   371→  1097→                  <span className="break-all">{BRAND.email}</span>
+   372→  1098→                </li>
+   373→  1099→                <li className="flex items-start gap-2.5 text-sm text-gray-400">
+   374→  1100→                  <MapPin className="h-4 w-4 mt-0.5 shrink-0 text-[var(--gold,#D4AF37)]" />
+   375→  1101→                  <span className="leading-relaxed">{BRAND.headOffice.full}</span>
+   376→  1102→                </li>
+   377→  1103→                <li className="flex items-start gap-2.5 text-sm text-gray-400">
+   378→  1104→                  <MapPin className="h-4 w-4 mt-0.5 shrink-0 text-[var(--gold,#D4AF37)]" />
+   379→  1105→                  <span className="leading-relaxed">{BRAND.branchOffice.full}</span>
+   380→  1106→                </li>
+   381→  1107→              </ul>
+   382→  1108→            </div>
+   383→  1109→
+   384→  1110→            {/* Column 4 — Social */}
+   385→  1111→            <div>
+   386→  1112→              <h4 className="text-xs font-semibold text-white uppercase tracking-widest mb-5">Follow Us</h4>
+   387→  1113→              <div className="flex flex-wrap gap-2.5">
+   388→  1114→                {SOCIAL_ITEMS.map((s) => (
+   389→  1115→                  <a
+   390→  1116→                    key={s.label}
+   391→  1117→                    href={s.href}
+   392→  1118→                    target="_blank"
+   393→  1119→                    rel="noopener noreferrer"
+   394→  1120→                    className="group flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 transition-all duration-200 hover:scale-110 hover:shadow-lg"
+   395→  1121→                    style={{ color: s.color }}
+   396→  1122→                    onMouseEnter={(e) => {
+   397→  1123→                      e.currentTarget.style.background = s.gradient || s.color
+   398→  1124→                      e.currentTarget.style.color = '#fff'
+   399→  1125→                      e.currentTarget.style.borderColor = 'transparent'
+   400→  1126→                      e.currentTarget.style.boxShadow = `0 4px 14px ${s.color}40`
+   401→  1127→                    }}
+   402→  1128→                    onMouseLeave={(e) => {
+   403→  1129→                      e.currentTarget.style.background = 'transparent'
+   404→  1130→                      e.currentTarget.style.color = s.color
+   405→  1131→                      e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'
+   406→  1132→                      e.currentTarget.style.boxShadow = 'none'
+   407→  1133→                    }}
+   408→  1134→                    aria-label={s.label}
+   409→  1135→                  >
+   410→  1136→                    <s.icon className="h-4 w-4" />
+   411→  1137→                  </a>
+   412→  1138→                ))}
+   413→  1139→              </div>
+   414→  1140→              {/* Legal badges in footer */}
+   415→  1141→              <div className="mt-6 space-y-2">
+   416→  1142→                <div className="flex items-center gap-2 text-xs text-gray-500">
+   417→  1143→                  <ShieldCheck className="h-3.5 w-3.5 text-[var(--gold,#D4AF37)]" />
+   418→  1144→                  GSTIN: {BRAND.gstin}
+   419→  1145→                </div>
+   420→  1146→                <div className="flex items-center gap-2 text-xs text-gray-500">
+   421→  1147→                  <Award className="h-3.5 w-3.5 text-[var(--gold,#D4AF37)]" />
+   422→  1148→                  UDYAM: {BRAND.udyam}
+   423→  1149→                </div>
+   424→  1150→                <div className="flex items-center gap-2 text-xs text-gray-500">
+   425→  1151→                  <FileText className="h-3.5 w-3.5 text-[var(--gold,#D4AF37)]" />
+   426→  1152→                  PAN: {BRAND.pan}
+   427→  1153→                </div>
+   428→  1154→              </div>
+   429→  1155→            </div>
+   430→  1156→          </div>
+   431→  1157→
+   432→  1158→          {/* Bottom Bar */}
+   433→  1159→          <div className="mt-12 pt-8 border-t border-white/5">
+   434→  1160→            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+   435→  1161→              <p className="text-xs text-gray-500">© {new Date().getFullYear()} HP ENTERPRISE. All rights reserved.</p>
+   436→  1162→              <div className="flex items-center gap-2 text-xs text-gray-500">
+   437→  1163→                <Bot className="h-3.5 w-3.5 text-[var(--gold,#D4AF37)]" />
+   438→  1164→                Powered by <strong className="text-gray-400">HPHRMS AI</strong>
+   439→  1165→              </div>
+   440→  1166→            </div>
+   441→  1167→          </div>
+   442→  1168→        </div>
+   443→  1169→      </footer>
+   444→  1170→    </div>
+   445→  1171→  )
+   446→  1172→}
+   447→  1173→

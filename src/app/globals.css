@@ -173,3 +173,15 @@
   50% { box-shadow: 0 0 0 12px rgba(212,175,55,0); }
 }
 .animate-hpai-pulse { animation: hpai-pulse 2s ease-in-out infinite; }
+
+/* Marquee animation for services */
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(calc(-50% - 0.75rem)); }
+}
+.animate-marquee {
+  animation: marquee 40s linear infinite;
+}
+.animate-marquee:hover {
+  animation-play-state: paused;
+}

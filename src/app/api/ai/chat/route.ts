@@ -40,30 +40,105 @@ Services: HR Management, Recruitment & Talent Acquisition, Manpower Supply, EHS 
 
 Keep responses concise (2-4 sentences max unless asked for details). Be friendly but professional. Use bullet points for lists. If unsure, advise the user to contact HR at hpenterpriseofficial11@gmail.com or call +91 73377 92436.`
 
-/* ─── Z.ai SDK (primary — always available locally, with retry) ─── */
-async function callZai(messages: { role: string; content: string }[]): Promise<string> {
-  const ZAI = (await import('z-ai-web-dev-sdk')).default
-  // Retry up to 2 times with delay
-  for (let attempt = 0; attempt < 2; attempt++) {
-    try {
-      const zai = await ZAI.create()
-      const completion = await zai.chat.completions.create({
-        messages,
-        thinking: { type: 'disabled' },
-      })
-      const text = completion.choices[0]?.message?.content
-      if (text) return text
-      throw new Error('Empty response from Z.ai')
-    } catch (e) {
-      console.error(`[HPAI] Z.ai attempt ${attempt + 1} failed:`, (e as Error)?.message)
-      if (attempt === 1) throw e
-      await new Promise((r) => setTimeout(r, 1000))
-    }
+/** Graceful fallback when all AI providers are down — users should never see a raw error. */
+function getFallbackResponse(userMessage: string): string {
+  const msg = (userMessage || '').toLowerCase().trim()
+
+  // Greeting patterns
+  if (/^(hi|hello|hey|good morning|good afternoon|good evening|howdy|namaste|namaskara)\b/.test(msg)) {
+    return 'Hello! 👋 Welcome to HPHRMS. I\'m HPAI, your HR assistant. How can I help you today? You can ask me about leave, payroll, attendance, policies, or any HR-related queries.'
   }
-  throw new Error('Z.ai SDK failed after retries')
+
+  // Leave related
+  if (/leave|holiday|vacation|time.?off|casual.?leave|sick.?leave|earned.?leave|cl|sl|el|pl/.test(msg)) {
+    return 'For leave-related queries, please reach out to HR at **+91 73377 92436** or email **hpenterpriseofficial11@gmail.com**. You can also check your leave balance and apply through the HPHRMS portal. Would you like information about a specific leave type?'
+  }
+
+  // Payroll related
+  if (/salary|pay|payroll|pf|esi|tax|payslip|wage|compensation|ctc|deduction/.test(msg)) {
+    return 'For payroll queries (salary breakdown, PF, ESI, professional tax), please contact HR at **+91 73377 92436** or email **hpenterpriseofficial11@gmail.com**. Salary slips are available on the HPHRMS portal under the ESS section.'
+  }
+
+  // Attendance related
+  if (/attendance|punch|late|overtime|shift|roster|check.?in|check.?out|biometric/.test(msg)) {
+    return 'For attendance-related queries (punch-in/out timing, late grace, overtime, shifts), please contact HR at **+91 73377 92436** or check the HPHRMS portal. Your attendance records are available in the Attendance section.'
+  }
+
+  // Document related
+  if (/document|letter|certificate|offer|id.?card|experience|salary.?slip/.test(msg)) {
+    return 'For document requests (offer letters, ID cards, salary slips, experience letters), please reach out to HR at **hpenterpriseofficial11@gmail.com** or call **+91 73377 92436**. Many documents are also available for download from the HPHRMS portal.'
+  }
+
+  // Generic helpful fallback
+  return 'I\'m currently experiencing high demand, but I\'m still here to help! For immediate assistance, please contact our HR team:\n\n- 📧 **Email:** hpenterpriseofficial11@gmail.com\n- 📞 **Phone:** +91 73377 92436\n- 💬 **WhatsApp:** [Chat with us](https://wa.me/message/65PDYODAFJZAN1)\n\nYou can also explore the HPHRMS portal at [hphrms.com](https://hphrms.com) for self-service options. Please try asking me again in a moment!'
 }
 
-/* ─── Gemini direct API (fallback for Vercel) ─── */
+/** Detailed error logging — avoids silently swallowing unknown error shapes */
+function logError(label: string, e: unknown) {
+  if (e instanceof Error) {
+    console.error(`[HPAI] ${label}:`, e.message, '\n', e.stack)
+  } else {
+    console.error(`[HPAI] ${label}:`, JSON.stringify(e, null, 2))
+  }
+}
+
+/** Add a timeout to any promise */
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms),
+    ),
+  ])
+}
+
+/* ─── Z.ai SDK (primary — always available locally, with retry) ─── */
+async function callZai(messages: { role: string; content: string }[]): Promise<string> {
+  let ZAI: any
+  try {
+    const mod = await import('z-ai-web-dev-sdk')
+    ZAI = (mod as any).default || mod
+  } catch (importErr) {
+    logError('Z.ai SDK import failed', importErr)
+    throw new Error('Z.ai SDK could not be imported')
+  }
+
+  if (typeof ZAI?.create !== 'function') {
+    throw new Error('Z.ai SDK: create() function not found on module')
+  }
+
+  // Retry up to 3 times with exponential backoff + jitter
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const zai = await withTimeout(ZAI.create(), 10000, 'ZAI.create()')
+
+      if (!zai?.chat?.completions?.create) {
+        throw new Error('Z.ai SDK: chat.completions.create not available on instance')
+      }
+
+      const completion = await withTimeout(
+        zai.chat.completions.create({
+          messages,
+        }),
+        30000,
+        'Z.ai chat completion',
+      )
+
+      const text = completion?.choices?.[0]?.message?.content
+      if (text && text.trim().length > 0) return text.trim()
+      throw new Error('Empty response from Z.ai')
+    } catch (e) {
+      logError(`Z.ai attempt ${attempt + 1}/3 failed`, e)
+      if (attempt === 2) throw e
+      // Exponential backoff: 1s, 2s
+      const delay = Math.min(1000 * Math.pow(2, attempt), 3000) + Math.random() * 500
+      await new Promise((r) => setTimeout(r, delay))
+    }
+  }
+  throw new Error('Z.ai SDK failed after all retries')
+}
+
+/* ─── Gemini direct API (fallback) ─── */
 async function callGemini(messages: { role: string; content: string }[]): Promise<string> {
   const apiKey = process.env.GEMINI_API_KEY
   if (!apiKey) throw new Error('GEMINI_API_KEY not configured')
@@ -84,17 +159,15 @@ async function callGemini(messages: { role: string; content: string }[]): Promis
     body.systemInstruction = { parts: [{ text: systemInstruction.content }] }
   }
 
-  // Try multiple model names
-  const models = [
-    'gemini-2.0-flash',
-    'gemini-1.5-flash',
-    'gemini-1.5-pro',
-    'gemini-pro',
-  ]
+  const models = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro']
 
   for (const model of models) {
     try {
-      const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + apiKey
+      const url =
+        'https://generativelanguage.googleapis.com/v1beta/models/' +
+        model +
+        ':generateContent?key=' +
+        apiKey
       const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -109,7 +182,8 @@ async function callGemini(messages: { role: string; content: string }[]): Promis
       const data = await res.json()
       const text = data?.candidates?.[0]?.content?.parts?.[0]?.text
       if (text) return text
-    } catch {
+    } catch (e) {
+      logError(`Gemini model ${model} failed`, e)
       continue
     }
   }
@@ -140,41 +214,43 @@ export async function POST(req: NextRequest) {
     }
 
     let aiResponse: string | undefined
-    let lastError: Error | undefined
+    let usedFallback = false
 
-    // Strategy 1: Z.ai SDK (always available locally)
+    // Strategy 1: Z.ai SDK (primary)
     try {
       aiResponse = await callZai(history)
     } catch (e) {
-      lastError = e as Error
-      console.error('[HPAI] Z.ai failed:', lastError?.message)
+      logError('Z.ai primary failed', e)
     }
 
-    // Strategy 2: Gemini direct (fallback for Vercel)
+    // Strategy 2: Gemini direct (fallback — only if API key is configured)
     if (!aiResponse && process.env.GEMINI_API_KEY) {
       try {
         aiResponse = await callGemini(history)
       } catch (e) {
-        lastError = e as Error
-        console.error('[HPAI] Gemini failed:', lastError?.message)
+        logError('Gemini fallback failed', e)
       }
     }
 
+    // Strategy 3: Graceful hardcoded fallback — users should NEVER see an error
     if (!aiResponse) {
-      console.error('[HPAI] All providers failed')
-      return NextResponse.json(
-        { error: 'AI service is temporarily unavailable. Please try again in a moment.' },
-        { status: 503 },
-      )
+      console.warn('[HPAI] All AI providers failed, using hardcoded fallback response')
+      aiResponse = getFallbackResponse(message)
+      usedFallback = true
     }
 
     // Clean up markdown fences
-    aiResponse = aiResponse.replace(/^```(?:markdown|text)?\n?/i, '').replace(/\n?```$/i, '').trim()
+    aiResponse = aiResponse
+      .replace(/^```(?:markdown|text)?\n?/i, '')
+      .replace(/\n?```$/i, '')
+      .trim()
+
     history.push({ role: 'assistant', content: aiResponse })
     conversations.set(userId, history)
-    return NextResponse.json({ response: aiResponse })
+
+    return NextResponse.json({ response: aiResponse, fallback: usedFallback || undefined })
   } catch (e: unknown) {
-    console.error('[HPAI] Unhandled error:', e)
+    logError('Unhandled error in POST handler', e)
     return NextResponse.json({ error: 'AI service unavailable' }, { status: 503 })
   }
 }
