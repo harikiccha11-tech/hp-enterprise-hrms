@@ -22,8 +22,10 @@ Keep responses concise (2-4 sentences max unless asked for details). Be friendly
 const GATEWAY_MODELS = [
   'google/gemini-2.0-flash-001',
   'google/gemini-2.0-flash',
+  'google/gemini-3.6-flash',
   'openai/gpt-4o-mini',
   'openai/gpt-4o',
+  'openai/gpt-5.4',
 ]
 
 /* ─── Vercel AI Gateway (primary — works on Vercel & everywhere) ─── */
@@ -50,14 +52,14 @@ async function callGateway(messages: { role: string; content: string }[]): Promi
       })
 
       if (res.status === 404 || res.status === 400) {
-        // Model not available, try next
-        console.warn('[HPAI] Gateway model ' + model + ' not available (' + res.status + ')')
+        const errBody = await res.text()
+        console.warn('[HPAI] Gateway model ' + model + ' failed (' + res.status + '):', errBody.slice(0, 200))
         continue
       }
 
       if (!res.ok) {
         const errBody = await res.text()
-        throw new Error('Gateway ' + res.status + ': ' + errBody.slice(0, 200))
+        throw new Error('Gateway ' + res.status + ': ' + errBody.slice(0, 300))
       }
 
       const data = await res.json()
@@ -67,12 +69,14 @@ async function callGateway(messages: { role: string; content: string }[]): Promi
       return text
     } catch (e) {
       lastErr = e as Error
-      if (lastErr.name === 'TimeoutError' || lastErr.message?.includes('404') || lastErr.message?.includes('400')) {
-        console.warn('[HPAI] Gateway model ' + model + ' failed:', lastErr.message)
+      console.warn('[HPAI] Gateway model ' + model + ' failed:', lastErr.message)
+      // Only continue on 404/400 — other errors mean the gateway itself is broken
+      const msg = lastErr.message || ''
+      if (msg.includes('404') || msg.includes('400') || msg.includes('not available') || msg.includes('not found')) {
         continue
       }
-      // Network / auth errors — don't bother trying more models
-      throw lastErr
+      // For auth/network/timeout errors, still try next model
+      continue
     }
   }
   throw lastErr || new Error('All gateway models failed')
@@ -112,7 +116,7 @@ async function callGemini(messages: { role: string; content: string }[]): Promis
   if (!res.ok) {
     const errBody = await res.text()
     console.error('[HPAI] Gemini error:', res.status, errBody)
-    throw new Error('Gemini returned ' + res.status)
+    throw new Error('Gemini returned ' + res.status + ': ' + errBody.slice(0, 200))
   }
 
   const data = await res.json()
@@ -197,7 +201,7 @@ export async function POST(req: NextRequest) {
     if (!aiResponse) {
       console.error('[HPAI] All providers failed:', lastError?.message)
       return NextResponse.json(
-        { error: 'AI service unavailable. Please try again later.' },
+        { error: 'AI service unavailable. Please try again later.', debug: lastError?.message },
         { status: 503 },
       )
     }
@@ -223,4 +227,41 @@ export async function DELETE() {
   if (!cu) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   if (cu.user.id) conversations.delete(cu.user.id)
   return NextResponse.json({ ok: true })
+}
+
+/* ─── Debug endpoint (GET) ─── */
+export async function GET() {
+  const isVercel = typeof process.env.VERCEL !== 'undefined'
+  const hasGatewayKey = !!process.env.AI_GATEWAY_API_KEY
+  const hasGeminiKey = !!process.env.GEMINI_API_KEY
+  const gatewayKeyPrefix = hasGatewayKey ? process.env.AI_GATEWAY_API_KEY!.slice(0, 8) + '...' : 'not set'
+  const geminiKeyPrefix = hasGeminiKey ? process.env.GEMINI_API_KEY!.slice(0, 6) + '...' : 'not set'
+
+  // Quick gateway test
+  let gatewayTest = 'not tested'
+  if (hasGatewayKey) {
+    try {
+      const res = await fetch('https://gateway.ai.vercel.com/v1/models', {
+        headers: { Authorization: 'Bearer ' + process.env.AI_GATEWAY_API_KEY },
+        signal: AbortSignal.timeout(10000),
+      })
+      gatewayTest = 'status ' + res.status + (res.ok ? ' (connected)' : ' (failed)')
+      if (res.ok) {
+        const data = await res.json()
+        const models = (data?.data || []).slice(0, 5).map(function (m: any) { return m.id })
+        gatewayTest += ' — models: ' + JSON.stringify(models)
+      }
+    } catch (e) {
+      gatewayTest = 'error: ' + (e as Error).message
+    }
+  }
+
+  return NextResponse.json({
+    isVercel,
+    env: {
+      AI_GATEWAY_API_KEY: gatewayKeyPrefix,
+      GEMINI_API_KEY: geminiKeyPrefix,
+    },
+    gatewayTest,
+  })
 }
