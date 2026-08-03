@@ -38,7 +38,7 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const { error, cu } = await requireRole('OWNER')
+  const { error, cu } = await requireRole('OWNER', 'SUPER_ADMIN')
   if (error) return error
   try {
     const body = await req.json()
@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
-  const { error, cu } = await requireRole('OWNER')
+  const { error, cu } = await requireRole('OWNER', 'SUPER_ADMIN')
   if (error) return error
   try {
     const { id, role } = await req.json()

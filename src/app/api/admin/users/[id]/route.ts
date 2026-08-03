@@ -8,7 +8,7 @@ export const runtime = 'nodejs'
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const cu = await getCurrentUser()
   if (!cu) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  if (cu.user.role !== 'OWNER') return NextResponse.json({ error: 'Only the Owner can reset passwords' }, { status: 403 })
+  if (!['OWNER', 'SUPER_ADMIN'].includes(cu.user.role)) return NextResponse.json({ error: 'Only Owner or Super Admin can manage users' }, { status: 403 })
   try {
     const { id } = await params
     const body = await req.json()
@@ -43,7 +43,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const cu = await getCurrentUser()
   if (!cu) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  if (cu.user.role !== 'OWNER') return NextResponse.json({ error: 'Only the Owner can delete users' }, { status: 403 })
+  if (!['OWNER', 'SUPER_ADMIN'].includes(cu.user.role)) return NextResponse.json({ error: 'Only Owner or Super Admin can delete users' }, { status: 403 })
   try {
     const { id } = await params
     const target = await db.user.findUnique({ where: { id } })

@@ -315,7 +315,7 @@ export function AdminLayout() {
 
       <nav className="flex-1 overflow-y-auto scroll-thin px-3 py-3 space-y-4" aria-label="Admin navigation">
         {navGroups.map((group) => {
-          const visibleItems = group.items.filter((it) => (!it.superAdminOnly || isSuperAdmin) && (!it.ownerOnly || isOwner))
+          const visibleItems = group.items.filter((it) => (!it.superAdminOnly || isSuperAdmin) && (!it.ownerOnly || isOwner || isSuperAdmin))
           if (visibleItems.length === 0) return null
           return (
             <div key={group.title}>
@@ -446,7 +446,7 @@ export function AdminLayout() {
               {active === 'documents' && <Documents refreshKey={refreshKey} />}
               {active === 'onboarding' && <Onboarding refreshKey={refreshKey} />}
               {active === 'offboarding' && <Offboarding refreshKey={refreshKey} />}
-              {active === 'users' && isOwner && <UserAccounts refreshKey={refreshKey} />}
+              {active === 'users' && isSuperAdmin && <UserAccounts refreshKey={refreshKey} />}
 
               {/* Recruitment */}
               {active === 'recruitment' && <Recruitment refreshKey={refreshKey} />}
@@ -481,9 +481,9 @@ export function AdminLayout() {
               {active === 'payment-gateways' && <PaymentGateways refreshKey={refreshKey} />}
               {active === 'security' && <SecurityCenter isSuperAdmin={isSuperAdmin} />}
               {active === 'system-health' && <SystemHealth />}
-              {active === 'roles' && <RoleManagement refreshKey={refreshKey} isOwner={isOwner} />}
+              {active === 'roles' && <RoleManagement refreshKey={refreshKey} isOwner={isOwner || isSuperAdmin} />}
               {active === 'audit' && <AuditLogs isSuperAdmin={isSuperAdmin} />}
-              {active === 'settings' && <SettingsModule isSuperAdmin={isSuperAdmin} isOwner={isOwner} />}
+              {active === 'settings' && <SettingsModule isSuperAdmin={isSuperAdmin} isOwner={isOwner || isSuperAdmin} />}
             </div>
           </main>
         </div>

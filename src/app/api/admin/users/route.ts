@@ -10,7 +10,7 @@ export async function GET() {
   try {
     const cu = await getCurrentUser()
     if (!cu) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    if (cu.user.role !== 'OWNER') return NextResponse.json({ error: 'Only the Owner can manage users' }, { status: 403 })
+    if (!['OWNER', 'SUPER_ADMIN'].includes(cu.user.role)) return NextResponse.json({ error: 'Only the Owner or Super Admin can manage users' }, { status: 403 })
     const users = await db.user.findMany({
       where: { role: { in: ['OWNER', 'SUPER_ADMIN', 'HR_MANAGER', 'CLIENT'] } },
       orderBy: { createdAt: 'asc' },
@@ -25,7 +25,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   const cu = await getCurrentUser()
   if (!cu) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  if (cu.user.role !== 'OWNER') return NextResponse.json({ error: 'Only the Owner can create accounts' }, { status: 403 })
+  if (!['OWNER', 'SUPER_ADMIN'].includes(cu.user.role)) return NextResponse.json({ error: 'Only the Owner or Super Admin can create accounts' }, { status: 403 })
   try {
     const body = await req.json()
     const { username, email, password, role, fullName } = body

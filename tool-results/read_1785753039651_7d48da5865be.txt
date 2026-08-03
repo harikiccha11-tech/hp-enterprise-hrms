@@ -1,0 +1,504 @@
+     1→'use client'
+     2→import { useEffect, useState, useRef } from 'react'
+     3→import { useAuth } from '@/lib/store'
+     4→import { BrandLogo } from '@/components/brand/BrandLogo'
+     5→import { Button } from '@/components/ui/button'
+     6→import { Sheet, SheetContent, SheetTitle, SheetDescription } from '@/components/ui/sheet'
+     7→import {
+     8→  DropdownMenu,
+     9→  DropdownMenuContent,
+    10→  DropdownMenuItem,
+    11→  DropdownMenuSeparator,
+    12→  DropdownMenuLabel,
+    13→  DropdownMenuTrigger,
+    14→} from '@/components/ui/dropdown-menu'
+    15→import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+    16→import { Badge } from '@/components/ui/badge'
+    17→import { Toaster } from '@/components/ui/sonner'
+    18→import { toast } from 'sonner'
+    19→import { cn } from '@/lib/utils'
+    20→import { format } from 'date-fns'
+    21→import {
+    22→  LayoutDashboard, Users, Fingerprint, CalendarDays, Wallet, Building2,
+    23→  FolderKanban, ClipboardList, ReceiptText, BarChart3, FileText, Megaphone,
+    24→  ScrollText, Settings, Bell, LogOut, Menu, X, ChevronRight, CheckCheck,
+    25→  ShieldCheck, ShieldAlert, Lock, Crown, UserCog,
+    26→  // New icons for new modules
+    27→  Network, Briefcase, MapPin, Truck, Package, UserPlus, UserMinus,
+    28→  Target, GraduationCap, CreditCard, BookOpen, Mail, BellRing,
+    29→  CreditCard as CreditCardIcon, ToggleLeft, Landmark, Shield, Activity,
+    30→  Search, Key, Globe,
+    31→} from 'lucide-react'
+    32→import { ROLE_LABELS } from '@/lib/constants'
+    33→import { t, type LangCode } from '@/lib/i18n'
+    34→import { fmtRelative, initials } from './lib'
+    35→// Existing modules
+    36→import { Dashboard } from './modules/Dashboard'
+    37→import { Employees } from './modules/Employees'
+    38→import { Attendance } from './modules/Attendance'
+    39→import { Leaves } from './modules/Leaves'
+    40→import { Payroll } from './modules/Payroll'
+    41→import { Clients } from './modules/Clients'
+    42→import { Projects } from './modules/Projects'
+    43→import { WorkOrders } from './modules/WorkOrders'
+    44→import { Invoices } from './modules/Invoices'
+    45→import { Reports } from './modules/Reports'
+    46→import { Documents } from './modules/Documents'
+    47→import { Announcements } from './modules/Announcements'
+    48→import { AuditLogs } from './modules/AuditLogs'
+    49→import { SettingsModule } from './modules/Settings'
+    50→import { UserAccounts } from './modules/UserAccounts'
+    51→// New modules - Organization
+    52→import { Departments } from './modules/Departments'
+    53→import { Designations } from './modules/Designations'
+    54→import { Branches } from './modules/Branches'
+    55→// New modules - Operations
+    56→import { Vendors } from './modules/Vendors'
+    57→import { Assets } from './modules/Assets'
+    58→// New modules - HR Lifecycle
+    59→import { Recruitment } from './modules/Recruitment'
+    60→import { Onboarding } from './modules/Onboarding'
+    61→import { Offboarding } from './modules/Offboarding'
+    62→// New modules - Performance & Learning
+    63→import { Performance } from './modules/Performance'
+    64→import { Goals } from './modules/Goals'
+    65→import { Training } from './modules/Training'
+    66→// New modules - Finance
+    67→import { Expenses } from './modules/Expenses'
+    68→// New modules - System & Config
+    69→import { KnowledgeBase } from './modules/KnowledgeBase'
+    70→import { EmailTemplates } from './modules/EmailTemplates'
+    71→import { NotificationTemplates } from './modules/NotificationTemplates'
+    72→import { SubscriptionPlans } from './modules/SubscriptionPlans'
+    73→import { FeatureFlags } from './modules/FeatureFlags'
+    74→import { PaymentGateways } from './modules/PaymentGateways'
+    75→import { SecurityCenter } from './modules/SecurityCenter'
+    76→import { SystemHealth } from './modules/SystemHealth'
+    77→import { GlobalSearch } from './modules/GlobalSearch'
+    78→import { RoleManagement } from './modules/RoleManagement'
+    79→import { HpAiChat } from '@/components/shared/HpAiChat'
+    80→import { LanguageSwitcher } from '@/components/shared/LanguageSwitcher'
+    81→
+    82→export type ModuleKey =
+    83→  // Overview
+    84→  | 'dashboard' | 'global-search'
+    85→  // Organization
+    86→  | 'departments' | 'designations' | 'branches'
+    87→  // People
+    88→  | 'employees' | 'attendance' | 'leaves' | 'documents' | 'onboarding' | 'offboarding'
+    89→  // Recruitment
+    90→  | 'recruitment'
+    91→  // Performance & Learning
+    92→  | 'performance' | 'goals' | 'training'
+    93→  // Operations
+    94→  | 'clients' | 'projects' | 'workorders' | 'vendors' | 'assets' | 'invoices'
+    95→  // Finance
+    96→  | 'payroll' | 'expenses' | 'reports'
+    97→  // Communications
+    98→  | 'announcements' | 'knowledge-base' | 'email-templates' | 'notification-templates'
+    99→  // System
+   100→  | 'subscription-plans' | 'feature-flags' | 'payment-gateways'
+   101→  | 'security' | 'system-health'
+   102→  | 'audit' | 'roles' | 'settings' | 'users'
+   103→
+   104→interface NavItem {
+   105→  key: ModuleKey
+   106→  label: string
+   107→  icon: typeof LayoutDashboard
+   108→  desc: string
+   109→  superAdminOnly?: boolean
+   110→  ownerOnly?: boolean
+   111→}
+   112→
+   113→function getNavGroups(lang: LangCode): { title: string; items: NavItem[] }[] {
+   114→  return [
+   115→    {
+   116→      title: t('nav.group.overview', lang),
+   117→      items: [
+   118→        { key: 'dashboard', label: t('nav.dashboard', lang), icon: LayoutDashboard, desc: 'Overview & analytics' },
+   119→        { key: 'global-search', label: 'Global Search', icon: Search, desc: 'Search across all modules' },
+   120→      ],
+   121→    },
+   122→    {
+   123→      title: 'Organization',
+   124→      items: [
+   125→        { key: 'departments', label: 'Departments', icon: Network, desc: 'Manage organizational departments' },
+   126→        { key: 'designations', label: 'Designations', icon: Briefcase, desc: 'Job titles & salary ranges' },
+   127→        { key: 'branches', label: 'Branches', icon: MapPin, desc: 'Office locations & branches' },
+   128→      ],
+   129→    },
+   130→    {
+   131→      title: t('nav.group.people', lang),
+   132→      items: [
+   133→        { key: 'employees', label: t('nav.employees', lang), icon: Users, desc: t('nav.desc.employees', lang) },
+   134→        { key: 'attendance', label: t('nav.attendance', lang), icon: Fingerprint, desc: t('nav.desc.attendance', lang) },
+   135→        { key: 'leaves', label: t('nav.leaves', lang), icon: CalendarDays, desc: t('nav.desc.leaves', lang) },
+   136→        { key: 'documents', label: t('nav.documents', lang), icon: FileText, desc: t('nav.desc.documents', lang) },
+   137→        { key: 'onboarding', label: 'Onboarding', icon: UserPlus, desc: 'Employee onboarding checklists' },
+   138→        { key: 'offboarding', label: 'Offboarding', icon: UserMinus, desc: 'Employee offboarding checklists' },
+   139→        { key: 'users', label: t('nav.userAccounts', lang), icon: UserCog, desc: t('nav.desc.userAccounts', lang), ownerOnly: true },
+   140→      ],
+   141→    },
+   142→    {
+   143→      title: 'Recruitment',
+   144→      items: [
+   145→        { key: 'recruitment', label: 'Recruitment', icon: UserPlus, desc: 'Job postings & candidate pipeline' },
+   146→      ],
+   147→    },
+   148→    {
+   149→      title: 'Performance & Learning',
+   150→      items: [
+   151→        { key: 'performance', label: 'Performance', icon: Target, desc: 'Employee performance reviews' },
+   152→        { key: 'goals', label: 'Goals', icon: Target, desc: 'Employee goals & targets' },
+   153→        { key: 'training', label: 'Training', icon: GraduationCap, desc: 'Training courses & enrollments' },
+   154→      ],
+   155→    },
+   156→    {
+   157→      title: t('nav.group.operations', lang),
+   158→      items: [
+   159→        { key: 'clients', label: t('nav.clients', lang), icon: Building2, desc: t('nav.desc.clients', lang) },
+   160→        { key: 'projects', label: t('nav.projects', lang), icon: FolderKanban, desc: t('nav.desc.projects', lang) },
+   161→        { key: 'workorders', label: t('nav.workOrders', lang), icon: ClipboardList, desc: t('nav.desc.workOrders', lang) },
+   162→        { key: 'vendors', label: 'Vendors', icon: Truck, desc: 'Vendor management' },
+   163→        { key: 'assets', label: 'Assets', icon: Package, desc: 'Asset tracking & assignment' },
+   164→        { key: 'invoices', label: t('nav.invoices', lang), icon: ReceiptText, desc: t('nav.desc.invoices', lang) },
+   165→      ],
+   166→    },
+   167→    {
+   168→      title: 'Finance',
+   169→      items: [
+   170→        { key: 'payroll', label: t('nav.payroll', lang), icon: Wallet, desc: t('nav.desc.payroll', lang), superAdminOnly: true },
+   171→        { key: 'expenses', label: 'Expenses', icon: CreditCard, desc: 'Expense claims & reimbursement' },
+   172→        { key: 'reports', label: t('nav.reports', lang), icon: BarChart3, desc: t('nav.desc.reports', lang) },
+   173→      ],
+   174→    },
+   175→    {
+   176→      title: 'Communications',
+   177→      items: [
+   178→        { key: 'announcements', label: t('nav.announcements', lang), icon: Megaphone, desc: t('nav.desc.announcements', lang) },
+   179→        { key: 'knowledge-base', label: 'Knowledge Base', icon: BookOpen, desc: 'AI knowledge base articles' },
+   180→        { key: 'email-templates', label: 'Email Templates', icon: Mail, desc: 'Email template management' },
+   181→        { key: 'notification-templates', label: 'Notification Templates', icon: BellRing, desc: 'Notification template management' },
+   182→      ],
+   183→    },
+   184→    {
+   185→      title: 'System',
+   186→      items: [
+   187→        { key: 'subscription-plans', label: 'Subscription Plans', icon: CreditCardIcon, desc: 'Pricing plans management' },
+   188→        { key: 'feature-flags', label: 'Feature Flags', icon: ToggleLeft, desc: 'Feature toggle management' },
+   189→        { key: 'payment-gateways', label: 'Payment Gateways', icon: Landmark, desc: 'Payment gateway configuration' },
+   190→        { key: 'security', label: 'Security Center', icon: Shield, desc: 'Security monitoring & logs', superAdminOnly: true },
+   191→        { key: 'system-health', label: 'System Health', icon: Activity, desc: 'System status & diagnostics' },
+   192→        { key: 'roles', label: 'Role Management', icon: Key, desc: 'Roles & permissions', ownerOnly: true },
+   193→        { key: 'audit', label: t('nav.auditLogs', lang), icon: ScrollText, desc: t('nav.desc.auditLogs', lang), superAdminOnly: true },
+   194→        { key: 'settings', label: t('nav.settings', lang), icon: Settings, desc: t('nav.desc.settings', lang), ownerOnly: true },
+   195→      ],
+   196→    },
+   197→  ]
+   198→}
+   199→
+   200→interface NotificationLite {
+   201→  id: string
+   202→  title: string
+   203→  message: string
+   204→  type: string
+   205→  read: boolean
+   206→  createdAt: string
+   207→  link?: string | null
+   208→}
+   209→
+   210→export function AdminLayout() {
+   211→  const { user, logout, lang } = useAuth()
+   212→  const [active, setActive] = useState<ModuleKey>('dashboard')
+   213→  const [mobileOpen, setMobileOpen] = useState(false)
+   214→  const [notifications, setNotifications] = useState<NotificationLite[]>([])
+   215→  const [unread, setUnread] = useState(0)
+   216→  const [now, setNow] = useState(new Date())
+   217→  const [bellOpen, setBellOpen] = useState(false)
+   218→  const [refreshKey, setRefreshKey] = useState(0)
+   219→  const sseRef = useRef<EventSource | null>(null)
+   220→
+   221→  const isOwner = user?.role === 'OWNER'
+   222→  const isSuperAdmin = user?.role === 'OWNER' || user?.role === 'SUPER_ADMIN'
+   223→  const roleLabel = user?.role ? ROLE_LABELS[user.role] : 'Admin'
+   224→  const adminName = user?.username || 'Admin'
+   225→  const adminEmail = user?.email || ''
+   226→
+   227→  useEffect(() => {
+   228→    let cancelled = false
+   229→    fetch('/api/notifications', { cache: 'no-store' })
+   230→      .then((r) => (r.ok ? r.json() : null))
+   231→      .then((data) => {
+   232→        if (cancelled || !data) return
+   233→        setNotifications(data.notifications || [])
+   234→        setUnread(data.unread || 0)
+   235→      })
+   236→      .catch(() => {})
+   237→    return () => { cancelled = true }
+   238→  }, [])
+   239→
+   240→  useEffect(() => {
+   241→    const t = setInterval(() => setNow(new Date()), 30_000)
+   242→    return () => clearInterval(t)
+   243→  }, [])
+   244→
+   245→  useEffect(() => {
+   246→    let es: EventSource | null = null
+   247→    try {
+   248→      es = new EventSource('/api/sse')
+   249→      sseRef.current = es
+   250→      es.onmessage = (ev) => {
+   251→        try {
+   252→          const payload = JSON.parse(ev.data)
+   253→          if (payload.type === 'notification') {
+   254→            toast(payload.notification.title, { description: payload.notification.message })
+   255→            fetch('/api/notifications', { cache: 'no-store' })
+   256→              .then((r) => r.ok ? r.json() : null)
+   257→              .then((d) => { if (!d) return; setNotifications(d.notifications || []); setUnread(d.unread || 0) })
+   258→              .catch(() => {})
+   259→            setRefreshKey((k) => k + 1)
+   260→          }
+   261→        } catch {}
+   262→      }
+   263→      es.onerror = () => {}
+   264→    } catch {}
+   265→    return () => { try { es?.close() } catch {} }
+   266→  }, [])
+   267→
+   268→  const loadNotifications = async () => {
+   269→    try {
+   270→      const res = await fetch('/api/notifications', { cache: 'no-store' })
+   271→      if (!res.ok) return
+   272→      const data = await res.json()
+   273→      setNotifications(data.notifications || [])
+   274→      setUnread(data.unread || 0)
+   275→    } catch {}
+   276→  }
+   277→
+   278→  const handleNavigate = (k: ModuleKey) => { setActive(k); setMobileOpen(false) }
+   279→
+   280→  const markAllRead = async () => {
+   281→    try {
+   282→      await fetch('/api/notifications', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ all: true }) })
+   283→      setNotifications((arr) => arr.map((n) => ({ ...n, read: true })))
+   284→      setUnread(0)
+   285→      toast.success(t('nav.allMarkedRead', lang))
+   286→    } catch { toast.error(t('nav.notifFailed', lang)) }
+   287→  }
+   288→
+   289→  const markOneRead = async (id: string) => {
+   290→    try {
+   291→      await fetch('/api/notifications', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) })
+   292→      setNotifications((arr) => arr.map((n) => (n.id === id ? { ...n, read: true } : n)))
+   293→      setUnread((u) => Math.max(0, u - 1))
+   294→    } catch {}
+   295→  }
+   296→
+   297→  const handleLogout = async () => { await logout(); toast.success(t('nav.signedOut', lang)) }
+   298→
+   299→  const navGroups = getNavGroups(lang)
+   300→  const allItems = navGroups.flatMap((g) => g.items)
+   301→  const currentNav = allItems.find((n) => n.key === active)
+   302→
+   303→  const sidebarInner = (
+   304→    <div className="flex h-full flex-col text-slate-200">
+   305→      <div className="px-5 pt-5 pb-4 border-b border-white/10">
+   306→        <BrandLogo />
+   307→        <div className="mt-3 flex items-center gap-2">
+   308→          <span className={cn('inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider', isOwner ? 'bg-gradient-to-r from-[var(--gold)] to-[var(--gold-light)] text-[var(--navy)]' : isSuperAdmin ? 'bg-[var(--gold)]/80 text-[var(--navy)]' : 'bg-white/10 text-[var(--gold-light)]')}>
+   309→            {isOwner ? <Crown className="h-3 w-3" /> : isSuperAdmin ? <ShieldCheck className="h-3 w-3" /> : <ShieldAlert className="h-3 w-3" />}
+   310→            {roleLabel}
+   311→          </span>
+   312→          <span className="text-[10px] uppercase tracking-wider text-blue-200/60">Console</span>
+   313→        </div>
+   314→      </div>
+   315→
+   316→      <nav className="flex-1 overflow-y-auto scroll-thin px-3 py-3 space-y-4" aria-label="Admin navigation">
+   317→        {navGroups.map((group) => {
+   318→          const visibleItems = group.items.filter((it) => (!it.superAdminOnly || isSuperAdmin) && (!it.ownerOnly || isOwner))
+   319→          if (visibleItems.length === 0) return null
+   320→          return (
+   321→            <div key={group.title}>
+   322→              <p className="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-blue-200/50">{group.title}</p>
+   323→              <div className="space-y-1">
+   324→                {visibleItems.map((item) => {
+   325→                  const Icon = item.icon
+   326→                  const isActive = active === item.key
+   327→                  return (
+   328→                    <button key={item.key} onClick={() => handleNavigate(item.key)} aria-current={isActive ? 'page' : undefined}
+   329→                      className={cn('group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-all', isActive ? 'bg-[var(--gold)] text-[var(--navy)] shadow-sm' : 'text-blue-100/80 hover:bg-white/10 hover:text-white')}>
+   330→                      <Icon className={cn('h-[18px] w-[18px] shrink-0', isActive ? 'text-[var(--navy)]' : 'text-blue-200/70 group-hover:text-[var(--gold-light)]')} />
+   331→                      <span className="flex-1 truncate">{item.label}</span>
+   332→                      {isActive && <ChevronRight className="h-4 w-4 text-[var(--navy)]" />}
+   333→                    </button>
+   334→                  )
+   335→                })}
+   336→              </div>
+   337→            </div>
+   338→          )
+   339→        })}
+   340→      </nav>
+   341→
+   342→      <div className="border-t border-white/10 p-3">
+   343→        <div className="rounded-lg bg-white/5 p-3">
+   344→          <div className="flex items-center gap-3">
+   345→            <Avatar className="h-9 w-9 ring-2 ring-[var(--gold)]/40">
+   346→              <AvatarFallback className="bg-[var(--gold)] text-[var(--navy)] text-xs font-bold">{initials(adminName)}</AvatarFallback>
+   347→            </Avatar>
+   348→            <div className="min-w-0 flex-1">
+   349→              <p className="truncate text-sm font-semibold text-white">{adminName}</p>
+   350→              <p className="truncate text-[11px] text-blue-200/70">{adminEmail || roleLabel}</p>
+   351→            </div>
+   352→          </div>
+   353→          <Button onClick={handleLogout} variant="ghost" size="sm" className="mt-3 w-full justify-start gap-2 text-blue-100/80 hover:bg-white/10 hover:text-white">
+   354→            <LogOut className="h-4 w-4" /> {t('nav.signOut', lang)}
+   355→          </Button>
+   356→        </div>
+   357→      </div>
+   358→    </div>
+   359→  )
+   360→
+   361→  return (
+   362→    <div className="min-h-screen flex flex-col bg-background">
+   363→      <div className="h-1 hpe-gold-bar w-full" />
+   364→      <div className="flex flex-1 overflow-hidden">
+   365→        <aside className="hidden lg:flex w-[260px] shrink-0 hpe-sidebar-gradient border-r border-white/10">{sidebarInner}</aside>
+   366→        <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+   367→          <SheetContent side="left" className="w-[260px] p-0 hpe-sidebar-gradient border-white/10">
+   368→            <SheetTitle className="sr-only">HP ENTERPRISE Admin Navigation</SheetTitle>
+   369→            <SheetDescription className="sr-only">Admin console navigation menu.</SheetDescription>
+   370→            <button onClick={() => setMobileOpen(false)} className="absolute right-3 top-3 z-10 grid h-8 w-8 place-items-center rounded-md text-blue-100 hover:bg-white/10" aria-label="Close menu"><X className="h-5 w-5" /></button>
+   371→            {sidebarInner}
+   372→          </SheetContent>
+   373→        </Sheet>
+   374→
+   375→        <div className="flex flex-1 flex-col min-w-0">
+   376→          <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-3 border-b bg-card/95 px-4 backdrop-blur-md sm:px-6">
+   377→            <div className="flex items-center gap-3 min-w-0">
+   378→              <button onClick={() => setMobileOpen(true)} className="lg:hidden grid h-9 w-9 place-items-center rounded-md border bg-background" aria-label="Open menu"><Menu className="h-5 w-5" /></button>
+   379→              <div className="min-w-0">
+   380→                <h1 className="truncate text-base font-bold text-[var(--navy)] dark:text-white sm:text-lg">{currentNav?.label}</h1>
+   381→                <p className="hidden text-xs text-muted-foreground sm:block">{currentNav?.desc}</p>
+   382→              </div>
+   383→              {currentNav?.superAdminOnly && (<Badge variant="outline" className="hidden md:inline-flex border-[var(--gold)]/40 text-[#8a6f24] gap-1"><Lock className="h-3 w-3" /> Super Admin</Badge>)}
+   384→            </div>
+   385→            <div className="flex items-center gap-2 sm:gap-3">
+   386→              <LanguageSwitcher />
+   387→              <div className="hidden md:flex flex-col items-end leading-tight">
+   388→                <span className="text-xs font-medium text-[var(--navy)] dark:text-white">{format(now, 'EEEE, dd MMM yyyy')}</span>
+   389→                <span className="text-[11px] text-muted-foreground">{format(now, 'h:mm a')}</span>
+   390→              </div>
+   391→              <DropdownMenu open={bellOpen} onOpenChange={setBellOpen}>
+   392→                <DropdownMenuTrigger asChild>
+   393→                  <button className="relative grid h-10 w-10 place-items-center rounded-full border bg-background hover:bg-muted transition-colors" aria-label={`Notifications${unread ? `, ${unread} unread` : ''}`}>
+   394→                    <Bell className="h-[18px] w-[18px] text-[var(--navy)] dark:text-white" />
+   395→                    {unread > 0 && (<span className="absolute -right-0.5 -top-0.5 grid h-5 min-w-5 place-items-center rounded-full bg-[var(--gold)] px-1 text-[10px] font-bold text-[var(--navy)] ring-2 ring-card">{unread > 9 ? '9+' : unread}</span>)}
+   396→                  </button>
+   397→                </DropdownMenuTrigger>
+   398→                <DropdownMenuContent align="end" className="w-80 p-0">
+   399→                  <div className="flex items-center justify-between border-b px-3 py-2.5">
+   400→                    <p className="text-sm font-semibold text-[var(--navy)] dark:text-white">{t('nav.notifications', lang)}</p>
+   401→                    {unread > 0 && (<Button variant="ghost" size="sm" className="h-7 text-xs" onClick={markAllRead}><CheckCheck className="mr-1 h-3.5 w-3.5" /> {t('nav.markAllRead', lang)}</Button>)}
+   402→                  </div>
+   403→                  <div className="max-h-80 overflow-y-auto scroll-thin">
+   404→                    {notifications.length === 0 ? (
+   405→                      <div className="py-8 text-center text-sm text-muted-foreground"><Bell className="mx-auto mb-2 h-6 w-6 opacity-50" />{t('nav.noNotifications', lang)}</div>
+   406→                    ) : (
+   407→                      notifications.slice(0, 12).map((n) => (
+   408→                        <DropdownMenuItem key={n.id} className="flex flex-col items-start gap-0.5 px-3 py-2.5 focus:bg-muted/60" onClick={() => { if (!n.read) markOneRead(n.id) }}>
+   409→                          <div className="flex w-full items-start gap-2">
+   410→                            {!n.read && <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-[var(--gold)]" />}
+   411→                            <div className="min-w-0 flex-1">
+   412→                              <p className={cn('text-sm leading-snug', n.read ? 'text-muted-foreground' : 'font-semibold text-[var(--navy)] dark:text-white')}>{n.title}</p>
+   413→                              <p className="mt-0.5 text-xs text-muted-foreground line-clamp-2">{n.message}</p>
+   414→                              <p className="mt-1 text-[10px] text-muted-foreground">{fmtRelative(n.createdAt)}</p>
+   415→                            </div>
+   416→                          </div>
+   417→                        </DropdownMenuItem>
+   418→                      ))
+   419→                    )}
+   420→                  </div>
+   421→                  <DropdownMenuSeparator className="my-0" />
+   422→                  <DropdownMenuLabel className="py-2 text-center text-xs font-semibold text-[var(--navy)] dark:text-[var(--gold-light)]">{t('nav.liveUpdates', lang)}</DropdownMenuLabel>
+   423→                </DropdownMenuContent>
+   424→              </DropdownMenu>
+   425→              <Avatar className="hidden sm:block h-9 w-9 ring-2 ring-[var(--gold)]/40">
+   426→                <AvatarFallback className="bg-[var(--navy)] text-[var(--gold)] text-xs font-bold">{initials(adminName)}</AvatarFallback>
+   427→              </Avatar>
+   428→            </div>
+   429→          </header>
+   430→
+   431→          <main className="flex-1 overflow-y-auto scroll-thin">
+   432→            <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+   433→              {/* Overview */}
+   434→              {active === 'dashboard' && <Dashboard onNavigate={handleNavigate} refreshKey={refreshKey} />}
+   435→              {active === 'global-search' && <GlobalSearch onNavigate={handleNavigate} />}
+   436→
+   437→              {/* Organization */}
+   438→              {active === 'departments' && <Departments refreshKey={refreshKey} />}
+   439→              {active === 'designations' && <Designations refreshKey={refreshKey} />}
+   440→              {active === 'branches' && <Branches refreshKey={refreshKey} />}
+   441→
+   442→              {/* People */}
+   443→              {active === 'employees' && <Employees refreshKey={refreshKey} canDelete={isSuperAdmin} />}
+   444→              {active === 'attendance' && <Attendance refreshKey={refreshKey} />}
+   445→              {active === 'leaves' && <Leaves refreshKey={refreshKey} />}
+   446→              {active === 'documents' && <Documents refreshKey={refreshKey} />}
+   447→              {active === 'onboarding' && <Onboarding refreshKey={refreshKey} />}
+   448→              {active === 'offboarding' && <Offboarding refreshKey={refreshKey} />}
+   449→              {active === 'users' && isOwner && <UserAccounts refreshKey={refreshKey} />}
+   450→
+   451→              {/* Recruitment */}
+   452→              {active === 'recruitment' && <Recruitment refreshKey={refreshKey} />}
+   453→
+   454→              {/* Performance & Learning */}
+   455→              {active === 'performance' && <Performance refreshKey={refreshKey} isSuperAdmin={isSuperAdmin} />}
+   456→              {active === 'goals' && <Goals refreshKey={refreshKey} />}
+   457→              {active === 'training' && <Training refreshKey={refreshKey} />}
+   458→
+   459→              {/* Operations */}
+   460→              {active === 'clients' && <Clients refreshKey={refreshKey} canDelete={isSuperAdmin} />}
+   461→              {active === 'projects' && <Projects refreshKey={refreshKey} canDelete={isSuperAdmin} />}
+   462→              {active === 'workorders' && <WorkOrders refreshKey={refreshKey} />}
+   463→              {active === 'vendors' && <Vendors refreshKey={refreshKey} canDelete={isSuperAdmin} />}
+   464→              {active === 'assets' && <Assets refreshKey={refreshKey} />}
+   465→              {active === 'invoices' && <Invoices refreshKey={refreshKey} />}
+   466→
+   467→              {/* Finance */}
+   468→              {active === 'payroll' && <Payroll refreshKey={refreshKey} isSuperAdmin={isSuperAdmin} />}
+   469→              {active === 'expenses' && <Expenses refreshKey={refreshKey} isSuperAdmin={isSuperAdmin} />}
+   470→              {active === 'reports' && <Reports refreshKey={refreshKey} />}
+   471→
+   472→              {/* Communications */}
+   473→              {active === 'announcements' && <Announcements refreshKey={refreshKey} />}
+   474→              {active === 'knowledge-base' && <KnowledgeBase refreshKey={refreshKey} />}
+   475→              {active === 'email-templates' && <EmailTemplates refreshKey={refreshKey} />}
+   476→              {active === 'notification-templates' && <NotificationTemplates refreshKey={refreshKey} />}
+   477→
+   478→              {/* System */}
+   479→              {active === 'subscription-plans' && <SubscriptionPlans refreshKey={refreshKey} />}
+   480→              {active === 'feature-flags' && <FeatureFlags refreshKey={refreshKey} />}
+   481→              {active === 'payment-gateways' && <PaymentGateways refreshKey={refreshKey} />}
+   482→              {active === 'security' && <SecurityCenter isSuperAdmin={isSuperAdmin} />}
+   483→              {active === 'system-health' && <SystemHealth />}
+   484→              {active === 'roles' && <RoleManagement refreshKey={refreshKey} isOwner={isOwner} />}
+   485→              {active === 'audit' && <AuditLogs isSuperAdmin={isSuperAdmin} />}
+   486→              {active === 'settings' && <SettingsModule isSuperAdmin={isSuperAdmin} isOwner={isOwner} />}
+   487→            </div>
+   488→          </main>
+   489→        </div>
+   490→      </div>
+   491→
+   492→      <footer className="mt-auto border-t bg-card px-4 py-3 sm:px-6">
+   493→        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-1 text-xs text-muted-foreground sm:flex-row">
+   494→          <p>© 2025 HP ENTERPRISE Safety Service & Man Power Supply • Admin Console • CIN: U72900KA2015PTC112233</p>
+   495→          <p className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />{t('footer.systemsOperational', lang)}</p>
+   496→        </div>
+   497→      </footer>
+   498→
+   499→      <HpAiChat />
+   500→      <Toaster richColors position="top-right" />
+   501→    </div>
+   502→  )
+   503→}
+   504→

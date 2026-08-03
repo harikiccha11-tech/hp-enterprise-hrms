@@ -628,3 +628,29 @@ Stage Summary:
 - Root cause: Prisma schema pointed to PostgreSQL (Neon) instead of local SQLite, causing connection failures
 - Fixed by switching to SQLite provider and re-seeding
 - All portals verified working end-to-end in browser
+
+---
+Task ID: fix-admin-menus-portals
+Agent: Main Orchestrator
+Task: Fix SUPER_ADMIN missing menus (Users, Roles, Settings) and portal access issues
+
+Work Log:
+- Identified SUPER_ADMIN was missing 3 menu items (User Accounts, Role Management, Settings) due to `ownerOnly` flag filtering
+- Fixed AdminLayout.tsx nav filter to include SUPER_ADMIN for ownerOnly items
+- Fixed AdminLayout.tsx render conditions: UserAccounts now renders for isSuperAdmin, RoleManagement and Settings pass isOwner||isSuperAdmin
+- Fixed /api/admin/users/route.ts: Changed OWNER-only gates to allow SUPER_ADMIN (GET, POST)
+- Fixed /api/admin/users/[id]/route.ts: Changed OWNER-only gates to allow SUPER_ADMIN (PATCH, DELETE)
+- Fixed /api/admin/roles/route.ts: Changed OWNER-only gates to allow SUPER_ADMIN (POST, PATCH)
+- Fixed /api/admin/settings/route.ts: Changed OWNER-only PUT gate to allow SUPER_ADMIN
+- Installed missing `bcryptjs` dependency (was causing Role Management module crash)
+- Verified all 4 portals in browser:
+  - SUPER_ADMIN: 36 modules visible (was 33) ✓
+  - HR_MANAGER: 32 modules (correctly reduced) ✓
+  - Employee: 8 modules + dashboard ✓
+  - Client: 4 modules + dashboard ✓
+
+Stage Summary:
+- SUPER_ADMIN now has full access to all 36 admin modules including User Accounts, Role Management, Settings
+- All backend APIs updated to allow SUPER_ADMIN access (previously OWNER-only)
+- All portal logins verified working
+- Zero API errors in dev log
