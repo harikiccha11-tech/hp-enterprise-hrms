@@ -219,5 +219,22 @@ export async function GET() {
       geminiGenTest = genRes.ok ? ('OK: ' + (genText || 'empty')) : ('ERR ' + genRes.status + ': ' + JSON.stringify(genData?.error || {}).slice(0, 200))
     } catch (e) { geminiGenTest = 'error: ' + (e as Error).message }
   }
-  return NextResponse.json({ isVercel, hasGemini, hasGateway, geminiTest, geminiGenTest })
+  // Find working model
+  let workingModel = 'none'
+  const modelsToTry = ['gemini-2.0-flash', 'gemini-1.5-pro-latest', 'gemini-1.5-flash-8b', 'gemini-pro', 'gemini-2.0-flash-lite', 'gemini-1.5-pro']
+  if (hasGemini) {
+    for (const m of modelsToTry) {
+      try {
+        const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + m + ':generateContent?key=' + process.env.GEMINI_API_KEY, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents: [{ parts: [{ text: 'Hi' }] }], generationConfig: { maxOutputTokens: 5 } }),
+          signal: AbortSignal.timeout(10000),
+        })
+        if (r.ok) { workingModel = m; break }
+        const err = await r.json().catch(function() { return {} })
+        workingModel = m + ' -> ' + r.status + ': ' + String(err?.error?.message || '').slice(0, 80)
+      } catch (e) { workingModel = m + ' -> err: ' + (e as Error).message.slice(0, 50) }
+    }
+  }
+  return NextResponse.json({ isVercel, hasGemini, hasGateway, workingModel, triedModels: modelsToTry })
 }
