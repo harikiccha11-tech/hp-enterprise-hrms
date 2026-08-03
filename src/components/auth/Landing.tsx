@@ -424,7 +424,7 @@ function PortalLoginForm({ portal, onBack }: { portal: PortalConfig; onBack: () 
                 <Icon className="h-7 w-7 text-white" />
               </div>
               <CardTitle className="text-2xl font-bold text-gray-900">{portal.title}</CardTitle>
-              <CardDescription className="text-gray-500 mt-1">{portal.description}</CardDescription>
+              <CardDescription className="text-gray-600 mt-1">{portal.description}</CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -483,7 +483,7 @@ function SubscriptionForm({ onBack }: { onBack: () => void }) {
           <CardContent className="py-12">
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50"><Check className="h-8 w-8 text-emerald-600" /></div>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Request Submitted!</h2>
-            <p className="text-gray-500 mb-6">Our team will contact you within 24 hours.</p>
+            <p className="text-gray-600 mb-6">Our team will contact you within 24 hours.</p>
             <Button onClick={onBack} style={{ background: '#002B5C' }} className="text-white">Back to Home</Button>
           </CardContent>
         </Card>
@@ -497,7 +497,7 @@ function SubscriptionForm({ onBack }: { onBack: () => void }) {
         <div className="text-center mb-10">
           <Badge className="mb-4 px-4 py-1 text-sm" style={{ background: 'rgba(0,43,92,0.08)', color: '#002B5C', border: '1px solid rgba(0,43,92,0.12)' }}>Get Started</Badge>
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900">Request a Subscription</h2>
-          <p className="text-gray-500 mt-2">Fill in the details and our team will reach out to you.</p>
+          <p className="text-gray-600 mt-2">Fill in the details and our team will reach out to you.</p>
         </div>
         <Card className="shadow-lg">
           <CardContent className="pt-6">
@@ -683,7 +683,7 @@ export function Landing() {
                 </Button>
               </div>
 
-              <div className="mt-12 flex flex-wrap items-center gap-6 text-sm text-gray-300">
+              <div className="mt-12 flex flex-wrap items-center gap-6 text-sm text-white">
                 <div className="flex items-center gap-2">
                   <ShieldCheck className="h-4 w-4" style={{ color: '#D4AF37' }} />
                   <span>GSTIN: {BRAND.gstin}</span>
@@ -710,8 +710,8 @@ export function Landing() {
           <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2.5">
             {TRUST_BADGES.map((badge, i) => (
               <Reveal key={i} delay={i * 0.03}>
-                <div className="flex items-center gap-1.5 text-sm text-gray-500 font-medium">
-                  <Check className="h-3.5 w-3.5 text-emerald-500" />{badge}
+                <div className="flex items-center gap-1.5 text-sm text-gray-700 font-medium">
+                  <Check className="h-3.5 w-3.5 text-emerald-600" />{badge}
                 </div>
               </Reveal>
             ))}
@@ -732,7 +732,7 @@ export function Landing() {
                 <br />
                 <span style={{ color: '#002B5C' }}>Business Services</span>
               </h2>
-              <p className="mt-4 text-gray-500 max-w-2xl mx-auto text-lg">
+              <p className="mt-4 text-gray-700 max-w-2xl mx-auto text-lg">
                 From HR management to engineering support — we deliver end-to-end workforce solutions. Click any service to learn more.
               </p>
             </div>
@@ -768,7 +768,7 @@ export function Landing() {
                     {/* Content */}
                     <div className="p-5">
                       <h3 className="text-lg font-bold text-gray-900 group-hover:text-[#002B5C] transition-colors mb-2">{service.title}</h3>
-                      <p className="text-sm text-gray-500 leading-relaxed mb-4">{service.short}</p>
+                      <p className="text-sm text-gray-600 leading-relaxed mb-4">{service.short}</p>
                       <div className="flex items-center gap-2 text-sm font-semibold" style={{ color: '#002B5C' }}>
                         Learn more <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform" />
                       </div>
@@ -808,13 +808,13 @@ export function Landing() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <Reveal>
             <div className="text-center mb-14">
-              <Badge className="mb-4 px-4 py-1 text-sm" style={{ background: 'rgba(212,175,55,0.1)', color: '#92780a', border: '1px solid rgba(212,175,55,0.2)' }}>Product Features</Badge>
+              <Badge className="mb-4 px-4 py-1 text-sm" style={{ background: 'rgba(0,43,92,0.08)', color: '#002B5C', border: '1px solid rgba(0,43,92,0.15)' }}>Product Features</Badge>
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-gray-900 tracking-tight">
                 Everything You Need to
                 <br />
                 <span style={{ color: '#002B5C' }}>Run HR Smarter</span>
               </h2>
-              <p className="mt-4 text-gray-500 max-w-2xl mx-auto text-lg">Powerful modules designed for modern Indian enterprises — from hiring to payroll, all powered by AI.</p>
+              <p className="mt-4 text-gray-700 max-w-2xl mx-auto text-lg">Powerful modules designed for modern Indian enterprises — from hiring to payroll, all powered by AI.</p>
             </div>
           </Reveal>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -827,7 +827,7 @@ export function Landing() {
                       <Icon className="h-5 w-5 text-white" />
                     </div>
                     <h3 className="text-base font-semibold text-gray-900 group-hover:text-[#002B5C] transition-colors">{feature}</h3>
-                    <p className="mt-1.5 text-sm text-gray-500 leading-relaxed">Streamline your {feature.toLowerCase()} with intelligent automation and real-time insights.</p>
+                    <p className="mt-1.5 text-sm text-gray-600 leading-relaxed">Streamline your {feature.toLowerCase()} with intelligent automation and real-time insights.</p>
                     <div className="absolute bottom-0 left-6 right-6 h-0.5 bg-gradient-to-r from-[#002B5C] to-[#D4AF37] scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left rounded-full" />
                   </div>
                 </Reveal>
@@ -849,7 +849,7 @@ export function Landing() {
                 <br />
                 <span style={{ color: '#D4AF37' }}>Across India</span>
               </h2>
-              <p className="mt-4 text-gray-300 max-w-2xl mx-auto text-lg">Growing with every successful project and satisfied client. We deliver results, not promises.</p>
+              <p className="mt-4 text-gray-200 max-w-2xl mx-auto text-lg">Growing with every successful project and satisfied client. We deliver results, not promises.</p>
             </div>
           </Reveal>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -865,8 +865,8 @@ export function Landing() {
                     <item.icon className="h-6 w-6" style={{ color: '#D4AF37' }} />
                   </div>
                   <h3 className="text-base font-bold text-white mb-1">{item.title}</h3>
-                  <p className="text-sm text-gray-400 leading-relaxed">{item.desc}</p>
-                  {item.value && <p className="mt-2 text-xs font-mono text-gray-500">{item.value}</p>}
+                  <p className="text-sm text-gray-200 leading-relaxed">{item.desc}</p>
+                  {item.value && <p className="mt-2 text-xs font-mono text-gray-300">{item.value}</p>}
                 </div>
               </Reveal>
             ))}
@@ -881,13 +881,13 @@ export function Landing() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <Reveal>
             <div className="text-center mb-14">
-              <Badge className="mb-4 px-4 py-1 text-sm" style={{ background: 'rgba(212,175,55,0.1)', color: '#92780a', border: '1px solid rgba(212,175,55,0.2)' }}>Simple Pricing</Badge>
+              <Badge className="mb-4 px-4 py-1 text-sm" style={{ background: 'rgba(0,43,92,0.08)', color: '#002B5C', border: '1px solid rgba(0,43,92,0.15)' }}>Simple Pricing</Badge>
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-gray-900 tracking-tight">
                 Plans That
                 <br />
                 <span style={{ color: '#002B5C' }}>Scale With You</span>
               </h2>
-              <p className="mt-4 text-gray-500 max-w-2xl mx-auto text-lg">Start free. Upgrade as you grow. No hidden fees.</p>
+              <p className="mt-4 text-gray-700 max-w-2xl mx-auto text-lg">Start free. Upgrade as you grow. No hidden fees.</p>
             </div>
           </Reveal>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -899,11 +899,11 @@ export function Landing() {
                   )}
                   <div className="mb-6">
                     <h3 className={cn('text-lg font-bold mb-1', plan.popular ? 'text-white' : 'text-gray-900')}>{plan.name}</h3>
-                    <p className={cn('text-sm', plan.popular ? 'text-gray-300' : 'text-gray-500')}>{plan.description}</p>
+                    <p className={cn('text-sm', plan.popular ? 'text-gray-200' : 'text-gray-600')}>{plan.description}</p>
                   </div>
                   <div className="mb-6">
                     <span className={cn('text-4xl font-extrabold', plan.popular ? 'text-white' : 'text-gray-900')}>{plan.price}</span>
-                    {plan.period && <span className={cn('text-sm ml-1', plan.popular ? 'text-gray-400' : 'text-gray-500')}>{plan.period}</span>}
+                    {plan.period && <span className={cn('text-sm ml-1', plan.popular ? 'text-gray-300' : 'text-gray-400')}>{plan.period}</span>}
                   </div>
                   <ul className="space-y-3 mb-8 flex-1">
                     {plan.features.map((f) => (
@@ -936,7 +936,7 @@ export function Landing() {
                 <br />
                 <span style={{ color: '#002B5C' }}>Workspace Awaits</span>
               </h2>
-              <p className="mt-4 text-gray-500 max-w-xl mx-auto text-lg">Select your portal to get started.</p>
+              <p className="mt-4 text-gray-700 max-w-xl mx-auto text-lg">Select your portal to get started.</p>
             </div>
           </Reveal>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -953,7 +953,7 @@ export function Landing() {
                         <portal.icon className="h-6 w-6" style={{ color: '#002B5C' }} />
                       </div>
                       <h3 className="text-xl font-bold text-white mb-2">{portal.title}</h3>
-                      <p className="text-sm text-gray-300 mb-6">{portal.description}</p>
+                      <p className="text-sm text-gray-200 mb-6">{portal.description}</p>
                       <ul className="space-y-2.5">
                         {portal.features.map((f) => (
                           <li key={f} className="flex items-center gap-2 text-sm text-gray-300">
@@ -986,7 +986,7 @@ export function Landing() {
                 <br />
                 <span style={{ color: '#002B5C' }}>Great Together</span>
               </h2>
-              <p className="mt-4 text-gray-500 max-w-xl mx-auto text-lg">Reach out to us for demos, inquiries, or partnership opportunities.</p>
+              <p className="mt-4 text-gray-700 max-w-xl mx-auto text-lg">Reach out to us for demos, inquiries, or partnership opportunities.</p>
             </div>
           </Reveal>
 
@@ -1006,14 +1006,14 @@ export function Landing() {
                       <item.icon className="h-5 w-5" style={{ color: '#002B5C' }} />
                     </div>
                     <div>
-                      <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">{item.label}</div>
+                      <div className="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">{item.label}</div>
                       <div className="text-sm font-medium text-gray-800 group-hover:text-[#002B5C] transition-colors leading-relaxed">{item.value}</div>
                     </div>
                   </a>
                 ))}
 
                 <div className="pt-4">
-                  <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Connect With Us</div>
+                  <div className="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-3">Connect With Us</div>
                   <div className="flex flex-wrap gap-2">
                     {SOCIAL_ITEMS.map((s) => (
                       <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer" className="h-10 w-10 rounded-xl flex items-center justify-center transition-all duration-200 hover:scale-110 hover:shadow-md bg-white border border-gray-100" style={{ color: s.color }} aria-label={s.label}>
@@ -1029,7 +1029,7 @@ export function Landing() {
               <Card className="shadow-lg border-gray-100">
                 <CardHeader>
                   <CardTitle className="text-xl font-bold text-gray-900">Send Us a Message</CardTitle>
-                  <CardDescription className="text-gray-500">We typically respond within 24 hours.</CardDescription>
+                  <CardDescription className="text-gray-600">We typically respond within 24 hours.</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <form onSubmit={(e) => { e.preventDefault(); toast.success('Message sent! We will get back to you soon.') }} className="space-y-4">
@@ -1053,7 +1053,7 @@ export function Landing() {
       {/* ══════════════════════════════════════════════════════════════════════
           FOOTER — Sticky to bottom
          ══════════════════════════════════════════════════════════════════════ */}
-      <footer className="mt-auto bg-gray-900 text-gray-400" role="contentinfo">
+      <footer className="mt-auto bg-gray-900 text-gray-300" role="contentinfo">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
             {/* Brand */}
@@ -1062,10 +1062,10 @@ export function Landing() {
                 <BrandLogo size={32} />
                 <div className="flex flex-col">
                   <span className="font-extrabold text-sm text-white">HP ENTERPRISE</span>
-                  <span className="text-[9px] font-medium tracking-widest uppercase text-gray-500">Building Safer Tomorrow</span>
+                  <span className="text-[9px] font-medium tracking-widest uppercase text-gray-400">Building Safer Tomorrow</span>
                 </div>
               </div>
-              <p className="text-sm text-gray-400 leading-relaxed mb-4">{BRAND.taglineFull}</p>
+              <p className="text-sm text-gray-300 leading-relaxed mb-4">{BRAND.taglineFull}</p>
               <div className="flex flex-wrap gap-2">
                 {SOCIAL_ITEMS.map((s) => (
                   <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer" className="h-8 w-8 rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-110 bg-gray-800" style={{ color: s.color }} aria-label={s.label}><s.icon className="h-3.5 w-3.5" /></a>
@@ -1078,7 +1078,7 @@ export function Landing() {
               <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-4">Services</h4>
               <ul className="space-y-2.5">
                 {SERVICES.slice(0, 6).map((s) => (
-                  <li key={s}><span className="text-sm text-gray-400 hover:text-white transition-colors cursor-default">{s}</span></li>
+                  <li key={s}><span className="text-sm text-gray-300 hover:text-white transition-colors cursor-default">{s}</span></li>
                 ))}
               </ul>
             </div>
@@ -1086,19 +1086,19 @@ export function Landing() {
             {/* Legal */}
             <div>
               <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-4">Legal & Compliance</h4>
-              <ul className="space-y-2.5 text-sm text-gray-400">
-                <li className="flex items-center gap-2"><ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />GSTIN: {BRAND.gstin}</li>
-                <li className="flex items-center gap-2"><ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />PAN: {BRAND.pan}</li>
-                <li className="flex items-center gap-2"><ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />UDYAM: {BRAND.udyam}</li>
-                <li className="flex items-center gap-2"><MapPin className="h-3.5 w-3.5 text-gray-500" />Bengaluru, Karnataka</li>
-                <li className="flex items-center gap-2"><MapPin className="h-3.5 w-3.5 text-gray-500" />Chitradurga, Karnataka</li>
+              <ul className="space-y-2.5 text-sm text-gray-300">
+                <li className="flex items-center gap-2"><ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />GSTIN: {BRAND.gstin}</li>
+                <li className="flex items-center gap-2"><ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />PAN: {BRAND.pan}</li>
+                <li className="flex items-center gap-2"><ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />UDYAM: {BRAND.udyam}</li>
+                <li className="flex items-center gap-2"><MapPin className="h-3.5 w-3.5 text-gray-400" />Bengaluru, Karnataka</li>
+                <li className="flex items-center gap-2"><MapPin className="h-3.5 w-3.5 text-gray-400" />Chitradurga, Karnataka</li>
               </ul>
             </div>
 
             {/* Contact */}
             <div>
               <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-4">Contact</h4>
-              <ul className="space-y-2.5 text-sm text-gray-400">
+              <ul className="space-y-2.5 text-sm text-gray-300">
                 <li className="flex items-center gap-2"><Phone className="h-3.5 w-3.5" />{BRAND.phone}</li>
                 <li className="flex items-center gap-2"><Phone className="h-3.5 w-3.5" />{BRAND.hrPhone}</li>
                 <li className="flex items-center gap-2"><Mail className="h-3.5 w-3.5" />{BRAND.email}</li>
@@ -1109,8 +1109,8 @@ export function Landing() {
 
           {/* Bottom bar */}
           <div className="mt-12 pt-8 border-t border-gray-800 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-xs text-gray-500">© {new Date().getFullYear()} HP ENTERPRISE. All rights reserved.</p>
-            <div className="flex items-center gap-4 text-xs text-gray-500">
+            <p className="text-xs text-gray-400">© {new Date().getFullYear()} HP ENTERPRISE. All rights reserved.</p>
+            <div className="flex items-center gap-4 text-xs text-gray-400">
               <span>Managing Director: {BRAND.managingDirector}</span>
               <span className="hidden sm:inline">•</span>
               <span className="hidden sm:inline">EHS Director: {BRAND.ehsDirector}</span>
