@@ -1,0 +1,506 @@
+     1→   501→          <div className="absolute -bottom-20 right-1/4 w-[400px] h-[400px] rounded-full opacity-[0.06] blur-[100px] animate-[pulse_12s_ease-in-out_infinite_4s]" style={{ background: 'radial-gradient(circle, #7c3aed 0%, transparent 70%)' }} />
+     2→   502→          {/* Grid overlay */}
+     3→   503→          <div className="absolute inset-0" style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px)', backgroundSize: '60px 60px' }} />
+     4→   504→        </div>
+     5→   505→
+     6→   506→        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-24 lg:py-28">
+     7→   507→          <div className="max-w-3xl">
+     8→   508→            <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: [0.25, 0.4, 0.25, 1] }}>
+     9→   509→              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-8 text-sm font-medium" style={{ background: 'rgba(212,175,55,0.1)', border: '1px solid rgba(212,175,55,0.2)', color: 'var(--gold, #D4AF37)' }}>
+    10→   510→                <Sparkles className="h-3.5 w-3.5" />AI-Powered HR Platform
+    11→   511→                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider" style={{ background: 'rgba(212,175,55,0.15)' }}>New</span>
+    12→   512→              </div>
+    13→   513→
+    14→   514→              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-extrabold text-white leading-[1.1] tracking-tight">
+    15→   515→                The Smarter Way to<br />
+    16→   516→                <span className="bg-clip-text text-transparent" style={{ backgroundImage: 'linear-gradient(135deg, var(--gold, #D4AF37) 0%, #E8C96A 50%, #D4AF37 100%)' }}>Manage Your</span><br />
+    17→   517→                Entire Workforce
+    18→   518→              </h1>
+    19→   519→
+    20→   520→              <p className="mt-6 text-lg sm:text-xl text-gray-300/90 max-w-xl leading-relaxed">
+    21→   521→                HPHRMS is the next-generation AI-powered HR management system that automates payroll, attendance, recruitment, and compliance — all in one platform.
+    22→   522→              </p>
+    23→   523→            </motion.div>
+    24→   524→
+    25→   525→            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.3, ease: [0.25, 0.4, 0.25, 1] }}>
+    26→   526→              <div className="mt-10 flex flex-wrap gap-4">
+    27→   527→                <Button size="lg" className="text-base font-semibold h-12 px-8 rounded-xl shadow-lg shadow-[var(--gold,#D4AF37)]/20 hover:shadow-xl hover:shadow-[var(--gold,#D4AF37)]/30 transition-all duration-300" style={{ background: 'linear-gradient(135deg, var(--gold, #D4AF37), #E8C96A)', color: 'var(--navy, #002B5C)' }} onClick={() => setView('subscribe')}>
+    28→   528→                  Start Free Trial<ArrowRight className="ml-2 h-4 w-4" />
+    29→   529→                </Button>
+    30→   530→                <Button size="lg" variant="outline" className="text-base font-medium h-12 px-8 rounded-xl border-white/20 text-white hover:bg-white/10 hover:text-white hover:border-white/30 transition-all duration-300" onClick={() => setView('login-admin')}>
+    31→   531→                  <Play className="mr-2 h-4 w-4" />Login to Dashboard
+    32→   532→                </Button>
+    33→   533→              </div>
+    34→   534→
+    35→   535→              <div className="mt-12 flex flex-wrap items-center gap-6 text-sm text-gray-400">
+    36→   536→                <div className="flex items-center gap-2">
+    37→   537→                  <div className="flex -space-x-2">
+    38→   538→                    {['bg-emerald-500', 'bg-amber-500', 'bg-sky-500', 'bg-rose-500'].map((bg, i) => (
+    39→   539→                      <div key={i} className={cn('h-7 w-7 rounded-full border-2 border-[#0c1429] flex items-center justify-center text-[10px] font-bold text-white', bg)}>{String.fromCharCode(65 + i)}</div>
+    40→   540→                    ))}
+    41→   541→                  </div>
+    42→   542→                  <span>Trusted by <strong className="text-white">100+</strong> businesses</span>
+    43→   543→                </div>
+    44→   544→                <div className="flex items-center gap-1.5"><ShieldCheck className="h-4 w-4 text-[var(--gold,#D4AF37)]" /><span>GSTIN: {BRAND.gstin}</span></div>
+    45→   545→                <div className="flex items-center gap-1.5"><Star className="h-4 w-4 text-[var(--gold,#D4AF37)]" /><span>UDYAM Registered</span></div>
+    46→   546→              </div>
+    47→   547→            </motion.div>
+    48→   548→          </div>
+    49→   549→        </div>
+    50→   550→      </section>
+    51→   551→
+    52→   552→      {/* ══════════════════════════════════════════════════════════════════════
+    53→   553→          SERVICES MOTION VIDEO — Horizontal Auto-Scroll with Images
+    54→   554→         ══════════════════════════════════════════════════════════════════════ */}
+    55→   555→      <section id="services-motion" className="py-20 sm:py-24 relative overflow-hidden bg-white" aria-label="Our services showcase">
+    56→   556→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-12">
+    57→   557→          <Reveal>
+    58→   558→            <div className="text-center">
+    59→   559→              <Badge className="mb-4 px-4 py-1 text-sm" style={{ background: 'rgba(10,31,68,0.06)', color: 'var(--navy, #002B5C)', border: '1px solid rgba(10,31,68,0.1)' }}>Enterprise Solutions</Badge>
+    60→   560→              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-gray-900 tracking-tight">
+    61→   561→                Comprehensive<br />
+    62→   562→                <span className="bg-clip-text text-transparent" style={{ backgroundImage: 'linear-gradient(135deg, var(--navy, #002B5C), var(--navy-light, #0A4488))' }}>Business Services</span>
+    63→   563→              </h2>
+    64→   564→              <p className="mt-4 text-gray-500 max-w-2xl mx-auto text-lg">
+    65→   565→                From HR management to engineering support — we deliver end-to-end workforce solutions that scale with your business.
+    66→   566→              </p>
+    67→   567→            </div>
+    68→   568→          </Reveal>
+    69→   569→        </div>
+    70→   570→
+    71→   571→        {/* Horizontal Marquee — Motion Video Effect */}
+    72→   572→        <div
+    73→   573→          className="relative"
+    74→   574→          onMouseEnter={() => setMarqueePaused(true)}
+    75→   575→          onMouseLeave={() => setMarqueePaused(false)}
+    76→   576→        >
+    77→   577→          {/* Gradient masks on edges */}
+    78→   578→          <div className="absolute left-0 top-0 bottom-0 w-20 z-10 pointer-events-none" style={{ background: 'linear-gradient(to right, white, transparent)' }} />
+    79→   579→          <div className="absolute right-0 top-0 bottom-0 w-20 z-10 pointer-events-none" style={{ background: 'linear-gradient(to left, white, transparent)' }} />
+    80→   580→
+    81→   581→          {/* Scrolling track */}
+    82→   582→          <div
+    83→   583→            ref={marqueeRef}
+    84→   584→            className={cn('flex gap-6 w-max', !marqueePaused && 'animate-marquee')}
+    85→   585→            style={{ padding: '1rem 0' }}
+    86→   586→          >
+    87→   587→            {/* Duplicate for seamless loop */}
+    88→   588→            {[...FEATURED_SERVICES, ...FEATURED_SERVICES].map((service, i) => (
+    89→   589→              <motion.div
+    90→   590→                key={i}
+    91→   591→                whileHover={{ y: -8, scale: 1.02 }}
+    92→   592→                transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+    93→   593→                className="group relative w-[320px] sm:w-[380px] h-[260px] sm:h-[300px] rounded-2xl overflow-hidden cursor-pointer flex-shrink-0"
+    94→   594→                style={{ background: '#f8f9fc', boxShadow: '0 4px 24px -4px rgba(10,31,68,0.08)' }}
+    95→   595→              >
+    96→   596→                {/* Service image background */}
+    97→   597→                <div className="absolute inset-0">
+    98→   598→                  <Image src={service.image} alt={service.title} fill className="object-cover transition-transform duration-700 group-hover:scale-110" />
+    99→   599→                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+   100→   600→                </div>
+   101→   601→
+   102→   602→                {/* Animated gradient border on hover */}
+   103→   603→                <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" style={{ padding: '2px' }}>
+   104→   604→                  <div className="w-full h-full rounded-2xl" style={{ background: 'conic-gradient(from var(--angle, 0deg), var(--navy, #002B5C), var(--gold, #D4AF37), var(--navy-light, #0A4488), var(--gold, #D4AF37), var(--navy, #002B5C))' }} />
+   105→   605→                </div>
+   106→   606→                <div className="absolute inset-[2px] rounded-[14px] bg-black/60 group-hover:bg-black/40 transition-colors duration-500" />
+   107→   607→
+   108→   608→                {/* Content */}
+   109→   609→                <div className="relative z-10 h-full flex flex-col justify-end p-6">
+   110→   610→                  <div className="flex items-center gap-3 mb-3">
+   111→   611→                    <div className="h-10 w-10 rounded-xl flex items-center justify-center transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3" style={{ background: service.color }}>
+   112→   612→                      <service.icon className="h-5 w-5 text-white" />
+   113→   613→                    </div>
+   114→   614→                    <div className="h-0.5 flex-1 rounded-full overflow-hidden bg-white/20">
+   115→   615→                      <motion.div
+   116→   616→                        className="h-full rounded-full"
+   117→   617→                        style={{ background: service.color }}
+   118→   618→                        initial={{ width: '0%' }}
+   119→   619→                        whileInView={{ width: '100%' }}
+   120→   620→                        transition={{ duration: 1.5, delay: 0.2, ease: 'easeOut' }}
+   121→   621→                        viewport={{ once: true }}
+   122→   622→                      />
+   123→   623→                    </div>
+   124→   624→                  </div>
+   125→   625→                  <h3 className="text-xl font-bold text-white mb-1.5 group-hover:text-transparent group-hover:bg-clip-text transition-all duration-300" style={{ backgroundImage: 'linear-gradient(135deg, white, var(--gold, #D4AF37))' }}>
+   126→   626→                    {service.title}
+   127→   627→                  </h3>
+   128→   628→                  <p className="text-sm text-gray-300 leading-relaxed line-clamp-2 group-hover:text-gray-200 transition-colors duration-300">
+   129→   629→                    {service.desc}
+   130→   630→                  </p>
+   131→   631→                  <div className="mt-3 flex items-center gap-1.5 text-sm font-medium opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-300" style={{ color: service.color }}>
+   132→   632→                    Learn more <ArrowRight className="h-3.5 w-3.5" />
+   133→   633→                  </div>
+   134→   634→                </div>
+   135→   635→              </motion.div>
+   136→   636→            ))}
+   137→   637→          </div>
+   138→   638→        </div>
+   139→   639→
+   140→   640→        {/* All services list below marquee */}
+   141→   641→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-16">
+   142→   642→          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+   143→   643→            {SERVICES.map((service, i) => {
+   144→   644→              const Icon = SERVICE_ICONS[i] || Zap
+   145→   645→              return (
+   146→   646→                <Reveal key={i} delay={i * 0.05}>
+   147→   647→                  <div className="group flex items-start gap-3.5 p-4 rounded-xl hover:bg-gray-50 transition-all duration-200 cursor-default">
+   148→   648→                    <div className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110" style={{ background: 'linear-gradient(135deg, var(--navy, #002B5C), var(--navy-light, #0A4488))' }}>
+   149→   649→                      <Icon className="h-4 w-4 text-white" />
+   150→   650→                    </div>
+   151→   651→                    <span className="text-sm font-medium text-gray-700 group-hover:text-gray-900 leading-snug pt-1.5">{service}</span>
+   152→   652→                  </div>
+   153→   653→                </Reveal>
+   154→   654→              )
+   155→   655→            })}
+   156→   656→          </div>
+   157→   657→        </div>
+   158→   658→      </section>
+   159→   659→
+   160→   660→      {/* ══════════════════════════════════════════════════════════════════════
+   161→   661→          TRUST STRIP
+   162→   662→         ══════════════════════════════════════════════════════════════════════ */}
+   163→   663→      <section className="py-10 bg-gray-50/80 border-y border-gray-100" aria-label="Trust indicators">
+   164→   664→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+   165→   665→          <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3">
+   166→   666→            {TRUST_BADGES.map((badge, i) => (
+   167→   667→              <Reveal key={i} delay={i * 0.04}>
+   168→   668→                <div className="flex items-center gap-2 text-sm text-gray-400 font-medium">
+   169→   669→                  <Check className="h-4 w-4 text-emerald-500" />{badge}
+   170→   670→                </div>
+   171→   671→              </Reveal>
+   172→   672→            ))}
+   173→   673→          </div>
+   174→   674→        </div>
+   175→   675→      </section>
+   176→   676→
+   177→   677→      {/* ══════════════════════════════════════════════════════════════════════
+   178→   678→          HPHRMS FEATURES
+   179→   679→         ══════════════════════════════════════════════════════════════════════ */}
+   180→   680→      <section id="features" className="py-20 sm:py-28 bg-white" aria-label="HPHRMS Features">
+   181→   681→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+   182→   682→          <Reveal>
+   183→   683→            <div className="text-center mb-16">
+   184→   684→              <Badge className="mb-4 px-4 py-1 text-sm" style={{ background: 'rgba(212,175,55,0.08)', color: 'var(--gold, #D4AF37)', border: '1px solid rgba(212,175,55,0.15)' }}>Product Features</Badge>
+   185→   685→              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-gray-900 tracking-tight">
+   186→   686→                Everything You Need to<br />
+   187→   687→                <span className="bg-clip-text text-transparent" style={{ backgroundImage: 'linear-gradient(135deg, var(--navy, #002B5C), var(--navy-light, #0A4488))' }}>Run HR Smarter</span>
+   188→   688→              </h2>
+   189→   689→              <p className="mt-4 text-gray-500 max-w-2xl mx-auto text-lg">Powerful modules designed for modern Indian enterprises — from hiring to payroll, all powered by AI.</p>
+   190→   690→            </div>
+   191→   691→          </Reveal>
+   192→   692→          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+   193→   693→            {HPHRMS_FEATURES.map((feature, i) => {
+   194→   694→              const Icon = FEATURE_ICONS[i] || Zap
+   195→   695→              return (
+   196→   696→                <Reveal key={i} delay={i * 0.04}>
+   197→   697→                  <div className="group relative p-6 rounded-2xl bg-gray-50/80 border border-gray-100 hover:bg-white hover:shadow-xl hover:shadow-gray-200/50 hover:-translate-y-1 transition-all duration-300 cursor-default">
+   198→   698→                    <div className="flex h-11 w-11 items-center justify-center rounded-xl mb-4 transition-all duration-300" style={{ background: 'linear-gradient(135deg, var(--navy, #002B5C), var(--navy-light, #0A4488))' }}>
+   199→   699→                      <Icon className="h-5 w-5 text-white" />
+   200→   700→                    </div>
+   201→   701→                    <h3 className="text-base font-semibold text-gray-900 group-hover:text-[var(--navy,#002B5C)] transition-colors">{feature}</h3>
+   202→   702→                    <p className="mt-1.5 text-sm text-gray-400 leading-relaxed">Streamline your {feature.toLowerCase()} with intelligent automation and real-time insights.</p>
+   203→   703→                    <div className="absolute bottom-0 left-6 right-6 h-0.5 bg-gradient-to-r from-[var(--navy,#002B5C)] to-[var(--gold,#D4AF37)] scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left rounded-full" />
+   204→   704→                  </div>
+   205→   705→                </Reveal>
+   206→   706→              )
+   207→   707→            })}
+   208→   708→          </div>
+   209→   709→        </div>
+   210→   710→      </section>
+   211→   711→
+   212→   712→      {/* ══════════════════════════════════════════════════════════════════════
+   213→   713→          STATS — Animated counters
+   214→   714→         ══════════════════════════════════════════════════════════════════════ */}
+   215→   715→      <section className="py-16 relative overflow-hidden" style={{ background: 'linear-gradient(160deg, #060a18, #0f1a38, #0c1429)' }} aria-label="Statistics">
+   216→   716→        <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+   217→   717→          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full opacity-[0.04] blur-[120px]" style={{ background: 'radial-gradient(circle, var(--gold, #D4AF37), transparent 70%)' }} />
+   218→   718→        </div>
+   219→   719→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+   220→   720→          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
+   221→   721→            {[
+   222→   722→              { value: '100+', label: 'Businesses Trust Us', icon: Building2 },
+   223→   723→              { value: '5000+', label: 'Employees Managed', icon: Users },
+   224→   724→              { value: '50+', label: 'Projects Delivered', icon: FolderKanban },
+   225→   725→              { value: '99.9%', label: 'Platform Uptime', icon: ShieldCheck },
+   226→   726→            ].map((stat, i) => (
+   227→   727→              <Reveal key={i} delay={i * 0.1}>
+   228→   728→                <div className="text-center">
+   229→   729→                  <stat.icon className="h-8 w-8 mx-auto mb-3 text-[var(--gold,#D4AF37)] opacity-60" />
+   230→   730→                  <div className="text-3xl sm:text-4xl font-extrabold text-white mb-1">{stat.value}</div>
+   231→   731→                  <div className="text-sm text-gray-400 font-medium">{stat.label}</div>
+   232→   732→                </div>
+   233→   733→              </Reveal>
+   234→   734→            ))}
+   235→   735→          </div>
+   236→   736→        </div>
+   237→   737→      </section>
+   238→   738→
+   239→   739→      {/* ══════════════════════════════════════════════════════════════════════
+   240→   740→          PRICING
+   241→   741→         ══════════════════════════════════════════════════════════════════════ */}
+   242→   742→      <section id="pricing" className="py-20 sm:py-28 bg-gray-50/50" aria-label="Pricing plans">
+   243→   743→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+   244→   744→          <Reveal>
+   245→   745→            <div className="text-center mb-16">
+   246→   746→              <Badge className="mb-4 px-4 py-1 text-sm" style={{ background: 'rgba(212,175,55,0.08)', color: 'var(--gold, #D4AF37)', border: '1px solid rgba(212,175,55,0.15)' }}>Simple Pricing</Badge>
+   247→   747→              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-gray-900 tracking-tight">
+   248→   748→                Plans That<br />
+   249→   749→                <span className="bg-clip-text text-transparent" style={{ backgroundImage: 'linear-gradient(135deg, var(--navy, #002B5C), var(--navy-light, #0A4488))' }}>Scale With You</span>
+   250→   750→              </h2>
+   251→   751→              <p className="mt-4 text-gray-500 max-w-2xl mx-auto text-lg">Start free. Upgrade as you grow. No hidden fees.</p>
+   252→   752→            </div>
+   253→   753→          </Reveal>
+   254→   754→          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+   255→   755→            {PRICING_PLANS.map((plan, i) => (
+   256→   756→              <Reveal key={plan.name} delay={i * 0.1}>
+   257→   757→                <div className={cn('relative rounded-2xl p-6 h-full flex flex-col transition-all duration-300 hover:-translate-y-1', plan.popular ? 'bg-[var(--navy,#002B5C)] text-white shadow-2xl shadow-[var(--navy,#002B5C)]/30 scale-[1.02]' : 'bg-white border border-gray-200 hover:shadow-xl')}>
+   258→   758→                  {plan.popular && (
+   259→   759→                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wider" style={{ background: 'linear-gradient(135deg, var(--gold, #D4AF37), #E8C96A)', color: 'var(--navy, #002B5C)' }}>Most Popular</div>
+   260→   760→                  )}
+   261→   761→                  <div className="mb-6">
+   262→   762→                    <h3 className={cn('text-lg font-bold mb-1', plan.popular ? 'text-white' : 'text-gray-900')}>{plan.name}</h3>
+   263→   763→                    <p className={cn('text-sm', plan.popular ? 'text-gray-300' : 'text-gray-500')}>{plan.description}</p>
+   264→   764→                  </div>
+   265→   765→                  <div className="mb-6">
+   266→   766→                    <span className={cn('text-4xl font-extrabold', plan.popular ? 'text-white' : 'text-gray-900')}>{plan.price}</span>
+   267→   767→                    {plan.period && <span className={cn('text-sm ml-1', plan.popular ? 'text-gray-400' : 'text-gray-500')}>{plan.period}</span>}
+   268→   768→                  </div>
+   269→   769→                  <ul className="space-y-3 mb-8 flex-1">
+   270→   770→                    {plan.features.map((f) => (
+   271→   771→                      <li key={f} className="flex items-start gap-2 text-sm">
+   272→   772→                        <Check className={cn('h-4 w-4 mt-0.5 shrink-0', plan.popular ? 'text-[var(--gold,#D4AF37)]' : 'text-emerald-500')} />
+   273→   773→                        <span className={plan.popular ? 'text-gray-200' : 'text-gray-600'}>{f}</span>
+   274→   774→                      </li>
+   275→   775→                    ))}
+   276→   776→                  </ul>
+   277→   777→                  <Button className={cn('w-full font-semibold', plan.popular ? 'text-[var(--navy,#002B5C)]' : '')} style={!plan.popular ? {} : { background: 'linear-gradient(135deg, var(--gold, #D4AF37), #E8C96A)' }} variant={plan.popular ? 'default' : 'outline'} onClick={() => setView('subscribe')}>
+   278→   778→                    {plan.price === 'Custom' ? 'Contact Sales' : 'Get Started'}
+   279→   779→                  </Button>
+   280→   780→                </div>
+   281→   781→              </Reveal>
+   282→   782→            ))}
+   283→   783→          </div>
+   284→   784→        </div>
+   285→   785→      </section>
+   286→   786→
+   287→   787→      {/* ══════════════════════════════════════════════════════════════════════
+   288→   788→          PORTAL ACCESS CARDS
+   289→   789→         ══════════════════════════════════════════════════════════════════════ */}
+   290→   790→      <section id="trust" className="py-20 sm:py-28 bg-white" aria-label="Portal access">
+   291→   791→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+   292→   792→          <Reveal>
+   293→   793→            <div className="text-center mb-16">
+   294→   794→              <Badge className="mb-4 px-4 py-1 text-sm" style={{ background: 'rgba(10,31,68,0.06)', color: 'var(--navy, #002B5C)', border: '1px solid rgba(10,31,68,0.1)' }}>Portal Access</Badge>
+   295→   795→              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-gray-900 tracking-tight">
+   296→   796→                Your Dedicated<br />
+   297→   797→                <span className="bg-clip-text text-transparent" style={{ backgroundImage: 'linear-gradient(135deg, var(--navy, #002B5C), var(--navy-light, #0A4488))' }}>Workspace Awaits</span>
+   298→   798→              </h2>
+   299→   799→            </div>
+   300→   800→          </Reveal>
+   301→   801→          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+   302→   802→            {PORTALS.map((portal, i) => (
+   303→   803→              <Reveal key={portal.id} delay={i * 0.12}>
+   304→   804→                <motion.div whileHover={{ y: -6 }} transition={{ type: 'spring', stiffness: 300, damping: 20 }}>
+   305→   805→                  <div className="group relative rounded-2xl overflow-hidden cursor-pointer border border-gray-100 hover:border-gray-200 transition-all duration-300 hover:shadow-xl" onClick={() => setView(portal.id)}>
+   306→   806→                    <div className="absolute inset-0" style={{ background: 'linear-gradient(160deg, #060a18, #0f1a38)' }} />
+   307→   807→                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" style={{ background: 'linear-gradient(160deg, #0f1a38, #162a52)' }} />
+   308→   808→                    <div className="relative z-10 p-8">
+   309→   809→                      <div className="h-12 w-12 rounded-xl flex items-center justify-center mb-5" style={{ background: 'linear-gradient(135deg, var(--gold, #D4AF37), #E8C96A)' }}>
+   310→   810→                        <portal.icon className="h-6 w-6 text-[var(--navy,#002B5C)]" />
+   311→   811→                      </div>
+   312→   812→                      <h3 className="text-xl font-bold text-white mb-2">{portal.title}</h3>
+   313→   813→                      <p className="text-sm text-gray-400 mb-6">{portal.description}</p>
+   314→   814→                      <ul className="space-y-2.5">
+   315→   815→                        {portal.features.map((f) => (
+   316→   816→                          <li key={f} className="flex items-center gap-2 text-sm text-gray-300">
+   317→   817→                            <Check className="h-3.5 w-3.5 text-[var(--gold,#D4AF37)] shrink-0" />{f}
+   318→   818→                          </li>
+   319→   819→                        ))}
+   320→   820→                      </ul>
+   321→   821→                      <div className="mt-6 flex items-center gap-2 text-sm font-semibold text-[var(--gold,#D4AF37)] group-hover:gap-3 transition-all duration-300">
+   322→   822→                        Access Portal <ArrowRight className="h-4 w-4" />
+   323→   823→                      </div>
+   324→   824→                    </div>
+   325→   825→                  </div>
+   326→   826→                </motion.div>
+   327→   827→              </Reveal>
+   328→   828→            ))}
+   329→   829→          </div>
+   330→   830→        </div>
+   331→   831→      </section>
+   332→   832→
+   333→   833→      {/* ══════════════════════════════════════════════════════════════════════
+   334→   834→          CONTACT SECTION
+   335→   835→         ══════════════════════════════════════════════════════════════════════ */}
+   336→   836→      <section id="contact" className="py-20 sm:py-28 relative overflow-hidden" style={{ background: 'linear-gradient(160deg, #060a18, #0c1429 50%, #101d3a)' }} aria-label="Contact us">
+   337→   837→        <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+   338→   838→          <div className="absolute top-0 right-1/4 w-[400px] h-[400px] rounded-full opacity-[0.04] blur-[120px]" style={{ background: 'radial-gradient(circle, var(--gold, #D4AF37), transparent 70%)' }} />
+   339→   839→        </div>
+   340→   840→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+   341→   841→          <Reveal>
+   342→   842→            <div className="text-center mb-16">
+   343→   843→              <Badge className="mb-4 px-4 py-1 text-sm" style={{ background: 'rgba(212,175,55,0.1)', color: 'var(--gold, #D4AF37)', border: '1px solid rgba(212,175,55,0.2)' }}>Get In Touch</Badge>
+   344→   844→              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white tracking-tight">
+   345→   845→                Let&apos;s Build Something<br />
+   346→   846→                <span className="bg-clip-text text-transparent" style={{ backgroundImage: 'linear-gradient(135deg, var(--gold, #D4AF37), #E8C96A)' }}>Great Together</span>
+   347→   847→              </h2>
+   348→   848→            </div>
+   349→   849→          </Reveal>
+   350→   850→
+   351→   851→          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+   352→   852→            {/* Contact Info */}
+   353→   853→            <Reveal direction="left">
+   354→   854→              <div className="space-y-6">
+   355→   855→                {[
+   356→   856→                  { icon: Phone, label: 'Call Us', value: BRAND.phone, href: `tel:${BRAND.phone}` },
+   357→   857→                  { icon: Mail, label: 'Email Us', value: BRAND.email, href: `mailto:${BRAND.email}` },
+   358→   858→                  { icon: Globe2, label: 'Website', value: BRAND.website, href: BRAND.website },
+   359→   859→                  { icon: MapPin, label: 'Head Office', value: BRAND.headOffice.full, href: `https://maps.google.com/?q=${encodeURIComponent(BRAND.headOffice.full)}` },
+   360→   860→                  { icon: MapPin, label: 'Branch Office', value: BRAND.branchOffice.full, href: `https://maps.google.com/?q=${encodeURIComponent(BRAND.branchOffice.full)}` },
+   361→   861→                ].map((item, i) => (
+   362→   862→                  <a key={i} href={item.href} target={item.href.startsWith('http') ? '_blank' : undefined} rel={item.href.startsWith('http') ? 'noopener noreferrer' : undefined} className="flex items-start gap-4 p-4 rounded-xl transition-all duration-200 hover:bg-white/5 group">
+   363→   863→                    <div className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'rgba(212,175,55,0.1)' }}>
+   364→   864→                      <item.icon className="h-5 w-5 text-[var(--gold,#D4AF37)]" />
+   365→   865→                    </div>
+   366→   866→                    <div>
+   367→   867→                      <div className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">{item.label}</div>
+   368→   868→                      <div className="text-sm text-gray-200 group-hover:text-white transition-colors leading-relaxed">{item.value}</div>
+   369→   869→                    </div>
+   370→   870→                  </a>
+   371→   871→                ))}
+   372→   872→
+   373→   873→                {/* Social row */}
+   374→   874→                <div className="pt-4">
+   375→   875→                  <div className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-3">Connect With Us</div>
+   376→   876→                  <div className="flex flex-wrap gap-2">
+   377→   877→                    {SOCIAL_ITEMS.map((s) => (
+   378→   878→                      <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer" className="h-10 w-10 rounded-xl flex items-center justify-center transition-all duration-200 hover:scale-110 hover:shadow-lg" style={{ background: 'rgba(255,255,255,0.05)', color: s.color }} aria-label={s.label}>
+   379→   879→                        <s.icon className="h-4 w-4" />
+   380→   880→                      </a>
+   381→   881→                    ))}
+   382→   882→                  </div>
+   383→   883→                </div>
+   384→   884→              </div>
+   385→   885→            </Reveal>
+   386→   886→
+   387→   887→            {/* Contact Form */}
+   388→   888→            <Reveal direction="right">
+   389→   889→              <Card className="border-0" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+   390→   890→                <CardContent className="pt-6">
+   391→   891→                  <form onSubmit={(e) => { e.preventDefault(); toast.success('Message sent! We will get back to you soon.') }} className="space-y-4">
+   392→   892→                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+   393→   893→                      <div className="space-y-2"><Label className="text-gray-300 text-sm">Name</Label><Input placeholder="Your name" className="bg-white/5 border-white/10 text-white placeholder:text-gray-500" /></div>
+   394→   894→                      <div className="space-y-2"><Label className="text-gray-300 text-sm">Email</Label><Input type="email" placeholder="you@company.com" className="bg-white/5 border-white/10 text-white placeholder:text-gray-500" /></div>
+   395→   895→                    </div>
+   396→   896→                    <div className="space-y-2"><Label className="text-gray-300 text-sm">Subject</Label><Input placeholder="How can we help?" className="bg-white/5 border-white/10 text-white placeholder:text-gray-500" /></div>
+   397→   897→                    <div className="space-y-2"><Label className="text-gray-300 text-sm">Message</Label><Textarea placeholder="Tell us about your requirements..." rows={4} className="bg-white/5 border-white/10 text-white placeholder:text-gray-500" /></div>
+   398→   898→                    <Button type="submit" className="w-full h-11 font-semibold" style={{ background: 'linear-gradient(135deg, var(--gold, #D4AF37), #E8C96A)', color: 'var(--navy, #002B5C)' }}>
+   399→   899→                      <Send className="mr-2 h-4 w-4" />Send Message
+   400→   900→                    </Button>
+   401→   901→                  </form>
+   402→   902→                </CardContent>
+   403→   903→              </Card>
+   404→   904→            </Reveal>
+   405→   905→          </div>
+   406→   906→        </div>
+   407→   907→      </section>
+   408→   908→
+   409→   909→      {/* ══════════════════════════════════════════════════════════════════════
+   410→   910→          FOOTER — Sticky to bottom
+   411→   911→         ══════════════════════════════════════════════════════════════════════ */}
+   412→   912→      <footer className="mt-auto relative overflow-hidden" style={{ background: 'linear-gradient(180deg, #060a18, #030710)' }} role="contentinfo">
+   413→   913→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+   414→   914→          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
+   415→   915→            {/* Brand */}
+   416→   916→            <div className="lg:col-span-1">
+   417→   917→              <div className="flex items-center gap-2.5 mb-4">
+   418→   918→                <BrandLogo size={32} />
+   419→   919→                <div className="flex flex-col">
+   420→   920→                  <span className="font-extrabold text-sm text-white">HP ENTERPRISE</span>
+   421→   921→                  <span className="text-[9px] font-medium tracking-widest uppercase text-gray-500">Building Safer Tomorrow</span>
+   422→   922→                </div>
+   423→   923→              </div>
+   424→   924→              <p className="text-sm text-gray-400 leading-relaxed mb-4">{BRAND.taglineFull}</p>
+   425→   925→              <div className="flex flex-wrap gap-2">
+   426→   926→                {SOCIAL_ITEMS.map((s) => (
+   427→   927→                  <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer" className="h-8 w-8 rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-110" style={{ color: s.color }} aria-label={s.label}><s.icon className="h-3.5 w-3.5" /></a>
+   428→   928→                ))}
+   429→   929→              </div>
+   430→   930→            </div>
+   431→   931→
+   432→   932→            {/* Services */}
+   433→   933→            <div>
+   434→   934→              <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-4">Services</h4>
+   435→   935→              <ul className="space-y-2.5">
+   436→   936→                {SERVICES.slice(0, 6).map((s) => (
+   437→   937→                  <li key={s}><span className="text-sm text-gray-400 hover:text-gray-200 transition-colors cursor-default">{s}</span></li>
+   438→   938→                ))}
+   439→   939→              </ul>
+   440→   940→            </div>
+   441→   941→
+   442→   942→            {/* Legal */}
+   443→   943→            <div>
+   444→   944→              <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-4">Legal & Compliance</h4>
+   445→   945→              <ul className="space-y-2.5 text-sm text-gray-400">
+   446→   946→                <li className="flex items-center gap-2"><ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />GSTIN: {BRAND.gstin}</li>
+   447→   947→                <li className="flex items-center gap-2"><ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />PAN: {BRAND.pan}</li>
+   448→   948→                <li className="flex items-center gap-2"><ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />UDYAM: {BRAND.udyam}</li>
+   449→   949→                <li className="flex items-center gap-2"><MapPin className="h-3.5 w-3.5 text-gray-500" />Bengaluru, Karnataka</li>
+   450→   950→                <li className="flex items-center gap-2"><MapPin className="h-3.5 w-3.5 text-gray-500" />Chitradurga, Karnataka</li>
+   451→   951→              </ul>
+   452→   952→            </div>
+   453→   953→
+   454→   954→            {/* Contact */}
+   455→   955→            <div>
+   456→   956→              <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-4">Contact</h4>
+   457→   957→              <ul className="space-y-2.5 text-sm text-gray-400">
+   458→   958→                <li className="flex items-center gap-2"><Phone className="h-3.5 w-3.5" />{BRAND.phone}</li>
+   459→   959→                <li className="flex items-center gap-2"><Phone className="h-3.5 w-3.5" />{BRAND.hrPhone}</li>
+   460→   960→                <li className="flex items-center gap-2"><Mail className="h-3.5 w-3.5" />{BRAND.email}</li>
+   461→   961→                <li className="flex items-center gap-2"><Globe2 className="h-3.5 w-3.5" /><a href={BRAND.website} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">{BRAND.website}</a></li>
+   462→   962→              </ul>
+   463→   963→            </div>
+   464→   964→          </div>
+   465→   965→
+   466→   966→          {/* Bottom bar */}
+   467→   967→          <div className="mt-12 pt-8 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-4">
+   468→   968→            <p className="text-xs text-gray-500">© {new Date().getFullYear()} HP ENTERPRISE. All rights reserved.</p>
+   469→   969→            <div className="flex items-center gap-4 text-xs text-gray-500">
+   470→   970→              <span>Managing Director: {BRAND.managingDirector}</span>
+   471→   971→              <span className="hidden sm:inline">•</span>
+   472→   972→              <span className="hidden sm:inline">EHS Director: {BRAND.ehsDirector}</span>
+   473→   973→            </div>
+   474→   974→          </div>
+   475→   975→        </div>
+   476→   976→      </footer>
+   477→   977→
+   478→   978→      {/* ── CSS for marquee animation ──────────────────────────────────────── */}
+   479→   979→      <style jsx global>{`
+   480→   980→        @keyframes marquee {
+   481→   981→          0% { transform: translateX(0); }
+   482→   982→          100% { transform: translateX(calc(-50% - 0.75rem)); }
+   483→   983→        }
+   484→   984→        .animate-marquee {
+   485→   985→          animation: marquee 40s linear infinite;
+   486→   986→        }
+   487→   987→        .animate-marquee:hover {
+   488→   988→          animation-play-state: paused;
+   489→   989→        }
+   490→   990→        @property --angle {
+   491→   991→          syntax: '<angle>';
+   492→   992→          initial-value: 0deg;
+   493→   993→          inherits: false;
+   494→   994→        }
+   495→   995→        @keyframes rotate-border {
+   496→   996→          0% { --angle: 0deg; }
+   497→   997→          100% { --angle: 360deg; }
+   498→   998→        }
+   499→   999→        .group:hover > [style*='conic-gradient'] {
+   500→  1000→          animation: rotate-border 3s linear infinite;
+   501→  1001→        }
+   502→  1002→      `}</style>
+   503→  1003→    </div>
+   504→  1004→  )
+   505→  1005→}
+   506→  1006→
