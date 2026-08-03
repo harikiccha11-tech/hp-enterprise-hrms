@@ -200,11 +200,24 @@ export async function GET() {
   const hasGemini = !!process.env.GEMINI_API_KEY
   const hasGateway = !!process.env.AI_GATEWAY_API_KEY
   let geminiTest = 'not tested'
+  let geminiGenTest = 'not tested'
   if (hasGemini) {
     try {
       const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash?key=' + process.env.GEMINI_API_KEY, { signal: AbortSignal.timeout(10000) })
       geminiTest = 'status ' + res.status + (res.ok ? ' (available)' : ' (error)')
     } catch (e) { geminiTest = 'error: ' + (e as Error).message }
+    // Test actual generation
+    try {
+      const genRes = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + process.env.GEMINI_API_KEY, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents: [{ parts: [{ text: 'Say hi' }] }], generationConfig: { maxOutputTokens: 10 } }),
+        signal: AbortSignal.timeout(15000),
+      })
+      const genData = await genRes.json()
+      const genText = genData?.candidates?.[0]?.content?.parts?.[0]?.text
+      geminiGenTest = genRes.ok ? ('OK: ' + (genText || 'empty')) : ('ERR ' + genRes.status + ': ' + JSON.stringify(genData?.error || {}).slice(0, 200))
+    } catch (e) { geminiGenTest = 'error: ' + (e as Error).message }
   }
-  return NextResponse.json({ isVercel, hasGemini, hasGateway, geminiTest })
+  return NextResponse.json({ isVercel, hasGemini, hasGateway, geminiTest, geminiGenTest })
 }
