@@ -361,3 +361,40 @@ Stage Summary:
 - Zero dark backgrounds on any content section
 - 10 portals with inline expand/collapse, all on single page
 - Browser verified: all portals render, login forms expand, text is visible
+
+---
+Task ID: 9
+Agent: Main
+Task: Connect full onboarding/joining application form to all request-access portals
+
+Work Log:
+- Added `appliedPortal` and `maritalStatus`, `nationality`, `permanentAddress` fields to Prisma Employee model
+- Pushed schema to DB with `bun run db:push`
+- Updated `/api/registration/route.ts` to accept and store `appliedPortal`, `maritalStatus`, `nationality`, `permanentAddress`
+- Added `medicalFile` and `addressProofFile` to registration API document uploads
+- Updated `RegistrationForm.tsx`:
+  - Added `appliedFor` prop for portal context display
+  - Added Marital Status select (Single/Married/Divorced/Widowed)
+  - Added Nationality field (default: Indian)
+  - Added Permanent Address textarea
+  - Added Medical/Fitness Certificate upload
+  - Added Address Proof (Voter ID/Utility Bill) upload
+  - Updated labels: "Resume / CV *", "Last 3 Months Salary Slips", "Relieving / Service Certificate"
+  - Added 4 new summary fields in Review step (Gender, Marital Status, IFSC, Expected Salary)
+  - Added Badge import for appliedFor display in header and success page
+- Updated `Landing.tsx`:
+  - Added `'apply'` to LandingView type
+  - Added `appliedPortal` state and `openApplyForm` callback
+  - Replaced request-access portal buttons: old WhatsApp/external Apply Now → new onboarding CTA card with:
+    - Portal name, description, 7-step checklist tags
+    - "Fill Joining Application — All Documents" button → opens full RegistrationForm
+    - WhatsApp + Call Us kept as alternative small buttons
+  - Added routing: `view === 'apply'` renders `<RegistrationForm appliedFor={appliedPortal} />`
+
+Stage Summary:
+- All 5 request-access portals (Recruitment, EHS, Payroll, Manpower, Engineering) now open the complete 7-step onboarding form
+- Login portals (Owner, Admin, HR, Employee, Client) unchanged
+- Onboarding form now has 14 document upload slots: Aadhaar, PAN, Passport Photo, Signature, Medical Certificate, Address Proof, Passbook, Education Certs, Resume/CV, Experience Certs, Salary Slips, Relieving Letter
+- Portal context (e.g. "Joining: Recruitment Portal") shown in form header and success page
+- `appliedPortal` stored in DB for admin tracking
+- Browser verified: Recruitment → form opens with correct badge, EHS → correct badge, Employee → login form unchanged, zero console errors
