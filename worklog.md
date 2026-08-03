@@ -486,3 +486,49 @@ Stage Summary:
 - Leadership section now shows Hariprasad N P (MD) and Rajesh S (EHS Director) with phone numbers
 - Access Portals is a webapp-style view, not scroll down
 - API Management has full add/remove/toggle/rotate/bulk-revoke capabilities
+---
+Task ID: 13
+Agent: Main
+Task: Fix portal click behavior — clicking a portal should show dedicated page, NOT return to landing page
+
+Work Log:
+- Identified root cause: PortalLoginPickerView.onLogin was calling `setView('home')` which navigated back to landing page
+- Created SinglePortalLoginView component:
+  - Clean dedicated login page for one specific portal
+  - Shows portal icon, name, description
+  - Username/password login form
+  - Forgot Password dialog
+  - WhatsApp + Call Support links
+  - Feature tags below the card
+  - 'Apply to Join' button shown only for request-access portals
+  - 'All Portals' back button
+- Added 'portal-login' to LandingView union type
+- Added selectedPortalId state to Landing component
+- Updated portal-pick routing: onSelect now sets selectedPortalId + view to 'portal-login'
+- Updated PortalLoginPickerView:
+  - Changed prop from onLogin to onSelect
+  - Now shows ALL 10 portals (not just 5 login portals)
+  - Two clear sections: 'Login Portals' (5) and 'Apply to Join Portals' (5)
+  - Search bar filters both sections
+  - Apply portals have green border + 'Apply' badge + 'Apply & Fill Form' CTA
+  - Login portals show 'Sign In' CTA
+  - 'Apply to Join HP Enterprise' general button at bottom
+- Updated home page portal section:
+  - Replaced accordion (expand/collapse) cards with clean clickable cards
+  - 5-column grid on xl, 3-column on lg, 2-column on sm
+  - Each card: icon, title, description (2-line clamp), action label (Sign In or Apply to Join)
+  - Clicking any card opens SinglePortalLoginView directly
+- Removed unused code: expandedPortal state, togglePortal callback, PortalLoginCard component, forgotOpen state from Landing
+- Browser verified:
+  - Click Admin Console → dedicated Admin login page (NOT landing page)
+  - Click All Portals → portal picker with all 10 portals in 2 groups
+  - Click EHS Safety Portal → dedicated page with login + 'Apply to Join EHS Safety Portal' button
+  - Nav Login button → portal picker view
+  - Zero console errors
+
+Stage Summary:
+- Portal click flow completely fixed: click any portal → see dedicated login/apply page
+- Portal picker shows all 10 portals in 2 groups (5 Login + 5 Apply)
+- Home page portal section: clean card grid, click opens dedicated view
+- 3 new views: portal-pick (all portals), portal-login (single portal), apply-pick (apply departments)
+- Zero console errors, ESLint clean

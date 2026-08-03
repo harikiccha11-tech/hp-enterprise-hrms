@@ -26,7 +26,7 @@ import {
 } from 'lucide-react'
 import Image from 'next/image'
 
-type LandingView = 'home' | 'register' | 'subscribe' | 'apply' | 'apply-pick' | 'portal-pick'
+type LandingView = 'home' | 'register' | 'subscribe' | 'apply' | 'apply-pick' | 'portal-pick' | 'portal-login'
 
 function InstagramIcon({ className, style }: { className?: string; style?: React.CSSProperties }) {
   return <svg className={className} style={style} viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
@@ -283,45 +283,6 @@ function ServiceModal({ service, open, onClose }: { service: ServiceDetail | nul
   )
 }
 
-function PortalLoginCard({ portal, onForgotPassword }: { portal: PortalConfig; onForgotPassword: () => void }) {
-  const { setUser } = useAppStore()
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
-  const Icon = portal.icon
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!username.trim() || !password.trim()) { toast.error('Please enter username and password'); return }
-    setLoading(true)
-    try {
-      const res = await fetch('/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: username.trim(), password }) })
-      const data = await res.json()
-      if (res.ok && data.user) { setUser(data.user); toast.success(`Welcome to ${portal.title}!`) }
-      else { toast.error(data.error || 'Login failed. Please check your credentials.') }
-    } catch { toast.error('Network error. Please try again.') } finally { setLoading(false) }
-  }
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-3">
-      <div className="space-y-1.5">
-        <Label htmlFor={`login-${portal.id}`} className="text-gray-800 text-xs font-bold uppercase tracking-wider">Username</Label>
-        <Input id={`login-${portal.id}`} placeholder="Enter your username" value={username} onChange={(e) => setUsername(e.target.value)} className="h-11 text-sm bg-white" autoComplete="username" />
-      </div>
-      <div className="space-y-1.5">
-        <div className="flex items-center justify-between">
-          <Label htmlFor={`pass-${portal.id}`} className="text-gray-800 text-xs font-bold uppercase tracking-wider">Password</Label>
-          <button type="button" onClick={onForgotPassword} className="text-[11px] font-bold hover:underline" style={{ color: portal.color }}>Forgot?</button>
-        </div>
-        <Input id={`pass-${portal.id}`} type="password" placeholder="Enter your password" value={password} onChange={(e) => setPassword(e.target.value)} className="h-11 text-sm bg-white" autoComplete="current-password" />
-      </div>
-      <Button type="submit" className="w-full h-11 font-bold text-sm text-white" style={{ background: portal.color }} disabled={loading}>
-        {loading ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <Lock className="mr-2 h-3.5 w-3.5" />}Sign In to {portal.title}
-      </Button>
-    </form>
-  )
-}
-
 function SubscriptionForm({ onBack }: { onBack: () => void }) {
   const [form, setForm] = useState({ companyName: '', contactName: '', email: '', phone: '', address: '', plan: '', employeeCount: '', message: '' })
   const [loading, setLoading] = useState(false)
@@ -395,6 +356,100 @@ const APPLY_OPTIONS = [
   { id: 'engineering', title: 'Engineering Portal', description: 'Join engineering project support and planning', icon: Wrench, color: '#0F766E', tag: 'Engineering' },
 ]
 
+function SinglePortalLoginView({ portalId, onBack, onApply }: { portalId: string; onBack: () => void; onApply: () => void }) {
+  const portal = PORTALS.find((p) => p.id === portalId)
+  const { setUser } = useAppStore()
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [showForgot, setShowForgot] = useState(false)
+  const [forgotOpen, setForgotOpen] = useState(false)
+  if (!portal) return <div>Portal not found</div>
+  const Icon = portal.icon
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!username.trim() || !password.trim()) { toast.error('Please enter username and password'); return }
+    setLoading(true)
+    try {
+      const res = await fetch('/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: username.trim(), password, role: portal.role }) })
+      const data = await res.json()
+      if (res.ok && data.user) { setUser(data.user); toast.success(`Welcome to ${portal.title}!`) }
+      else { toast.error(data.error || 'Login failed. Please check your credentials.') }
+    } catch { toast.error('Network error. Please try again.') } finally { setLoading(false) }
+  }
+  return (
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-gray-50 to-white">
+      <header className="sticky top-0 z-40 border-b bg-white/90 backdrop-blur">
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
+          <BrandLogo />
+          <Button variant="ghost" size="sm" onClick={onBack}><ArrowLeft className="mr-1 h-4 w-4" /> All Portals</Button>
+        </div>
+      </header>
+      <div className="flex-1 flex items-center justify-center px-4 py-10">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: LUXURY_EASE }} className="w-full max-w-md">
+          <div className="text-center mb-8">
+            <div className="mx-auto mb-4 h-16 w-16 rounded-2xl flex items-center justify-center shadow-lg" style={{ background: portal.color }}>
+              <Icon className="h-8 w-8 text-white" />
+            </div>
+            <h1 className="text-2xl font-extrabold text-gray-900 mb-1">{portal.title}</h1>
+            <p className="text-sm text-gray-500 font-medium">Sign in to access your {portal.title}</p>
+          </div>
+          <Card className="shadow-xl border-gray-200">
+            <CardContent className="pt-6">
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="portal-username" className="text-gray-800 text-xs font-bold uppercase tracking-wider">Username</Label>
+                  <Input id="portal-username" placeholder="Enter your username" value={username} onChange={(e) => setUsername(e.target.value)} className="h-12 text-sm" autoComplete="username" />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="portal-password" className="text-gray-800 text-xs font-bold uppercase tracking-wider">Password</Label>
+                    <button type="button" onClick={() => setForgotOpen(true)} className="text-[11px] font-bold hover:underline" style={{ color: portal.color }}>Forgot Password?</button>
+                  </div>
+                  <Input id="portal-password" type="password" placeholder="Enter your password" value={password} onChange={(e) => setPassword(e.target.value)} className="h-12 text-sm" autoComplete="current-password" />
+                </div>
+                <Button type="submit" className="w-full h-12 font-bold text-sm text-white" style={{ background: portal.color }} disabled={loading}>
+                  {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Lock className="mr-2 h-4 w-4" />}Sign In to {portal.title}
+                </Button>
+              </form>
+              <div className="mt-4 flex items-center gap-3">
+                <div className="flex-1 h-px bg-gray-200" />
+                <span className="text-[11px] text-gray-400 font-bold uppercase">or</span>
+                <div className="flex-1 h-px bg-gray-200" />
+              </div>
+              <div className="mt-4 grid grid-cols-2 gap-2">
+                <a href={SOCIAL.whatsapp} target="_blank" rel="noopener noreferrer" className="h-10 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold text-white transition-all hover:opacity-90" style={{ background: '#25D366' }}>
+                  <WhatsAppIcon className="h-3.5 w-3.5" />WhatsApp
+                </a>
+                <a href={`tel:${BRAND.phone}`} className="h-10 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold text-white transition-all hover:opacity-90" style={{ background: portal.color }}>
+                  <Phone className="h-3.5 w-3.5" />Call Support
+                </a>
+              </div>
+              {portal.requestAccess && (
+                <div className="mt-4 rounded-xl bg-amber-50 border border-amber-200/60 p-4">
+                  <p className="text-xs font-bold text-gray-800 mb-2">Don&apos;t have an account?</p>
+                  <Button onClick={onApply} className="w-full h-10 font-bold text-sm text-white" style={{ background: '#166534' }}>
+                    <UserPlus className="mr-2 h-4 w-4" />Apply to Join {portal.title}
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+          <div className="mt-6 flex flex-wrap gap-1.5 justify-center">
+            {portal.features.map((f) => (
+              <span key={f} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white border border-gray-200 text-[10px] font-bold text-gray-500">
+                <Check className="h-2.5 w-2.5" style={{ color: portal.color }} />{f}
+              </span>
+            ))}
+          </div>
+          <p className="mt-4 text-center text-[11px] text-gray-400 font-medium">{BRAND.name} &middot; GSTIN: {BRAND.gstin}</p>
+          <ForgotPasswordDialog open={forgotOpen} onOpenChange={setForgotOpen} />
+        </motion.div>
+      </div>
+    </div>
+  )
+}
+
 function PortalPickerView({ onPick, onBack }: { onPick: (title: string) => void; onBack: () => void }) {
   const [hovered, setHovered] = useState<string | null>(null)
   return (
@@ -464,10 +519,13 @@ function PortalPickerView({ onPick, onBack }: { onPick: (title: string) => void;
 }
 
 const LOGIN_PORTALS = PORTALS.filter((p) => !p.requestAccess)
+const APPLY_PORTALS = PORTALS.filter((p) => p.requestAccess)
 
-function PortalLoginPickerView({ onBack, onLogin, onApply }: { onBack: () => void; onLogin: (id: string) => void; onApply: () => void }) {
+function PortalLoginPickerView({ onBack, onSelect, onApply }: { onBack: () => void; onSelect: (id: string) => void; onApply: () => void }) {
   const [search, setSearch] = useState('')
-  const filtered = LOGIN_PORTALS.filter((p) => !search || p.title.toLowerCase().includes(search.toLowerCase()) || p.description.toLowerCase().includes(search.toLowerCase()))
+  const filteredLogin = LOGIN_PORTALS.filter((p) => !search || p.title.toLowerCase().includes(search.toLowerCase()) || p.description.toLowerCase().includes(search.toLowerCase()))
+  const filteredApply = APPLY_PORTALS.filter((p) => !search || p.title.toLowerCase().includes(search.toLowerCase()) || p.description.toLowerCase().includes(search.toLowerCase()))
+  const hasResults = filteredLogin.length > 0 || filteredApply.length > 0
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-gray-50 to-white">
       <header className="sticky top-0 z-40 border-b bg-white/90 backdrop-blur">
@@ -476,44 +534,96 @@ function PortalLoginPickerView({ onBack, onLogin, onApply }: { onBack: () => voi
           <Button variant="ghost" size="sm" onClick={onBack}><ArrowLeft className="mr-1 h-4 w-4" /> Back to Home</Button>
         </div>
       </header>
-      <div className="mx-auto w-full max-w-5xl flex-1 px-4 py-10 sm:py-16">
+      <div className="mx-auto w-full max-w-6xl flex-1 px-4 py-10 sm:py-16">
         <div className="text-center mb-10">
-          <Badge className="mb-4 px-4 py-1 text-sm font-bold" style={{ background: '#D4AF37', color: '#002B5C' }}><Shield className="h-3.5 w-3.5 mr-1.5" />Portal Access</Badge>
+          <Badge className="mb-4 px-4 py-1 text-sm font-bold" style={{ background: '#D4AF37', color: '#002B5C' }}><Shield className="h-3.5 w-3.5 mr-1.5" />All Portals</Badge>
           <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-3">Select Your Portal</h1>
-          <p className="text-gray-600 text-lg font-medium max-w-2xl mx-auto mb-6">Choose your portal to sign in, or apply to join if you don&apos;t have an account yet.</p>
+          <p className="text-gray-600 text-lg font-medium max-w-2xl mx-auto mb-6">Choose from {PORTALS.length} specialized portals. Sign in or apply to join.</p>
           <div className="max-w-md mx-auto relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input placeholder="Search portals..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10 h-11" />
           </div>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
-          {filtered.map((portal) => {
-            const Icon = portal.icon
-            return (
-              <motion.button key={portal.id} onClick={() => onLogin(portal.id)} whileHover={{ y: -3 }} whileTap={{ scale: 0.98 }}
-                className="text-left rounded-2xl border-2 border-gray-200 bg-white p-6 shadow-sm hover:shadow-lg hover:border-blue-300 transition-all duration-300 group cursor-pointer">
-                <div className="h-14 w-14 rounded-2xl flex items-center justify-center shadow-md mb-4" style={{ background: portal.color }}>
-                  <Icon className="h-7 w-7 text-white" />
-                </div>
-                <h3 className="text-lg font-bold text-gray-900 mb-1">{portal.title}</h3>
-                <p className="text-sm text-gray-500 font-medium leading-relaxed mb-3">{portal.description}</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {portal.features.slice(0, 3).map((f) => (
-                    <span key={f} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 text-[10px] font-bold text-gray-600">
-                      <Check className="h-2.5 w-2.5" />{f}
-                    </span>
-                  ))}
-                  {portal.features.length > 3 && <span className="text-[10px] font-bold text-gray-400">+{portal.features.length - 3} more</span>}
-                </div>
-                <div className="mt-4 flex items-center gap-1.5 text-sm font-bold" style={{ color: portal.color }}>
-                  <Lock className="h-3.5 w-3.5" />Sign In <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform" />
-                </div>
-              </motion.button>
-            )
-          })}
-        </div>
-        <div className="text-center">
-          <p className="text-sm text-gray-500 font-medium mb-3">Don&apos;t have an account yet?</p>
+        {!hasResults && (
+          <div className="text-center py-12">
+            <p className="text-gray-400 font-medium">No portals found matching your search.</p>
+          </div>
+        )}
+        {filteredLogin.length > 0 && (
+          <div className="mb-10">
+            <div className="flex items-center gap-2 mb-5">
+              <div className="h-8 w-8 rounded-lg flex items-center justify-center" style={{ background: '#002B5C' }}><Lock className="h-4 w-4 text-white" /></div>
+              <h2 className="text-lg font-extrabold text-gray-900">Login Portals</h2>
+              <span className="text-xs font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{filteredLogin.length}</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {filteredLogin.map((portal) => {
+                const Icon = portal.icon
+                return (
+                  <motion.button key={portal.id} onClick={() => onSelect(portal.id)} whileHover={{ y: -3 }} whileTap={{ scale: 0.98 }}
+                    className="text-left rounded-2xl border-2 border-gray-200 bg-white p-6 shadow-sm hover:shadow-lg transition-all duration-300 group cursor-pointer" style={{ borderColor: undefined }}>
+                    <div className="h-14 w-14 rounded-2xl flex items-center justify-center shadow-md mb-4" style={{ background: portal.color }}>
+                      <Icon className="h-7 w-7 text-white" />
+                    </div>
+                    <h3 className="text-lg font-bold text-gray-900 mb-1">{portal.title}</h3>
+                    <p className="text-sm text-gray-500 font-medium leading-relaxed mb-3">{portal.description}</p>
+                    <div className="flex flex-wrap gap-1.5 mb-4">
+                      {portal.features.slice(0, 3).map((f) => (
+                        <span key={f} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 text-[10px] font-bold text-gray-600">
+                          <Check className="h-2.5 w-2.5" />{f}
+                        </span>
+                      ))}
+                      {portal.features.length > 3 && <span className="text-[10px] font-bold text-gray-400">+{portal.features.length - 3} more</span>}
+                    </div>
+                    <div className="flex items-center gap-1.5 text-sm font-bold" style={{ color: portal.color }}>
+                      <Lock className="h-3.5 w-3.5" />Sign In <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform" />
+                    </div>
+                  </motion.button>
+                )
+              })}
+            </div>
+          </div>
+        )}
+        {filteredApply.length > 0 && (
+          <div className="mb-8">
+            <div className="flex items-center gap-2 mb-5">
+              <div className="h-8 w-8 rounded-lg flex items-center justify-center" style={{ background: '#166534' }}><UserPlus className="h-4 w-4 text-white" /></div>
+              <h2 className="text-lg font-extrabold text-gray-900">Apply to Join Portals</h2>
+              <span className="text-xs font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{filteredApply.length}</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {filteredApply.map((portal) => {
+                const Icon = portal.icon
+                return (
+                  <motion.button key={portal.id} onClick={() => onSelect(portal.id)} whileHover={{ y: -3 }} whileTap={{ scale: 0.98 }}
+                    className="text-left rounded-2xl border-2 border-green-200 bg-white p-6 shadow-sm hover:shadow-lg hover:border-green-400 transition-all duration-300 group cursor-pointer">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="h-14 w-14 rounded-2xl flex items-center justify-center shadow-md" style={{ background: portal.color }}>
+                        <Icon className="h-7 w-7 text-white" />
+                      </div>
+                      <Badge className="text-[10px] font-bold px-2 py-0.5" style={{ background: '#166534', color: '#fff' }}>Apply</Badge>
+                    </div>
+                    <h3 className="text-lg font-bold text-gray-900 mb-1">{portal.title}</h3>
+                    <p className="text-sm text-gray-500 font-medium leading-relaxed mb-3">{portal.description}</p>
+                    <div className="flex flex-wrap gap-1.5 mb-4">
+                      {portal.features.slice(0, 3).map((f) => (
+                        <span key={f} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-50 text-[10px] font-bold text-green-700">
+                          <Check className="h-2.5 w-2.5" />{f}
+                        </span>
+                      ))}
+                      {portal.features.length > 3 && <span className="text-[10px] font-bold text-gray-400">+{portal.features.length - 3} more</span>}
+                    </div>
+                    <div className="flex items-center gap-1.5 text-sm font-bold" style={{ color: '#166534' }}>
+                      <UserPlus className="h-3.5 w-3.5" />Apply & Fill Form <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform" />
+                    </div>
+                  </motion.button>
+                )
+              })}
+            </div>
+          </div>
+        )}
+        <div className="text-center pt-4">
+          <p className="text-sm text-gray-500 font-medium mb-3">Or apply for any department directly?</p>
           <Button size="lg" className="h-11 font-bold text-white" style={{ background: '#166534' }} onClick={onApply}>
             <UserPlus className="mr-2 h-4 w-4" />Apply to Join HP Enterprise
           </Button>
@@ -530,9 +640,8 @@ export function Landing() {
   const [scrolled, setScrolled] = useState(false)
   const [activeService, setActiveService] = useState<ServiceDetail | null>(null)
   const [serviceModalOpen, setServiceModalOpen] = useState(false)
-  const [expandedPortal, setExpandedPortal] = useState<string | null>(null)
-  const [forgotOpen, setForgotOpen] = useState(false)
   const [appliedPortal, setAppliedPortal] = useState<string>('')
+  const [selectedPortalId, setSelectedPortalId] = useState<string>('')
   const homeRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -545,7 +654,7 @@ export function Landing() {
   const scrollTo = useCallback((id: string) => { setMobileMenu(false); const el = document.getElementById(id); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }) }, [])
   const goHome = useCallback(() => { setView('home'); window.scrollTo({ top: 0, behavior: 'smooth' }) }, [])
   const openServiceModal = useCallback((s: ServiceDetail) => { setActiveService(s); setServiceModalOpen(true) }, [])
-  const togglePortal = useCallback((id: string) => { setExpandedPortal((p) => (p === id ? null : id)) }, [])
+
 
   const NAV_LINKS = [
     { id: 'features', label: 'Features' }, { id: 'services', label: 'Services' },
@@ -557,14 +666,14 @@ export function Landing() {
   if (view === 'register') return <RegistrationForm onBack={goHome} />
   if (view === 'apply') return <RegistrationForm onBack={goHome} appliedFor={appliedPortal} />
   if (view === 'apply-pick') return <PortalPickerView onPick={(title) => { setAppliedPortal(title); setView('apply') }} onBack={goHome} />
-  if (view === 'portal-pick') return <PortalLoginPickerView onBack={goHome} onLogin={(id) => { setView('home'); setTimeout(() => { setExpandedPortal(id); const el = document.getElementById('portals'); if (el) el.scrollIntoView({ behavior: 'smooth' }) }, 100) }} onApply={() => openApplyForm()} />
+  if (view === 'portal-pick') return <PortalLoginPickerView onBack={goHome} onSelect={(id) => { setSelectedPortalId(id); setView('portal-login') }} onApply={() => openApplyForm()} />
+  if (view === 'portal-login') return <SinglePortalLoginView portalId={selectedPortalId} onBack={() => setView('portal-pick')} onApply={() => { const p = PORTALS.find((pp) => pp.id === selectedPortalId); openApplyForm(p?.title) }} />
   if (view === 'subscribe') return <SubscriptionForm onBack={goHome} />
 
   return (
     <div ref={homeRef} className="min-h-screen flex flex-col" style={{ background: '#FFFFFF' }}>
       <SocialSideMenu />
       <ServiceModal service={activeService} open={serviceModalOpen} onClose={() => setServiceModalOpen(false)} />
-      <ForgotPasswordDialog open={forgotOpen} onOpenChange={setForgotOpen} />
 
       <nav className={cn('sticky top-0 z-40 w-full transition-all duration-500', scrolled ? 'bg-white/90 shadow-lg shadow-gray-200/50 backdrop-blur-xl' : 'bg-white/50 backdrop-blur-sm')} role="navigation" aria-label="Main navigation">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -854,76 +963,24 @@ export function Landing() {
               <p className="text-gray-600 text-lg font-medium">Each role gets a tailored experience. Select your portal and sign in.</p>
             </div>
           </Reveal>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
             {PORTALS.map((portal, i) => {
               const Icon = portal.icon
-              const isExpanded = expandedPortal === portal.id
               return (
-                <Reveal key={portal.id} delay={i * 0.05}>
-                  <Card className="overflow-hidden border-gray-200 hover:shadow-lg transition-all duration-300">
-                    <CardHeader className="pb-3 cursor-pointer" onClick={() => togglePortal(portal.id)}>
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-start gap-3">
-                          <div className="h-12 w-12 rounded-2xl flex items-center justify-center shrink-0 shadow-sm" style={{ background: portal.color }}>
-                            <Icon className="h-6 w-6 text-white" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <CardTitle className="text-base font-bold text-gray-900">{portal.title}</CardTitle>
-                            <CardDescription className="text-sm mt-0.5 leading-relaxed">{portal.description}</CardDescription>
-                          </div>
-                        </div>
-                        <motion.div animate={{ rotate: isExpanded ? 180 : 0 }} transition={{ duration: 0.3 }}>
-                          <ChevronRight className="h-5 w-5 text-gray-400" />
-                        </motion.div>
-                      </div>
-                    </CardHeader>
-                    <AnimatePresence>
-                      {isExpanded && (
-                        <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.4, ease: LUXURY_EASE }} className="overflow-hidden">
-                          <CardContent className="pt-0 space-y-5">
-                            <div>
-                              <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2.5">Portal Features</p>
-                              <div className="grid grid-cols-2 gap-2">
-                                {portal.features.map((f) => (
-                                  <div key={f} className="flex items-center gap-2 text-sm text-gray-700 font-medium">
-                                    <Check className="h-3.5 w-3.5 shrink-0" style={{ color: portal.color }} />{f}
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                            {portal.requestAccess ? (
-                              <div className="space-y-3">
-                                <div className="rounded-xl bg-amber-50 border border-amber-200/60 p-4">
-                                  <p className="text-sm font-bold text-gray-900 mb-1.5">Apply to Join {portal.title}</p>
-                                  <p className="text-xs text-gray-600 leading-relaxed mb-3">Complete the onboarding form with all your personal details, identity documents, educational qualifications, experience, bank details, and upload all required documents.</p>
-                                  <div className="flex flex-wrap gap-1.5 mb-3">
-                                    {['Personal Info', 'Identity (Aadhaar/PAN)', 'Bank Details', 'Education', 'Experience', 'Documents Upload', 'Declaration'].map((item) => (
-                                      <span key={item} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 text-[10px] font-bold text-amber-800">
-                                        <Check className="h-2.5 w-2.5" />{item}
-                                      </span>
-                                    ))}
-                                  </div>
-                                  <Button onClick={() => openApplyForm(portal.title)} className="w-full h-11 font-bold text-sm text-white" style={{ background: portal.color }}>
-                                    <ClipboardList className="mr-2 h-4 w-4" />Fill Joining Application — All Documents
-                                  </Button>
-                                </div>
-                                <div className="flex gap-2">
-                                  <a href={SOCIAL.whatsapp} target="_blank" rel="noopener noreferrer" className="flex-1 h-10 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold text-white transition-all hover:opacity-90" style={{ background: '#25D366' }}>
-                                    <WhatsAppIcon className="h-3.5 w-3.5" />WhatsApp
-                                  </a>
-                                  <a href={`tel:${BRAND.phone}`} className="flex-1 h-10 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold text-white transition-all hover:opacity-90" style={{ background: '#002B5C' }}>
-                                    <Phone className="h-3.5 w-3.5" />Call Us
-                                  </a>
-                                </div>
-                              </div>
-                            ) : (
-                              <PortalLoginCard portal={portal} onForgotPassword={() => setForgotOpen(true)} />
-                            )}
-                          </CardContent>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </Card>
+                <Reveal key={portal.id} delay={i * 0.04}>
+                  <motion.button onClick={() => { setSelectedPortalId(portal.id); setView('portal-login') }} whileHover={{ y: -3 }} whileTap={{ scale: 0.98 }}
+                    className={cn('text-left rounded-2xl border-2 bg-white p-5 shadow-sm hover:shadow-lg transition-all duration-300 group cursor-pointer w-full', portal.requestAccess ? 'border-green-200 hover:border-green-400' : 'border-gray-200 hover:border-gray-400')}>
+                    <div className="h-12 w-12 rounded-2xl flex items-center justify-center shadow-md mb-3" style={{ background: portal.color }}>
+                      <Icon className="h-6 w-6 text-white" />
+                    </div>
+                    <h3 className="text-sm font-bold text-gray-900 mb-0.5 leading-tight">{portal.title}</h3>
+                    <p className="text-xs text-gray-500 font-medium leading-relaxed mb-3 line-clamp-2">{portal.description}</p>
+                    <div className="flex items-center gap-1 text-xs font-bold" style={{ color: portal.requestAccess ? '#166534' : portal.color }}>
+                      {portal.requestAccess ? <UserPlus className="h-3 w-3" /> : <Lock className="h-3 w-3" />}
+                      {portal.requestAccess ? 'Apply to Join' : 'Sign In'}
+                      <ArrowRight className="h-3 w-3 ml-auto group-hover:translate-x-1 transition-transform" />
+                    </div>
+                  </motion.button>
                 </Reveal>
               )
             })}
