@@ -60,9 +60,9 @@ const PLANS = [
 ]
 
 const PORTALS = [
-  { key: 'admin' as const, title: 'Admin Console', subtitle: 'Owner / Super Admin / HR Manager', icon: ShieldCheck, color: 'var(--navy)', features: ['Full employee management', 'Payroll & leave approval', 'Client & project handling', 'Document generation (16+ types)', 'Reports with CSV export', 'Audit logs & settings'], creds: 'owner / Owner@123' },
-  { key: 'employee' as const, title: 'Employee Portal', subtitle: 'Self-Service for All Employees', icon: Users, color: 'var(--gold)', features: ['Punch in/out with GPS', 'Leave application & balance', 'Download salary slips & documents', 'Profile & bank details', 'Change password', 'Notifications & announcements'], creds: 'arjun.sharma / Employee@123' },
-  { key: 'client' as const, title: 'Client Portal', subtitle: 'Clients & Contractors', icon: Building2, color: '#0A4488', features: ['Project progress dashboard', 'Work order tracking', 'Invoice viewing & PDF download', 'Team deployment overview', 'Live notifications', 'Communication with admin'], creds: 'infosys.client / Client@123' },
+  { key: 'admin' as const, title: 'Admin Console', subtitle: 'Owner / Super Admin / HR Manager', icon: ShieldCheck, color: 'var(--navy)', features: ['Full employee management', 'Payroll & leave approval', 'Client & project handling', 'Document generation (16+ types)', 'Reports with CSV export', 'Audit logs & settings'] },
+  { key: 'employee' as const, title: 'Employee Portal', subtitle: 'Self-Service for All Employees', icon: Users, color: 'var(--gold)', features: ['Punch in/out with GPS', 'Leave application & balance', 'Download salary slips & documents', 'Profile & bank details', 'Change password', 'Notifications & announcements'] },
+  { key: 'client' as const, title: 'Client Portal', subtitle: 'Clients & Contractors', icon: Building2, color: '#0A4488', features: ['Project progress dashboard', 'Work order tracking', 'Invoice viewing & PDF download', 'Team deployment overview', 'Live notifications', 'Communication with admin'] },
 ]
 
 // ── Portal Login Form ──────────────────────────────────────────────────────
@@ -120,10 +120,7 @@ function PortalLoginForm({ portal, onBack }: { portal: typeof PORTALS[number]; o
                 {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Signing in...</> : <>Sign In to {portal.title}</>}
               </Button>
             </form>
-            <div className="mt-4 rounded-lg border border-dashed p-3 text-center">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Demo Credentials</p>
-              <p className="text-xs font-mono font-semibold text-[var(--navy)] dark:text-[var(--gold)]">{portal.creds}</p>
-            </div>
+
           </CardContent>
         </Card>
       </div>
@@ -322,10 +319,7 @@ export function Landing() {
                       <li key={f} className="flex items-start gap-2 text-sm"><Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-500" />{f}</li>
                     ))}
                   </ul>
-                  <div className="mt-4 rounded-lg border border-dashed p-2.5 text-center bg-muted/30">
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Demo</p>
-                    <p className="text-xs font-mono font-semibold text-[var(--navy)] dark:text-[var(--gold)] mt-0.5">{p.creds}</p>
-                  </div>
+
                 </CardContent>
               </Card>
             )
