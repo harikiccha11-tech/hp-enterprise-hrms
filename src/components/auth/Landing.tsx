@@ -171,13 +171,13 @@ const LUXURY_EASE = [0.22, 1, 0.36, 1] as const
 
 function Reveal({ children, delay = 0, direction = 'up', className = '' }: { children: React.ReactNode; delay?: number; direction?: 'up' | 'left' | 'right'; className?: string }) {
   const ref = useRef<HTMLDivElement>(null)
-  const isInView = useInView(ref, { once: true, margin: '-40px' })
-  const offsets = { up: { y: 50, x: 0 }, left: { y: 0, x: -50 }, right: { y: 0, x: 50 } }
+  const isInView = useInView(ref, { once: true, margin: '-20px' })
+  const offsets = { up: { y: 30, x: 0 }, left: { y: 0, x: -30 }, right: { y: 0, x: 30 } }
   return (
     <motion.div ref={ref} className={className}
       initial={{ opacity: 0, ...offsets[direction] }}
       animate={isInView ? { opacity: 1, x: 0, y: 0 } : { opacity: 0, ...offsets[direction] }}
-      transition={{ duration: 0.8, delay, ease: LUXURY_EASE }}
+      transition={{ duration: 0.4, delay, ease: LUXURY_EASE }}
     >
       {children}
     </motion.div>
@@ -967,7 +967,7 @@ export function Landing() {
             {PORTALS.map((portal, i) => {
               const Icon = portal.icon
               return (
-                <Reveal key={portal.id} delay={i * 0.04}>
+                <Reveal key={portal.id} delay={i * 0.02}>
                   <motion.button onClick={() => { setSelectedPortalId(portal.id); setView('portal-login') }} whileHover={{ y: -3 }} whileTap={{ scale: 0.98 }}
                     className={cn('text-left rounded-2xl border-2 bg-white p-5 shadow-sm hover:shadow-lg transition-all duration-300 group cursor-pointer w-full', portal.requestAccess ? 'border-green-200 hover:border-green-400' : 'border-gray-200 hover:border-gray-400')}>
                     <div className="h-12 w-12 rounded-2xl flex items-center justify-center shadow-md mb-3" style={{ background: portal.color }}>
