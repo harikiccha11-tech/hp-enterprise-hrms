@@ -430,3 +430,179 @@ Stage Summary:
 - On Vercel: AI Gateway will work (same network, no TLS issues)
 - Local: Z.ai SDK works as fallback
 - User needs to set AI_GATEWAY_API_KEY env var in Vercel project settings for production
+
+---
+Task ID: 4-a
+Agent: Master Data Modules Agent
+Task: Build Departments, Designations, Branches, Vendors, Assets API routes + frontend modules
+
+Work Log:
+- Created 5 API routes with full CRUD (GET/POST/PATCH/DELETE):
+  - `/api/admin/departments/route.ts` — unique name + code validation
+  - `/api/admin/designations/route.ts` — unique title validation
+  - `/api/admin/branches/route.ts` — unique code validation, isHead field
+  - `/api/admin/vendors/route.ts` — search/filter by status/category, rating support
+  - `/api/admin/assets/route.ts` — search/filter by status/category, assign + return actions in POST handler
+- Created 5 frontend modules following Clients.tsx pattern:
+  - `Departments.tsx` — Table with name/code/head/status, search, status filter, CRUD dialog, delete AlertDialog
+  - `Designations.tsx` — Table with title/level/department/salary range/status, search, status filter, CRUD dialog
+  - `Branches.tsx` — Table with name/code/city/state/phone/isHead/status, search, status filter, CRUD dialog
+  - `Vendors.tsx` — Table with vendorName/category/GST/contact/rating/status, search/status/category filter, canDelete prop, rating stars, 3-state status (Active/Inactive/Blacklisted)
+  - `Assets.tsx` — Table with name/category/serial/status/location, search/status/category filter, Assign dialog (employee picker + condition), Return dialog (condition + notes), 5-state status badges
+- All components use: 'use client', shadcn/ui components, SectionTitle/EmptyState, api() helper, toast(), navy/gold brand colors, Lucide icons
+- All API routes use: NextRequest/NextResponse, requireRole, audit logging, runtime='nodejs', try/catch
+- Lint: 0 errors
+
+Stage Summary:
+- 10 files created (5 API routes + 5 frontend modules)
+- Full CRUD for Department, Designation, Branch, Vendor, Asset models
+- Asset assignment and return workflow with employee picker
+- Server-side search/filtering on Vendors and Assets API routes
+- Client-side search/filtering on Departments, Designations, Branches
+- All modules follow the existing Clients.tsx pattern exactly
+- Dev server compiled successfully with no errors
+
+---
+Task ID: 4-b
+Agent: Recruitment & Onboarding/Offboarding Module Builder
+Task: Create Recruitment (Job Postings + Candidates Pipeline), Onboarding, and Offboarding modules with full CRUD API routes and frontend components
+
+Work Log:
+- Read worklog.md and studied existing Clients.tsx pattern for consistent module structure
+- Analyzed Prisma schema for JobPosting, Candidate, OnboardingTask, OffboardingTask models
+- Identified api helper from `@/components/admin/lib`, SectionTitle/EmptyState from `@/components/shared`, requireRole from `@/lib/guards`
+
+## Backend API Routes Created (4 files):
+
+1. **`/api/admin/recruitment/route.ts`** — Job Postings CRUD
+   - GET: List jobs with `_count.candidates`, filter by status & search across title/department/designation/location
+   - POST: Create job posting with all fields (title, department, designation, location, type, experience, salary, description, requirements, status)
+   - PATCH: Update any field including status transitions (auto-sets closedAt when CLOSED)
+   - DELETE: Remove job posting (OWNER/SUPER_ADMIN only)
+
+2. **`/api/admin/candidates/route.ts`** — Candidates CRUD
+   - GET: List candidates with jobPosting relation, filter by status/source/search across name/email/skills/company
+   - POST: Create candidate with optional jobPostingId link
+   - PATCH: Update candidate fields (status, remarks, CTC values)
+   - DELETE: Remove candidate (OWNER/SUPER_ADMIN only)
+
+3. **`/api/admin/onboarding/route.ts`** — Onboarding Tasks CRUD
+   - GET: List tasks for employeeId query param, optional status filter
+   - POST: Single or bulk create (array of tasks) with transaction
+   - PATCH: Update task (auto-sets completedAt on COMPLETED status)
+   - DELETE: Remove task (OWNER/SUPER_ADMIN only)
+
+4. **`/api/admin/offboarding/route.ts`** — Offboarding Tasks CRUD
+   - Same pattern as onboarding but for OffboardingTask model
+   - Same single/bulk create, status auto-complete, delete capabilities
+
+## Frontend Modules Created (3 files):
+
+5. **`Recruitment.tsx`** — Dual-tab recruitment module
+   - **Job Postings Tab**: Table with title, department, type badge, salary range (₹ formatted), color-coded status badge, candidates count, posted date
+   - Status actions: Open (DRAFT→OPEN), Fill/Close (OPEN→FILLED/CLOSED), Reopen (CLOSED→OPEN)
+   - Create/Edit dialog with full form fields (title, department, designation, location, type dropdown, experience, salary min/max, description, requirements textarea, status dropdown on edit)
+   - Search + status filter on job listings
+   - **Candidates Tab**: Table with name/company/skills, email, phone, source badge, current CTC (₹ formatted), color-coded pipeline status badge, applied date
+   - Create/Edit dialog with full candidate form + job posting link dropdown + status dropdown on edit
+   - Search + status filter + source filter on candidate listings
+   - Uses Tabs, Select, AlertDialog (delete), Dialog (create/edit) from shadcn/ui
+
+6. **`Onboarding.tsx`** — Employee onboarding checklist
+   - Employee selector dropdown (fetches APPROVED employees)
+   - Progress bar showing completion percentage (completed+skipped / total)
+   - Task table with task name + status icon, category badge, due date, status badge, notes
+   - Quick status actions: Start (PENDING→IN_PROGRESS), Done (IN_PROGRESS→COMPLETED), Skip (IN_PROGRESS→SKIPPED), Reopen
+   - Completed/Skipped tasks shown with strikethrough and reduced opacity
+   - "Add Standard Tasks" bulk button adds 19 pre-defined onboarding tasks (Documents, IT, HR, Finance, Training, General)
+   - Create/Edit dialog with task name, category dropdown, due date, notes, status
+   - Uses Progress component for completion visualization
+
+7. **`Offboarding.tsx`** — Employee offboarding checklist
+   - Same structure as Onboarding but for offboarding
+   - Fetches APPROVED + TERMINATED employees
+   - 21 pre-defined offboarding tasks including Assets category (laptop, access cards, mobile, vehicle, asset register)
+   - Same progress bar, task table, quick actions, bulk add pattern
+   - Terminated employees shown with [Terminated] label in dropdown
+
+Stage Summary:
+- 7 files created (4 API routes + 3 frontend modules)
+- Full CRUD for JobPosting, Candidate, OnboardingTask, OffboardingTask
+- Color-coded candidate pipeline (NEW→SCREENING→SHORTLISTED→INTERVIEW→OFFERED→HIRED/REJECTED/WITHDRAWN)
+- Job posting status workflow (DRAFT→OPEN→CLOSED/FILLED with reopen)
+- Onboarding/Offboarding task management with progress tracking
+- Bulk standard task templates for both onboarding (19 tasks) and offboarding (21 tasks)
+- All modules follow existing Clients.tsx pattern (Dialog for create/edit, AlertDialog for delete, Table for list, Skeleton for loading)
+- ESLint passed with no errors, dev server compiled successfully
+---
+Task ID: 4-c
+Agent: Module Builder
+Task: Create Performance, Goals, Training, and Expenses admin modules (API + Frontend)
+
+Work Log:
+- Created 4 API routes under /api/admin/ with full CRUD operations
+- Created 4 frontend modules under /components/admin/modules/ following existing patterns
+- All files pass ESLint, dev server compiles successfully
+
+## Files Created:
+
+### API Routes:
+1. **src/app/api/admin/performance/route.ts** — GET (list with filters: status, period, year, search), POST (create), PATCH (update rating/feedback/status), DELETE
+2. **src/app/api/admin/goals/route.ts** — GET (list with filters: status, category, search), POST (create), PATCH (update progress/status/title), DELETE
+3. **src/app/api/admin/training/route.ts** — GET (list courses with _count.enrollments OR list enrollments), POST (create course / enroll / update-enrollment), PATCH (update course), DELETE (course + cascading enrollments)
+4. **src/app/api/admin/expenses/route.ts** — GET (list with filters: status, category, search), POST (create), PATCH (approve/reject/reimburse with approvedBy/approvedAt), DELETE
+
+### Frontend Modules:
+5. **src/components/admin/modules/Performance.tsx** — Summary stats (total reviews, avg rating, completed this quarter), table with star ratings, status workflow actions (Submit→Review→Complete), Create/Edit dialog with employee selector, period/year/rating slider, textareas, status/status filter/period filter/year filter
+6. **src/components/admin/modules/Goals.tsx** — Table with color-coded category/priority badges, progress bar with inline quick-update (click to edit slider), Create/Edit dialog with employee selector, all fields, category/status filters, search
+7. **src/components/admin/modules/Training.tsx** — Two tabs (Courses + Enrollments), Courses tab: CRUD with category/mode badges and enrolled/max count, Enrollments tab: enroll form row + enrollment table with status/score update dialog, filters
+8. **src/components/admin/modules/Expenses.tsx** — Summary cards (Pending/Approved/Reimbursed/Total amounts in INR), table with category badges and INR formatting, Approve/Reject/Reimburse action buttons, reject dialog with remarks, create dialog, status/category filters
+
+## Patterns Followed:
+- All API routes use `requireRole` from `@/lib/guards`, `runtime = nodejs`, `dynamic = force-dynamic`
+- All frontend modules use `use client`, `api` helper from `../lib`, `SectionTitle`/`EmptyState` from shared, `toast` from sonner, Lucide icons
+- Navy/gold brand buttons: `bg-[var(--navy)] text-white hover:bg-[var(--navy-light)]`
+- Skeleton loading states, AlertDialog for deletes, Dialog for create/edit
+- Sticky table headers with `max-h-[65vh] overflow-y-auto scroll-thin`
+
+---
+Task ID: 4-d
+Agent: Module Builder
+Task: Create 10 API routes + 10 frontend modules for KnowledgeBase, EmailTemplates, NotificationTemplates, SubscriptionPlans, FeatureFlags, PaymentGateways, SecurityCenter, SystemHealth, GlobalSearch, RoleManagement
+
+Work Log:
+- Created 10 API routes with full CRUD (GET/POST/PATCH/DELETE) patterns
+- Created 10 frontend modules following existing project conventions
+- All files pass ESLint linting
+- All modules use `use client` directive, `api` helper, `SectionTitle`/`EmptyState`, `toast` from sonner, Lucide icons
+- Navy/gold brand buttons applied consistently
+
+## API Routes Created (10 files):
+
+1. **`/api/admin/knowledge-base/route.ts`** — Full CRUD for KnowledgeBase. GET with category filter and search (question+answer+tags). PATCH/DELETE.
+2. **`/api/admin/email-templates/route.ts`** — Full CRUD for EmailTemplate. GET with category filter. Name uniqueness enforced. PATCH/DELETE.
+3. **`/api/admin/notification-templates/route.ts`** — Full CRUD for NotificationTemplate. GET with category filter. Name uniqueness enforced. PATCH/DELETE.
+4. **`/api/admin/subscription-plans/route.ts`** — Full CRUD for SubscriptionPlan. GET with status filter. Features stored as JSON string. PATCH/DELETE.
+5. **`/api/admin/feature-flags/route.ts`** — Full CRUD for FeatureFlag. GET all. Toggle enabled via PATCH. Key uniqueness enforced. PATCH/DELETE.
+6. **`/api/admin/payment-gateways/route.ts`** — Full CRUD for PaymentGateway. GET all. Setting isDefault unsets others. PATCH/DELETE.
+7. **`/api/admin/security/route.ts`** — GET only: Failed logins (24h), active sessions, locked accounts, security events count, last 50 security audit logs.
+8. **`/api/admin/system-health/route.ts`** — GET only: DB connection check via `$queryRaw`, entity counts, weekly activity stats, memory usage, uptime.
+9. **`/api/admin/global-search/route.ts`** — GET with `?q=` search: Searches employees, clients, projects, vendors, candidates, assets with case-insensitive matching. Returns grouped results.
+10. **`/api/admin/roles/route.ts`** — GET: All users with role grouping. POST: Create user with password (bcrypt). PATCH: Update user role (OWNER only). Self-role-change prevented.
+
+## Frontend Modules Created (10 files):
+
+11. **`KnowledgeBase.tsx`** — Table with category badge, question/answer truncated, tags, enabled Switch toggle, sort order. Create/Edit dialog with rich textarea, category select, keyword fields. Search + category filter.
+12. **`EmailTemplates.tsx`** — Table with name, subject, category badge (color-coded), status. Create/Edit dialog with HTML body textarea, JSON variables field, category select.
+13. **`NotificationTemplates.tsx`** — Same pattern as EmailTemplates with type badge (push/email/sms/in_app color-coded), category filter.
+14. **`SubscriptionPlans.tsx`** — Card grid layout (pricing cards) with plan name, INR/USD pricing, interval, features list (JSON parsed), trial days, popular gold badge, status. Create/Edit dialog with all fields.
+15. **`FeatureFlags.tsx`** — Table with name, key (monospace code), description, enabled Switch toggle (calls PATCH), environments badges, created date. Create/Edit dialog.
+16. **`PaymentGateways.tsx`** — Table with name, type badge, masked merchant ID, UPI/bank details, isDefault gold star badge, status. Create/Edit dialog with conditional fields (UPI shows UPI fields, bank_transfer shows bank fields, razorpay/stripe show API key/secret).
+17. **`SecurityCenter.tsx`** — Display-only dashboard: 4 stat cards (failed logins, active sessions, locked accounts, security events). Recent audit logs table (security actions only). Auto-refresh every 30s.
+18. **`SystemHealth.tsx`** — Display-only dashboard: Status cards (DB connection green/red with latency, API server, memory, heap). Entity counts table with weekly created/updated stats. Manual refresh button.
+19. **`GlobalSearch.tsx`** — Large search input (Google-style), 300ms debounced search. Results grouped by entity type with icons, counts, and clickable rows calling onNavigate.
+20. **`RoleManagement.tsx`** — Role hierarchy cards at top (color-coded with counts). Table with username, full name, email, role badge, last login, status. Change role dropdown (OWNER only). Create new user dialog (username/email/password/role).
+
+## Files Created: 20 total (10 API + 10 frontend)
+
+---

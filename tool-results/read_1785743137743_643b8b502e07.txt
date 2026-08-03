@@ -1,0 +1,949 @@
+     1→'use client'
+     2→import { useEffect, useState } from 'react'
+     3→import { useAuth } from '@/lib/store'
+     4→import { BrandLogo } from '@/components/brand/BrandLogo'
+     5→import { Button } from '@/components/ui/button'
+     6→import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+     7→import { Badge } from '@/components/ui/badge'
+     8→import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+     9→import { Sheet, SheetContent, SheetTitle, SheetDescription } from '@/components/ui/sheet'
+    10→import { Skeleton } from '@/components/ui/skeleton'
+    11→import {
+    12→  Table,
+    13→  TableBody,
+    14→  TableCell,
+    15→  TableHead,
+    16→  TableHeader,
+    17→  TableRow,
+    18→} from '@/components/ui/table'
+    19→import {
+    20→  DropdownMenu,
+    21→  DropdownMenuContent,
+    22→  DropdownMenuItem,
+    23→  DropdownMenuTrigger,
+    24→  DropdownMenuSeparator,
+    25→} from '@/components/ui/dropdown-menu'
+    26→import { Toaster } from '@/components/ui/sonner'
+    27→import { toast } from 'sonner'
+    28→import { cn } from '@/lib/utils'
+    29→import { format } from 'date-fns'
+    30→import {
+    31→  LayoutDashboard,
+    32→  Briefcase,
+    33→  ClipboardList,
+    34→  FileText,
+    35→  Bell,
+    36→  Menu,
+    37→  X,
+    38→  ChevronRight,
+    39→  LogOut,
+    40→  TrendingUp,
+    41→  Users,
+    42→  IndianRupee,
+    43→  Receipt,
+    44→  Building2,
+    45→  MapPin,
+    46→  Wallet,
+    47→  CalendarClock,
+    48→} from 'lucide-react'
+    49→import { t, type LangCode } from '@/lib/i18n'
+    50→import { HpAiChat } from '@/components/shared/HpAiChat'
+    51→import { LanguageSwitcher } from '@/components/shared/LanguageSwitcher'
+    52→
+    53→// ── Types ──────────────────────────────────────────────────────────────────
+    54→
+    55→type ClientView = 'dashboard' | 'projects' | 'work-orders' | 'invoices'
+    56→
+    57→interface NavItem {
+    58→  key: ClientView
+    59→  label: string
+    60→  icon: typeof LayoutDashboard
+    61→  desc: string
+    62→}
+    63→
+    64→interface ClientInfo {
+    65→  id: string
+    66→  clientName: string
+    67→  companyName: string | null
+    68→  email: string | null
+    69→  phone: string | null
+    70→  address: string | null
+    71→  gst: string | null
+    72→}
+    73→
+    74→interface DashboardProject {
+    75→  id: string
+    76→  projectName: string
+    77→  site: string | null
+    78→  startDate: string | null
+    79→  endDate: string | null
+    80→  status: string
+    81→  description: string | null
+    82→  memberCount: number
+    83→}
+    84→
+    85→interface DashboardWorkOrder {
+    86→  id: string
+    87→  woNumber: string
+    88→  title: string
+    89→  value: number
+    90→  startDate: string | null
+    91→  endDate: string | null
+    92→  status: string
+    93→  projectName: string | null
+    94→}
+    95→
+    96→interface DashboardInvoice {
+    97→  id: string
+    98→  invoiceNumber: string
+    99→  amount: number
+   100→  tax: number
+   101→  total: number
+   102→  status: string
+   103→  issueDate: string
+   104→  dueDate: string | null
+   105→  workOrderTitle: string | null
+   106→}
+   107→
+   108→interface NotificationLite {
+   109→  id: string
+   110→  title: string
+   111→  message: string
+   112→  type: string
+   113→  read: boolean
+   114→  createdAt: string
+   115→}
+   116→
+   117→interface DashboardData {
+   118→  client: ClientInfo
+   119→  stats: {
+   120→    totalProjects: number
+   121→    activeProjects: number
+   122→    workOrderValue: number
+   123→    invoiceTotal: number
+   124→    paidAmount: number
+   125→  }
+   126→  projects: DashboardProject[]
+   127→  workOrders: DashboardWorkOrder[]
+   128→  invoices: DashboardInvoice[]
+   129→  announcements: { id: string; title: string; message: string; createdAt: string }[]
+   130→  unreadNotifications: number
+   131→}
+   132→
+   133→// ── Helpers ────────────────────────────────────────────────────────────────
+   134→
+   135→function initials(name: string): string {
+   136→  return name
+   137→    .split(' ')
+   138→    .filter(Boolean)
+   139→    .slice(0, 2)
+   140→    .map((w) => w[0]?.toUpperCase())
+   141→    .join('')
+   142→}
+   143→
+   144→function formatINR(amount: number): string {
+   145→  return new Intl.NumberFormat('en-IN', {
+   146→    style: 'currency',
+   147→    currency: 'INR',
+   148→    maximumFractionDigits: 0,
+   149→  }).format(amount)
+   150→}
+   151→
+   152→function fmtDate(d: string | null | undefined): string {
+   153→  if (!d) return '—'
+   154→  try {
+   155→    return format(new Date(d), 'dd MMM yyyy')
+   156→  } catch {
+   157→    return '—'
+   158→  }
+   159→}
+   160→
+   161→function statusColor(status: string): string {
+   162→  const s = status.toUpperCase()
+   163→  if (s === 'ACTIVE' || s === 'OPEN' || s === 'PAID') return 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/25'
+   164→  if (s === 'COMPLETED' || s === 'SENT') return 'bg-sky-500/15 text-sky-700 dark:text-sky-400 border-sky-500/25'
+   165→  if (s === 'ON_HOLD' || s === 'DRAFT') return 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/25'
+   166→  if (s === 'REJECTED' || s === 'OVERDUE') return 'bg-red-500/15 text-red-700 dark:text-red-400 border-red-500/25'
+   167→  if (s === 'CLOSED') return 'bg-slate-500/15 text-slate-600 dark:text-slate-400 border-slate-500/25'
+   168→  return 'bg-primary/10 text-primary border-primary/20'
+   169→}
+   170→
+   171→function StatusBadge({ status }: { status: string }) {
+   172→  return (
+   173→    <Badge variant="outline" className={cn('text-[11px]', statusColor(status))}>
+   174→      {status.replace(/_/g, ' ')}
+   175→    </Badge>
+   176→  )
+   177→}
+   178→
+   179→// ── Navigation ─────────────────────────────────────────────────────────────
+   180→
+   181→function getNav(lang: LangCode): NavItem[] {
+   182→  return [
+   183→    { key: 'dashboard', label: t('client.dashboard', lang), icon: LayoutDashboard, desc: t('client.desc.dashboard', lang) },
+   184→    { key: 'projects', label: t('client.projects', lang), icon: Briefcase, desc: t('client.desc.projects', lang) },
+   185→    { key: 'work-orders', label: t('client.workOrders', lang), icon: ClipboardList, desc: t('client.desc.workOrders', lang) },
+   186→    { key: 'invoices', label: t('client.invoices', lang), icon: FileText, desc: t('client.desc.invoices', lang) },
+   187→  ]
+   188→}
+   189→
+   190→// ── Stat Card ───────────────────────────────────────────────────────────────
+   191→
+   192→function StatCard({ label, value, icon: Icon, loading }: { label: string; value: string; icon: typeof IndianRupee; loading: boolean }) {
+   193→  return (
+   194→    <Card className="relative overflow-hidden">
+   195→      <div className="absolute -right-3 -top-3 h-16 w-16 rounded-full bg-[var(--gold)]/8" />
+   196→      <CardContent className="p-5">
+   197→        <div className="flex items-center gap-3">
+   198→          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-[var(--navy)]/10">
+   199→            <Icon className="h-5 w-5 text-[var(--navy)] dark:text-[var(--gold-light)]" />
+   200→          </div>
+   201→          <div className="min-w-0 flex-1">
+   202→            {loading ? (
+   203→              <>
+   204→                <Skeleton className="mb-1 h-3.5 w-20" />
+   205→                <Skeleton className="h-6 w-28" />
+   206→              </>
+   207→            ) : (
+   208→              <>
+   209→                <p className="text-xs font-medium text-muted-foreground">{label}</p>
+   210→                <p className="text-xl font-bold text-[var(--navy)] dark:text-white">{value}</p>
+   211→              </>
+   212→            )}
+   213→          </div>
+   214→        </div>
+   215→      </CardContent>
+   216→    </Card>
+   217→  )
+   218→}
+   219→
+   220→// ── Data Table (reusable) ──────────────────────────────────────────────────
+   221→
+   222→function DataTable<T extends { id: string }>({
+   223→  title,
+   224→  data,
+   225→  loading,
+   226→  emptyMessage,
+   227→  emptyIcon: EmptyIcon,
+   228→  columns,
+   229→  renderRow,
+   230→}: {
+   231→  title: string
+   232→  data: T[]
+   233→  loading: boolean
+   234→  emptyMessage: string
+   235→  emptyIcon: typeof LayoutDashboard
+   236→  columns: { key: string; label: string; className?: string }[]
+   237→  renderRow: (item: T) => React.ReactNode
+   238→}) {
+   239→  return (
+   240→    <Card>
+   241→      <CardHeader className="pb-3">
+   242→        <CardTitle className="text-base">{title}</CardTitle>
+   243→      </CardHeader>
+   244→      <CardContent className="px-6 pb-6 pt-0">
+   245→        {loading ? (
+   246→          <div className="space-y-3">
+   247→            {Array.from({ length: 4 }).map((_, i) => (
+   248→              <Skeleton key={i} className="h-10 w-full" />
+   249→            ))}
+   250→          </div>
+   251→        ) : data.length === 0 ? (
+   252→          <div className="flex flex-col items-center justify-center py-10 text-center text-muted-foreground">
+   253→            <EmptyIcon className="mb-2 h-8 w-8 opacity-40" />
+   254→            <p className="text-sm font-medium">{emptyMessage}</p>
+   255→            <p className="mt-0.5 text-xs">Data will appear here once available</p>
+   256→          </div>
+   257→        ) : (
+   258→          <div className="max-h-96 overflow-y-auto rounded-lg border scroll-thin">
+   259→            <Table>
+   260→              <TableHeader className="bg-muted/50">
+   261→                <TableRow>
+   262→                  {columns.map((col) => (
+   263→                    <TableHead key={col.key} className={cn('text-xs font-semibold uppercase tracking-wide text-muted-foreground', col.className)}>
+   264→                      {col.label}
+   265→                    </TableHead>
+   266→                  ))}
+   267→                </TableRow>
+   268→              </TableHeader>
+   269→              <TableBody>
+   270→                {data.map((item) => renderRow(item))}
+   271→              </TableBody>
+   272→            </Table>
+   273→          </div>
+   274→        )}
+   275→      </CardContent>
+   276→    </Card>
+   277→  )
+   278→}
+   279→
+   280→// ── Dashboard View ──────────────────────────────────────────────────────────
+   281→
+   282→function DashboardView({
+   283→  data,
+   284→  loading,
+   285→}: {
+   286→  data: DashboardData | null
+   287→  loading: boolean
+   288→}) {
+   289→  const clientName = data?.client?.companyName || data?.client?.clientName || 'Client'
+   290→  const stats = data?.stats
+   291→
+   292→  return (
+   293→    <div className="space-y-6">
+   294→      {/* Welcome Banner */}
+   295→      <div className="rounded-xl bg-gradient-to-r from-[var(--navy)] to-[var(--navy)]/90 p-6 text-white shadow-lg">
+   296→        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+   297→          <div>
+   298→            <h2 className="text-xl font-bold sm:text-2xl">
+   299→              Welcome back, {data?.client?.clientName || 'Client'}!
+   300→            </h2>
+   301→            <p className="mt-1 text-sm text-blue-100/80">
+   302→              Here&apos;s an overview of your engagement with {clientName}.
+   303→            </p>
+   304→          </div>
+   305→          <div className="flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-medium backdrop-blur-sm">
+   306→            <TrendingUp className="h-4 w-4 text-[var(--gold)]" />
+   307→            <span className="text-[var(--gold-light)]">Client Dashboard</span>
+   308→          </div>
+   309→        </div>
+   310→      </div>
+   311→
+   312→      {/* 5 Stat Cards */}
+   313→      <div className="grid gap-4 grid-cols-2 lg:grid-cols-5">
+   314→        <StatCard
+   315→          label="Total Projects"
+   316→          value={stats ? String(stats.totalProjects) : '—'}
+   317→          icon={Building2}
+   318→          loading={loading}
+   319→        />
+   320→        <StatCard
+   321→          label="Active Projects"
+   322→          value={stats ? String(stats.activeProjects) : '—'}
+   323→          icon={TrendingUp}
+   324→          loading={loading}
+   325→        />
+   326→        <StatCard
+   327→          label="Work Order Value"
+   328→          value={stats ? formatINR(stats.workOrderValue) : '—'}
+   329→          icon={IndianRupee}
+   330→          loading={loading}
+   331→        />
+   332→        <StatCard
+   333→          label="Invoice Total"
+   334→          value={stats ? formatINR(stats.invoiceTotal) : '—'}
+   335→          icon={Receipt}
+   336→          loading={loading}
+   337→        />
+   338→        <StatCard
+   339→          label="Paid Amount"
+   340→          value={stats ? formatINR(stats.paidAmount) : '—'}
+   341→          icon={Wallet}
+   342→          loading={loading}
+   343→        />
+   344→      </div>
+   345→
+   346→      {/* Recent Projects — top 5 */}
+   347→      <DataTable
+   348→        title="Recent Projects"
+   349→        data={(data?.projects || []).slice(0, 5)}
+   350→        loading={loading}
+   351→        emptyMessage="No projects found"
+   352→        emptyIcon={Briefcase}
+   353→        columns={[
+   354→          { key: 'name', label: 'Project' },
+   355→          { key: 'site', label: 'Site' },
+   356→          { key: 'status', label: 'Status', className: 'w-28' },
+   357→          { key: 'members', label: 'Team', className: 'w-16' },
+   358→          { key: 'dates', label: 'Period' },
+   359→        ]}
+   360→        renderRow={(p) => (
+   361→          <TableRow key={p.id}>
+   362→            <TableCell className="font-medium text-[var(--navy)] dark:text-white">{p.projectName}</TableCell>
+   363→            <TableCell>
+   364→              <div className="flex items-center gap-1.5 text-muted-foreground">
+   365→                <MapPin className="h-3.5 w-3.5 shrink-0" />
+   366→                <span className="truncate max-w-32">{p.site || '—'}</span>
+   367→              </div>
+   368→            </TableCell>
+   369→            <TableCell><StatusBadge status={p.status} /></TableCell>
+   370→            <TableCell>
+   371→              <div className="flex items-center gap-1 text-muted-foreground">
+   372→                <Users className="h-3.5 w-3.5" />
+   373→                <span>{p.memberCount}</span>
+   374→              </div>
+   375→            </TableCell>
+   376→            <TableCell className="text-xs text-muted-foreground">
+   377→              <div className="flex flex-col gap-0.5">
+   378→                <span>Start: {fmtDate(p.startDate)}</span>
+   379→                <span>End: {fmtDate(p.endDate)}</span>
+   380→              </div>
+   381→            </TableCell>
+   382→          </TableRow>
+   383→        )}
+   384→      />
+   385→
+   386→      {/* Recent Work Orders — top 5 */}
+   387→      <DataTable
+   388→        title="Recent Work Orders"
+   389→        data={(data?.workOrders || []).slice(0, 5)}
+   390→        loading={loading}
+   391→        emptyMessage="No work orders found"
+   392→        emptyIcon={ClipboardList}
+   393→        columns={[
+   394→          { key: 'number', label: 'WO #' },
+   395→          { key: 'title', label: 'Title' },
+   396→          { key: 'project', label: 'Project', className: 'hidden md:table-cell' },
+   397→          { key: 'value', label: 'Value', className: 'text-right' },
+   398→          { key: 'status', label: 'Status', className: 'w-28' },
+   399→          { key: 'dates', label: 'Period', className: 'hidden lg:table-cell' },
+   400→        ]}
+   401→        renderRow={(wo) => (
+   402→          <TableRow key={wo.id}>
+   403→            <TableCell className="font-mono text-xs font-semibold text-[var(--navy)] dark:text-[var(--gold-light)]">{wo.woNumber}</TableCell>
+   404→            <TableCell className="font-medium">{wo.title}</TableCell>
+   405→            <TableCell className="hidden md:table-cell text-sm text-muted-foreground">{wo.projectName || '—'}</TableCell>
+   406→            <TableCell className="text-right font-semibold">{formatINR(wo.value)}</TableCell>
+   407→            <TableCell><StatusBadge status={wo.status} /></TableCell>
+   408→            <TableCell className="hidden lg:table-cell text-xs text-muted-foreground">
+   409→              <div className="flex flex-col gap-0.5">
+   410→                <span>Start: {fmtDate(wo.startDate)}</span>
+   411→                <span>End: {fmtDate(wo.endDate)}</span>
+   412→              </div>
+   413→            </TableCell>
+   414→          </TableRow>
+   415→        )}
+   416→      />
+   417→
+   418→      {/* Recent Invoices — top 5 */}
+   419→      <DataTable
+   420→        title="Recent Invoices"
+   421→        data={(data?.invoices || []).slice(0, 5)}
+   422→        loading={loading}
+   423→        emptyMessage="No invoices found"
+   424→        emptyIcon={FileText}
+   425→        columns={[
+   426→          { key: 'number', label: 'Invoice #' },
+   427→          { key: 'workOrder', label: 'Work Order', className: 'hidden md:table-cell' },
+   428→          { key: 'amount', label: 'Amount', className: 'text-right' },
+   429→          { key: 'total', label: 'Total', className: 'text-right' },
+   430→          { key: 'status', label: 'Status', className: 'w-28' },
+   431→          { key: 'dates', label: 'Dates' },
+   432→        ]}
+   433→        renderRow={(inv) => (
+   434→          <TableRow key={inv.id}>
+   435→            <TableCell className="font-mono text-xs font-semibold text-[var(--navy)] dark:text-[var(--gold-light)]">{inv.invoiceNumber}</TableCell>
+   436→            <TableCell className="hidden md:table-cell text-sm text-muted-foreground">{inv.workOrderTitle || '—'}</TableCell>
+   437→            <TableCell className="text-right">{formatINR(inv.amount)}</TableCell>
+   438→            <TableCell className="text-right font-semibold">{formatINR(inv.total)}</TableCell>
+   439→            <TableCell><StatusBadge status={inv.status} /></TableCell>
+   440→            <TableCell className="text-xs text-muted-foreground">
+   441→              <div className="flex flex-col gap-0.5">
+   442→                <span>Issue: {fmtDate(inv.issueDate)}</span>
+   443→                <span>Due: {fmtDate(inv.dueDate)}</span>
+   444→              </div>
+   445→            </TableCell>
+   446→          </TableRow>
+   447→        )}
+   448→      />
+   449→    </div>
+   450→  )
+   451→}
+   452→
+   453→// ── Projects Full View ─────────────────────────────────────────────────────
+   454→
+   455→function ProjectsView({ data, loading }: { data: DashboardData | null; loading: boolean }) {
+   456→  return (
+   457→    <DataTable
+   458→      title="All Projects"
+   459→      data={data?.projects || []}
+   460→      loading={loading}
+   461→      emptyMessage="No projects found"
+   462→      emptyIcon={Briefcase}
+   463→      columns={[
+   464→        { key: 'name', label: 'Project' },
+   465→        { key: 'site', label: 'Site', className: 'hidden md:table-cell' },
+   466→        { key: 'status', label: 'Status', className: 'w-32' },
+   467→        { key: 'members', label: 'Team', className: 'w-16' },
+   468→        { key: 'description', label: 'Description', className: 'hidden lg:table-cell' },
+   469→        { key: 'dates', label: 'Period' },
+   470→      ]}
+   471→      renderRow={(p) => (
+   472→        <TableRow key={p.id} className="hover:bg-muted/40">
+   473→          <TableCell>
+   474→            <p className="truncate text-sm font-semibold text-[var(--navy)] dark:text-white">{p.projectName}</p>
+   475→          </TableCell>
+   476→          <TableCell className="hidden md:table-cell">
+   477→            <div className="flex items-center gap-1.5 text-muted-foreground">
+   478→              <MapPin className="h-3.5 w-3.5 shrink-0" />
+   479→              <span className="truncate max-w-40">{p.site || '—'}</span>
+   480→            </div>
+   481→          </TableCell>
+   482→          <TableCell><StatusBadge status={p.status} /></TableCell>
+   483→          <TableCell>
+   484→            <div className="flex items-center gap-1 text-muted-foreground">
+   485→              <Users className="h-3.5 w-3.5" />
+   486→              <span>{p.memberCount}</span>
+   487→            </div>
+   488→          </TableCell>
+   489→          <TableCell className="hidden lg:table-cell max-w-48">
+   490→            <p className="truncate text-sm text-muted-foreground">{p.description || '—'}</p>
+   491→          </TableCell>
+   492→          <TableCell className="text-xs text-muted-foreground">
+   493→            <div className="flex flex-col gap-0.5">
+   494→              <span>Start: {fmtDate(p.startDate)}</span>
+   495→              <span>End: {fmtDate(p.endDate)}</span>
+   496→            </div>
+   497→          </TableCell>
+   498→        </TableRow>
+   499→      )}
+   500→    />
+   501→  )
+   502→}
+   503→
+   504→// ── Work Orders Full View ──────────────────────────────────────────────────
+   505→
+   506→function WorkOrdersView({ data, loading }: { data: DashboardData | null; loading: boolean }) {
+   507→  const list = data?.workOrders || []
+   508→  const totalValue = list.reduce((s, wo) => s + wo.value, 0)
+   509→
+   510→  return (
+   511→    <div className="space-y-5">
+   512→      {/* Summary Cards */}
+   513→      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+   514→        <Card className="p-4">
+   515→          <p className="text-xs uppercase tracking-wider text-muted-foreground">Total Work Orders</p>
+   516→          <p className="mt-1 text-xl font-bold text-[var(--navy)] dark:text-white">{list.length}</p>
+   517→        </Card>
+   518→        <Card className="p-4">
+   519→          <p className="text-xs uppercase tracking-wider text-muted-foreground">Total Value</p>
+   520→          <p className="mt-1 text-xl font-bold text-[var(--navy)] dark:text-white">{formatINR(totalValue)}</p>
+   521→        </Card>
+   522→        <Card className="p-4">
+   523→          <p className="text-xs uppercase tracking-wider text-muted-foreground">Open Orders</p>
+   524→          <p className="mt-1 text-xl font-bold text-emerald-700">{list.filter((wo) => wo.status === 'OPEN').length}</p>
+   525→        </Card>
+   526→      </div>
+   527→
+   528→      <DataTable
+   529→        title="All Work Orders"
+   530→        data={list}
+   531→        loading={loading}
+   532→        emptyMessage="No work orders found"
+   533→        emptyIcon={ClipboardList}
+   534→        columns={[
+   535→          { key: 'number', label: 'WO #' },
+   536→          { key: 'title', label: 'Title' },
+   537→          { key: 'project', label: 'Project', className: 'hidden md:table-cell' },
+   538→          { key: 'value', label: 'Value', className: 'text-right' },
+   539→          { key: 'status', label: 'Status', className: 'w-32' },
+   540→          { key: 'dates', label: 'Period' },
+   541→        ]}
+   542→        renderRow={(wo) => (
+   543→          <TableRow key={wo.id} className="hover:bg-muted/40">
+   544→            <TableCell className="font-mono text-xs font-semibold text-[var(--navy)] dark:text-[var(--gold-light)]">{wo.woNumber}</TableCell>
+   545→            <TableCell>
+   546→              <p className="truncate text-sm font-semibold text-[var(--navy)] dark:text-white">{wo.title}</p>
+   547→            </TableCell>
+   548→            <TableCell className="hidden md:table-cell text-sm text-muted-foreground">{wo.projectName || '—'}</TableCell>
+   549→            <TableCell className="text-right font-mono font-semibold">{formatINR(wo.value)}</TableCell>
+   550→            <TableCell><StatusBadge status={wo.status} /></TableCell>
+   551→            <TableCell className="text-xs text-muted-foreground">
+   552→              <div className="flex flex-col gap-0.5">
+   553→                <span>Start: {fmtDate(wo.startDate)}</span>
+   554→                <span>End: {fmtDate(wo.endDate)}</span>
+   555→              </div>
+   556→            </TableCell>
+   557→          </TableRow>
+   558→        )}
+   559→      />
+   560→    </div>
+   561→  )
+   562→}
+   563→
+   564→// ── Invoices Full View ─────────────────────────────────────────────────────
+   565→
+   566→function InvoicesView({ data, loading }: { data: DashboardData | null; loading: boolean }) {
+   567→  const list = data?.invoices || []
+   568→  const totalAmount = list.reduce((s, i) => s + i.total, 0)
+   569→  const totalPaid = list.filter((i) => i.status === 'PAID').reduce((s, i) => s + i.total, 0)
+   570→
+   571→  return (
+   572→    <div className="space-y-5">
+   573→      {/* Summary Cards */}
+   574→      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+   575→        <Card className="p-4">
+   576→          <p className="text-xs uppercase tracking-wider text-muted-foreground">Total Invoiced</p>
+   577→          <p className="mt-1 text-xl font-bold text-[var(--navy)] dark:text-white">{formatINR(totalAmount)}</p>
+   578→          <p className="mt-0.5 text-[11px] text-muted-foreground">{list.length} invoice{list.length !== 1 ? 's' : ''}</p>
+   579→        </Card>
+   580→        <Card className="p-4">
+   581→          <p className="text-xs uppercase tracking-wider text-muted-foreground">Paid</p>
+   582→          <p className="mt-1 text-xl font-bold text-emerald-700">{formatINR(totalPaid)}</p>
+   583→          <p className="mt-0.5 text-[11px] text-muted-foreground">PAID status</p>
+   584→        </Card>
+   585→        <Card className="p-4">
+   586→          <p className="text-xs uppercase tracking-wider text-muted-foreground">Outstanding</p>
+   587→          <p className="mt-1 text-xl font-bold text-amber-700">{formatINR(totalAmount - totalPaid)}</p>
+   588→          <p className="mt-0.5 text-[11px] text-muted-foreground">Pending / overdue</p>
+   589→        </Card>
+   590→      </div>
+   591→
+   592→      <DataTable
+   593→        title="All Invoices"
+   594→        data={list}
+   595→        loading={loading}
+   596→        emptyMessage="No invoices found"
+   597→        emptyIcon={FileText}
+   598→        columns={[
+   599→          { key: 'number', label: 'Invoice #' },
+   600→          { key: 'workOrder', label: 'Work Order', className: 'hidden md:table-cell' },
+   601→          { key: 'amount', label: 'Amount', className: 'text-right' },
+   602→          { key: 'tax', label: 'Tax', className: 'hidden lg:table-cell text-right' },
+   603→          { key: 'total', label: 'Total', className: 'text-right' },
+   604→          { key: 'status', label: 'Status', className: 'w-28' },
+   605→          { key: 'dates', label: 'Dates' },
+   606→        ]}
+   607→        renderRow={(inv) => (
+   608→          <TableRow key={inv.id} className="hover:bg-muted/40">
+   609→            <TableCell className="font-mono text-xs font-semibold text-[var(--navy)] dark:text-[var(--gold-light)]">{inv.invoiceNumber}</TableCell>
+   610→            <TableCell className="hidden md:table-cell text-sm text-muted-foreground">{inv.workOrderTitle || '—'}</TableCell>
+   611→            <TableCell className="text-right font-mono">{formatINR(inv.amount)}</TableCell>
+   612→            <TableCell className="hidden lg:table-cell text-right font-mono text-muted-foreground">{formatINR(inv.tax)}</TableCell>
+   613→            <TableCell className="text-right font-mono font-bold text-[var(--navy)] dark:text-white">{formatINR(inv.total)}</TableCell>
+   614→            <TableCell><StatusBadge status={inv.status} /></TableCell>
+   615→            <TableCell className="text-xs text-muted-foreground">
+   616→              <div className="flex flex-col gap-0.5">
+   617→                <span>Issue: {fmtDate(inv.issueDate)}</span>
+   618→                <span>Due: {fmtDate(inv.dueDate)}</span>
+   619→              </div>
+   620→            </TableCell>
+   621→          </TableRow>
+   622→        )}
+   623→      />
+   624→    </div>
+   625→  )
+   626→}
+   627→
+   628→// ── Main Component ──────────────────────────────────────────────────────────
+   629→
+   630→export function ClientLayout() {
+   631→  const { user, logout, lang } = useAuth()
+   632→  const [active, setActive] = useState<ClientView>('dashboard')
+   633→  const [mobileOpen, setMobileOpen] = useState(false)
+   634→  const [data, setData] = useState<DashboardData | null>(null)
+   635→  const [loading, setLoading] = useState(true)
+   636→  const [notifications, setNotifications] = useState<NotificationLite[]>([])
+   637→  const [unread, setUnread] = useState(0)
+   638→  const [now, setNow] = useState(new Date())
+   639→  const [bellOpen, setBellOpen] = useState(false)
+   640→
+   641→  const client = user?.client
+   642→  const clientName = data?.client?.clientName || client?.clientName || client?.companyName || user?.username || 'Client'
+   643→
+   644→  // Fetch dashboard data
+   645→  useEffect(() => {
+   646→    let cancelled = false
+   647→    fetch('/api/client/dashboard', { cache: 'no-store' })
+   648→      .then((r) => (r.ok ? r.json() : null))
+   649→      .then((json) => {
+   650→        if (cancelled || !json) return
+   651→        setData(json)
+   652→        setUnread(json.unreadNotifications ?? 0)
+   653→      })
+   654→      .catch(() => {})
+   655→      .finally(() => {
+   656→        if (!cancelled) setLoading(false)
+   657→      })
+   658→    return () => { cancelled = true }
+   659→  }, [])
+   660→
+   661→  // Fetch notifications separately
+   662→  useEffect(() => {
+   663→    let cancelled = false
+   664→    fetch('/api/notifications', { cache: 'no-store' })
+   665→      .then((r) => (r.ok ? r.json() : null))
+   666→      .then((data) => {
+   667→        if (cancelled || !data) return
+   668→        setNotifications(data.notifications || [])
+   669→      })
+   670→      .catch(() => {})
+   671→    return () => { cancelled = true }
+   672→  }, [])
+   673→
+   674→  // Tick clock every 30s
+   675→  useEffect(() => {
+   676→    const t = setInterval(() => setNow(new Date()), 30_000)
+   677→    return () => clearInterval(t)
+   678→  }, [])
+   679→
+   680→  const handleNavigate = (key: ClientView) => {
+   681→    setActive(key)
+   682→    setMobileOpen(false)
+   683→  }
+   684→
+   685→  const markAllRead = async () => {
+   686→    try {
+   687→      await fetch('/api/notifications', {
+   688→        method: 'PATCH',
+   689→        headers: { 'Content-Type': 'application/json' },
+   690→        body: JSON.stringify({ all: true }),
+   691→      })
+   692→      setNotifications((arr) => arr.map((n) => ({ ...n, read: true })))
+   693→      setUnread(0)
+   694→      toast.success(t('nav.allMarkedRead', lang))
+   695→    } catch {
+   696→      toast.error(t('nav.notifFailed', lang))
+   697→    }
+   698→  }
+   699→
+   700→  const markOneRead = async (id: string) => {
+   701→    try {
+   702→      await fetch('/api/notifications', {
+   703→        method: 'PATCH',
+   704→        headers: { 'Content-Type': 'application/json' },
+   705→        body: JSON.stringify({ id }),
+   706→      })
+   707→      setNotifications((arr) => arr.map((n) => (n.id === id ? { ...n, read: true } : n)))
+   708→      setUnread((u) => Math.max(0, u - 1))
+   709→    } catch {}
+   710→  }
+   711→
+   712→  const handleLogout = async () => {
+   713→    await logout()
+   714→    toast.success(t('nav.signedOut', lang))
+   715→  }
+   716→
+   717→  const nav = getNav(lang)
+   718→  const currentNav = nav.find((n) => n.key === active)
+   719→
+   720→  // ── Sidebar inner (shared between desktop & mobile) ──
+   721→  const sidebarInner = (
+   722→    <div className="flex h-full flex-col text-slate-200">
+   723→      {/* Brand */}
+   724→      <div className="px-5 pt-5 pb-4 border-b border-white/10">
+   725→        <BrandLogo />
+   726→      </div>
+   727→
+   728→      {/* Navigation */}
+   729→      <nav className="flex-1 overflow-y-auto scroll-thin px-3 py-4 space-y-1">
+   730→        {nav.map((item) => {
+   731→          const Icon = item.icon
+   732→          const isActive = active === item.key
+   733→          return (
+   734→            <button
+   735→              key={item.key}
+   736→              onClick={() => handleNavigate(item.key)}
+   737→              aria-current={isActive ? 'page' : undefined}
+   738→              className={cn(
+   739→                'group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-all',
+   740→                isActive
+   741→                  ? 'bg-[var(--gold)] text-[var(--navy)] shadow-sm'
+   742→                  : 'text-blue-100/80 hover:bg-white/10 hover:text-white'
+   743→              )}
+   744→            >
+   745→              <Icon
+   746→                className={cn(
+   747→                  'h-[18px] w-[18px] shrink-0',
+   748→                  isActive ? 'text-[var(--navy)]' : 'text-blue-200/70 group-hover:text-[var(--gold-light)]'
+   749→                )}
+   750→              />
+   751→              <span className="flex-1 truncate">{item.label}</span>
+   752→              {isActive && <ChevronRight className="h-4 w-4 text-[var(--navy)]" />}
+   753→            </button>
+   754→          )
+   755→        })}
+   756→      </nav>
+   757→
+   758→      {/* User card + logout */}
+   759→      <div className="border-t border-white/10 p-3">
+   760→        <div className="rounded-lg bg-white/5 p-3">
+   761→          <div className="flex items-center gap-3">
+   762→            <Avatar className="h-9 w-9 ring-2 ring-[var(--gold)]/40">
+   763→              <AvatarFallback className="bg-[var(--gold)] text-[var(--navy)] text-xs font-bold">
+   764→                {initials(clientName)}
+   765→              </AvatarFallback>
+   766→            </Avatar>
+   767→            <div className="min-w-0 flex-1">
+   768→              <p className="truncate text-sm font-semibold text-white">{clientName}</p>
+   769→              <p className="truncate text-[11px] text-blue-200/70">
+   770→                {data?.client?.companyName || client?.companyName || client?.email || 'Client Portal'}
+   771→              </p>
+   772→            </div>
+   773→          </div>
+   774→          <Button
+   775→            onClick={handleLogout}
+   776→            variant="ghost"
+   777→            size="sm"
+   778→            className="mt-3 w-full justify-start gap-2 text-blue-100/80 hover:bg-white/10 hover:text-white"
+   779→          >
+   780→            <LogOut className="h-4 w-4" /> {t('nav.signOut', lang)}
+   781→          </Button>
+   782→        </div>
+   783→      </div>
+   784→    </div>
+   785→  )
+   786→
+   787→  return (
+   788→    <div className="min-h-screen flex flex-col bg-background">
+   789→      {/* Top accent bar */}
+   790→      <div className="h-1 hpe-gold-bar w-full" />
+   791→
+   792→      <div className="flex flex-1 overflow-hidden">
+   793→        {/* Desktop sidebar */}
+   794→        <aside className="hidden lg:flex w-[260px] shrink-0 hpe-sidebar-gradient border-r border-white/10">
+   795→          {sidebarInner}
+   796→        </aside>
+   797→
+   798→        {/* Mobile sidebar (Sheet) */}
+   799→        <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+   800→          <SheetContent side="left" className="w-[260px] p-0 hpe-sidebar-gradient border-white/10">
+   801→            <SheetTitle className="sr-only">HP ENTERPRISE Client Portal Navigation</SheetTitle>
+   802→            <SheetDescription className="sr-only">Client portal navigation with access to your dashboard, projects, work orders, and invoices.</SheetDescription>
+   803→            <button
+   804→              onClick={() => setMobileOpen(false)}
+   805→              className="absolute right-3 top-3 z-10 grid h-8 w-8 place-items-center rounded-md text-blue-100 hover:bg-white/10"
+   806→              aria-label="Close menu"
+   807→            >
+   808→              <X className="h-5 w-5" />
+   809→            </button>
+   810→            {sidebarInner}
+   811→          </SheetContent>
+   812→        </Sheet>
+   813→
+   814→        {/* Main area */}
+   815→        <div className="flex flex-1 flex-col min-w-0">
+   816→          {/* Top bar */}
+   817→          <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-3 border-b bg-card/95 px-4 backdrop-blur-md sm:px-6">
+   818→            <div className="flex items-center gap-3 min-w-0">
+   819→              {/* Mobile hamburger */}
+   820→              <button
+   821→                onClick={() => setMobileOpen(true)}
+   822→                className="lg:hidden grid h-9 w-9 place-items-center rounded-md border bg-background"
+   823→                aria-label="Open menu"
+   824→              >
+   825→                <Menu className="h-5 w-5" />
+   826→              </button>
+   827→              <div className="min-w-0">
+   828→                <h1 className="truncate text-base font-bold text-[var(--navy)] dark:text-white sm:text-lg">
+   829→                  {currentNav?.label}
+   830→                </h1>
+   831→                <p className="hidden text-xs text-muted-foreground sm:block">{currentNav?.desc}</p>
+   832→              </div>
+   833→            </div>
+   834→
+   835→            <div className="flex items-center gap-2 sm:gap-3">
+   836→              <LanguageSwitcher />
+   837→
+   838→              {/* Date / Time */}
+   839→              <div className="hidden md:flex flex-col items-end leading-tight">
+   840→                <span className="text-xs font-medium text-[var(--navy)] dark:text-white">
+   841→                  {format(now, 'EEEE, dd MMM yyyy')}
+   842→                </span>
+   843→                <span className="text-[11px] text-muted-foreground">
+   844→                  {format(now, 'h:mm a')}
+   845→                </span>
+   846→              </div>
+   847→
+   848→              {/* Notifications bell */}
+   849→              <DropdownMenu open={bellOpen} onOpenChange={setBellOpen}>
+   850→                <DropdownMenuTrigger asChild>
+   851→                  <button
+   852→                    className="relative grid h-10 w-10 place-items-center rounded-full border bg-background hover:bg-muted transition-colors"
+   853→                    aria-label={`Notifications${unread ? `, ${unread} unread` : ''}`}
+   854→                  >
+   855→                    <Bell className="h-[18px] w-[18px] text-[var(--navy)] dark:text-white" />
+   856→                    {unread > 0 && (
+   857→                      <span className="absolute -right-0.5 -top-0.5 grid h-5 min-w-5 place-items-center rounded-full bg-[var(--gold)] px-1 text-[10px] font-bold text-[var(--navy)] ring-2 ring-card">
+   858→                        {unread > 9 ? '9+' : unread}
+   859→                      </span>
+   860→                    )}
+   861→                  </button>
+   862→                </DropdownMenuTrigger>
+   863→                <DropdownMenuContent align="end" className="w-80 p-0">
+   864→                  <div className="flex items-center justify-between border-b px-3 py-2.5">
+   865→                    <p className="text-sm font-semibold text-[var(--navy)] dark:text-white">{t('nav.notifications', lang)}</p>
+   866→                    {unread > 0 && (
+   867→                      <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={markAllRead}>
+   868→                        {t('nav.markAllRead', lang)}
+   869→                      </Button>
+   870→                    )}
+   871→                  </div>
+   872→                  <div className="max-h-80 overflow-y-auto scroll-thin">
+   873→                    {notifications.length === 0 ? (
+   874→                      <div className="py-8 text-center text-sm text-muted-foreground">
+   875→                        <Bell className="mx-auto mb-2 h-6 w-6 opacity-50" />
+   876→                        {t('nav.noNotifications', lang)}
+   877→                      </div>
+   878→                    ) : (
+   879→                      notifications.slice(0, 12).map((n) => (
+   880→                        <DropdownMenuItem
+   881→                          key={n.id}
+   882→                          className="flex flex-col items-start gap-0.5 px-3 py-2.5 focus:bg-muted/60"
+   883→                          onClick={() => {
+   884→                            if (!n.read) markOneRead(n.id)
+   885→                          }}
+   886→                        >
+   887→                          <div className="flex w-full items-start gap-2">
+   888→                            {!n.read && <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-[var(--gold)]" />}
+   889→                            <div className="min-w-0 flex-1">
+   890→                              <p
+   891→                                className={cn(
+   892→                                  'text-sm leading-snug',
+   893→                                  n.read ? 'text-muted-foreground' : 'font-semibold text-[var(--navy)] dark:text-white'
+   894→                                )}
+   895→                              >
+   896→                                {n.title}
+   897→                              </p>
+   898→                              <p className="mt-0.5 text-xs text-muted-foreground line-clamp-2">{n.message}</p>
+   899→                              <p className="mt-1 text-[10px] text-muted-foreground">
+   900→                                {format(new Date(n.createdAt), 'dd MMM yyyy, h:mm a')}
+   901→                              </p>
+   902→                            </div>
+   903→                          </div>
+   904→                        </DropdownMenuItem>
+   905→                      ))
+   906→                    )}
+   907→                  </div>
+   908→                </DropdownMenuContent>
+   909→              </DropdownMenu>
+   910→
+   911→              {/* User avatar */}
+   912→              <Avatar className="hidden sm:block h-9 w-9 ring-2 ring-[var(--gold)]/40">
+   913→                <AvatarFallback className="bg-[var(--navy)] text-[var(--gold)] text-xs font-bold">
+   914→                  {initials(clientName)}
+   915→                </AvatarFallback>
+   916→              </Avatar>
+   917→            </div>
+   918→          </header>
+   919→
+   920→          {/* Module content */}
+   921→          <main className="flex-1 overflow-y-auto scroll-thin">
+   922→            <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+   923→              {active === 'dashboard' && <DashboardView data={data} loading={loading} />}
+   924→              {active === 'projects' && <ProjectsView data={data} loading={loading} />}
+   925→              {active === 'work-orders' && <WorkOrdersView data={data} loading={loading} />}
+   926→              {active === 'invoices' && <InvoicesView data={data} loading={loading} />}
+   927→            </div>
+   928→          </main>
+   929→        </div>
+   930→      </div>
+   931→
+   932→      {/* Sticky footer */}
+   933→      <footer className="mt-auto border-t bg-card px-4 py-3 sm:px-6">
+   934→        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-1 text-xs text-muted-foreground sm:flex-row">
+   935→          <p>&copy; 2025 HP ENTERPRISE Safety Service &amp; Man Power Supply &bull; Client Portal</p>
+   936→          <p className="flex items-center gap-1.5">
+   937→            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+   938→            {t('footer.systemsOperational', lang)}
+   939→          </p>
+   940→        </div>
+   941→      </footer>
+   942→
+   943→      <HpAiChat />
+   944→
+   945→      <Toaster richColors position="top-right" />
+   946→    </div>
+   947→  )
+   948→}
+   949→
