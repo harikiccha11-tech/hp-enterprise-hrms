@@ -1,0 +1,1094 @@
+    30→// ── Types ────────────────────────────────────────────────────────────────────
+    31→
+    32→type LandingView = 'home' | 'login-admin' | 'login-employee' | 'login-client' | 'register' | 'subscribe'
+    33→
+    34→// ── Inline Social SVGs ──────────────────────────────────────────────────────
+    35→
+    36→function InstagramIcon({ className, style }: { className?: string; style?: React.CSSProperties }) {
+    37→  return <svg className={className} style={style} viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+    38→}
+    39→function LinkedInIcon({ className, style }: { className?: string; style?: React.CSSProperties }) {
+    40→  return <svg className={className} style={style} viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+    41→}
+    42→function FacebookIcon({ className, style }: { className?: string; style?: React.CSSProperties }) {
+    43→  return <svg className={className} style={style} viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+    44→}
+    45→function XTwitterIcon({ className, style }: { className?: string; style?: React.CSSProperties }) {
+    46→  return <svg className={className} style={style} viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+    47→}
+    48→function YouTubeIcon({ className, style }: { className?: string; style?: React.CSSProperties }) {
+    49→  return <svg className={className} style={style} viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+    50→}
+    51→function ThreadsIcon({ className, style }: { className?: string; style?: React.CSSProperties }) {
+    52→  return <svg className={className} style={style} viewBox="0 0 24 24" fill="currentColor"><path d="M12.186 24h-.007c-3.581-.024-6.334-1.205-8.184-3.509C2.35 18.44 1.5 15.586 1.472 12.01v-.017c.03-3.579.879-6.43 2.525-8.482C5.845 1.205 8.6.024 12.18 0h.014c2.746.02 5.043.725 6.826 2.098 1.677 1.29 2.858 3.13 3.509 5.467l-2.04.569c-1.104-3.96-3.898-5.984-8.304-6.015-2.91.022-5.11.936-6.54 2.717C4.307 6.504 3.616 8.914 3.589 12c.027 3.086.718 5.496 2.057 7.164 1.43 1.783 3.631 2.698 6.54 2.717 2.623-.02 4.358-.631 5.8-2.045 1.647-1.613 1.618-3.593 1.09-4.798-.31-.71-.873-1.3-1.634-1.75-.192 1.352-.622 2.446-1.284 3.272-.886 1.102-2.14 1.704-3.73 1.79-1.202.065-2.361-.218-3.259-.8-.946-.612-1.59-1.494-1.862-2.557-.56-2.168.33-4.764 2.553-6.573 1.402-1.14 3.02-1.786 4.598-1.864 1.818-.09 3.37.445 4.502 1.388.137.114.27.234.398.36l.087.083c.055-1.15-.031-2.273-.393-3.266-.672-1.86-2.088-3.063-4.375-3.71l.573-2.023c2.832.746 4.788 2.353 5.69 4.696.605 1.544.76 3.28.558 5.28.02.04.04.08.058.12.68 1.56.818 3.546-.543 5.464-1.445 2.037-3.47 3.295-6.023 3.737a10.3 10.3 0 01-1.646.132zm-.044-11.496c-1.093.055-2.275.535-3.327 1.391-1.52 1.236-2.122 3.048-1.77 4.424.137.527.453.974.913 1.273.452.293 1.043.446 1.72.41 1.1-.06 1.886-.408 2.475-1.082.59-.68.957-1.72 1.096-3.108l-.037-.03c-.474-.508-1.22-.927-2.07-.278z"/></svg>
+    53→}
+    54→function RedditIcon({ className, style }: { className?: string; style?: React.CSSProperties }) {
+    55→  return <svg className={className} style={style} viewBox="0 0 24 24" fill="currentColor"><path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z"/></svg>
+    56→}
+    57→function WhatsAppIcon({ className, style }: { className?: string; style?: React.CSSProperties }) {
+    58→  return <svg className={className} style={style} viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+    59→}
+    60→
+    61→// ── Social Items ─────────────────────────────────────────────────────────────
+    62→
+    63→const SOCIAL_ITEMS = [
+    64→  { href: SOCIAL.whatsapp, icon: WhatsAppIcon, label: 'WhatsApp', color: '#25D366', hoverBg: '#25D366' },
+    65→  { href: SOCIAL.instagram, icon: InstagramIcon, label: 'Instagram', color: '#E4405F', hoverBg: '#E4405F' },
+    66→  { href: SOCIAL.linkedin, icon: LinkedInIcon, label: 'LinkedIn', color: '#0A66C2', hoverBg: '#0A66C2' },
+    67→  { href: SOCIAL.facebook, icon: FacebookIcon, label: 'Facebook', color: '#1877F2', hoverBg: '#1877F2' },
+    68→  { href: SOCIAL.twitter, icon: XTwitterIcon, label: 'X', color: '#000000', hoverBg: '#14171A' },
+    69→  { href: SOCIAL.youtube, icon: YouTubeIcon, label: 'YouTube', color: '#FF0000', hoverBg: '#FF0000' },
+    70→  { href: SOCIAL.threads, icon: ThreadsIcon, label: 'Threads', color: '#000000', hoverBg: '#333333' },
+    71→  { href: SOCIAL.reddit, icon: RedditIcon, label: 'Reddit', color: '#FF4500', hoverBg: '#FF4500' },
+    72→]
+    73→
+    74→// ── Service Detail Data ─────────────────────────────────────────────────────
+    75→
+    76→interface ServiceDetail {
+    77→  title: string
+    78→  short: string
+    79→  icon: LucideIcon
+    80→  image: string
+    81→  description: string
+    82→  benefits: string[]
+    83→  industries: string[]
+    84→  process: string[]
+    85→}
+    86→
+    87→const SERVICE_DETAILS: ServiceDetail[] = [
+    88→  {
+    89→    title: 'Human Resource Management',
+    90→    short: 'Complete workforce lifecycle management powered by AI',
+    91→    icon: Users,
+    92→    image: '/service-hr.png',
+    93→    description: 'Our comprehensive HR management service covers the entire employee lifecycle — from onboarding to exit. We handle employee records, performance tracking, policy compliance, and organizational development to help you build a strong, engaged workforce.',
+    94→    benefits: ['End-to-end employee lifecycle management', 'AI-powered performance analytics', 'Compliance with Indian labour laws', 'Employee engagement & retention programs', 'Organizational structure optimization'],
+    95→    industries: ['IT & Technology', 'Construction & Infrastructure', 'Manufacturing', 'Healthcare', 'BFSI'],
+    96→    process: ['Workforce assessment & planning', 'HR policy design & implementation', 'Employee onboarding & documentation', 'Ongoing HR operations & support', 'Performance reviews & analytics'],
+    97→  },
+    98→  {
+    99→    title: 'Recruitment & Talent Acquisition',
+   100→    short: 'End-to-end hiring pipeline with smart screening',
+   101→    icon: Target,
+   102→    image: '/service-recruitment.png',
+   103→    description: 'We manage the complete recruitment cycle — from job posting and candidate sourcing to interviewing, offer negotiation, and onboarding. Our AI-powered ATS helps you find the right talent faster while reducing hiring costs.',
+   104→    benefits: ['AI-powered applicant tracking system (ATS)', 'Multi-channel candidate sourcing', 'Structured interview frameworks', 'Background verification support', 'Faster time-to-hire with smart screening'],
+   105→    industries: ['All sectors — IT, Construction, Manufacturing, Services', 'Startups to Enterprise'],
+   106→    process: ['Requirement gathering & JD creation', 'Candidate sourcing & screening', 'Interview coordination & assessment', 'Offer management & negotiation', 'Onboarding & first-90-days support'],
+   107→  },
+   108→  {
+   109→    title: 'Safety (EHS) Consultancy',
+   110→    short: 'Environment, Health & Safety compliance and training',
+   111→    icon: HardHat,
+   112→    image: '/service-safety.png',
+   113→    description: 'HP Enterprise provides expert EHS consultancy services ensuring your organization meets all safety regulations. Our qualified EHS officers conduct audits, risk assessments, and training programs to create safer workplaces.',
+   114→    benefits: ['Qualified EHS officers on-site', 'Safety audit & compliance reporting', 'Risk assessment & hazard identification', 'Incident investigation & corrective actions', 'Safety training & awareness programs'],
+   115→    industries: ['Construction', 'Manufacturing', 'Oil & Gas', 'Power Plants', 'Infrastructure', 'Industrial'],
+   116→    process: ['Site safety assessment', 'Hazard identification & risk analysis', 'Safety plan development', 'Training delivery & certification', 'Ongoing monitoring & compliance audit'],
+   117→  },
+   118→  {
+   119→    title: 'Engineering & Project Support',
+   120→    short: 'Multi-discipline engineering for construction & infrastructure',
+   121→    icon: Settings,
+   122→    image: '/service-engineering.png',
+   123→    description: 'We provide skilled engineering professionals across all disciplines — civil, structural, MEP, HVAC, electrical, and more. Our engineers support projects from planning through execution, ensuring quality and timeline adherence.',
+   124→    benefits: ['Multi-discipline engineering team', 'Site supervision & quality control', 'Project planning & scheduling', 'Bill verification & quantity surveying', 'Testing & commissioning support'],
+   125→    industries: ['Commercial Buildings', 'Residential Projects', 'Airports', 'Metro Rail', 'Hospitals', 'Industrial Plants'],
+   126→    process: ['Project requirement analysis', 'Resource allocation & deployment', 'Execution & site supervision', 'Quality assurance & documentation', 'Project handover & closure'],
+   127→  },
+   128→  {
+   129→    title: 'Payroll Management',
+   130→    short: 'Automated payroll with PF, ESI, TDS & GST compliance',
+   131→    icon: Wallet,
+   132→    image: '/service-payroll.png',
+   133→    description: 'Our payroll management service ensures accurate, timely salary processing with full statutory compliance. We handle PF, ESI, TDS, professional tax, and GST invoicing — so you can focus on growing your business.',
+   134→    benefits: ['Accurate & timely salary processing', 'PF, ESI, TDS statutory compliance', 'GST invoice generation', 'Payslip delivery via HPHRMS portal', 'Year-end tax documentation'],
+   135→    industries: ['All sectors requiring payroll outsourcing'],
+   136→    process: ['Employee data verification', 'Attendance & leave consolidation', 'Salary computation & statutory deductions', 'Payslip generation & distribution', 'Monthly compliance filings'],
+   137→  },
+   138→  {
+   139→    title: 'Manpower Supply',
+   140→    short: 'Skilled & unskilled workforce deployment across India',
+   141→    icon: Users,
+   142→    image: '/service-manpower.png',
+   143→    description: 'HP Enterprise supplies both skilled and unskilled manpower to construction sites, factories, offices, and industrial projects across India. We handle recruitment, documentation, safety training, and payroll for deployed workers.',
+   144→    benefits: ['Pan-India workforce deployment', 'Pre-screened & trained workers', 'Complete documentation & compliance', 'Flexible staffing — short-term & long-term', 'Single vendor for all manpower needs'],
+   145→    industries: ['Construction', 'Infrastructure', 'Manufacturing', 'Facility Management', 'Logistics & Warehousing'],
+   146→    process: ['Workforce requirement analysis', 'Candidate sourcing & screening', 'Safety induction & training', 'Deployment & attendance management', 'Payroll & compliance management'],
+   147→  },
+   148→]
+   149→
+   150→// ── Feature icons for HPHRMS ────────────────────────────────────────────────
+   151→
+   152→const FEATURE_ICONS: LucideIcon[] = [
+   153→  Bot, Users, Megaphone, Clock, CalendarDays, Wallet,
+   154→  UserCog, CalendarDays, FolderKanban, ReceiptText, BarChart3, Building2, Shield,
+   155→]
+   156→
+   157→// ── Portal Configs ───────────────────────────────────────────────────────────
+   158→
+   159→interface PortalConfig {
+   160→  id: LandingView
+   161→  title: string
+   162→  description: string
+   163→  icon: LucideIcon
+   164→  features: string[]
+   165→}
+   166→
+   167→const PORTALS: PortalConfig[] = [
+   168→  { id: 'login-admin', title: 'Admin Console', description: 'Complete HR & workforce management dashboard', icon: Shield, features: ['Employee Management', 'Payroll & Attendance', 'Recruitment & ATS', 'Reports & Analytics', 'Document Management'] },
+   169→  { id: 'login-employee', title: 'Employee Portal', description: 'Self-service portal for all employees', icon: UserIcon, features: ['View Payslips', 'Apply Leaves', 'Attendance History', 'Document Downloads', 'Profile Management'] },
+   170→  { id: 'login-client', title: 'Client Portal', description: 'Dedicated access for business clients', icon: Building2, features: ['Workforce Dashboard', 'Invoice Management', 'Project Tracking', 'Compliance Reports', 'Support Tickets'] },
+   171→]
+   172→
+   173→// ── Pricing Plans ────────────────────────────────────────────────────────────
+   174→
+   175→interface PricingPlan { name: string; price: string; period: string; description: string; popular?: boolean; features: string[] }
+   176→
+   177→const PRICING_PLANS: PricingPlan[] = [
+   178→  { name: 'Free', price: '₹0', period: 'forever', description: 'Get started with basic HR tools', features: ['Up to 10 Employees', 'Basic Attendance', 'Leave Management', 'Employee Directory', 'Email Support'] },
+   179→  { name: 'Starter', price: '₹2,999', period: '/month', description: 'Perfect for growing businesses', features: ['Up to 50 Employees', 'Payroll Processing', 'Recruitment Module', 'Shift Management', 'Priority Support', 'GST Invoices'] },
+   180→  { name: 'Professional', price: '₹7,999', period: '/month', description: 'For established organizations', popular: true, features: ['Up to 250 Employees', 'AI HR Assistant', 'Full ATS & Recruitment', 'Multi-Branch Support', 'Advanced Analytics', 'Document Management', 'Dedicated Account Manager'] },
+   181→  { name: 'Enterprise', price: 'Custom', period: '', description: 'Tailored for large enterprises', features: ['Unlimited Employees', 'Custom Integrations', 'Enterprise Security (SSO)', 'API Access', 'White-Label Options', '24/7 Premium Support', 'On-Premise Deployment', 'SLA Guarantee'] },
+   182→]
+   183→
+   184→// ══════════════════════════════════════════════════════════════════════════════
+   185→// SOCIAL MEDIA SIDE MENU
+   186→// ══════════════════════════════════════════════════════════════════════════════
+   187→
+   188→function SocialSideMenu() {
+   189→  const [expanded, setExpanded] = useState(false)
+   190→  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null)
+   191→
+   192→  return (
+   193→    <div className="fixed left-0 top-1/2 -translate-y-1/2 z-50 hidden md:flex flex-col items-end">
+   194→      <button
+   195→        onClick={() => setExpanded(!expanded)}
+   196→        className="absolute -right-8 top-1/2 -translate-y-1/2 w-7 h-7 rounded-r-lg flex items-center justify-center transition-all duration-300"
+   197→        style={{ background: '#002B5C' }}
+   198→        aria-label={expanded ? 'Close social menu' : 'Open social menu'}
+   199→      >
+   200→        <ChevronRight className={cn('h-3.5 w-3.5 text-white transition-transform duration-300', expanded && 'rotate-180')} />
+   201→      </button>
+   202→      <AnimatePresence>
+   203→        {expanded && (
+   204→          <motion.div
+   205→            initial={{ width: 0, opacity: 0 }}
+   206→            animate={{ width: 44, opacity: 1 }}
+   207→            exit={{ width: 0, opacity: 0 }}
+   208→            transition={{ duration: 0.3, ease: 'easeInOut' }}
+   209→            className="overflow-hidden rounded-l-xl bg-white shadow-xl border-r-0 border border-gray-200"
+   210→          >
+   211→            <div className="flex flex-col items-center py-3 gap-1 w-[44px]">
+   212→              {SOCIAL_ITEMS.map((s, i) => (
+   213→                <motion.a
+   214→                  key={s.label}
+   215→                  href={s.href}
+   216→                  target="_blank"
+   217→                  rel="noopener noreferrer"
+   218→                  initial={{ x: -20, opacity: 0 }}
+   219→                  animate={{ x: 0, opacity: 1 }}
+   220→                  transition={{ delay: i * 0.04, duration: 0.25 }}
+   221→                  className="relative flex h-8 w-8 items-center justify-center rounded-lg transition-all duration-200 group"
+   222→                  style={{ color: hoveredIdx === i ? '#fff' : s.color }}
+   223→                  onMouseEnter={() => setHoveredIdx(i)}
+   224→                  onMouseLeave={() => setHoveredIdx(null)}
+   225→                  aria-label={s.label}
+   226→                >
+   227→                  <motion.div
+   228→                    className="absolute inset-0 rounded-lg"
+   229→                    initial={false}
+   230→                    animate={{ scale: hoveredIdx === i ? 1 : 0, opacity: hoveredIdx === i ? 1 : 0 }}
+   231→                    transition={{ duration: 0.2 }}
+   232→                    style={{ background: s.hoverBg }}
+   233→                  />
+   234→                  <s.icon className="h-4 w-4 relative z-10" />
+   235→                  <AnimatePresence>
+   236→                    {hoveredIdx === i && (
+   237→                      <motion.div
+   238→                        initial={{ x: -4, opacity: 0, scale: 0.9 }}
+   239→                        animate={{ x: 0, opacity: 1, scale: 1 }}
+   240→                        exit={{ x: -4, opacity: 0, scale: 0.9 }}
+   241→                        transition={{ duration: 0.15 }}
+   242→                        className="absolute left-full ml-2 px-2 py-1 rounded-md text-[11px] font-medium text-white whitespace-nowrap pointer-events-none bg-gray-900"
+   243→                      >
+   244→                        {s.label}
+   245→                      </motion.div>
+   246→                    )}
+   247→                  </AnimatePresence>
+   248→                </motion.a>
+   249→              ))}
+   250→            </div>
+   251→          </motion.div>
+   252→        )}
+   253→      </AnimatePresence>
+   254→      {!expanded && (
+   255→        <div
+   256→          className="w-1 rounded-l-full cursor-pointer hover:w-1.5 transition-all duration-300"
+   257→          style={{ background: 'linear-gradient(180deg, #D4AF37, #002B5C, #D4AF37)', height: '160px' }}
+   258→          onClick={() => setExpanded(true)}
+   259→        />
+   260→      )}
+   261→    </div>
+   262→  )
+   263→}
+   264→
+   265→// ══════════════════════════════════════════════════════════════════════════════
+   266→// SCROLL REVEAL WRAPPER
+   267→// ══════════════════════════════════════════════════════════════════════════════
+   268→
+   269→function Reveal({ children, className, delay = 0, direction = 'up' }: {
+   270→  children: React.ReactNode; className?: string; delay?: number; direction?: 'up' | 'down' | 'left' | 'right'
+   271→}) {
+   272→  const ref = useRef(null)
+   273→  const inView = useInView(ref, { once: true, margin: '-60px' })
+   274→  const dir = { up: { y: 40 }, down: { y: -40 }, left: { x: 40 }, right: { x: -40 } }[direction]
+   275→
+   276→  return (
+   277→    <motion.div
+   278→      ref={ref}
+   279→      initial={{ opacity: 0, ...dir }}
+   280→      animate={inView ? { opacity: 1, x: 0, y: 0 } : {}}
+   281→      transition={{ duration: 0.6, delay, ease: [0.25, 0.4, 0.25, 1] }}
+   282→      className={className}
+   283→    >
+   284→      {children}
+   285→    </motion.div>
+   286→  )
+   287→}
+   288→
+   289→// ══════════════════════════════════════════════════════════════════════════════
+   290→// SERVICE DETAIL MODAL
+   291→// ══════════════════════════════════════════════════════════════════════════════
+   292→
+   293→function ServiceModal({ service, open, onClose }: { service: ServiceDetail | null; open: boolean; onClose: () => void }) {
+   294→  if (!service) return null
+   295→  const Icon = service.icon
+   296→
+   297→  return (
+   298→    <AnimatePresence>
+   299→      {open && (
+   300→        <motion.div
+   301→          initial={{ opacity: 0 }}
+   302→          animate={{ opacity: 1 }}
+   303→          exit={{ opacity: 0 }}
+   304→          className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+   305→          onClick={onClose}
+   306→        >
+   307→          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+   308→          <motion.div
+   309→            initial={{ opacity: 0, y: 40, scale: 0.95 }}
+   310→            animate={{ opacity: 1, y: 0, scale: 1 }}
+   311→            exit={{ opacity: 0, y: 40, scale: 0.95 }}
+   312→            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+   313→            className="relative z-10 bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden"
+   314→            onClick={(e) => e.stopPropagation()}
+   315→          >
+   316→            {/* Header image */}
+   317→            <div className="relative h-56 sm:h-64 overflow-hidden">
+   318→              <Image src={service.image} alt={service.title} fill className="object-cover" />
+   319→              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+   320→              <button onClick={onClose} className="absolute top-4 right-4 h-9 w-9 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center hover:bg-white transition-colors shadow-lg" aria-label="Close">
+   321→                <X className="h-4 w-4 text-gray-800" />
+   322→              </button>
+   323→              <div className="absolute bottom-4 left-6 right-6">
+   324→                <div className="flex items-center gap-3 mb-2">
+   325→                  <div className="h-10 w-10 rounded-xl flex items-center justify-center" style={{ background: '#002B5C' }}>
+   326→                    <Icon className="h-5 w-5 text-white" />
+   327→                  </div>
+   328→                  <h2 className="text-2xl font-bold text-white">{service.title}</h2>
+   329→                </div>
+   330→                <p className="text-gray-200 text-sm">{service.short}</p>
+   331→              </div>
+   332→            </div>
+   333→
+   334→            {/* Body */}
+   335→            <div className="overflow-y-auto max-h-[calc(90vh-16rem)] p-6 space-y-6">
+   336→              <p className="text-gray-700 leading-relaxed">{service.description}</p>
+   337→
+   338→              {/* Benefits */}
+   339→              <div>
+   340→                <h3 className="text-sm font-bold text-[#002B5C] uppercase tracking-wider mb-3">Key Benefits</h3>
+   341→                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+   342→                  {service.benefits.map((b) => (
+   343→                    <div key={b} className="flex items-start gap-2 p-2.5 rounded-lg bg-gray-50">
+   344→                      <Check className="h-4 w-4 mt-0.5 text-emerald-600 shrink-0" />
+   345→                      <span className="text-sm text-gray-700">{b}</span>
+   346→                    </div>
+   347→                  ))}
+   348→                </div>
+   349→              </div>
+   350→
+   351→              {/* Industries */}
+   352→              <div>
+   353→                <h3 className="text-sm font-bold text-[#002B5C] uppercase tracking-wider mb-3">Industries Served</h3>
+   354→                <div className="flex flex-wrap gap-2">
+   355→                  {service.industries.map((ind) => (
+   356→                    <span key={ind} className="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200">{ind}</span>
+   357→                  ))}
+   358→                </div>
+   359→              </div>
+   360→
+   361→              {/* Process */}
+   362→              <div>
+   363→                <h3 className="text-sm font-bold text-[#002B5C] uppercase tracking-wider mb-3">Our Process</h3>
+   364→                <div className="space-y-3">
+   365→                  {service.process.map((step, i) => (
+   366→                    <div key={step} className="flex items-start gap-3">
+   367→                      <div className="h-7 w-7 rounded-full flex items-center justify-center shrink-0 text-xs font-bold text-white" style={{ background: '#002B5C' }}>{i + 1}</div>
+   368→                      <div className="pt-1">
+   369→                        <span className="text-sm font-medium text-gray-800">{step}</span>
+   370→                      </div>
+   371→                    </div>
+   372→                  ))}
+   373→                </div>
+   374→              </div>
+   375→
+   376→              {/* Action buttons */}
+   377→              <div className="flex flex-col sm:flex-row gap-3 pt-2">
+   378→                <a href={SOCIAL.whatsapp} target="_blank" rel="noopener noreferrer" className="flex-1 h-11 rounded-xl flex items-center justify-center gap-2 text-sm font-semibold text-white transition-all hover:opacity-90" style={{ background: '#25D366' }}>
+   379→                  <WhatsAppIcon className="h-4 w-4" style={{ color: '#fff' }} />Chat on WhatsApp
+   380→                </a>
+   381→                <a href={`tel:${BRAND.phone}`} className="flex-1 h-11 rounded-xl flex items-center justify-center gap-2 text-sm font-semibold text-white transition-all hover:opacity-90" style={{ background: '#002B5C' }}>
+   382→                  <Phone className="h-4 w-4" />Call {BRAND.phone}
+   383→                </a>
+   384→              </div>
+   385→            </div>
+   386→          </motion.div>
+   387→        </motion.div>
+   388→      )}
+   389→    </AnimatePresence>
+   390→  )
+   391→}
+   392→
+   393→// ══════════════════════════════════════════════════════════════════════════════
+   394→// PORTAL LOGIN FORM
+   395→// ══════════════════════════════════════════════════════════════════════════════
+   396→
+   397→function PortalLoginForm({ portal, onBack }: { portal: PortalConfig; onBack: () => void }) {
+   398→  const { setUser } = useAppStore()
+   399→  const [username, setUsername] = useState('')
+   400→  const [password, setPassword] = useState('')
+   401→  const [loading, setLoading] = useState(false)
+   402→  const [forgotOpen, setForgotOpen] = useState(false)
+   403→  const Icon = portal.icon
+   404→
+   405→  const handleSubmit = async (e: React.FormEvent) => {
+   406→    e.preventDefault()
+   407→    if (!username.trim() || !password.trim()) { toast.error('Please enter username and password'); return }
+   408→    setLoading(true)
+   409→    try {
+   410→      const res = await fetch('/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: username.trim(), password }) })
+   411→      const data = await res.json()
+   412→      if (res.ok && data.user) { setUser(data.user); toast.success('Welcome back!') }
+   413→      else { toast.error(data.error || 'Login failed. Please check your credentials.') }
+   414→    } catch { toast.error('Network error. Please try again.') } finally { setLoading(false) }
+   415→  }
+   416→
+   417→  return (
+   418→    <>
+   419→      <section className="min-h-screen flex items-center justify-center px-4 relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #001A3D 0%, #002B5C 50%, #0A4488 100%)' }}>
+   420→        <div className="w-full max-w-md relative z-10">
+   421→          <Card className="border-0 shadow-2xl bg-white">
+   422→            <CardHeader className="text-center pb-4">
+   423→              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl" style={{ background: '#002B5C' }}>
+   424→                <Icon className="h-7 w-7 text-white" />
+   425→              </div>
+   426→              <CardTitle className="text-2xl font-bold text-gray-900">{portal.title}</CardTitle>
+   427→              <CardDescription className="text-gray-600 mt-1">{portal.description}</CardDescription>
+   428→            </CardHeader>
+   429→            <CardContent>
+   430→              <form onSubmit={handleSubmit} className="space-y-4">
+   431→                <div className="space-y-2">
+   432→                  <Label htmlFor="login-username" className="text-gray-700 text-sm font-medium">Username</Label>
+   433→                  <Input id="login-username" placeholder="Enter your username" value={username} onChange={(e) => setUsername(e.target.value)} className="h-11" autoComplete="username" autoFocus />
+   434→                </div>
+   435→                <div className="space-y-2">
+   436→                  <div className="flex items-center justify-between">
+   437→                    <Label htmlFor="login-password" className="text-gray-700 text-sm font-medium">Password</Label>
+   438→                    <button type="button" onClick={() => setForgotOpen(true)} className="text-xs font-medium hover:underline" style={{ color: '#002B5C' }}>Forgot password?</button>
+   439→                  </div>
+   440→                  <Input id="login-password" type="password" placeholder="Enter your password" value={password} onChange={(e) => setPassword(e.target.value)} className="h-11" autoComplete="current-password" />
+   441→                </div>
+   442→                <Button type="submit" className="w-full h-11 font-semibold text-base text-white" style={{ background: '#002B5C' }} disabled={loading}>
+   443→                  {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Lock className="mr-2 h-4 w-4" />}Sign In
+   444→                </Button>
+   445→                <Button type="button" variant="ghost" className="w-full text-gray-500 hover:text-gray-800" onClick={onBack}>
+   446→                  <ArrowLeft className="mr-2 h-4 w-4" />Back to Home
+   447→                </Button>
+   448→              </form>
+   449→            </CardContent>
+   450→          </Card>
+   451→        </div>
+   452→      </section>
+   453→      <ForgotPasswordDialog open={forgotOpen} onOpenChange={setForgotOpen} />
+   454→    </>
+   455→  )
+   456→}
+   457→
+   458→// ══════════════════════════════════════════════════════════════════════════════
+   459→// SUBSCRIPTION FORM
+   460→// ══════════════════════════════════════════════════════════════════════════════
+   461→
+   462→function SubscriptionForm({ onBack }: { onBack: () => void }) {
+   463→  const [form, setForm] = useState({ companyName: '', contactName: '', email: '', phone: '', address: '', plan: '', employeeCount: '', message: '' })
+   464→  const [loading, setLoading] = useState(false)
+   465→  const [sent, setSent] = useState(false)
+   466→  const update = (field: string, value: string) => setForm((prev) => ({ ...prev, [field]: value }))
+   467→
+   468→  const handleSubmit = async (e: React.FormEvent) => {
+   469→    e.preventDefault()
+   470→    if (!form.companyName.trim() || !form.contactName.trim() || !form.email.trim() || !form.phone.trim()) { toast.error('Please fill in all required fields'); return }
+   471→    setLoading(true)
+   472→    try {
+   473→      const res = await fetch('/api/subscription/request', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) })
+   474→      const data = await res.json()
+   475→      if (res.ok) { toast.success('Subscription request submitted!'); setSent(true) } else { toast.error(data.error || 'Failed to submit request') }
+   476→    } catch { toast.error('Network error. Please try again.') } finally { setLoading(false) }
+   477→  }
+   478→
+   479→  if (sent) {
+   480→    return (
+   481→      <section className="min-h-screen flex items-center justify-center px-4 bg-gray-50">
+   482→        <Card className="shadow-xl max-w-md w-full text-center">
+   483→          <CardContent className="py-12">
+   484→            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50"><Check className="h-8 w-8 text-emerald-600" /></div>
+   485→            <h2 className="text-2xl font-bold text-gray-900 mb-2">Request Submitted!</h2>
+   486→            <p className="text-gray-600 mb-6">Our team will contact you within 24 hours.</p>
+   487→            <Button onClick={onBack} style={{ background: '#002B5C' }} className="text-white">Back to Home</Button>
+   488→          </CardContent>
+   489→        </Card>
+   490→      </section>
+   491→    )
+   492→  }
+   493→
+   494→  return (
+   495→    <section className="min-h-screen py-20 px-4 bg-gray-50">
+   496→      <div className="max-w-2xl mx-auto">
+   497→        <div className="text-center mb-10">
+   498→          <Badge className="mb-4 px-4 py-1 text-sm" style={{ background: 'rgba(0,43,92,0.08)', color: '#002B5C', border: '1px solid rgba(0,43,92,0.12)' }}>Get Started</Badge>
+   499→          <h2 className="text-3xl md:text-4xl font-bold text-gray-900">Request a Subscription</h2>
+   500→          <p className="text-gray-600 mt-2">Fill in the details and our team will reach out to you.</p>
+   501→        </div>
+   502→        <Card className="shadow-lg">
+   503→          <CardContent className="pt-6">
+   504→            <form onSubmit={handleSubmit} className="space-y-4">
+   505→              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+   506→                <div className="space-y-2"><Label className="text-gray-700 text-sm font-medium">Company Name *</Label><Input placeholder="Your company" value={form.companyName} onChange={(e) => update('companyName', e.target.value)} /></div>
+   507→                <div className="space-y-2"><Label className="text-gray-700 text-sm font-medium">Contact Name *</Label><Input placeholder="Full name" value={form.contactName} onChange={(e) => update('contactName', e.target.value)} /></div>
+   508→              </div>
+   509→              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+   510→                <div className="space-y-2"><Label className="text-gray-700 text-sm font-medium">Email *</Label><Input type="email" placeholder="email@company.com" value={form.email} onChange={(e) => update('email', e.target.value)} /></div>
+   511→                <div className="space-y-2"><Label className="text-gray-700 text-sm font-medium">Phone *</Label><Input placeholder="+91 XXXXX XXXXX" value={form.phone} onChange={(e) => update('phone', e.target.value)} /></div>
+   512→              </div>
+   513→              <div className="space-y-2"><Label className="text-gray-700 text-sm font-medium">Address</Label><Input placeholder="Office address" value={form.address} onChange={(e) => update('address', e.target.value)} /></div>
+   514→              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+   515→                <div className="space-y-2"><Label className="text-gray-700 text-sm font-medium">Plan</Label><Select value={form.plan} onValueChange={(v) => update('plan', v)}><SelectTrigger><SelectValue placeholder="Select plan" /></SelectTrigger><SelectContent><SelectItem value="free">Free</SelectItem><SelectItem value="starter">Starter</SelectItem><SelectItem value="professional">Professional</SelectItem><SelectItem value="enterprise">Enterprise</SelectItem></SelectContent></Select></div>
+   516→                <div className="space-y-2"><Label className="text-gray-700 text-sm font-medium">Employee Count</Label><Input placeholder="e.g. 50" value={form.employeeCount} onChange={(e) => update('employeeCount', e.target.value)} /></div>
+   517→              </div>
+   518→              <div className="space-y-2"><Label className="text-gray-700 text-sm font-medium">Message</Label><Textarea placeholder="Tell us about your requirements..." rows={3} value={form.message} onChange={(e) => update('message', e.target.value)} /></div>
+   519→              <div className="flex gap-3 pt-2">
+   520→                <Button type="submit" className="flex-1 h-11 font-semibold text-white" style={{ background: '#002B5C' }} disabled={loading}>{loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}Submit Request</Button>
+   521→                <Button type="button" variant="outline" onClick={onBack}>Cancel</Button>
+   522→              </div>
+   523→            </form>
+   524→          </CardContent>
+   525→        </Card>
+   526→      </div>
+   527→    </section>
+   528→  )
+   529→}
+   530→
+   531→// ══════════════════════════════════════════════════════════════════════════════
+   532→// MAIN LANDING COMPONENT
+   533→// ══════════════════════════════════════════════════════════════════════════════
+   534→
+   535→export function Landing() {
+   536→  const { darkMode, setDarkMode, lang, setUser, hpaiOpen, setHpaiOpen } = useAppStore()
+   537→  const [view, setView] = useState<LandingView>('home')
+   538→  const [mobileMenu, setMobileMenu] = useState(false)
+   539→  const [scrolled, setScrolled] = useState(false)
+   540→  const [activeService, setActiveService] = useState<ServiceDetail | null>(null)
+   541→  const [serviceModalOpen, setServiceModalOpen] = useState(false)
+   542→  const homeRef = useRef<HTMLDivElement>(null)
+   543→
+   544→  useEffect(() => {
+   545→    const handleScroll = () => setScrolled(window.scrollY > 60)
+   546→    window.addEventListener('scroll', handleScroll, { passive: true })
+   547→    return () => window.removeEventListener('scroll', handleScroll)
+   548→  }, [])
+   549→
+   550→  const scrollTo = useCallback((id: string) => { setMobileMenu(false); const el = document.getElementById(id); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }) }, [])
+   551→  const goHome = useCallback(() => { setView('home'); setMobileMenu(false); window.scrollTo({ top: 0, behavior: 'smooth' }) }, [])
+   552→  const openServiceModal = useCallback((service: ServiceDetail) => { setActiveService(service); setServiceModalOpen(true) }, [])
+   553→  const portalForView = (v: LandingView) => PORTALS.find((p) => p.id === v) || PORTALS[0]
+   554→
+   555→  const NAV_LINKS = [
+   556→    { id: 'features', label: 'Features' },
+   557→    { id: 'services', label: 'Services' },
+   558→    { id: 'pricing', label: 'Pricing' },
+   559→    { id: 'portals', label: 'Portals' },
+   560→    { id: 'contact', label: 'Contact' },
+   561→  ]
+   562→
+   563→  if (view === 'register') return <RegistrationForm onBack={goHome} />
+   564→  if (view === 'subscribe') return <SubscriptionForm onBack={goHome} />
+   565→  if (view === 'login-admin' || view === 'login-employee' || view === 'login-client') {
+   566→    return <PortalLoginForm portal={portalForView(view)} onBack={goHome} />
+   567→  }
+   568→
+   569→  return (
+   570→    <div ref={homeRef} className="min-h-screen flex flex-col bg-white">
+   571→      <SocialSideMenu />
+   572→      <ServiceModal service={activeService} open={serviceModalOpen} onClose={() => setServiceModalOpen(false)} />
+   573→
+   574→      {/* ── NAVIGATION ─────────────────────────────────────────────────────── */}
+   575→      <nav
+   576→        className={cn('sticky top-0 z-40 w-full transition-all duration-300', scrolled ? 'bg-white/95 shadow-md backdrop-blur-lg' : 'bg-white')}
+   577→        role="navigation" aria-label="Main navigation"
+   578→      >
+   579→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+   580→          <div className="flex items-center justify-between h-[72px]">
+   581→            <button onClick={goHome} className="flex items-center gap-2.5 shrink-0" aria-label="HPHRMS Home">
+   582→              <BrandLogo size={36} />
+   583→              <div className="flex flex-col">
+   584→                <span className="font-extrabold text-[15px] tracking-tight leading-tight text-gray-900">HPHRMS</span>
+   585→                <span className="text-[10px] font-medium tracking-widest uppercase leading-tight text-gray-400">by HP Enterprise</span>
+   586→              </div>
+   587→            </button>
+   588→
+   589→            <div className="hidden lg:flex items-center gap-1">
+   590→              {NAV_LINKS.map((link) => (
+   591→                <button key={link.id} onClick={() => scrollTo(link.id)} className="px-3.5 py-2 rounded-lg text-[13px] font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-all duration-200">
+   592→                  {link.label}
+   593→                </button>
+   594→              ))}
+   595→            </div>
+   596→
+   597→            <div className="hidden lg:flex items-center gap-3">
+   598→              <LanguageSwitcher />
+   599→              <Button variant="ghost" className="text-sm font-medium h-9 text-gray-600 hover:text-gray-900 hover:bg-gray-100" onClick={() => setView('login-admin')}>Login</Button>
+   600→              <Button className="text-sm font-semibold h-9 px-5 rounded-lg text-white" style={{ background: '#D4AF37', color: '#002B5C' }} onClick={() => setView('subscribe')}>Start Free Trial</Button>
+   601→            </div>
+   602→
+   603→            <button className="lg:hidden p-2 rounded-lg text-gray-700" onClick={() => setMobileMenu(!mobileMenu)} aria-label={mobileMenu ? 'Close menu' : 'Open menu'} aria-expanded={mobileMenu}>
+   604→              {mobileMenu ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+   605→            </button>
+   606→          </div>
+   607→        </div>
+   608→
+   609→        {/* Mobile Menu */}
+   610→        <AnimatePresence>
+   611→          {mobileMenu && (
+   612→            <motion.div
+   613→              initial={{ height: 0, opacity: 0 }}
+   614→              animate={{ height: 'auto', opacity: 1 }}
+   615→              exit={{ height: 0, opacity: 0 }}
+   616→              className="lg:hidden overflow-hidden bg-white border-t border-gray-100 shadow-lg"
+   617→            >
+   618→              <div className="px-4 py-4 space-y-1">
+   619→                {NAV_LINKS.map((link) => (
+   620→                  <button key={link.id} onClick={() => scrollTo(link.id)} className="block w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors capitalize">{link.label}</button>
+   621→                ))}
+   622→                <hr className="my-3 border-gray-100" />
+   623→                <div className="flex items-center gap-3 px-4 py-2">
+   624→                  <LanguageSwitcher />
+   625→                </div>
+   626→                <div className="flex gap-2 px-4 pt-2">
+   627→                  <Button variant="outline" className="flex-1 text-sm h-10" onClick={() => { setView('login-admin'); setMobileMenu(false) }}>Login</Button>
+   628→                  <Button className="flex-1 text-sm font-semibold h-10 text-white" style={{ background: '#D4AF37', color: '#002B5C' }} onClick={() => { setView('subscribe'); setMobileMenu(false) }}>Start Free Trial</Button>
+   629→                </div>
+   630→                <div className="flex items-center gap-2 px-4 pt-4 pb-1">
+   631→                  <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mr-1">Follow us</span>
+   632→                  {SOCIAL_ITEMS.map((s) => (
+   633→                    <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer" className="flex h-8 w-8 items-center justify-center rounded-md transition-all duration-200 hover:scale-110" style={{ color: s.color }} aria-label={s.label}><s.icon className="h-3.5 w-3.5" /></a>
+   634→                  ))}
+   635→                </div>
+   636→              </div>
+   637→            </motion.div>
+   638→          )}
+   639→        </AnimatePresence>
+   640→      </nav>
+   641→
+   642→      {/* ══════════════════════════════════════════════════════════════════════
+   643→          HERO SECTION
+   644→         ══════════════════════════════════════════════════════════════════════ */}
+   645→      <section className="relative overflow-hidden" style={{ background: 'linear-gradient(160deg, #001A3D 0%, #002B5C 40%, #0A4488 100%)' }}>
+   646→        {/* Real background image */}
+   647→        <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+   648→          <Image src="/hero-banner.png" alt="" fill className="object-cover opacity-30" priority />
+   649→          <div className="absolute inset-0 bg-gradient-to-r from-[#001A3D] via-[#002B5C]/90 to-[#0A4488]/70" />
+   650→        </div>
+   651→
+   652→        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28 lg:py-36">
+   653→          <div className="max-w-3xl">
+   654→            <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: [0.25, 0.4, 0.25, 1] }}>
+   655→              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-8 text-sm font-medium bg-white/10 border border-white/20 text-white backdrop-blur-sm">
+   656→                <Sparkles className="h-3.5 w-3.5" style={{ color: '#D4AF37' }} />AI-Powered HR Platform
+   657→                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider" style={{ background: '#D4AF37', color: '#002B5C' }}>New</span>
+   658→              </div>
+   659→
+   660→              <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-white leading-[1.1] tracking-tight">
+   661→                The Smarter Way to
+   662→                <br />
+   663→                <span style={{ color: '#D4AF37' }}>Manage Your</span>
+   664→                <br />
+   665→                Entire Workforce
+   666→              </h1>
+   667→
+   668→              <p className="mt-6 text-lg sm:text-xl text-gray-200 max-w-xl leading-relaxed">
+   669→                HPHRMS is the next-generation AI-powered HR management system that automates payroll, attendance, recruitment, and compliance — all in one platform built for Indian enterprises.
+   670→              </p>
+   671→            </motion.div>
+   672→
+   673→            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.3, ease: [0.25, 0.4, 0.25, 1] }}>
+   674→              <div className="mt-10 flex flex-wrap gap-4">
+   675→                <Button size="lg" className="text-base font-semibold h-12 px-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300" style={{ background: '#D4AF37', color: '#002B5C' }} onClick={() => setView('subscribe')}>
+   676→                  Book a Demo<ArrowRight className="ml-2 h-4 w-4" />
+   677→                </Button>
+   678→                <Button size="lg" variant="outline" className="text-base font-medium h-12 px-8 rounded-xl border-white/30 text-white hover:bg-white/10 hover:text-white transition-all duration-300" onClick={() => setView('login-admin')}>
+   679→                  Login to Dashboard
+   680→                </Button>
+   681→                <Button size="lg" variant="outline" className="text-base font-medium h-12 px-8 rounded-xl border-white/30 text-white hover:bg-white/10 hover:text-white transition-all duration-300" onClick={() => scrollTo('services')}>
+   682→                  Explore HPHRMS AI
+   683→                </Button>
+   684→              </div>
+   685→
+   686→              <div className="mt-12 flex flex-wrap items-center gap-6 text-sm text-white">
+   687→                <div className="flex items-center gap-2">
+   688→                  <ShieldCheck className="h-4 w-4" style={{ color: '#D4AF37' }} />
+   689→                  <span>GSTIN: {BRAND.gstin}</span>
+   690→                </div>
+   691→                <div className="flex items-center gap-2">
+   692→                  <Award className="h-4 w-4" style={{ color: '#D4AF37' }} />
+   693→                  <span>UDYAM Registered</span>
+   694→                </div>
+   695→                <div className="flex items-center gap-2">
+   696→                  <Globe2 className="h-4 w-4" style={{ color: '#D4AF37' }} />
+   697→                  <span>Pan India Operations</span>
+   698→                </div>
+   699→              </div>
+   700→            </motion.div>
+   701→          </div>
+   702→        </div>
+   703→      </section>
+   704→
+   705→      {/* ══════════════════════════════════════════════════════════════════════
+   706→          TRUST BADGES STRIP
+   707→         ══════════════════════════════════════════════════════════════════════ */}
+   708→      <section className="py-5 bg-white border-b border-gray-100" aria-label="Trust indicators">
+   709→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+   710→          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2.5">
+   711→            {TRUST_BADGES.map((badge, i) => (
+   712→              <Reveal key={i} delay={i * 0.03}>
+   713→                <div className="flex items-center gap-1.5 text-sm text-gray-700 font-medium">
+   714→                  <Check className="h-3.5 w-3.5 text-emerald-600" />{badge}
+   715→                </div>
+   716→              </Reveal>
+   717→            ))}
+   718→          </div>
+   719→        </div>
+   720→      </section>
+   721→
+   722→      {/* ══════════════════════════════════════════════════════════════════════
+   723→          SERVICES — Clickable Cards with Detail Modals
+   724→         ══════════════════════════════════════════════════════════════════════ */}
+   725→      <section id="services" className="py-20 sm:py-24 bg-gray-50" aria-label="Our services">
+   726→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+   727→          <Reveal>
+   728→            <div className="text-center mb-14">
+   729→              <Badge className="mb-4 px-4 py-1 text-sm" style={{ background: 'rgba(0,43,92,0.06)', color: '#002B5C', border: '1px solid rgba(0,43,92,0.1)' }}>Enterprise Solutions</Badge>
+   730→              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-gray-900 tracking-tight">
+   731→                Comprehensive
+   732→                <br />
+   733→                <span style={{ color: '#002B5C' }}>Business Services</span>
+   734→              </h2>
+   735→              <p className="mt-4 text-gray-700 max-w-2xl mx-auto text-lg">
+   736→                From HR management to engineering support — we deliver end-to-end workforce solutions. Click any service to learn more.
+   737→              </p>
+   738→            </div>
+   739→          </Reveal>
+   740→
+   741→          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+   742→            {SERVICE_DETAILS.map((service, i) => {
+   743→              const Icon = service.icon
+   744→              return (
+   745→                <Reveal key={service.title} delay={i * 0.08}>
+   746→                  <motion.div
+   747→                    whileHover={{ y: -6 }}
+   748→                    transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+   749→                    className="group relative bg-white rounded-2xl overflow-hidden cursor-pointer shadow-sm hover:shadow-xl transition-shadow duration-300 border border-gray-100 h-full"
+   750→                    onClick={() => openServiceModal(service)}
+   751→                  >
+   752→                    {/* Image header */}
+   753→                    <div className="relative h-48 overflow-hidden">
+   754→                      <Image src={service.image} alt={service.title} fill className="object-cover transition-transform duration-700 group-hover:scale-110" />
+   755→                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+   756→                      <div className="absolute bottom-3 left-4">
+   757→                        <div className="h-10 w-10 rounded-xl flex items-center justify-center shadow-lg" style={{ background: '#D4AF37' }}>
+   758→                          <Icon className="h-5 w-5 text-white" />
+   759→                        </div>
+   760→                      </div>
+   761→                      <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+   762→                        <div className="px-2.5 py-1 rounded-full bg-white/90 backdrop-blur-sm text-xs font-semibold text-gray-800 flex items-center gap-1">
+   763→                          <Eye className="h-3 w-3" />View Details
+   764→                        </div>
+   765→                      </div>
+   766→                    </div>
+   767→
+   768→                    {/* Content */}
+   769→                    <div className="p-5">
+   770→                      <h3 className="text-lg font-bold text-gray-900 group-hover:text-[#002B5C] transition-colors mb-2">{service.title}</h3>
+   771→                      <p className="text-sm text-gray-600 leading-relaxed mb-4">{service.short}</p>
+   772→                      <div className="flex items-center gap-2 text-sm font-semibold" style={{ color: '#002B5C' }}>
+   773→                        Learn more <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform" />
+   774→                      </div>
+   775→                    </div>
+   776→
+   777→                    {/* Bottom accent line */}
+   778→                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-[#002B5C] to-[#D4AF37] scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left" />
+   779→                  </motion.div>
+   780→                </Reveal>
+   781→              )
+   782→            })}
+   783→          </div>
+   784→
+   785→          {/* All services grid below */}
+   786→          <Reveal>
+   787→            <div className="mt-14">
+   788→              <h3 className="text-lg font-bold text-gray-900 mb-6 text-center">All Services</h3>
+   789→              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+   790→                {SERVICES.map((service, i) => (
+   791→                  <div key={service} className="flex items-center gap-3 p-3 rounded-xl hover:bg-white hover:shadow-sm transition-all duration-200 cursor-default border border-transparent hover:border-gray-100">
+   792→                    <div className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: '#002B5C' }}>
+   793→                      <Check className="h-4 w-4 text-white" />
+   794→                    </div>
+   795→                    <span className="text-sm font-medium text-gray-700">{service}</span>
+   796→                  </div>
+   797→                ))}
+   798→              </div>
+   799→            </div>
+   800→          </Reveal>
+   801→        </div>
+   802→      </section>
+   803→
+   804→      {/* ══════════════════════════════════════════════════════════════════════
+   805→          HPHRMS FEATURES
+   806→         ══════════════════════════════════════════════════════════════════════ */}
+   807→      <section id="features" className="py-20 sm:py-24 bg-white" aria-label="HPHRMS Features">
+   808→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+   809→          <Reveal>
+   810→            <div className="text-center mb-14">
+   811→              <Badge className="mb-4 px-4 py-1 text-sm" style={{ background: 'rgba(0,43,92,0.08)', color: '#002B5C', border: '1px solid rgba(0,43,92,0.15)' }}>Product Features</Badge>
+   812→              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-gray-900 tracking-tight">
+   813→                Everything You Need to
+   814→                <br />
+   815→                <span style={{ color: '#002B5C' }}>Run HR Smarter</span>
+   816→              </h2>
+   817→              <p className="mt-4 text-gray-700 max-w-2xl mx-auto text-lg">Powerful modules designed for modern Indian enterprises — from hiring to payroll, all powered by AI.</p>
+   818→            </div>
+   819→          </Reveal>
+   820→          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+   821→            {HPHRMS_FEATURES.map((feature, i) => {
+   822→              const Icon = FEATURE_ICONS[i] || Zap
+   823→              return (
+   824→                <Reveal key={i} delay={i * 0.04}>
+   825→                  <div className="group relative p-6 rounded-2xl bg-gray-50 border border-gray-100 hover:bg-white hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-default">
+   826→                    <div className="flex h-11 w-11 items-center justify-center rounded-xl mb-4" style={{ background: '#002B5C' }}>
+   827→                      <Icon className="h-5 w-5 text-white" />
+   828→                    </div>
+   829→                    <h3 className="text-base font-semibold text-gray-900 group-hover:text-[#002B5C] transition-colors">{feature}</h3>
+   830→                    <p className="mt-1.5 text-sm text-gray-600 leading-relaxed">Streamline your {feature.toLowerCase()} with intelligent automation and real-time insights.</p>
+   831→                    <div className="absolute bottom-0 left-6 right-6 h-0.5 bg-gradient-to-r from-[#002B5C] to-[#D4AF37] scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left rounded-full" />
+   832→                  </div>
+   833→                </Reveal>
+   834→              )
+   835→            })}
+   836→          </div>
+   837→        </div>
+   838→      </section>
+   839→
+   840→      {/* ══════════════════════════════════════════════════════════════════════
+   841→          WHY HPHRMS — Trust & Credibility
+   842→         ══════════════════════════════════════════════════════════════════════ */}
+   843→      <section className="py-16 bg-white" style={{ background: 'linear-gradient(160deg, #001A3D 0%, #002B5C 50%, #0A4488 100%)' }} aria-label="Why HPHRMS">
+   844→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+   845→          <Reveal>
+   846→            <div className="text-center mb-12">
+   847→              <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+   848→                Trusted by Businesses
+   849→                <br />
+   850→                <span style={{ color: '#D4AF37' }}>Across India</span>
+   851→              </h2>
+   852→              <p className="mt-4 text-gray-200 max-w-2xl mx-auto text-lg">Growing with every successful project and satisfied client. We deliver results, not promises.</p>
+   853→            </div>
+   854→          </Reveal>
+   855→          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+   856→            {[
+   857→              { icon: Building2, title: 'Registered Business', desc: 'GSTIN & UDYAM certified enterprise', value: BRAND.gstin },
+   858→              { icon: ShieldCheck, title: 'Enterprise Security', desc: 'Role-based access, encrypted data, audit trails', value: null },
+   859→              { icon: Bot, title: 'AI-Powered Platform', desc: 'Smart automation for HR, payroll & compliance', value: null },
+   860→              { icon: Headphones, title: 'Dedicated Support', desc: 'Direct access to our team via phone, email & WhatsApp', value: BRAND.phone },
+   861→            ].map((item, i) => (
+   862→              <Reveal key={i} delay={i * 0.1}>
+   863→                <div className="p-6 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all duration-300 text-center">
+   864→                  <div className="h-12 w-12 mx-auto mb-4 rounded-xl flex items-center justify-center" style={{ background: 'rgba(212,175,55,0.15)' }}>
+   865→                    <item.icon className="h-6 w-6" style={{ color: '#D4AF37' }} />
+   866→                  </div>
+   867→                  <h3 className="text-base font-bold text-white mb-1">{item.title}</h3>
+   868→                  <p className="text-sm text-gray-200 leading-relaxed">{item.desc}</p>
+   869→                  {item.value && <p className="mt-2 text-xs font-mono text-gray-300">{item.value}</p>}
+   870→                </div>
+   871→              </Reveal>
+   872→            ))}
+   873→          </div>
+   874→        </div>
+   875→      </section>
+   876→
+   877→      {/* ══════════════════════════════════════════════════════════════════════
+   878→          PRICING
+   879→         ══════════════════════════════════════════════════════════════════════ */}
+   880→      <section id="pricing" className="py-20 sm:py-24 bg-gray-50" aria-label="Pricing plans">
+   881→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+   882→          <Reveal>
+   883→            <div className="text-center mb-14">
+   884→              <Badge className="mb-4 px-4 py-1 text-sm" style={{ background: 'rgba(0,43,92,0.08)', color: '#002B5C', border: '1px solid rgba(0,43,92,0.15)' }}>Simple Pricing</Badge>
+   885→              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-gray-900 tracking-tight">
+   886→                Plans That
+   887→                <br />
+   888→                <span style={{ color: '#002B5C' }}>Scale With You</span>
+   889→              </h2>
+   890→              <p className="mt-4 text-gray-700 max-w-2xl mx-auto text-lg">Start free. Upgrade as you grow. No hidden fees.</p>
+   891→            </div>
+   892→          </Reveal>
+   893→          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+   894→            {PRICING_PLANS.map((plan, i) => (
+   895→              <Reveal key={plan.name} delay={i * 0.1}>
+   896→                <div className={cn('relative rounded-2xl p-6 h-full flex flex-col transition-all duration-300 hover:-translate-y-1 hover:shadow-xl', plan.popular ? 'bg-[#002B5C] text-white shadow-2xl scale-[1.02]' : 'bg-white border border-gray-200 shadow-sm')}>
+   897→                  {plan.popular && (
+   898→                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wider" style={{ background: '#D4AF37', color: '#002B5C' }}>Most Popular</div>
+   899→                  )}
+   900→                  <div className="mb-6">
+   901→                    <h3 className={cn('text-lg font-bold mb-1', plan.popular ? 'text-white' : 'text-gray-900')}>{plan.name}</h3>
+   902→                    <p className={cn('text-sm', plan.popular ? 'text-gray-200' : 'text-gray-600')}>{plan.description}</p>
+   903→                  </div>
+   904→                  <div className="mb-6">
+   905→                    <span className={cn('text-4xl font-extrabold', plan.popular ? 'text-white' : 'text-gray-900')}>{plan.price}</span>
+   906→                    {plan.period && <span className={cn('text-sm ml-1', plan.popular ? 'text-gray-300' : 'text-gray-400')}>{plan.period}</span>}
+   907→                  </div>
+   908→                  <ul className="space-y-3 mb-8 flex-1">
+   909→                    {plan.features.map((f) => (
+   910→                      <li key={f} className="flex items-start gap-2 text-sm">
+   911→                        <Check className={cn('h-4 w-4 mt-0.5 shrink-0', plan.popular ? 'text-[#D4AF37]' : 'text-emerald-500')} />
+   912→                        <span className={plan.popular ? 'text-gray-200' : 'text-gray-600'}>{f}</span>
+   913→                      </li>
+   914→                    ))}
+   915→                  </ul>
+   916→                  <Button className={cn('w-full font-semibold rounded-xl h-11', plan.popular ? 'text-[#002B5C]' : '')} style={!plan.popular ? { background: '#002B5C', color: '#fff' } : { background: '#D4AF37' }} onClick={() => setView('subscribe')}>
+   917→                    {plan.price === 'Custom' ? 'Contact Sales' : 'Get Started'}
+   918→                  </Button>
+   919→                </div>
+   920→              </Reveal>
+   921→            ))}
+   922→          </div>
+   923→        </div>
+   924→      </section>
+   925→
+   926→      {/* ══════════════════════════════════════════════════════════════════════
+   927→          PORTAL ACCESS CARDS
+   928→         ══════════════════════════════════════════════════════════════════════ */}
+   929→      <section id="portals" className="py-20 sm:py-24 bg-white" aria-label="Portal access">
+   930→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+   931→          <Reveal>
+   932→            <div className="text-center mb-14">
+   933→              <Badge className="mb-4 px-4 py-1 text-sm" style={{ background: 'rgba(0,43,92,0.06)', color: '#002B5C', border: '1px solid rgba(0,43,92,0.1)' }}>Portal Access</Badge>
+   934→              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-gray-900 tracking-tight">
+   935→                Your Dedicated
+   936→                <br />
+   937→                <span style={{ color: '#002B5C' }}>Workspace Awaits</span>
+   938→              </h2>
+   939→              <p className="mt-4 text-gray-700 max-w-xl mx-auto text-lg">Select your portal to get started.</p>
+   940→            </div>
+   941→          </Reveal>
+   942→          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+   943→            {PORTALS.map((portal, i) => (
+   944→              <Reveal key={portal.id} delay={i * 0.12}>
+   945→                <motion.div whileHover={{ y: -6 }} transition={{ type: 'spring', stiffness: 300, damping: 20 }}>
+   946→                  <div
+   947→                    className="group relative rounded-2xl overflow-hidden cursor-pointer border border-gray-100 hover:shadow-xl transition-all duration-300 h-full"
+   948→                    style={{ background: 'linear-gradient(160deg, #001A3D, #002B5C)' }}
+   949→                    onClick={() => setView(portal.id)}
+   950→                  >
+   951→                    <div className="relative z-10 p-8">
+   952→                      <div className="h-12 w-12 rounded-xl flex items-center justify-center mb-5" style={{ background: '#D4AF37' }}>
+   953→                        <portal.icon className="h-6 w-6" style={{ color: '#002B5C' }} />
+   954→                      </div>
+   955→                      <h3 className="text-xl font-bold text-white mb-2">{portal.title}</h3>
+   956→                      <p className="text-sm text-gray-200 mb-6">{portal.description}</p>
+   957→                      <ul className="space-y-2.5">
+   958→                        {portal.features.map((f) => (
+   959→                          <li key={f} className="flex items-center gap-2 text-sm text-gray-300">
+   960→                            <Check className="h-3.5 w-3.5 shrink-0" style={{ color: '#D4AF37' }} />{f}
+   961→                          </li>
+   962→                        ))}
+   963→                      </ul>
+   964→                      <div className="mt-6 flex items-center gap-2 text-sm font-semibold group-hover:gap-3 transition-all duration-300" style={{ color: '#D4AF37' }}>
+   965→                        Access Portal <ArrowRight className="h-4 w-4" />
+   966→                      </div>
+   967→                    </div>
+   968→                  </div>
+   969→                </motion.div>
+   970→              </Reveal>
+   971→            ))}
+   972→          </div>
+   973→        </div>
+   974→      </section>
+   975→
+   976→      {/* ══════════════════════════════════════════════════════════════════════
+   977→          CONTACT SECTION
+   978→         ══════════════════════════════════════════════════════════════════════ */}
+   979→      <section id="contact" className="py-20 sm:py-24 bg-gray-50" aria-label="Contact us">
+   980→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+   981→          <Reveal>
+   982→            <div className="text-center mb-14">
+   983→              <Badge className="mb-4 px-4 py-1 text-sm" style={{ background: 'rgba(0,43,92,0.06)', color: '#002B5C', border: '1px solid rgba(0,43,92,0.1)' }}>Get In Touch</Badge>
+   984→              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-gray-900 tracking-tight">
+   985→                Let&apos;s Build Something
+   986→                <br />
+   987→                <span style={{ color: '#002B5C' }}>Great Together</span>
+   988→              </h2>
+   989→              <p className="mt-4 text-gray-700 max-w-xl mx-auto text-lg">Reach out to us for demos, inquiries, or partnership opportunities.</p>
+   990→            </div>
+   991→          </Reveal>
+   992→
+   993→          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+   994→            <Reveal direction="left">
+   995→              <div className="space-y-4">
+   996→                {[
+   997→                  { icon: Phone, label: 'Call Us', value: BRAND.phone, href: `tel:${BRAND.phone}` },
+   998→                  { icon: Phone, label: 'HR Helpline', value: BRAND.hrPhone, href: `tel:${BRAND.hrPhone}` },
+   999→                  { icon: Mail, label: 'Email Us', value: BRAND.email, href: `mailto:${BRAND.email}` },
+  1000→                  { icon: Globe2, label: 'Website', value: BRAND.website, href: BRAND.website },
+  1001→                  { icon: MapPin, label: 'Head Office', value: BRAND.headOffice.full, href: `https://maps.google.com/?q=${encodeURIComponent(BRAND.headOffice.full)}` },
+  1002→                  { icon: MapPin, label: 'Branch Office', value: BRAND.branchOffice.full, href: `https://maps.google.com/?q=${encodeURIComponent(BRAND.branchOffice.full)}` },
+  1003→                ].map((item, i) => (
+  1004→                  <a key={i} href={item.href} target={item.href.startsWith('http') ? '_blank' : undefined} rel={item.href.startsWith('http') ? 'noopener noreferrer' : undefined} className="flex items-start gap-4 p-4 rounded-xl bg-white border border-gray-100 hover:shadow-md transition-all duration-200 group">
+  1005→                    <div className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'rgba(0,43,92,0.06)' }}>
+  1006→                      <item.icon className="h-5 w-5" style={{ color: '#002B5C' }} />
+  1007→                    </div>
+  1008→                    <div>
+  1009→                      <div className="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">{item.label}</div>
+  1010→                      <div className="text-sm font-medium text-gray-800 group-hover:text-[#002B5C] transition-colors leading-relaxed">{item.value}</div>
+  1011→                    </div>
+  1012→                  </a>
+  1013→                ))}
+  1014→
+  1015→                <div className="pt-4">
+  1016→                  <div className="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-3">Connect With Us</div>
+  1017→                  <div className="flex flex-wrap gap-2">
+  1018→                    {SOCIAL_ITEMS.map((s) => (
+  1019→                      <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer" className="h-10 w-10 rounded-xl flex items-center justify-center transition-all duration-200 hover:scale-110 hover:shadow-md bg-white border border-gray-100" style={{ color: s.color }} aria-label={s.label}>
+  1020→                        <s.icon className="h-4 w-4" />
+  1021→                      </a>
+  1022→                    ))}
+  1023→                  </div>
+  1024→                </div>
+  1025→              </div>
+  1026→            </Reveal>
+  1027→
+  1028→            <Reveal direction="right">
+  1029→              <Card className="shadow-lg border-gray-100">
+  1030→                <CardHeader>
+  1031→                  <CardTitle className="text-xl font-bold text-gray-900">Send Us a Message</CardTitle>
+  1032→                  <CardDescription className="text-gray-600">We typically respond within 24 hours.</CardDescription>
+  1033→                </CardHeader>
+  1034→                <CardContent>
+  1035→                  <form onSubmit={(e) => { e.preventDefault(); toast.success('Message sent! We will get back to you soon.') }} className="space-y-4">
+  1036→                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+  1037→                      <div className="space-y-2"><Label className="text-gray-700 text-sm font-medium">Name</Label><Input placeholder="Your name" /></div>
+  1038→                      <div className="space-y-2"><Label className="text-gray-700 text-sm font-medium">Email</Label><Input type="email" placeholder="you@company.com" /></div>
+  1039→                    </div>
+  1040→                    <div className="space-y-2"><Label className="text-gray-700 text-sm font-medium">Subject</Label><Input placeholder="How can we help?" /></div>
+  1041→                    <div className="space-y-2"><Label className="text-gray-700 text-sm font-medium">Message</Label><Textarea placeholder="Tell us about your requirements..." rows={4} /></div>
+  1042→                    <Button type="submit" className="w-full h-11 font-semibold text-white rounded-xl" style={{ background: '#002B5C' }}>
+  1043→                      <Send className="mr-2 h-4 w-4" />Send Message
+  1044→                    </Button>
+  1045→                  </form>
+  1046→                </CardContent>
+  1047→              </Card>
+  1048→            </Reveal>
+  1049→          </div>
+  1050→        </div>
+  1051→      </section>
+  1052→
+  1053→      {/* ══════════════════════════════════════════════════════════════════════
+  1054→          FOOTER — Sticky to bottom
+  1055→         ══════════════════════════════════════════════════════════════════════ */}
+  1056→      <footer className="mt-auto bg-gray-900 text-gray-300" role="contentinfo">
+  1057→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+  1058→          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
+  1059→            {/* Brand */}
+  1060→            <div className="lg:col-span-1">
+  1061→              <div className="flex items-center gap-2.5 mb-4">
+  1062→                <BrandLogo size={32} />
+  1063→                <div className="flex flex-col">
+  1064→                  <span className="font-extrabold text-sm text-white">HP ENTERPRISE</span>
+  1065→                  <span className="text-[9px] font-medium tracking-widest uppercase text-gray-400">Building Safer Tomorrow</span>
+  1066→                </div>
+  1067→              </div>
+  1068→              <p className="text-sm text-gray-300 leading-relaxed mb-4">{BRAND.taglineFull}</p>
+  1069→              <div className="flex flex-wrap gap-2">
+  1070→                {SOCIAL_ITEMS.map((s) => (
+  1071→                  <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer" className="h-8 w-8 rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-110 bg-gray-800" style={{ color: s.color }} aria-label={s.label}><s.icon className="h-3.5 w-3.5" /></a>
+  1072→                ))}
+  1073→              </div>
+  1074→            </div>
+  1075→
+  1076→            {/* Services */}
+  1077→            <div>
+  1078→              <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-4">Services</h4>
+  1079→              <ul className="space-y-2.5">
+  1080→                {SERVICES.slice(0, 6).map((s) => (
+  1081→                  <li key={s}><span className="text-sm text-gray-300 hover:text-white transition-colors cursor-default">{s}</span></li>
+  1082→                ))}
+  1083→              </ul>
+  1084→            </div>
+  1085→
+  1086→            {/* Legal */}
+  1087→            <div>
+  1088→              <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-4">Legal & Compliance</h4>
+  1089→              <ul className="space-y-2.5 text-sm text-gray-300">
+  1090→                <li className="flex items-center gap-2"><ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />GSTIN: {BRAND.gstin}</li>
+  1091→                <li className="flex items-center gap-2"><ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />PAN: {BRAND.pan}</li>
+  1092→                <li className="flex items-center gap-2"><ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />UDYAM: {BRAND.udyam}</li>
+  1093→                <li className="flex items-center gap-2"><MapPin className="h-3.5 w-3.5 text-gray-400" />Bengaluru, Karnataka</li>
+  1094→                <li className="flex items-center gap-2"><MapPin className="h-3.5 w-3.5 text-gray-400" />Chitradurga, Karnataka</li>
+  1095→              </ul>
+  1096→            </div>
+  1097→
+  1098→            {/* Contact */}
+  1099→            <div>
+  1100→              <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-4">Contact</h4>
+  1101→              <ul className="space-y-2.5 text-sm text-gray-300">
+  1102→                <li className="flex items-center gap-2"><Phone className="h-3.5 w-3.5" />{BRAND.phone}</li>
+  1103→                <li className="flex items-center gap-2"><Phone className="h-3.5 w-3.5" />{BRAND.hrPhone}</li>
+  1104→                <li className="flex items-center gap-2"><Mail className="h-3.5 w-3.5" />{BRAND.email}</li>
+  1105→                <li className="flex items-center gap-2"><Globe2 className="h-3.5 w-3.5" /><a href={BRAND.website} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">{BRAND.website}</a></li>
+  1106→              </ul>
+  1107→            </div>
+  1108→          </div>
+  1109→
+  1110→          {/* Bottom bar */}
+  1111→          <div className="mt-12 pt-8 border-t border-gray-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+  1112→            <p className="text-xs text-gray-400">© {new Date().getFullYear()} HP ENTERPRISE. All rights reserved.</p>
+  1113→            <div className="flex items-center gap-4 text-xs text-gray-400">
+  1114→              <span>Managing Director: {BRAND.managingDirector}</span>
+  1115→              <span className="hidden sm:inline">•</span>
+  1116→              <span className="hidden sm:inline">EHS Director: {BRAND.ehsDirector}</span>
+  1117→            </div>
+  1118→          </div>
+  1119→        </div>
+  1120→      </footer>
+  1121→    </div>
+  1122→  )
+  1123→}
