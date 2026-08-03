@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic'
 // In-memory conversation store (keyed by userId)
 const conversations = new Map<string, { role: string; content: string }[]>()
 
-const SYSTEM_PROMPT = `You are HPAI, the intelligent HR assistant for HP ENTERPRISE Safety Service & Man Power Supply. You help with:
+const SYSTEM_PROMPT = `You are HPAI, the intelligent HR assistant for HP ENTERPRISE Safety Service & Man Power Supply (hpserve.site). You help with:
 - Leave policies, balances, and application procedures
 - Payroll queries (salary breakdown, PF, ESI, professional tax)
 - Attendance rules (punch-in/out timing, late grace, overtime)
@@ -15,20 +15,40 @@ const SYSTEM_PROMPT = `You are HPAI, the intelligent HR assistant for HP ENTERPR
 - Company policies and procedures
 - Safety compliance and EHS requirements
 - Project assignments and client coordination
+- Recruitment and onboarding help
 
-Keep responses concise (2-4 sentences max unless asked for details). Be friendly but professional. Use bullet points for lists. If unsure, advise the user to contact HR at hr@hpenterprise.co.in.`
+Company info:
+- Website: https://hpserve.site
+- AI Preview: https://hphrms.netlify.app/app
+- Email: hpenterpriseofficial11@gmail.com
+- Managing Director: Hariprasad N P (+91 80737 48271)
+- EHS Director: Rajesh S (+91 73377 92436)
 
-/* ─── Gemini direct API (primary — works everywhere) ─── */
+Keep responses concise (2-4 sentences max unless asked for details). Be friendly but professional. Use bullet points for lists. If unsure, advise the user to contact HR at hpenterpriseofficial11@gmail.com.`
+
+/* ─── Z.ai SDK (primary — always available locally) ─── */
+async function callZai(messages: { role: string; content: string }[]): Promise<string> {
+  const ZAI = (await import('z-ai-web-dev-sdk')).default
+  const zai = await ZAI.create()
+  const completion = await zai.chat.completions.create({
+    messages,
+    thinking: { type: 'disabled' },
+  })
+  return completion.choices[0]?.message?.content || 'No response from AI.'
+}
+
+/* ─── Gemini direct API (fallback for Vercel) ─── */
 async function callGemini(messages: { role: string; content: string }[]): Promise<string> {
   const apiKey = process.env.GEMINI_API_KEY
   if (!apiKey) throw new Error('GEMINI_API_KEY not configured')
 
   const geminiContents = messages
-    .filter(function (m) { return m.role !== 'system' })
-    .map(function (m) {
-      return { role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] }
-    })
-  const systemInstruction = messages.find(function (m) { return m.role === 'system' })
+    .filter((m) => m.role !== 'system')
+    .map((m) => ({
+      role: m.role === 'assistant' ? 'model' : 'user',
+      parts: [{ text: m.content }],
+    }))
+  const systemInstruction = messages.find((m) => m.role === 'system')
 
   const body: Record<string, unknown> = {
     contents: geminiContents,
@@ -38,75 +58,36 @@ async function callGemini(messages: { role: string; content: string }[]): Promis
     body.systemInstruction = { parts: [{ text: systemInstruction.content }] }
   }
 
-  const url =
-    'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=' +
-    apiKey
+  // Try multiple model names
+  const models = [
+    'gemini-2.0-flash',
+    'gemini-1.5-flash',
+    'gemini-1.5-pro',
+    'gemini-pro',
+  ]
 
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-    signal: AbortSignal.timeout(15000),
-  })
-
-  if (!res.ok) {
-    const errBody = await res.text()
-    throw new Error('Gemini ' + res.status + ': ' + errBody.slice(0, 200))
-  }
-
-  const data = await res.json()
-  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text
-  if (!text) throw new Error('No response from Gemini')
-  return text
-}
-
-/* ─── Vercel AI Gateway (fallback) ─── */
-const GATEWAY_MODELS = [
-  'google/gemini-2.0-flash-001',
-  'google/gemini-2.0-flash',
-  'openai/gpt-4o-mini',
-  'openai/gpt-4o',
-]
-
-async function callGateway(messages: { role: string; content: string }[]): Promise<string> {
-  const apiKey = process.env.AI_GATEWAY_API_KEY
-  if (!apiKey) throw new Error('AI_GATEWAY_API_KEY not configured')
-
-  let lastErr: Error | undefined
-  for (const model of GATEWAY_MODELS) {
+  for (const model of models) {
     try {
-      const res = await fetch('https://gateway.ai.vercel.com/v1/chat/completions', {
+      const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + apiKey
+      const res = await fetch(url, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: 'Bearer ' + apiKey,
-        },
-        body: JSON.stringify({ model, messages, temperature: 0.7, max_tokens: 1024 }),
-        signal: AbortSignal.timeout(20000),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(15000),
       })
       if (res.status === 404 || res.status === 400) continue
       if (!res.ok) {
         const errBody = await res.text()
-        throw new Error('Gateway ' + res.status + ': ' + errBody.slice(0, 200))
+        throw new Error('Gemini ' + res.status + ': ' + errBody.slice(0, 200))
       }
       const data = await res.json()
-      const text = data?.choices?.[0]?.message?.content
-      if (!text) throw new Error('Empty response')
-      return text
-    } catch (e) {
-      lastErr = e as Error
+      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text
+      if (text) return text
+    } catch {
       continue
     }
   }
-  throw lastErr || new Error('All gateway models failed')
-}
-
-/* ─── Z.ai SDK (local sandbox only) ─── */
-async function callZai(messages: { role: string; content: string }[]): Promise<string> {
-  const ZAI = (await import('z-ai-web-dev-sdk')).default
-  const zai = await ZAI.create()
-  const completion = await zai.chat.completions.create({ messages, thinking: { type: 'disabled' } })
-  return completion.choices[0]?.message?.content || 'No response from AI.'
+  throw new Error('All Gemini models failed')
 }
 
 /* ─── POST handler ─── */
@@ -134,49 +115,34 @@ export async function POST(req: NextRequest) {
 
     let aiResponse: string | undefined
     let lastError: Error | undefined
-    const isVercel = typeof process.env.VERCEL !== 'undefined'
 
-    // Strategy 1: Gemini direct (primary — works everywhere)
+    // Strategy 1: Z.ai SDK (always available locally)
+    try {
+      aiResponse = await callZai(history)
+    } catch (e) {
+      lastError = e as Error
+      console.error('[HPAI] Z.ai failed:', lastError?.message)
+    }
+
+    // Strategy 2: Gemini direct (fallback for Vercel)
     if (!aiResponse && process.env.GEMINI_API_KEY) {
       try {
         aiResponse = await callGemini(history)
-        console.log('[HPAI] Response via Gemini')
       } catch (e) {
         lastError = e as Error
         console.error('[HPAI] Gemini failed:', lastError?.message)
       }
     }
 
-    // Strategy 2: Vercel AI Gateway (fallback)
-    if (!aiResponse && process.env.AI_GATEWAY_API_KEY) {
-      try {
-        aiResponse = await callGateway(history)
-        console.log('[HPAI] Response via Gateway')
-      } catch (e) {
-        lastError = e as Error
-        console.error('[HPAI] Gateway failed:', lastError?.message)
-      }
-    }
-
-    // Strategy 3: Z.ai SDK (local only)
-    if (!aiResponse && !isVercel) {
-      try {
-        aiResponse = await callZai(history)
-        console.log('[HPAI] Response via Z.ai')
-      } catch (e) {
-        lastError = e as Error
-        console.error('[HPAI] Z.ai failed:', lastError?.message)
-      }
-    }
-
     if (!aiResponse) {
-      console.error('[HPAI] All providers failed:', lastError?.message)
+      console.error('[HPAI] All providers failed')
       return NextResponse.json(
-        { error: 'AI service unavailable. Please try again later.', debug: lastError?.message },
+        { error: 'AI service is temporarily unavailable. Please try again in a moment.' },
         { status: 503 },
       )
     }
 
+    // Clean up markdown fences
     aiResponse = aiResponse.replace(/^```(?:markdown|text)?\n?/i, '').replace(/\n?```$/i, '').trim()
     history.push({ role: 'assistant', content: aiResponse })
     conversations.set(userId, history)
@@ -192,49 +158,4 @@ export async function DELETE() {
   if (!cu) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   if (cu.user.id) conversations.delete(cu.user.id)
   return NextResponse.json({ ok: true })
-}
-
-/* ─── Debug endpoint ─── */
-export async function GET() {
-  const isVercel = typeof process.env.VERCEL !== 'undefined'
-  const hasGemini = !!process.env.GEMINI_API_KEY
-  const hasGateway = !!process.env.AI_GATEWAY_API_KEY
-  let geminiTest = 'not tested'
-  let geminiGenTest = 'not tested'
-  if (hasGemini) {
-    try {
-      const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest?key=' + process.env.GEMINI_API_KEY, { signal: AbortSignal.timeout(10000) })
-      geminiTest = 'status ' + res.status + (res.ok ? ' (available)' : ' (error)')
-    } catch (e) { geminiTest = 'error: ' + (e as Error).message }
-    // Test actual generation
-    try {
-      const genRes = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=' + process.env.GEMINI_API_KEY, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contents: [{ parts: [{ text: 'Say hi' }] }], generationConfig: { maxOutputTokens: 10 } }),
-        signal: AbortSignal.timeout(15000),
-      })
-      const genData = await genRes.json()
-      const genText = genData?.candidates?.[0]?.content?.parts?.[0]?.text
-      geminiGenTest = genRes.ok ? ('OK: ' + (genText || 'empty')) : ('ERR ' + genRes.status + ': ' + JSON.stringify(genData?.error || {}).slice(0, 200))
-    } catch (e) { geminiGenTest = 'error: ' + (e as Error).message }
-  }
-  // Find working model
-  let workingModel = 'none'
-  const modelsToTry = ['gemini-2.0-flash', 'gemini-1.5-pro-latest', 'gemini-1.5-flash-8b', 'gemini-pro', 'gemini-2.0-flash-lite', 'gemini-1.5-pro']
-  if (hasGemini) {
-    for (const m of modelsToTry) {
-      try {
-        const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + m + ':generateContent?key=' + process.env.GEMINI_API_KEY, {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ contents: [{ parts: [{ text: 'Hi' }] }], generationConfig: { maxOutputTokens: 5 } }),
-          signal: AbortSignal.timeout(10000),
-        })
-        if (r.ok) { workingModel = m; break }
-        const err = await r.json().catch(function() { return {} })
-        workingModel = m + ' -> ' + r.status + ': ' + String(err?.error?.message || '').slice(0, 80)
-      } catch (e) { workingModel = m + ' -> err: ' + (e as Error).message.slice(0, 50) }
-    }
-  }
-  return NextResponse.json({ isVercel, hasGemini, hasGateway, workingModel, triedModels: modelsToTry })
 }

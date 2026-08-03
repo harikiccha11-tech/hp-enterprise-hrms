@@ -654,3 +654,23 @@ Stage Summary:
 - All backend APIs updated to allow SUPER_ADMIN access (previously OWNER-only)
 - All portal logins verified working
 - Zero API errors in dev log
+
+---
+Task ID: fix-hpai-and-branding
+Agent: Main Orchestrator
+Task: Fix HPAI chatbot, bcryptjs error, and update company branding
+
+Work Log:
+- Fixed bcryptjs module not found: Replaced direct bcrypt import in roles API with hashPassword from auth.ts
+- Diagnosed Gemini API location restriction (not available from server region)
+- Rewrote /api/ai/chat/route.ts to use Z.ai SDK as primary provider (always works locally), Gemini as fallback
+- Tested HPAI in browser: sends messages, gets responses in ~1.3s, knows company info
+- Updated constants.ts with real company info: hpserve.site, official email, MD/EHS directors, phone numbers
+- Added SOCIAL object with all social media links (WhatsApp, Instagram, Threads, LinkedIn, Facebook, X, YouTube, Reddit)
+- Updated Landing.tsx footer with: Contact & Social section, real phone numbers, MD/EHS Director names, 6 social media icon links, CIN number
+
+Stage Summary:
+- HPAI chatbot is fully functional - tested with 2 messages, both responded correctly
+- Z.ai SDK used as primary AI provider (reliable in local environment)
+- All official company branding and social links integrated into landing page footer
+- bcryptjs dependency removed from roles API (uses existing auth.ts hashPassword)

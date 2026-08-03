@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { requireRole } from '@/lib/guards'
-import bcrypt from 'bcryptjs'
+import { hashPassword } from '@/lib/auth'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
     const existingUser = await db.user.findFirst({ where: { OR: [{ username: username.trim().toLowerCase() }, { email: email.trim().toLowerCase() }] } })
     if (existingUser) return NextResponse.json({ error: 'User with this username or email already exists' }, { status: 409 })
 
-    const passwordHash = await bcrypt.hash(password, 12)
+    const passwordHash = await hashPassword(password)
     const user = await db.user.create({
       data: {
         username: username.trim().toLowerCase(),

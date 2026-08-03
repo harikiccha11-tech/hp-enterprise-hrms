@@ -4,7 +4,7 @@ export const BRAND = {
   name: 'HP ENTERPRISE',
   legalName: 'HP ENTERPRISE Safety Service & Man Power Supply',
   tagline: 'Safety Service & Man Power Supply',
-  taglineFull: 'Safety Services • Manpower Supply • EHS Consultancy • Project Support',
+  taglineFull: 'Safety Services \u2022 Manpower Supply \u2022 EHS Consultancy \u2022 Project Support',
   subTagline: 'Comprehensive Workforce Solutions For Every Project',
   navy: '#002B5C',
   navyDeep: '#001A3D',
@@ -13,14 +13,33 @@ export const BRAND = {
   goldLight: '#E8C96A',
   silver: '#C0C0C0',
   accent: '#0A4488',
-  address: 'Plot 14, Tech Park Phase II, Whitefield, Bengaluru, Karnataka 560066',
-  phone: '+91 80 4567 8900',
-  email: 'hr@hpenterprise.co.in',
-  website: 'www.hpenterprise.co.in',
+  address: 'Bengaluru, Karnataka, India',
+  phone: '+91 80737 48271',
+  email: 'hpenterpriseofficial11@gmail.com',
+  website: 'https://hpserve.site',
   gst: '29AAGCH4521K1ZP',
   cin: 'U72900KA2015PTC112233',
   logoPath: '/hp-logo.jpg',
+  managingDirector: 'Hariprasad N P',
+  ehsDirector: 'Rajesh S',
+  mdPhone: '+91 80737 48271',
+  ehsPhone: '+91 73377 92436',
 }
+
+export const SOCIAL = {
+  website: 'https://hpserve.site',
+  aiPreview: 'https://hphrms.netlify.app/app',
+  email: 'hpenterpriseofficial11@gmail.com',
+  whatsapp: 'https://wa.me/message/65PDYODAFJZAN1',
+  instagram: 'https://www.instagram.com/hpenterpirse',
+  threads: 'https://www.threads.com/@hpenterpriseofficial',
+  linkedin: 'https://www.linkedin.com/in/hariprasad-np-4408a8423',
+  facebook: 'https://www.facebook.com/share/1DNBdqGcvb/',
+  twitter: 'https://x.com/hpenterpri5nww',
+  youtube: 'https://www.youtube.com/@HPEnterpriseIndia',
+  reddit: 'https://www.reddit.com/u/HPEnterpriseIndia/',
+  recruitment: 'https://docs.google.com/forms/d/e/1FAIpQLSfxMyayr18xiVYf8L9MlZjxrRHfGpvzC7KAubf3fGUuUSNWtQ/viewform?usp=header',
+} as const
 
 export const NAVY = BRAND.navy
 export const GOLD = BRAND.gold
