@@ -22,11 +22,11 @@ import {
   Settings, UserCog, Zap, Shield, Bell, Star, Headphones, Send, Loader2,
   Phone, Mail, MapPin, ChevronRight, Menu, X, Award, Globe2,
   HardHat, Truck, DollarSign, MonitorSmartphone,
-  type LucideIcon, Eye, Target, Wrench, UserPlus, Briefcase, FileUp, GraduationCap, Landmark,
+  type LucideIcon, Eye, Target, Wrench, UserPlus, Briefcase, FileUp, GraduationCap, Landmark, Search,
 } from 'lucide-react'
 import Image from 'next/image'
 
-type LandingView = 'home' | 'register' | 'subscribe' | 'apply' | 'apply-pick'
+type LandingView = 'home' | 'register' | 'subscribe' | 'apply' | 'apply-pick' | 'portal-pick'
 
 function InstagramIcon({ className, style }: { className?: string; style?: React.CSSProperties }) {
   return <svg className={className} style={style} viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
@@ -463,6 +463,66 @@ function PortalPickerView({ onPick, onBack }: { onPick: (title: string) => void;
   )
 }
 
+const LOGIN_PORTALS = PORTALS.filter((p) => !p.requestAccess)
+
+function PortalLoginPickerView({ onBack, onLogin, onApply }: { onBack: () => void; onLogin: (id: string) => void; onApply: () => void }) {
+  const [search, setSearch] = useState('')
+  const filtered = LOGIN_PORTALS.filter((p) => !search || p.title.toLowerCase().includes(search.toLowerCase()) || p.description.toLowerCase().includes(search.toLowerCase()))
+  return (
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-gray-50 to-white">
+      <header className="sticky top-0 z-40 border-b bg-white/90 backdrop-blur">
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
+          <BrandLogo />
+          <Button variant="ghost" size="sm" onClick={onBack}><ArrowLeft className="mr-1 h-4 w-4" /> Back to Home</Button>
+        </div>
+      </header>
+      <div className="mx-auto w-full max-w-5xl flex-1 px-4 py-10 sm:py-16">
+        <div className="text-center mb-10">
+          <Badge className="mb-4 px-4 py-1 text-sm font-bold" style={{ background: '#D4AF37', color: '#002B5C' }}><Shield className="h-3.5 w-3.5 mr-1.5" />Portal Access</Badge>
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-3">Select Your Portal</h1>
+          <p className="text-gray-600 text-lg font-medium max-w-2xl mx-auto mb-6">Choose your portal to sign in, or apply to join if you don&apos;t have an account yet.</p>
+          <div className="max-w-md mx-auto relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input placeholder="Search portals..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10 h-11" />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
+          {filtered.map((portal) => {
+            const Icon = portal.icon
+            return (
+              <motion.button key={portal.id} onClick={() => onLogin(portal.id)} whileHover={{ y: -3 }} whileTap={{ scale: 0.98 }}
+                className="text-left rounded-2xl border-2 border-gray-200 bg-white p-6 shadow-sm hover:shadow-lg hover:border-blue-300 transition-all duration-300 group cursor-pointer">
+                <div className="h-14 w-14 rounded-2xl flex items-center justify-center shadow-md mb-4" style={{ background: portal.color }}>
+                  <Icon className="h-7 w-7 text-white" />
+                </div>
+                <h3 className="text-lg font-bold text-gray-900 mb-1">{portal.title}</h3>
+                <p className="text-sm text-gray-500 font-medium leading-relaxed mb-3">{portal.description}</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {portal.features.slice(0, 3).map((f) => (
+                    <span key={f} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 text-[10px] font-bold text-gray-600">
+                      <Check className="h-2.5 w-2.5" />{f}
+                    </span>
+                  ))}
+                  {portal.features.length > 3 && <span className="text-[10px] font-bold text-gray-400">+{portal.features.length - 3} more</span>}
+                </div>
+                <div className="mt-4 flex items-center gap-1.5 text-sm font-bold" style={{ color: portal.color }}>
+                  <Lock className="h-3.5 w-3.5" />Sign In <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform" />
+                </div>
+              </motion.button>
+            )
+          })}
+        </div>
+        <div className="text-center">
+          <p className="text-sm text-gray-500 font-medium mb-3">Don&apos;t have an account yet?</p>
+          <Button size="lg" className="h-11 font-bold text-white" style={{ background: '#166534' }} onClick={onApply}>
+            <UserPlus className="mr-2 h-4 w-4" />Apply to Join HP Enterprise
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export function Landing() {
   const { setUser, hpaiOpen, setHpaiOpen } = useAppStore()
   const [view, setView] = useState<LandingView>('home')
@@ -497,6 +557,7 @@ export function Landing() {
   if (view === 'register') return <RegistrationForm onBack={goHome} />
   if (view === 'apply') return <RegistrationForm onBack={goHome} appliedFor={appliedPortal} />
   if (view === 'apply-pick') return <PortalPickerView onPick={(title) => { setAppliedPortal(title); setView('apply') }} onBack={goHome} />
+  if (view === 'portal-pick') return <PortalLoginPickerView onBack={goHome} onLogin={(id) => { setView('home'); setTimeout(() => { setExpandedPortal(id); const el = document.getElementById('portals'); if (el) el.scrollIntoView({ behavior: 'smooth' }) }, 100) }} onApply={() => openApplyForm()} />
   if (view === 'subscribe') return <SubscriptionForm onBack={goHome} />
 
   return (
@@ -522,7 +583,7 @@ export function Landing() {
             </div>
             <div className="hidden lg:flex items-center gap-3">
               <LanguageSwitcher />
-              <Button variant="ghost" className="text-sm font-bold h-10 text-gray-600 hover:text-gray-900 hover:bg-gray-100 px-5" onClick={() => scrollTo('portals')}>Login</Button>
+              <Button variant="ghost" className="text-sm font-bold h-10 text-gray-600 hover:text-gray-900 hover:bg-gray-100 px-5" onClick={() => setView('portal-pick')}>Login</Button>
               <Button className="text-sm font-bold h-10 px-5 rounded-xl text-white shadow-md hover:shadow-lg transition-all duration-300" style={{ background: '#166534' }} onClick={() => openApplyForm()}>Apply to Join</Button>
               <Button className="text-sm font-bold h-10 px-6 rounded-xl text-gray-900 shadow-md shadow-amber-200/50 hover:shadow-lg transition-all duration-300" style={{ background: '#D4AF37' }} onClick={() => setView('subscribe')}>Start Free Trial</Button>
             </div>
@@ -539,7 +600,7 @@ export function Landing() {
                   <button key={link.id} onClick={() => scrollTo(link.id)} className="block w-full text-left px-4 py-3 rounded-xl text-sm font-bold text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors capitalize">{link.label}</button>
                 ))}
                 <div className="pt-3 flex flex-col gap-2">
-                  <Button variant="outline" className="w-full text-sm font-bold" onClick={() => { scrollTo('portals'); setMobileMenu(false) }}>Login to Portal</Button>
+                  <Button variant="outline" className="w-full text-sm font-bold" onClick={() => { setView('portal-pick'); setMobileMenu(false) }}>Login to Portal</Button>
                   <Button className="w-full text-sm font-bold text-white" style={{ background: '#166534' }} onClick={() => { openApplyForm(); setMobileMenu(false) }}>Apply to Join</Button>
                   <Button className="w-full text-sm font-bold text-gray-900" style={{ background: '#D4AF37' }} onClick={() => { setView('subscribe'); setMobileMenu(false) }}>Start Free Trial</Button>
                 </div>
@@ -574,7 +635,7 @@ export function Landing() {
               </Reveal>
               <Reveal delay={0.3}>
                 <div className="flex flex-col sm:flex-row gap-3">
-                  <Button size="lg" className="h-13 text-base font-bold px-8 rounded-2xl text-white shadow-lg shadow-gray-900/20 hover:shadow-xl transition-all duration-300" style={{ background: '#002B5C' }} onClick={() => scrollTo('portals')}>
+                  <Button size="lg" className="h-13 text-base font-bold px-8 rounded-2xl text-white shadow-lg shadow-gray-900/20 hover:shadow-xl transition-all duration-300" style={{ background: '#002B5C' }} onClick={() => setView('portal-pick')}>
                     Access Portals <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                   <Button size="lg" className="h-13 text-base font-bold px-8 rounded-2xl text-white shadow-lg shadow-emerald-900/20 hover:shadow-xl transition-all duration-300" style={{ background: '#166534' }} onClick={() => openApplyForm()}>
@@ -963,8 +1024,39 @@ export function Landing() {
               </a>
             </Reveal>
           </div>
-          <Reveal delay={0.4}>
+          <Reveal delay={0.35}>
             <div className="mt-12 bg-white rounded-2xl p-8 border border-gray-200 shadow-sm max-w-5xl mx-auto">
+              <h3 className="text-lg font-bold text-gray-900 mb-6">Leadership</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div className="flex items-start gap-4 p-4 rounded-xl bg-gray-50 border border-gray-100">
+                  <div className="h-14 w-14 rounded-2xl flex items-center justify-center shrink-0 shadow-sm" style={{ background: '#002B5C' }}>
+                    <Crown className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-gray-900 text-base">{BRAND.managingDirector}</p>
+                    <p className="text-sm text-gray-500 font-medium">Managing Director</p>
+                    <a href={`tel:${BRAND.mdPhone}`} className="inline-flex items-center gap-1.5 mt-2 text-xs font-bold" style={{ color: '#002B5C' }}>
+                      <Phone className="h-3 w-3" />{BRAND.mdPhone}
+                    </a>
+                  </div>
+                </div>
+                <div className="flex items-start gap-4 p-4 rounded-xl bg-gray-50 border border-gray-100">
+                  <div className="h-14 w-14 rounded-2xl flex items-center justify-center shrink-0 shadow-sm" style={{ background: '#B45309' }}>
+                    <HardHat className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-gray-900 text-base">{BRAND.ehsDirector}</p>
+                    <p className="text-sm text-gray-500 font-medium">EHS Director</p>
+                    <a href={`tel:${BRAND.ehsPhone}`} className="inline-flex items-center gap-1.5 mt-2 text-xs font-bold" style={{ color: '#B45309' }}>
+                      <Phone className="h-3 w-3" />{BRAND.ehsPhone}
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Reveal>
+          <Reveal delay={0.4}>
+            <div className="mt-6 bg-white rounded-2xl p-8 border border-gray-200 shadow-sm max-w-5xl mx-auto">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div>
                   <h3 className="text-lg font-bold text-gray-900 mb-4">Office Locations</h3>

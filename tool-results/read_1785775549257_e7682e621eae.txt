@@ -1,0 +1,562 @@
+     1→'use client'
+     2→import { useState, useMemo } from 'react'
+     3→import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+     4→import { Button } from '@/components/ui/button'
+     5→import { Input } from '@/components/ui/input'
+     6→import { Label } from '@/components/ui/label'
+     7→import { Badge } from '@/components/ui/badge'
+     8→import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+     9→import { Skeleton } from '@/components/ui/skeleton'
+    10→import { Switch } from '@/components/ui/switch'
+    11→import {
+    12→  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+    13→} from '@/components/ui/table'
+    14→import {
+    15→  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+    16→} from '@/components/ui/dialog'
+    17→import {
+    18→  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
+    19→  AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+    20→} from '@/components/ui/alert-dialog'
+    21→import { Separator } from '@/components/ui/separator'
+    22→import { SectionTitle, EmptyState } from '@/components/shared'
+    23→import { toast } from 'sonner'
+    24→import {
+    25→  Key, Plus, Search, Copy, Eye, EyeOff, Trash2, Pencil, Webhook,
+    26→  BarChart3, ExternalLink, RefreshCw, CheckCircle2, XCircle, Clock,
+    27→  ArrowUpRight, ArrowDownRight, Activity, Zap, Shield, BookOpen,
+    28→} from 'lucide-react'
+    29→
+    30→interface ApiKey {
+    31→  id: string
+    32→  name: string
+    33→  key: string
+    34→  status: 'ACTIVE' | 'REVOKED' | 'EXPIRED'
+    35→  createdAt: string
+    36→  lastUsed: string
+    37→  totalCalls: number
+    38→  rateLimit: string
+    39→}
+    40→
+    41→interface WebhookConfig {
+    42→  id: string
+    43→  name: string
+    44→  url: string
+    45→  events: string[]
+    46→  status: 'ACTIVE' | 'PAUSED'
+    47→  lastTriggered: string
+    48→  successRate: number
+    49→}
+    50→
+    51→interface UsageStat {
+    52→  label: string
+    53→  value: string
+    54→  change: string
+    55→  positive: boolean
+    56→}
+    57→
+    58→const MOCK_KEYS: ApiKey[] = [
+    59→  {
+    60→    id: '1', name: 'Production API Key', key: 'hpe_prod_sk_a8f3k2m9x1b4c7d0e5f6g8h2j4k6l9',
+    61→    status: 'ACTIVE', createdAt: '2024-11-15T10:30:00Z', lastUsed: '2025-06-14T08:22:00Z', totalCalls: 284729, rateLimit: '1000/min',
+    62→  },
+    63→  {
+    64→    id: '2', name: 'Staging Environment', key: 'hpe_stg_sk_z3x5c7v9b1n3m5k8p2r4t6y8w0q1s3a',
+    65→    status: 'ACTIVE', createdAt: '2025-01-08T14:15:00Z', lastUsed: '2025-06-13T17:45:00Z', totalCalls: 45812, rateLimit: '500/min',
+    66→  },
+    67→  {
+    68→    id: '3', name: 'Mobile App Integration', key: 'hpe_mob_sk_d4f6g8h0j2l4n6p8r0s2t4v6x8z0b2d',
+    69→    status: 'ACTIVE', createdAt: '2025-03-22T09:00:00Z', lastUsed: '2025-06-14T06:10:00Z', totalCalls: 128403, rateLimit: '2000/min',
+    70→  },
+    71→  {
+    72→    id: '4', name: 'Legacy Integration (Deprecated)', key: 'hpe_leg_sk_m1n3p5r7t9v1x3z5b7d9f1g3h5j7k9l',
+    73→    status: 'REVOKED', createdAt: '2024-06-01T11:00:00Z', lastUsed: '2025-02-28T23:59:00Z', totalCalls: 512048, rateLimit: '200/min',
+    74→  },
+    75→]
+    76→
+    77→const MOCK_WEBHOOKS: WebhookConfig[] = [
+    78→  { id: '1', name: 'Employee Onboarding', url: 'https://hooks.internal/hr/onboarding', events: ['employee.created', 'employee.approved'], status: 'ACTIVE', lastTriggered: '2025-06-13T14:22:00Z', successRate: 99.8 },
+    79→  { id: '2', name: 'Payroll Events', url: 'https://hooks.internal/finance/payroll', events: ['payroll.processed', 'payslip.generated'], status: 'ACTIVE', lastTriggered: '2025-06-01T00:05:00Z', successRate: 100 },
+    80→  { id: '3', name: 'Leave Notifications', url: 'https://hooks.internal/notifications/leave', events: ['leave.applied', 'leave.approved', 'leave.rejected'], status: 'PAUSED', lastTriggered: '2025-05-20T09:15:00Z', successRate: 97.2 },
+    81→]
+    82→
+    83→const MOCK_STATS: UsageStat[] = [
+    84→  { label: 'Total API Calls (30d)', value: '458,944', change: '+12.3%', positive: true },
+    85→  { label: 'Avg Response Time', value: '142ms', change: '-8.1%', positive: true },
+    86→  { label: 'Error Rate', value: '0.12%', change: '-0.05%', positive: true },
+    87→  { label: 'Active Integrations', value: '7', change: '+2', positive: true },
+    88→]
+    89→
+    90→const WEBHOOK_EVENTS = [
+    91→  'employee.created', 'employee.approved', 'employee.updated',
+    92→  'leave.applied', 'leave.approved', 'leave.rejected',
+    93→  'payroll.processed', 'payslip.generated',
+    94→  'attendance.marked', 'invoice.generated',
+    95→]
+    96→
+    97→function statusColor(status: string) {
+    98→  if (status === 'ACTIVE') return 'bg-emerald-500/10 text-emerald-700 border-emerald-500/30'
+    99→  if (status === 'REVOKED' || status === 'EXPIRED') return 'bg-red-500/10 text-red-700 border-red-500/30'
+   100→  return 'bg-gray-500/10 text-gray-700 border-gray-500/30'
+   101→}
+   102→
+   103→function maskKey(key: string) {
+   104→  return key.slice(0, 12) + '••••••••••••••••' + key.slice(-4)
+   105→}
+   106→
+   107→function formatDate(iso: string) {
+   108→  return new Date(iso).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+   109→}
+   110→
+   111→function relativeTime(iso: string) {
+   112→  const diff = Date.now() - new Date(iso).getTime()
+   113→  const mins = Math.floor(diff / 60000)
+   114→  if (mins < 60) return `${mins}m ago`
+   115→  const hours = Math.floor(mins / 60)
+   116→  if (hours < 24) return `${hours}h ago`
+   117→  const days = Math.floor(hours / 24)
+   118→  if (days < 30) return `${days}d ago`
+   119→  return formatDate(iso)
+   120→}
+   121→
+   122→export function ApiManagement({ refreshKey }: { refreshKey: number }) {
+   123→  const [search, setSearch] = useState('')
+   124→  const [statusFilter, setStatusFilter] = useState('')
+   125→  const [keys, setKeys] = useState<ApiKey[]>(MOCK_KEYS)
+   126→  const [webhooks, setWebhooks] = useState<WebhookConfig[]>(MOCK_WEBHOOKS)
+   127→  const [revealedKeys, setRevealedKeys] = useState<Set<string>>(new Set())
+   128→  const [copiedId, setCopiedId] = useState<string | null>(null)
+   129→  const [creatingKey, setCreatingKey] = useState(false)
+   130→  const [newKeyName, setNewKeyName] = useState('')
+   131→  const [newKeyRateLimit, setNewKeyRateLimit] = useState('1000/min')
+   132→  const [creatingWebhook, setCreatingWebhook] = useState(false)
+   133→  const [webhookName, setWebhookName] = useState('')
+   134→  const [webhookUrl, setWebhookUrl] = useState('')
+   135→  const [webhookEvents, setWebhookEvents] = useState<string[]>([])
+   136→  const [revoking, setRevoking] = useState<ApiKey | null>(null)
+   137→  const [deletingWebhook, setDeletingWebhook] = useState<WebhookConfig | null>(null)
+   138→
+   139→  const filteredKeys = useMemo(() => {
+   140→    return keys.filter((k) => {
+   141→      const matchSearch = !search || k.name.toLowerCase().includes(search.toLowerCase()) || k.key.toLowerCase().includes(search.toLowerCase())
+   142→      const matchStatus = !statusFilter || k.status === statusFilter
+   143→      return matchSearch && matchStatus
+   144→    })
+   145→  }, [keys, search, statusFilter, refreshKey])
+   146→
+   147→  const toggleReveal = (id: string) => {
+   148→    setRevealedKeys((prev) => {
+   149→      const next = new Set(prev)
+   150→      if (next.has(id)) next.delete(id)
+   151→      else next.add(id)
+   152→      return next
+   153→    })
+   154→  }
+   155→
+   156→  const copyKey = (key: string, id: string) => {
+   157→    navigator.clipboard.writeText(key)
+   158→    setCopiedId(id)
+   159→    toast.success('API key copied to clipboard')
+   160→    setTimeout(() => setCopiedId(null), 2000)
+   161→  }
+   162→
+   163→  const handleCreateKey = () => {
+   164→    if (!newKeyName.trim()) { toast.error('Key name is required'); return }
+   165→    const newKey: ApiKey = {
+   166→      id: String(Date.now()),
+   167→      name: newKeyName,
+   168→      key: `hpe_new_sk_${Math.random().toString(36).slice(2, 34)}`,
+   169→      status: 'ACTIVE',
+   170→      createdAt: new Date().toISOString(),
+   171→      lastUsed: 'Never',
+   172→      totalCalls: 0,
+   173→      rateLimit: newKeyRateLimit,
+   174→    }
+   175→    setKeys([newKey, ...keys])
+   176→    setNewKeyName('')
+   177→    setNewKeyRateLimit('1000/min')
+   178→    setCreatingKey(false)
+   179→    toast.success('New API key generated successfully')
+   180→  }
+   181→
+   182→  const handleRevoke = () => {
+   183→    if (!revoking) return
+   184→    setKeys((prev) => prev.map((k) => k.id === revoking.id ? { ...k, status: 'REVOKED' as const } : k))
+   185→    setRevealedKeys((prev) => { const n = new Set(prev); n.delete(revoking.id); return n })
+   186→    setRevoking(null)
+   187→    toast.success(`API key "${revoking.name}" has been revoked`)
+   188→  }
+   189→
+   190→  const toggleWebhookStatus = (id: string) => {
+   191→    setWebhooks((prev) => prev.map((w) => w.id === id ? { ...w, status: w.status === 'ACTIVE' ? 'PAUSED' as const : 'ACTIVE' as const } : w))
+   192→  }
+   193→
+   194→  const handleCreateWebhook = () => {
+   195→    if (!webhookName.trim() || !webhookUrl.trim()) { toast.error('Name and URL are required'); return }
+   196→    if (webhookEvents.length === 0) { toast.error('Select at least one event'); return }
+   197→    const newWh: WebhookConfig = {
+   198→      id: String(Date.now()),
+   199→      name: webhookName, url: webhookUrl, events: webhookEvents,
+   200→      status: 'ACTIVE', lastTriggered: 'Never', successRate: 100,
+   201→    }
+   202→    setWebhooks([newWh, ...webhooks])
+   203→    setWebhookName(''); setWebhookUrl(''); setWebhookEvents([])
+   204→    setCreatingWebhook(false)
+   205→    toast.success('Webhook created successfully')
+   206→  }
+   207→
+   208→  const toggleWebhookEvent = (event: string) => {
+   209→    setWebhookEvents((prev) => prev.includes(event) ? prev.filter((e) => e !== event) : [...prev, event])
+   210→  }
+   211→
+   212→  return (
+   213→    <div className="space-y-6">
+   214→      <SectionTitle
+   215→        title="API Management"
+   216→        desc="API keys, webhooks & integrations"
+   217→        action={
+   218→          <div className="flex gap-2">
+   219→            <Button variant="outline" onClick={() => setCreatingWebhook(true)}>
+   220→              <Webhook className="mr-2 h-4 w-4" /> New Webhook
+   221→            </Button>
+   222→            <Button className="bg-[var(--navy)] text-white hover:bg-[var(--navy-light)]" onClick={() => setCreatingKey(true)}>
+   223→              <Plus className="mr-2 h-4 w-4" /> Generate API Key
+   224→            </Button>
+   225→          </div>
+   226→        }
+   227→      />
+   228→
+   229→      {/* Usage Stats */}
+   230→      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+   231→        {MOCK_STATS.map((stat) => (
+   232→          <Card key={stat.label}>
+   233→            <CardContent className="p-4">
+   234→              <p className="text-xs font-medium text-muted-foreground">{stat.label}</p>
+   235→              <div className="mt-1 flex items-baseline gap-2">
+   236→                <p className="text-2xl font-bold text-[var(--navy)] dark:text-white">{stat.value}</p>
+   237→                <span className={`inline-flex items-center gap-0.5 text-xs font-medium ${stat.positive ? 'text-emerald-600' : 'text-red-600'}`}>
+   238→                  {stat.positive ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+   239→                  {stat.change}
+   240→                </span>
+   241→              </div>
+   242→            </CardContent>
+   243→          </Card>
+   244→        ))}
+   245→      </div>
+   246→
+   247→      {/* API Keys Table */}
+   248→      <Card>
+   249→        <CardHeader className="pb-3">
+   250→          <CardTitle className="flex items-center gap-2 text-base">
+   251→            <Key className="h-4 w-4 text-[var(--gold)]" /> API Keys
+   252→          </CardTitle>
+   253→        </CardHeader>
+   254→        <CardContent>
+   255→          <div className="mb-4 flex flex-wrap gap-3">
+   256→            <div className="relative flex-1 min-w-[200px]">
+   257→              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+   258→              <Input placeholder="Search API keys..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+   259→            </div>
+   260→            <Select value={statusFilter} onValueChange={setStatusFilter}>
+   261→              <SelectTrigger className="w-[160px]">
+   262→                <SelectValue placeholder="All Status" />
+   263→              </SelectTrigger>
+   264→              <SelectContent>
+   265→                <SelectItem value="">All Status</SelectItem>
+   266→                <SelectItem value="ACTIVE">Active</SelectItem>
+   267→                <SelectItem value="REVOKED">Revoked</SelectItem>
+   268→                <SelectItem value="EXPIRED">Expired</SelectItem>
+   269→              </SelectContent>
+   270→            </Select>
+   271→          </div>
+   272→          <div className="max-h-96 overflow-y-auto">
+   273→            <Table>
+   274→              <TableHeader>
+   275→                <TableRow>
+   276→                  <TableHead>Name</TableHead>
+   277→                  <TableHead>API Key</TableHead>
+   278→                  <TableHead>Status</TableHead>
+   279→                  <TableHead>Rate Limit</TableHead>
+   280→                  <TableHead>Total Calls</TableHead>
+   281→                  <TableHead>Created</TableHead>
+   282→                  <TableHead>Last Used</TableHead>
+   283→                  <TableHead className="text-right">Actions</TableHead>
+   284→                </TableRow>
+   285→              </TableHeader>
+   286→              <TableBody>
+   287→                {filteredKeys.map((k) => {
+   288→                  const revealed = revealedKeys.has(k.id)
+   289→                  const displayKey = revealed ? k.key : maskKey(k.key)
+   290→                  return (
+   291→                    <TableRow key={k.id}>
+   292→                      <TableCell className="font-medium">{k.name}</TableCell>
+   293→                      <TableCell>
+   294→                        <div className="flex items-center gap-1.5">
+   295→                          <code className="rounded bg-muted px-1.5 py-0.5 text-xs font-mono max-w-[220px] truncate">{displayKey}</code>
+   296→                          <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => toggleReveal(k.id)} aria-label={revealed ? 'Hide key' : 'Reveal key'}>
+   297→                            {revealed ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+   298→                          </Button>
+   299→                          <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => copyKey(k.key, k.id)} aria-label="Copy key">
+   300→                            <Copy className={`h-3.5 w-3.5 ${copiedId === k.id ? 'text-emerald-600' : ''}`} />
+   301→                          </Button>
+   302→                        </div>
+   303→                      </TableCell>
+   304→                      <TableCell><Badge className={statusColor(k.status)}>{k.status}</Badge></TableCell>
+   305→                      <TableCell className="text-sm text-muted-foreground">{k.rateLimit}</TableCell>
+   306→                      <TableCell className="text-sm font-mono">{k.totalCalls.toLocaleString()}</TableCell>
+   307→                      <TableCell className="text-sm">{formatDate(k.createdAt)}</TableCell>
+   308→                      <TableCell className="text-sm text-muted-foreground">{k.lastUsed === 'Never' ? 'Never' : relativeTime(k.lastUsed)}</TableCell>
+   309→                      <TableCell className="text-right">
+   310→                        {k.status === 'ACTIVE' && (
+   311→                          <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-red-600 hover:text-red-700" onClick={() => setRevoking(k)} aria-label="Revoke key">
+   312→                            <XCircle className="h-4 w-4" />
+   313→                          </Button>
+   314→                        )}
+   315→                      </TableCell>
+   316→                    </TableRow>
+   317→                  )
+   318→                })}
+   319→                {filteredKeys.length === 0 && (
+   320→                  <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">No API keys match your filters</TableCell></TableRow>
+   321→                )}
+   322→              </TableBody>
+   323→            </Table>
+   324→          </div>
+   325→        </CardContent>
+   326→      </Card>
+   327→
+   328→      {/* Webhook Configuration */}
+   329→      <Card>
+   330→        <CardHeader className="pb-3">
+   331→          <CardTitle className="flex items-center gap-2 text-base">
+   332→            <Webhook className="h-4 w-4 text-[var(--gold)]" /> Webhook Endpoints
+   333→          </CardTitle>
+   334→        </CardHeader>
+   335→        <CardContent>
+   336→          <div className="max-h-96 overflow-y-auto">
+   337→            <Table>
+   338→              <TableHeader>
+   339→                <TableRow>
+   340→                  <TableHead>Name</TableHead>
+   341→                  <TableHead>URL</TableHead>
+   342→                  <TableHead>Events</TableHead>
+   343→                  <TableHead>Status</TableHead>
+   344→                  <TableHead>Success Rate</TableHead>
+   345→                  <TableHead>Last Triggered</TableHead>
+   346→                  <TableHead className="text-right">Actions</TableHead>
+   347→                </TableRow>
+   348→              </TableHeader>
+   349→              <TableBody>
+   350→                {webhooks.map((w) => (
+   351→                  <TableRow key={w.id}>
+   352→                    <TableCell className="font-medium">{w.name}</TableCell>
+   353→                    <TableCell>
+   354→                      <code className="rounded bg-muted px-1.5 py-0.5 text-xs font-mono max-w-[200px] truncate block">{w.url}</code>
+   355→                    </TableCell>
+   356→                    <TableCell>
+   357→                      <div className="flex flex-wrap gap-1">
+   358→                        {w.events.slice(0, 2).map((e) => (
+   359→                          <Badge key={e} variant="outline" className="text-[10px]">{e}</Badge>
+   360→                        ))}
+   361→                        {w.events.length > 2 && (
+   362→                          <Badge variant="outline" className="text-[10px]">+{w.events.length - 2}</Badge>
+   363→                        )}
+   364→                      </div>
+   365→                    </TableCell>
+   366→                    <TableCell>
+   367→                      <div className="flex items-center gap-2">
+   368→                        <Switch checked={w.status === 'ACTIVE'} onCheckedChange={() => toggleWebhookStatus(w.id)} />
+   369→                        <Badge className={w.status === 'ACTIVE' ? 'bg-emerald-500/10 text-emerald-700 border-emerald-500/30' : 'bg-amber-500/10 text-amber-700 border-amber-500/30'}>
+   370→                          {w.status}
+   371→                        </Badge>
+   372→                      </div>
+   373→                    </TableCell>
+   374→                    <TableCell className="text-sm">
+   375→                      <span className={w.successRate >= 99 ? 'text-emerald-600' : w.successRate >= 95 ? 'text-amber-600' : 'text-red-600'}>
+   376→                        {w.successRate}%
+   377→                      </span>
+   378→                    </TableCell>
+   379→                    <TableCell className="text-sm text-muted-foreground">{w.lastTriggered === 'Never' ? 'Never' : relativeTime(w.lastTriggered)}</TableCell>
+   380→                    <TableCell className="text-right">
+   381→                      <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-red-600 hover:text-red-700" onClick={() => setDeletingWebhook(w)} aria-label="Delete webhook">
+   382→                        <Trash2 className="h-3.5 w-3.5" />
+   383→                      </Button>
+   384→                    </TableCell>
+   385→                  </TableRow>
+   386→                ))}
+   387→              </TableBody>
+   388→            </Table>
+   389→          </div>
+   390→        </CardContent>
+   391→      </Card>
+   392→
+   393→      {/* Integration Documentation */}
+   394→      <Card>
+   395→        <CardHeader className="pb-3">
+   396→          <CardTitle className="flex items-center gap-2 text-base">
+   397→            <BookOpen className="h-4 w-4 text-[var(--gold)]" /> Integration Documentation
+   398→          </CardTitle>
+   399→        </CardHeader>
+   400→        <CardContent>
+   401→          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+   402→            {[
+   403→              { title: 'Getting Started', desc: 'Authentication, base URL, and your first API call', icon: Zap },
+   404→              { title: 'Authentication', desc: 'API key auth, OAuth 2.0, and token management', icon: Shield },
+   405→              { title: 'Rate Limiting', desc: 'Quotas, throttling, and best practices', icon: Activity },
+   406→              { title: 'Webhooks Guide', desc: 'Setting up and managing webhook endpoints', icon: Webhook },
+   407→              { title: 'API Reference', desc: 'Complete endpoint documentation with examples', icon: BookOpen },
+   408→              { title: 'SDKs & Libraries', desc: 'Official SDKs for JavaScript, Python, and Java', icon: BarChart3 },
+   409→            ].map((doc) => {
+   410→              const Icon = doc.icon
+   411→              return (
+   412→                <button
+   413→                  key={doc.title}
+   414→                  className="flex items-start gap-3 rounded-lg border p-3 text-left transition-colors hover:bg-muted/60"
+   415→                  onClick={() => toast.info(`${doc.title} documentation would open here`)}
+   416→                >
+   417→                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[var(--navy)]/10">
+   418→                    <Icon className="h-4 w-4 text-[var(--navy)] dark:text-[var(--gold-light)]" />
+   419→                  </div>
+   420→                  <div className="min-w-0 flex-1">
+   421→                    <p className="text-sm font-medium text-[var(--navy)] dark:text-white">{doc.title}</p>
+   422→                    <p className="mt-0.5 text-xs text-muted-foreground line-clamp-2">{doc.desc}</p>
+   423→                  </div>
+   424→                  <ExternalLink className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+   425→                </button>
+   426→              )
+   427→            })}
+   428→          </div>
+   429→        </CardContent>
+   430→      </Card>
+   431→
+   432→      {/* Generate API Key Dialog */}
+   433→      <Dialog open={creatingKey} onOpenChange={(o) => !o && setCreatingKey(false)}>
+   434→        <DialogContent className="max-w-md">
+   435→          <DialogHeader>
+   436→            <DialogTitle className="flex items-center gap-2">
+   437→              <Key className="h-5 w-5" /> Generate New API Key
+   438→            </DialogTitle>
+   439→            <DialogDescription>Create a new API key for integration access. Keep it secure.</DialogDescription>
+   440→          </DialogHeader>
+   441→          <div className="space-y-3">
+   442→            <div className="space-y-1.5">
+   443→              <Label>Key Name *</Label>
+   444→              <Input value={newKeyName} onChange={(e) => setNewKeyName(e.target.value)} placeholder="e.g. Production API Key" />
+   445→            </div>
+   446→            <div className="space-y-1.5">
+   447→              <Label>Rate Limit</Label>
+   448→              <Select value={newKeyRateLimit} onValueChange={setNewKeyRateLimit}>
+   449→                <SelectTrigger><SelectValue /></SelectTrigger>
+   450→                <SelectContent>
+   451→                  <SelectItem value="100/min">100/min (Low)</SelectItem>
+   452→                  <SelectItem value="500/min">500/min (Medium)</SelectItem>
+   453→                  <SelectItem value="1000/min">1,000/min (Standard)</SelectItem>
+   454→                  <SelectItem value="2000/min">2,000/min (High)</SelectItem>
+   455→                  <SelectItem value="5000/min">5,000/min (Enterprise)</SelectItem>
+   456→                </SelectContent>
+   457→              </Select>
+   458→            </div>
+   459→            <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3">
+   460→              <p className="text-xs text-amber-700 dark:text-amber-400">
+   461→                <strong>Warning:</strong> The API key will only be displayed once after creation. Store it securely.
+   462→              </p>
+   463→            </div>
+   464→          </div>
+   465→          <DialogFooter>
+   466→            <Button variant="outline" onClick={() => setCreatingKey(false)}>Cancel</Button>
+   467→            <Button className="bg-[var(--navy)] text-white hover:bg-[var(--navy-light)]" onClick={handleCreateKey}>
+   468→              <Key className="mr-2 h-4 w-4" /> Generate Key
+   469→            </Button>
+   470→          </DialogFooter>
+   471→        </DialogContent>
+   472→      </Dialog>
+   473→
+   474→      {/* Create Webhook Dialog */}
+   475→      <Dialog open={creatingWebhook} onOpenChange={(o) => !o && setCreatingWebhook(false)}>
+   476→        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+   477→          <DialogHeader>
+   478→            <DialogTitle className="flex items-center gap-2">
+   479→              <Webhook className="h-5 w-5" /> Create Webhook
+   480→            </DialogTitle>
+   481→            <DialogDescription>Configure a webhook endpoint to receive real-time event notifications.</DialogDescription>
+   482→          </DialogHeader>
+   483→          <div className="space-y-3">
+   484→            <div className="space-y-1.5">
+   485→              <Label>Webhook Name *</Label>
+   486→              <Input value={webhookName} onChange={(e) => setWebhookName(e.target.value)} placeholder="e.g. HR Onboarding Events" />
+   487→            </div>
+   488→            <div className="space-y-1.5">
+   489→              <Label>Endpoint URL *</Label>
+   490→              <Input value={webhookUrl} onChange={(e) => setWebhookUrl(e.target.value)} placeholder="https://your-server.com/webhook" />
+   491→            </div>
+   492→            <div className="space-y-1.5">
+   493→              <Label>Events *</Label>
+   494→              <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+   495→                {WEBHOOK_EVENTS.map((event) => (
+   496→                  <button
+   497→                    key={event}
+   498→                    onClick={() => toggleWebhookEvent(event)}
+   499→                    className={`flex items-center gap-2 rounded-md border px-2.5 py-1.5 text-left text-xs transition-colors ${webhookEvents.includes(event) ? 'border-[var(--gold)] bg-[var(--gold)]/10 text-[var(--navy)] dark:text-[var(--gold-light)]' : 'hover:bg-muted'}`}
+   500→                  >
+   501→                    <div className={`h-3.5 w-3.5 rounded border flex items-center justify-center ${webhookEvents.includes(event) ? 'bg-[var(--gold)] border-[var(--gold)]' : 'border-muted-foreground/30'}`}>
+   502→                      {webhookEvents.includes(event) && <CheckCircle2 className="h-2.5 w-2.5 text-[var(--navy)]" />}
+   503→                    </div>
+   504→                    {event}
+   505→                  </button>
+   506→                ))}
+   507→              </div>
+   508→            </div>
+   509→          </div>
+   510→          <DialogFooter>
+   511→            <Button variant="outline" onClick={() => setCreatingWebhook(false)}>Cancel</Button>
+   512→            <Button className="bg-[var(--navy)] text-white hover:bg-[var(--navy-light)]" onClick={handleCreateWebhook}>
+   513→              <Webhook className="mr-2 h-4 w-4" /> Create Webhook
+   514→            </Button>
+   515→          </DialogFooter>
+   516→        </DialogContent>
+   517→      </Dialog>
+   518→
+   519→      {/* Revoke API Key Dialog */}
+   520→      <AlertDialog open={!!revoking} onOpenChange={(o) => !o && setRevoking(null)}>
+   521→        <AlertDialogContent>
+   522→          <AlertDialogHeader>
+   523→            <AlertDialogTitle className="text-red-700">Revoke API Key?</AlertDialogTitle>
+   524→            <AlertDialogDescription>
+   525→              This will permanently revoke <strong>{revoking?.name}</strong>. All applications using this key will immediately lose access.
+   526→            </AlertDialogDescription>
+   527→          </AlertDialogHeader>
+   528→          <AlertDialogFooter>
+   529→            <AlertDialogCancel>Cancel</AlertDialogCancel>
+   530→            <AlertDialogAction className="bg-red-600 hover:bg-red-700" onClick={handleRevoke}>
+   531→              <XCircle className="mr-1 h-4 w-4" /> Revoke Key
+   532→            </AlertDialogAction>
+   533→          </AlertDialogFooter>
+   534→        </AlertDialogContent>
+   535→      </AlertDialog>
+   536→
+   537→      {/* Delete Webhook Dialog */}
+   538→      <AlertDialog open={!!deletingWebhook} onOpenChange={(o) => !o && setDeletingWebhook(null)}>
+   539→        <AlertDialogContent>
+   540→          <AlertDialogHeader>
+   541→            <AlertDialogTitle className="text-red-700">Delete Webhook?</AlertDialogTitle>
+   542→            <AlertDialogDescription>
+   543→              Permanently delete the <strong>{deletingWebhook?.name}</strong> webhook? Event notifications will stop immediately.
+   544→            </AlertDialogDescription>
+   545→          </AlertDialogHeader>
+   546→          <AlertDialogFooter>
+   547→            <AlertDialogCancel>Cancel</AlertDialogCancel>
+   548→            <AlertDialogAction className="bg-red-600 hover:bg-red-700" onClick={() => {
+   549→              if (!deletingWebhook) return
+   550→              setWebhooks((prev) => prev.filter((w) => w.id !== deletingWebhook.id))
+   551→              setDeletingWebhook(null)
+   552→              toast.success('Webhook deleted')
+   553→            }}>
+   554→              <Trash2 className="mr-1 h-4 w-4" /> Delete
+   555→            </AlertDialogAction>
+   556→          </AlertDialogFooter>
+   557→        </AlertDialogContent>
+   558→      </AlertDialog>
+   559→    </div>
+   560→  )
+   561→}
+   562→

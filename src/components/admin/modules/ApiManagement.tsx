@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Switch } from '@/components/ui/switch'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
@@ -25,6 +26,7 @@ import {
   Key, Plus, Search, Copy, Eye, EyeOff, Trash2, Pencil, Webhook,
   BarChart3, ExternalLink, RefreshCw, CheckCircle2, XCircle, Clock,
   ArrowUpRight, ArrowDownRight, Activity, Zap, Shield, BookOpen,
+  RotateCcw, Ban, Server, Timer, Users, TrendingUp, AlertTriangle,
 } from 'lucide-react'
 
 interface ApiKey {
@@ -36,6 +38,8 @@ interface ApiKey {
   lastUsed: string
   totalCalls: number
   rateLimit: string
+  expiresAt: string | null
+  isEnabled: boolean
 }
 
 interface WebhookConfig {
@@ -53,24 +57,33 @@ interface UsageStat {
   value: string
   change: string
   positive: boolean
+  icon: typeof Zap
 }
 
 const MOCK_KEYS: ApiKey[] = [
   {
     id: '1', name: 'Production API Key', key: 'hpe_prod_sk_a8f3k2m9x1b4c7d0e5f6g8h2j4k6l9',
-    status: 'ACTIVE', createdAt: '2024-11-15T10:30:00Z', lastUsed: '2025-06-14T08:22:00Z', totalCalls: 284729, rateLimit: '1000/min',
+    status: 'ACTIVE', createdAt: '2024-11-15T10:30:00Z', lastUsed: '2025-06-14T08:22:00Z', totalCalls: 284729, rateLimit: '1000/min', expiresAt: null, isEnabled: true,
   },
   {
     id: '2', name: 'Staging Environment', key: 'hpe_stg_sk_z3x5c7v9b1n3m5k8p2r4t6y8w0q1s3a',
-    status: 'ACTIVE', createdAt: '2025-01-08T14:15:00Z', lastUsed: '2025-06-13T17:45:00Z', totalCalls: 45812, rateLimit: '500/min',
+    status: 'ACTIVE', createdAt: '2025-01-08T14:15:00Z', lastUsed: '2025-06-13T17:45:00Z', totalCalls: 45812, rateLimit: '500/min', expiresAt: '2025-12-31T23:59:59Z', isEnabled: true,
   },
   {
     id: '3', name: 'Mobile App Integration', key: 'hpe_mob_sk_d4f6g8h0j2l4n6p8r0s2t4v6x8z0b2d',
-    status: 'ACTIVE', createdAt: '2025-03-22T09:00:00Z', lastUsed: '2025-06-14T06:10:00Z', totalCalls: 128403, rateLimit: '2000/min',
+    status: 'ACTIVE', createdAt: '2025-03-22T09:00:00Z', lastUsed: '2025-06-14T06:10:00Z', totalCalls: 128403, rateLimit: '2000/min', expiresAt: '2026-03-22T09:00:00Z', isEnabled: true,
   },
   {
     id: '4', name: 'Legacy Integration (Deprecated)', key: 'hpe_leg_sk_m1n3p5r7t9v1x3z5b7d9f1g3h5j7k9l',
-    status: 'REVOKED', createdAt: '2024-06-01T11:00:00Z', lastUsed: '2025-02-28T23:59:00Z', totalCalls: 512048, rateLimit: '200/min',
+    status: 'REVOKED', createdAt: '2024-06-01T11:00:00Z', lastUsed: '2025-02-28T23:59:00Z', totalCalls: 512048, rateLimit: '200/min', expiresAt: null, isEnabled: false,
+  },
+  {
+    id: '5', name: 'Staging API Key', key: 'hpe_sta_sk_q7w9e2r4t6y8u0i1o3p5a7s9d1f3g5',
+    status: 'ACTIVE', createdAt: '2025-04-10T12:00:00Z', lastUsed: '2025-06-12T15:30:00Z', totalCalls: 18920, rateLimit: '100/min', expiresAt: '2025-10-10T12:00:00Z', isEnabled: true,
+  },
+  {
+    id: '6', name: 'Mobile App Key', key: 'hpe_mak_sk_b6n8m0k2j4h6g8f0d2s4a6u8y0e2w4',
+    status: 'ACTIVE', createdAt: '2025-05-01T08:00:00Z', lastUsed: '2025-06-14T09:45:00Z', totalCalls: 67215, rateLimit: '10000/min', expiresAt: '2026-05-01T08:00:00Z', isEnabled: false,
   },
 ]
 
@@ -81,10 +94,10 @@ const MOCK_WEBHOOKS: WebhookConfig[] = [
 ]
 
 const MOCK_STATS: UsageStat[] = [
-  { label: 'Total API Calls (30d)', value: '458,944', change: '+12.3%', positive: true },
-  { label: 'Avg Response Time', value: '142ms', change: '-8.1%', positive: true },
-  { label: 'Error Rate', value: '0.12%', change: '-0.05%', positive: true },
-  { label: 'Active Integrations', value: '7', change: '+2', positive: true },
+  { label: 'Total API Calls (30d)', value: '458,944', change: '+12.3%', positive: true, icon: BarChart3 },
+  { label: 'Avg Response Time', value: '142ms', change: '-8.1%', positive: true, icon: Timer },
+  { label: 'Error Rate', value: '0.12%', change: '-0.05%', positive: true, icon: AlertTriangle },
+  { label: 'Active Integrations', value: '7', change: '+2', positive: true, icon: Server },
 ]
 
 const WEBHOOK_EVENTS = [
@@ -94,10 +107,32 @@ const WEBHOOK_EVENTS = [
   'attendance.marked', 'invoice.generated',
 ]
 
-function statusColor(status: string) {
+const RATE_LIMIT_OPTIONS = [
+  { value: '10/min', label: '10/min (Minimal)' },
+  { value: '100/min', label: '100/min (Low)' },
+  { value: '1000/min', label: '1,000/min (Standard)' },
+  { value: '10000/min', label: '10,000/min (High)' },
+  { value: 'custom', label: 'Custom' },
+]
+
+const EXPIRY_OPTIONS = [
+  { value: 'never', label: 'Never' },
+  { value: '30', label: '30 days' },
+  { value: '90', label: '90 days' },
+  { value: '365', label: '1 year' },
+  { value: 'custom', label: 'Custom' },
+]
+
+function statusColor(status: string, isEnabled?: boolean) {
+  if (status === 'ACTIVE' && isEnabled === false) return 'bg-amber-500/10 text-amber-700 border-amber-500/30'
   if (status === 'ACTIVE') return 'bg-emerald-500/10 text-emerald-700 border-emerald-500/30'
   if (status === 'REVOKED' || status === 'EXPIRED') return 'bg-red-500/10 text-red-700 border-red-500/30'
   return 'bg-gray-500/10 text-gray-700 border-gray-500/30'
+}
+
+function statusLabel(status: string, isEnabled?: boolean) {
+  if (status === 'ACTIVE' && isEnabled === false) return 'DISABLED'
+  return status
 }
 
 function maskKey(key: string) {
@@ -119,6 +154,15 @@ function relativeTime(iso: string) {
   return formatDate(iso)
 }
 
+function getExpiryDate(expiryValue: string): string | null {
+  if (expiryValue === 'never') return null
+  const days = parseInt(expiryValue, 10)
+  if (isNaN(days) || days <= 0) return null
+  const d = new Date()
+  d.setDate(d.getDate() + days)
+  return d.toISOString()
+}
+
 export function ApiManagement({ refreshKey }: { refreshKey: number }) {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
@@ -129,12 +173,18 @@ export function ApiManagement({ refreshKey }: { refreshKey: number }) {
   const [creatingKey, setCreatingKey] = useState(false)
   const [newKeyName, setNewKeyName] = useState('')
   const [newKeyRateLimit, setNewKeyRateLimit] = useState('1000/min')
+  const [newKeyCustomRateLimit, setNewKeyCustomRateLimit] = useState('')
+  const [newKeyExpiry, setNewKeyExpiry] = useState('never')
+  const [newKeyCustomExpiry, setNewKeyCustomExpiry] = useState('')
   const [creatingWebhook, setCreatingWebhook] = useState(false)
   const [webhookName, setWebhookName] = useState('')
   const [webhookUrl, setWebhookUrl] = useState('')
   const [webhookEvents, setWebhookEvents] = useState<string[]>([])
   const [revoking, setRevoking] = useState<ApiKey | null>(null)
   const [deletingWebhook, setDeletingWebhook] = useState<WebhookConfig | null>(null)
+  const [regeneratingKey, setRegeneratingKey] = useState<ApiKey | null>(null)
+  const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set())
+  const [bulkRevoking, setBulkRevoking] = useState(false)
 
   const filteredKeys = useMemo(() => {
     return keys.filter((k) => {
@@ -143,6 +193,9 @@ export function ApiManagement({ refreshKey }: { refreshKey: number }) {
       return matchSearch && matchStatus
     })
   }, [keys, search, statusFilter, refreshKey])
+
+  const allFilteredSelected = filteredKeys.length > 0 && filteredKeys.every((k) => selectedKeys.has(k.id))
+  const someSelected = selectedKeys.size > 0
 
   const toggleReveal = (id: string) => {
     setRevealedKeys((prev) => {
@@ -156,12 +209,14 @@ export function ApiManagement({ refreshKey }: { refreshKey: number }) {
   const copyKey = (key: string, id: string) => {
     navigator.clipboard.writeText(key)
     setCopiedId(id)
-    toast.success('API key copied to clipboard')
+    toast.success('Copied!')
     setTimeout(() => setCopiedId(null), 2000)
   }
 
   const handleCreateKey = () => {
     if (!newKeyName.trim()) { toast.error('Key name is required'); return }
+    const resolvedRateLimit = newKeyRateLimit === 'custom' ? (newKeyCustomRateLimit.trim() || '1000/min') : newKeyRateLimit
+    const resolvedExpiry = newKeyExpiry === 'custom' ? newKeyCustomExpiry.trim() : newKeyExpiry
     const newKey: ApiKey = {
       id: String(Date.now()),
       name: newKeyName,
@@ -170,21 +225,85 @@ export function ApiManagement({ refreshKey }: { refreshKey: number }) {
       createdAt: new Date().toISOString(),
       lastUsed: 'Never',
       totalCalls: 0,
-      rateLimit: newKeyRateLimit,
+      rateLimit: resolvedRateLimit,
+      expiresAt: getExpiryDate(resolvedExpiry),
+      isEnabled: true,
     }
     setKeys([newKey, ...keys])
     setNewKeyName('')
     setNewKeyRateLimit('1000/min')
+    setNewKeyCustomRateLimit('')
+    setNewKeyExpiry('never')
+    setNewKeyCustomExpiry('')
     setCreatingKey(false)
     toast.success('New API key generated successfully')
   }
 
   const handleRevoke = () => {
     if (!revoking) return
-    setKeys((prev) => prev.map((k) => k.id === revoking.id ? { ...k, status: 'REVOKED' as const } : k))
+    setKeys((prev) => prev.map((k) => k.id === revoking.id ? { ...k, status: 'REVOKED' as const, isEnabled: false } : k))
     setRevealedKeys((prev) => { const n = new Set(prev); n.delete(revoking.id); return n })
     setRevoking(null)
     toast.success(`API key "${revoking.name}" has been revoked`)
+  }
+
+  const handleRegenerateKey = () => {
+    if (!regeneratingKey) return
+    setKeys((prev) => prev.map((k) => {
+      if (k.id === regeneratingKey.id) {
+        return {
+          ...k,
+          key: `hpe_reg_sk_${Math.random().toString(36).slice(2, 34)}`,
+          status: 'ACTIVE' as const,
+          isEnabled: true,
+          createdAt: new Date().toISOString(),
+        }
+      }
+      return k
+    }))
+    setRegeneratingKey(null)
+    toast.success(`API key regenerated for "${regeneratingKey.name}"`)
+  }
+
+  const toggleKeyEnabled = (id: string) => {
+    setKeys((prev) => prev.map((k) => {
+      if (k.id === id && k.status === 'ACTIVE') {
+        const newEnabled = !k.isEnabled
+        toast.success(newEnabled ? `API key "${k.name}" enabled` : `API key "${k.name}" disabled`)
+        return { ...k, isEnabled: newEnabled }
+      }
+      return k
+    }))
+  }
+
+  const toggleSelectKey = (id: string) => {
+    setSelectedKeys((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const toggleSelectAll = () => {
+    if (allFilteredSelected) {
+      setSelectedKeys(new Set())
+    } else {
+      setSelectedKeys(new Set(filteredKeys.map((k) => k.id)))
+    }
+  }
+
+  const handleBulkRevoke = () => {
+    const ids = selectedKeys
+    setKeys((prev) => prev.map((k) => ids.has(k.id) ? { ...k, status: 'REVOKED' as const, isEnabled: false } : k))
+    setRevealedKeys((prev) => {
+      const n = new Set(prev)
+      ids.forEach((id) => n.delete(id))
+      return n
+    })
+    setSelectedKeys(new Set())
+    setBulkRevoking(false)
+    toast.success(`${ids.size} API key(s) have been bulk revoked`)
   }
 
   const toggleWebhookStatus = (id: string) => {
@@ -226,23 +345,49 @@ export function ApiManagement({ refreshKey }: { refreshKey: number }) {
         }
       />
 
-      {/* Usage Stats */}
+      {/* Usage Stats Dashboard */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {MOCK_STATS.map((stat) => (
-          <Card key={stat.label}>
-            <CardContent className="p-4">
-              <p className="text-xs font-medium text-muted-foreground">{stat.label}</p>
-              <div className="mt-1 flex items-baseline gap-2">
-                <p className="text-2xl font-bold text-[var(--navy)] dark:text-white">{stat.value}</p>
-                <span className={`inline-flex items-center gap-0.5 text-xs font-medium ${stat.positive ? 'text-emerald-600' : 'text-red-600'}`}>
-                  {stat.positive ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
-                  {stat.change}
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+        {MOCK_STATS.map((stat) => {
+          const Icon = stat.icon
+          return (
+            <Card key={stat.label} className="relative overflow-hidden">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-medium text-muted-foreground">{stat.label}</p>
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--navy)]/10">
+                    <Icon className="h-4 w-4 text-[var(--navy)] dark:text-[var(--gold-light)]" />
+                  </div>
+                </div>
+                <div className="mt-2 flex items-baseline gap-2">
+                  <p className="text-2xl font-bold text-[var(--navy)] dark:text-white">{stat.value}</p>
+                  <span className={`inline-flex items-center gap-0.5 text-xs font-medium ${stat.positive ? 'text-emerald-600' : 'text-red-600'}`}>
+                    {stat.positive ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+                    {stat.change}
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+          )
+        })}
       </div>
+
+      {/* API Usage Timeline Placeholder */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <TrendingUp className="h-4 w-4 text-[var(--gold)]" /> API Usage Timeline
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex h-48 items-center justify-center rounded-lg border border-dashed border-muted-foreground/25 bg-muted/30">
+            <div className="text-center">
+              <BarChart3 className="mx-auto h-10 w-10 text-muted-foreground/40" />
+              <p className="mt-2 text-sm text-muted-foreground">Usage chart will render here</p>
+              <p className="text-xs text-muted-foreground/60">Connect to analytics backend to see daily call volumes</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* API Keys Table */}
       <Card>
@@ -257,25 +402,50 @@ export function ApiManagement({ refreshKey }: { refreshKey: number }) {
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input placeholder="Search API keys..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v === '_all_' ? '' : v); setSelectedKeys(new Set()) }}>
               <SelectTrigger className="w-[160px]">
                 <SelectValue placeholder="All Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Status</SelectItem>
+                <SelectItem value="_all_">All Status</SelectItem>
                 <SelectItem value="ACTIVE">Active</SelectItem>
                 <SelectItem value="REVOKED">Revoked</SelectItem>
                 <SelectItem value="EXPIRED">Expired</SelectItem>
               </SelectContent>
             </Select>
           </div>
+
+          {/* Bulk Actions Bar */}
+          {someSelected && (
+            <div className="mb-3 flex items-center gap-3 rounded-lg border border-[var(--gold)]/30 bg-[var(--gold)]/5 px-4 py-2.5">
+              <span className="text-sm font-medium text-[var(--navy)] dark:text-[var(--gold-light)]">
+                {selectedKeys.size} key{selectedKeys.size > 1 ? 's' : ''} selected
+              </span>
+              <div className="flex-1" />
+              <Button size="sm" variant="outline" className="text-muted-foreground" onClick={() => setSelectedKeys(new Set())}>
+                Clear Selection
+              </Button>
+              <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700 border-red-200 hover:bg-red-50" onClick={() => setBulkRevoking(true)}>
+                <Ban className="mr-1.5 h-3.5 w-3.5" /> Bulk Revoke
+              </Button>
+            </div>
+          )}
+
           <div className="max-h-96 overflow-y-auto">
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-10">
+                    <Checkbox
+                      checked={filteredKeys.length > 0 ? (allFilteredSelected ? true : someSelected && filteredKeys.some((k) => selectedKeys.has(k.id)) ? 'indeterminate' : false) : false}
+                      onCheckedChange={() => toggleSelectAll()}
+                      aria-label="Select all keys"
+                    />
+                  </TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead>API Key</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Enabled</TableHead>
                   <TableHead>Rate Limit</TableHead>
                   <TableHead>Total Calls</TableHead>
                   <TableHead>Created</TableHead>
@@ -287,8 +457,16 @@ export function ApiManagement({ refreshKey }: { refreshKey: number }) {
                 {filteredKeys.map((k) => {
                   const revealed = revealedKeys.has(k.id)
                   const displayKey = revealed ? k.key : maskKey(k.key)
+                  const isSelected = selectedKeys.has(k.id)
                   return (
-                    <TableRow key={k.id}>
+                    <TableRow key={k.id} data-selected={isSelected || undefined} className={isSelected ? 'bg-muted/50' : ''}>
+                      <TableCell>
+                        <Checkbox
+                          checked={isSelected}
+                          onCheckedChange={() => toggleSelectKey(k.id)}
+                          aria-label={`Select ${k.name}`}
+                        />
+                      </TableCell>
                       <TableCell className="font-medium">{k.name}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1.5">
@@ -299,25 +477,46 @@ export function ApiManagement({ refreshKey }: { refreshKey: number }) {
                           <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => copyKey(k.key, k.id)} aria-label="Copy key">
                             <Copy className={`h-3.5 w-3.5 ${copiedId === k.id ? 'text-emerald-600' : ''}`} />
                           </Button>
+                          {copiedId === k.id && (
+                            <span className="text-xs font-medium text-emerald-600">Copied!</span>
+                          )}
                         </div>
                       </TableCell>
-                      <TableCell><Badge className={statusColor(k.status)}>{k.status}</Badge></TableCell>
+                      <TableCell><Badge className={statusColor(k.status, k.isEnabled)}>{statusLabel(k.status, k.isEnabled)}</Badge></TableCell>
+                      <TableCell>
+                        {k.status === 'ACTIVE' ? (
+                          <Switch
+                            checked={k.isEnabled}
+                            onCheckedChange={() => toggleKeyEnabled(k.id)}
+                            aria-label={`Toggle ${k.name}`}
+                          />
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
                       <TableCell className="text-sm text-muted-foreground">{k.rateLimit}</TableCell>
                       <TableCell className="text-sm font-mono">{k.totalCalls.toLocaleString()}</TableCell>
                       <TableCell className="text-sm">{formatDate(k.createdAt)}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">{k.lastUsed === 'Never' ? 'Never' : relativeTime(k.lastUsed)}</TableCell>
                       <TableCell className="text-right">
-                        {k.status === 'ACTIVE' && (
-                          <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-red-600 hover:text-red-700" onClick={() => setRevoking(k)} aria-label="Revoke key">
-                            <XCircle className="h-4 w-4" />
-                          </Button>
-                        )}
+                        <div className="flex items-center justify-end gap-0.5">
+                          {k.status === 'ACTIVE' && (
+                            <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-muted-foreground hover:text-[var(--navy)]" onClick={() => setRegeneratingKey(k)} aria-label="Regenerate key" title="Regenerate key">
+                              <RotateCcw className="h-4 w-4" />
+                            </Button>
+                          )}
+                          {k.status === 'ACTIVE' && (
+                            <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-red-600 hover:text-red-700" onClick={() => setRevoking(k)} aria-label="Revoke key">
+                              <XCircle className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   )
                 })}
                 {filteredKeys.length === 0 && (
-                  <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">No API keys match your filters</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={10} className="text-center text-muted-foreground py-8">No API keys match your filters</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>
@@ -448,13 +647,40 @@ export function ApiManagement({ refreshKey }: { refreshKey: number }) {
               <Select value={newKeyRateLimit} onValueChange={setNewKeyRateLimit}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="100/min">100/min (Low)</SelectItem>
-                  <SelectItem value="500/min">500/min (Medium)</SelectItem>
-                  <SelectItem value="1000/min">1,000/min (Standard)</SelectItem>
-                  <SelectItem value="2000/min">2,000/min (High)</SelectItem>
-                  <SelectItem value="5000/min">5,000/min (Enterprise)</SelectItem>
+                  {RATE_LIMIT_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
+              {newKeyRateLimit === 'custom' && (
+                <Input
+                  className="mt-1.5"
+                  placeholder="e.g. 5000/min"
+                  value={newKeyCustomRateLimit}
+                  onChange={(e) => setNewKeyCustomRateLimit(e.target.value)}
+                />
+              )}
+            </div>
+            <div className="space-y-1.5">
+              <Label>Key Expiry</Label>
+              <Select value={newKeyExpiry} onValueChange={setNewKeyExpiry}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {EXPIRY_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {newKeyExpiry === 'custom' && (
+                <Input
+                  className="mt-1.5"
+                  type="number"
+                  min="1"
+                  placeholder="Number of days"
+                  value={newKeyCustomExpiry}
+                  onChange={(e) => setNewKeyCustomExpiry(e.target.value)}
+                />
+              )}
             </div>
             <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3">
               <p className="text-xs text-amber-700 dark:text-amber-400">
@@ -529,6 +755,44 @@ export function ApiManagement({ refreshKey }: { refreshKey: number }) {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction className="bg-red-600 hover:bg-red-700" onClick={handleRevoke}>
               <XCircle className="mr-1 h-4 w-4" /> Revoke Key
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Regenerate API Key Dialog */}
+      <AlertDialog open={!!regeneratingKey} onOpenChange={(o) => !o && setRegeneratingKey(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Regenerate API Key?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will generate a new API key for <strong>{regeneratingKey?.name}</strong> and revoke the existing one.
+              Any application using the current key will immediately lose access. Make sure to update your integrations with the new key.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction className="bg-[var(--navy)] text-white hover:bg-[var(--navy-light)]" onClick={handleRegenerateKey}>
+              <RotateCcw className="mr-1 h-4 w-4" /> Regenerate Key
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Bulk Revoke API Keys Dialog */}
+      <AlertDialog open={bulkRevoking} onOpenChange={(o) => !o && setBulkRevoking(false)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-red-700">Bulk Revoke {selectedKeys.size} API Key{selectedKeys.size > 1 ? 's' : ''}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently revoke <strong>{selectedKeys.size} API key{selectedKeys.size > 1 ? 's' : ''}</strong>.
+              All applications using these keys will immediately lose access. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction className="bg-red-600 hover:bg-red-700" onClick={handleBulkRevoke}>
+              <Ban className="mr-1 h-4 w-4" /> Revoke {selectedKeys.size} Key{selectedKeys.size > 1 ? 's' : ''}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

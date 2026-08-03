@@ -449,3 +449,40 @@ Stage Summary:
 - User flow: Click 'Apply to Join' anywhere → See all 6 portal options → Pick one → Full 7-step onboarding form
 - Direct flow: Click specific portal's 'Fill Joining Application' → Full form directly (portal pre-selected)
 - All 6 options: General Application, Recruitment Portal, EHS Safety Portal, Payroll Portal, Manpower Supply Portal, Engineering Portal
+
+---
+Task ID: 12
+Agent: Main
+Task: Fix 3 issues — missing EHS Director, Access Portals opens view not scroll, enhance API Management
+
+Work Log:
+- Added Leadership section to Contact area with 2 cards:
+  - Managing Director: Hariprasad N P (+91 80737 48271) with Crown icon, navy color
+  - EHS Director: Rajesh S (+91 73377 92436) with HardHat icon, amber color
+  - Both have clickable phone links
+- Created PortalLoginPickerView component:
+  - Shows 5 login portals (Owner, Admin, HR, Employee, Client) as cards
+  - Search bar to filter portals
+  - Each card shows icon, title, description, top 3 features, Sign In CTA
+  - 'Apply to Join HP Enterprise' button at bottom for non-registered users
+  - Back to Home button
+- Changed all 'Access Portals' / 'Login' buttons to open portal-pick view:
+  - Hero 'Access Portals' button
+  - Nav bar 'Login' button  
+  - Mobile menu 'Login to Portal' button
+- Enhanced API Management module via subagent:
+  - Rate limit dropdown (10/100/1000/10000/min + Custom)
+  - Key expiry dropdown (Never/30d/90d/1yr/Custom)
+  - Regenerate/Rotate key with confirmation
+  - Toggle Enable/Disable switch per key
+  - Copy to clipboard with 'Copied!' feedback
+  - 2 new mock keys (Staging, Mobile App)
+  - Enhanced stats dashboard with icons
+  - Usage timeline placeholder
+  - Bulk select + bulk revoke actions
+- Browser verified: Login opens portal picker, both directors visible, zero errors
+
+Stage Summary:
+- Leadership section now shows Hariprasad N P (MD) and Rajesh S (EHS Director) with phone numbers
+- Access Portals is a webapp-style view, not scroll down
+- API Management has full add/remove/toggle/rotate/bulk-revoke capabilities
