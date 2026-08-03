@@ -9,18 +9,27 @@ export const dynamic = 'force-dynamic'
 export async function GET(req: NextRequest) {
   const cu = await getCurrentUser()
   if (!cu) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  if (!['OWNER', 'SUPER_ADMIN', 'HR_MANAGER', 'EMPLOYEE'].includes(cu.user.role))
+  if (!['OWNER', 'SUPER_ADMIN', 'HR_MANAGER', 'EMPLOYEE', 'CLIENT'].includes(cu.user.role))
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   const { searchParams } = new URL(req.url)
   const date = searchParams.get('date')
   const employeeId = searchParams.get('employeeId')
   const from = searchParams.get('from')
   const to = searchParams.get('to')
+  const clientId = searchParams.get('clientId')
 
   const where: any = {}
   // Scope employee role to their own records only
   if (cu.user.role === 'EMPLOYEE') {
     where.employeeId = cu.user.employee?.id
+  }
+  // Scope CLIENT role to employees assigned to their client
+  if (cu.user.role === 'CLIENT' && cu.user.clientId) {
+    where.employee = { assignedClientId: cu.user.clientId }
+  }
+  // Admin filter by client
+  if (clientId) {
+    where.employee = { ...(where.employee || {}), assignedClientId: clientId }
   }
   if (employeeId) where.employeeId = employeeId
   if (date) {
@@ -35,7 +44,14 @@ export async function GET(req: NextRequest) {
   try {
     const records = await db.attendance.findMany({
       where,
-      include: { employee: { select: { id: true, fullName: true, employeeCode: true, designation: true, department: true } } },
+      include: {
+        employee: {
+          select: {
+            id: true, fullName: true, employeeCode: true, designation: true, department: true,
+            assignedClient: { select: { id: true, clientName: true } },
+          }
+        }
+      },
       orderBy: { date: 'desc' },
       take: 500,
     })

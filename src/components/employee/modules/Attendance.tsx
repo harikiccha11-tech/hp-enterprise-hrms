@@ -19,6 +19,7 @@ import {
 } from 'lucide-react'
 import { fmtTime, hoursBetween } from '../lib'
 import { format } from 'date-fns'
+import { SelfieCapture } from './SelfieCapture'
 
 interface AttendanceRow {
   id: string
@@ -35,6 +36,8 @@ interface AttendanceRow {
   punchOutLat?: number | null
   punchOutLng?: number | null
   punchOutAddress?: string | null
+  punchInSelfie?: string | null
+  punchOutSelfie?: string | null
 }
 
 interface AttendanceData {
@@ -78,6 +81,9 @@ export function Attendance({ refreshKey }: { refreshKey: number }) {
   const [punching, setPunching] = useState<'punch_in' | 'punch_out' | null>(null)
   const [now, setNow] = useState(new Date())
   const [locStatus, setLocStatus] = useState<'idle' | 'capturing'>('idle')
+  const [selfieOpen, setSelfieOpen] = useState(false)
+  const [pendingAction, setPendingAction] = useState<'punch_in' | 'punch_out' | null>(null)
+  const [pendingSelfie, setPendingSelfie] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -109,11 +115,32 @@ export function Attendance({ refreshKey }: { refreshKey: number }) {
     ? hoursBetween(today.punchIn, now)
     : (today?.workingHours || 0)
 
-  const handlePunch = async (action: 'punch_in' | 'punch_out') => {
+  // When user clicks punch in/out, open selfie camera first
+  const handlePunchClick = (action: 'punch_in' | 'punch_out') => {
+    setPendingAction(action)
+    setSelfieOpen(true)
+  }
+
+  // After selfie is captured, proceed with punch
+  const handleSelfieSubmit = async (selfieBase64: string) => {
+    setSelfieOpen(false)
+    setPendingSelfie(selfieBase64)
+    if (pendingAction) {
+      await doPunch(pendingAction, selfieBase64)
+    }
+    setPendingAction(null)
+    setPendingSelfie(null)
+  }
+
+  const handleSelfieCancel = () => {
+    setSelfieOpen(false)
+    setPendingAction(null)
+  }
+
+  const doPunch = async (action: 'punch_in' | 'punch_out', selfie?: string | null) => {
     setPunching(action)
     setLocStatus('capturing')
     try {
-      // Capture location (non-blocking — punch proceeds even if denied)
       const loc = await captureLocation()
       setLocStatus('idle')
       const payload: any = { action }
@@ -121,6 +148,9 @@ export function Attendance({ refreshKey }: { refreshKey: number }) {
         payload.lat = loc.lat
         payload.lng = loc.lng
         payload.address = loc.address
+      }
+      if (selfie) {
+        payload.selfie = selfie
       }
       const res = await fetch('/api/employee/attendance', {
         method: 'POST',
@@ -163,6 +193,16 @@ export function Attendance({ refreshKey }: { refreshKey: number }) {
 
   return (
     <div className="space-y-6">
+      {/* Selfie capture modal */}
+      {pendingAction && (
+        <SelfieCapture
+          open={selfieOpen}
+          action={pendingAction}
+          onSubmit={handleSelfieSubmit}
+          onCancel={handleSelfieCancel}
+        />
+      )}
+
       {/* Punch card */}
       <Card className="overflow-hidden border-0 shadow-lg">
         <div className="relative">
@@ -191,6 +231,9 @@ export function Attendance({ refreshKey }: { refreshKey: number }) {
                         <span className="line-clamp-2">{today.punchInAddress}</span>
                       </p>
                     )}
+                    {today?.punchInSelfie && (
+                      <p className="mt-1 text-[10px] text-emerald-300/80">✓ Selfie captured</p>
+                    )}
                   </div>
                   <div className="rounded-lg border border-white/15 bg-white/10 p-3">
                     <p className="text-[10px] uppercase tracking-wider text-blue-100/70">Punch Out</p>
@@ -200,6 +243,9 @@ export function Attendance({ refreshKey }: { refreshKey: number }) {
                         <MapPin className="mt-0.5 h-2.5 w-2.5 shrink-0" />
                         <span className="line-clamp-2">{today.punchOutAddress}</span>
                       </p>
+                    )}
+                    {today?.punchOutSelfie && (
+                      <p className="mt-1 text-[10px] text-emerald-300/80">✓ Selfie captured</p>
                     )}
                   </div>
                 </div>
@@ -233,7 +279,7 @@ export function Attendance({ refreshKey }: { refreshKey: number }) {
 
                 <div className="mt-5 flex flex-col gap-2 sm:flex-row">
                   <Button
-                    onClick={() => handlePunch('punch_in')}
+                    onClick={() => handlePunchClick('punch_in')}
                     disabled={isPunchedIn || !!punching}
                     className="flex-1 bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
                   >
@@ -241,7 +287,7 @@ export function Attendance({ refreshKey }: { refreshKey: number }) {
                     {punching === 'punch_in' ? 'Punching…' : 'Punch In'}
                   </Button>
                   <Button
-                    onClick={() => handlePunch('punch_out')}
+                    onClick={() => handlePunchClick('punch_out')}
                     disabled={!isPunchedIn || isPunchedOut || !!punching}
                     className="flex-1 bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-50"
                   >
@@ -280,7 +326,8 @@ export function Attendance({ refreshKey }: { refreshKey: number }) {
                     <th className="py-2 pr-4 font-medium">Punch In</th>
                     <th className="py-2 pr-4 font-medium">Punch Out</th>
                     <th className="py-2 pr-4 font-medium">Hours</th>
-                    <th className="py-2 pr-4 font-medium">Overtime</th>
+                    <th className="py-2 pr-4 font-medium">OT</th>
+                    <th className="py-2 pr-4 font-medium">Selfie</th>
                     <th className="py-2 pr-4 font-medium">Location</th>
                     <th className="py-2 pr-4 font-medium">Status</th>
                   </tr>
@@ -288,12 +335,22 @@ export function Attendance({ refreshKey }: { refreshKey: number }) {
                 <tbody>
                   {monthRecords.map((r) => (
                     <tr key={r.id} className="border-b last:border-0 hover:bg-muted/40">
-                      <td className="py-2.5 pr-4 font-medium text-[var(--navy)] dark:text-white">{format(new Date(r.date), 'dd MMM yyyy')}</td>
+                      <td className="py-2.5 pr-4 font-medium text-[var(--navy)] dark:text-white">{format(new Date(r.date), 'dd MMM')}</td>
                       <td className="py-2.5 pr-4">{r.punchIn ? fmtTime(r.punchIn) : '—'}</td>
                       <td className="py-2.5 pr-4">{r.punchOut ? fmtTime(r.punchOut) : '—'}</td>
                       <td className="py-2.5 pr-4">{r.workingHours != null ? `${r.workingHours}h` : '—'}</td>
                       <td className="py-2.5 pr-4">{r.overtime ? `${r.overtime}h` : '—'}</td>
-                      <td className="py-2.5 pr-4 max-w-[180px]">
+                      <td className="py-2.5 pr-4">
+                        <div className="flex gap-1">
+                          {r.punchInSelfie ? (
+                            <img src={`/api/uploads/${r.punchInSelfie}`} alt="In" className="h-6 w-6 rounded-full object-cover border border-emerald-400" />
+                          ) : <span className="text-muted-foreground text-xs">—</span>}
+                          {r.punchOutSelfie ? (
+                            <img src={`/api/uploads/${r.punchOutSelfie}`} alt="Out" className="h-6 w-6 rounded-full object-cover border border-rose-400" />
+                          ) : <span className="text-muted-foreground text-xs">—</span>}
+                        </div>
+                      </td>
+                      <td className="py-2.5 pr-4 max-w-[150px]">
                         {r.punchInAddress ? (
                           <span className="flex items-start gap-1 text-xs text-muted-foreground">
                             <MapPin className="mt-0.5 h-3 w-3 shrink-0 text-[var(--gold)]" />

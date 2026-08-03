@@ -2,9 +2,28 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
 import { audit } from '@/lib/audit'
+import { writeFile, mkdir } from 'fs/promises'
+import path from 'path'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
+
+/** Save a base64 selfie image to disk and return the relative file path */
+async function saveSelfie(employeeId: string, action: string, base64Data: string): Promise<string> {
+  // Strip data URL prefix if present
+  const matches = base64Data.match(/^data:image\/(\w+);base64,(.+)$/)
+  const ext = matches ? matches[1] : 'jpg'
+  const data = matches ? matches[2] : base64Data
+
+  const dir = path.join(process.cwd(), 'upload', 'attendance', employeeId)
+  await mkdir(dir, { recursive: true })
+
+  const fileName = `${action}_${new Date().toISOString().replace(/[:.]/g, '-')}.${ext}`
+  const filePath = path.join(dir, fileName)
+  await writeFile(filePath, Buffer.from(data, 'base64'))
+
+  return `attendance/${employeeId}/${fileName}`
+}
 
 export async function GET() {
   try {
@@ -37,7 +56,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json()
-    const { action } = body // punch_in | punch_out
+    const { action, selfie } = body // punch_in | punch_out, selfie = base64 string
     const now = new Date()
     const today = new Date(now); today.setHours(0, 0, 0, 0)
     const endOfDay = new Date(now); endOfDay.setHours(23, 59, 59, 999)
@@ -69,6 +88,10 @@ export async function POST(req: NextRequest) {
         punchInLng: lng,
         punchInAddress: address,
       }
+      // Save selfie photo if provided
+      if (selfie) {
+        locData.punchInSelfie = await saveSelfie(employeeId, 'punch_in', selfie)
+      }
       if (record) {
         record = await db.attendance.update({ where: { id: record.id }, data: locData })
       } else {
@@ -81,12 +104,17 @@ export async function POST(req: NextRequest) {
       const diff = (now.getTime() - new Date(record.punchIn).getTime()) / 3600000
       const workingHours = Math.round(diff * 100) / 100
       const overtime = Math.max(0, Math.round((diff - 9) * 100) / 100)
+      const updateData: any = {
+        punchOut: now, workingHours, overtime,
+        punchOutLat: lat, punchOutLng: lng, punchOutAddress: address,
+      }
+      // Save selfie photo if provided
+      if (selfie) {
+        updateData.punchOutSelfie = await saveSelfie(employeeId, 'punch_out', selfie)
+      }
       record = await db.attendance.update({
         where: { id: record.id },
-        data: {
-          punchOut: now, workingHours, overtime,
-          punchOutLat: lat, punchOutLng: lng, punchOutAddress: address,
-        },
+        data: updateData,
       })
       await audit(cu.user.id, 'PUNCH_OUT', 'Attendance', record.id, `${workingHours}h ${address ? 'at ' + address : ''}`)
     }

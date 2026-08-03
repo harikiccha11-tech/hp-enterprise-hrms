@@ -380,3 +380,28 @@ Stage Summary:
 - Root cause of Unauthorized: page.tsx useEffect called refresh() on every render cycle, causing race condition with setUser() from login
 - All 3 portal logins now work correctly from landing page
 - Production-ready zip created for deployment
+
+---
+Task ID: 1
+Agent: main
+Task: Fix HPAI AI assistant not responding on Vercel + implement attendance selfie capture feature
+
+Work Log:
+- Diagnosed root cause: Z.ai SDK reads config from .z-ai-config which is in .gitignore, so it never deploys to Vercel. Also Z.ai internal API (internal-api.z.ai) is only accessible from Z.ai sandbox, not from Vercel servers
+- Rewrote /api/ai/chat/route.ts to use Gemini API directly via fetch (for Vercel) with Z.ai SDK as local fallback
+- Updated error message in i18n.ts
+- Deployed HPAI fix to Vercel via REST API (bypassing Git/Vercel CLI issues)
+- Added punchInSelfie and punchOutSelfie fields to Prisma Attendance model
+- Created SelfieCapture.tsx camera component with front/back camera, capture, retake, and submit
+- Modified employee Attendance.tsx to show selfie capture dialog on punch in/out
+- Modified employee attendance API to save base64 selfie images to disk
+- Updated uploads route to serve attendance selfies
+- Enhanced admin Attendance.tsx with: selfie thumbnails in table, full-size selfie viewer dialog, client filter dropdown, selfie display in location cards
+- Worked around Turbopack parser bug (arrow functions in JSX expression blocks)
+- All changes deployed to Vercel production via API
+
+Stage Summary:
+- HPAI now uses Gemini API on Vercel, Z.ai SDK locally
+- Deployment: dpl_2xaNfLkbi5SzCxDLJVKVPJwyzTDL (READY, promoted to production)
+- Attendance selfie feature: camera capture on punch in/out, geolocation + timestamp, photo saved to disk, displayed in admin panel
+- Admin panel: client filter, selfie thumbnails, full-size viewer, client column in table
