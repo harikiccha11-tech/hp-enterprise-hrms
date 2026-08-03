@@ -39,7 +39,7 @@ async function callGemini(messages: { role: string; content: string }[]): Promis
   }
 
   const url =
-    'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' +
+    'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=' +
     apiKey
 
   const res = await fetch(url, {
@@ -203,12 +203,12 @@ export async function GET() {
   let geminiGenTest = 'not tested'
   if (hasGemini) {
     try {
-      const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash?key=' + process.env.GEMINI_API_KEY, { signal: AbortSignal.timeout(10000) })
+      const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest?key=' + process.env.GEMINI_API_KEY, { signal: AbortSignal.timeout(10000) })
       geminiTest = 'status ' + res.status + (res.ok ? ' (available)' : ' (error)')
     } catch (e) { geminiTest = 'error: ' + (e as Error).message }
     // Test actual generation
     try {
-      const genRes = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' + process.env.GEMINI_API_KEY, {
+      const genRes = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=' + process.env.GEMINI_API_KEY, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ contents: [{ parts: [{ text: 'Say hi' }] }], generationConfig: { maxOutputTokens: 10 } }),
