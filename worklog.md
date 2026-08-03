@@ -108,3 +108,38 @@ Stage Summary:
 - Employee Portal: 8 modules, fully functional
 - Client Portal: 4 modules, fully functional
 - HPAI: Working, responds with correct business info
+---
+Task ID: 1
+Agent: Main
+Task: Rewrite Landing page as SaaS-style (Zoho/Keka), remove top company bar, premium luxury background, make everything workable
+
+Work Log:
+- Read current project state: constants.ts (already updated), Landing.tsx (1253 lines with old design), page.tsx, roles/route.ts (bcryptjs already fixed), AI chat route (working), dev.log (server running clean)
+- Confirmed bcryptjs is NOT imported anywhere in src/ — already fixed in previous session
+- Confirmed HPAI copilot works (dev.log shows POST /api/ai/chat 200)
+- Confirmed sitemap.ts and robots.ts already exist with correct info
+- Confirmed layout.tsx has full SEO: OG tags, Twitter cards, JSON-LD structured data (Organization, LocalBusiness, WebApplication, WebSite schemas)
+- Completely rewrote Landing.tsx (~750 lines) with SaaS-style design:
+  - REMOVED top GST/UDYAM/PAN trust bar (no company info at top)
+  - Nav: Transparent on hero, solid white on scroll, product name "HPHRMS" prominent
+  - Hero: Premium dark gradient (#060a18 → #121e42) with animated gold/blue/purple glow orbs, grid overlay, mesh gradient, product-focused headline "The Smarter Way to Manage Your Entire Workforce"
+  - Trust strip: Light gray horizontal bar with check marks
+  - Features: 12 HPHRMS features in 3-col grid with navy icons
+  - Services: Dark section with glass-morphism cards (11 HP Enterprise services)
+  - Pricing: 4 plans (Free/₹0, Starter/₹2,999, Professional/₹7,999, Enterprise/Custom), popular card highlighted with gold ring
+  - Trust & Compliance: 3 large cards (GSTIN 29ANZPH4067Q1ZS, UDYAM, PAN)
+  - Portal Access: 3 portal cards (Admin, Employee, Client) — clickable to login
+  - Contact: 3 phone/email cards + 2 office cards + CTA card with WhatsApp/Recruitment links
+  - Footer: Dark (#060a18), 4-column layout, social icons, GST/UDYAM/PAN in footer only
+- All views functional: login forms, subscription form, registration form
+- ESLint clean
+- Agent Browser verification: zero console errors, all sections render, login flow works, subscription form works, nav scrolling works, footer verified with all business info
+
+Stage Summary:
+- Landing page completely redesigned as premium SaaS product page (Zoho/Keka style)
+- No company info at top — product (HPHRMS) is the hero
+- Premium luxury dark gradient backgrounds with animated glow effects
+- All interactive elements verified working: login, subscribe, register, nav scrolling
+- SEO fully covered: sitemap.ts, robots.ts, layout.tsx with JSON-LD, OG, Twitter cards
+- All business info (GSTIN, UDYAM, PAN, addresses, contacts) correctly placed in footer and trust section
+
