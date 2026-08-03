@@ -606,3 +606,25 @@ Work Log:
 ## Files Created: 20 total (10 API + 10 frontend)
 
 ---
+
+---
+Task ID: session-recovery
+Agent: Main Orchestrator
+Task: Fix dev server crash and database misconfiguration to restore preview
+
+Work Log:
+- Found dev server process was dead (no running Next.js process)
+- Found Prisma schema was set to PostgreSQL (for Vercel) but local env uses SQLite
+- Changed prisma/schema.prisma datasource from postgresql to sqlite (file:../db/custom.db)
+- Ran `bun run db:push` to sync schema with local SQLite database
+- Ran seed script (bun run src/lib/seed.ts) — created owner, superadmin, hrmanager, 2 employees, client, project, work order, announcements, attendance records
+- Started dev server with nohup to keep it alive
+- Verified all 3 portals via agent-browser:
+  - Admin Console (superadmin/Admin@123) — 30+ modules, dashboard with stats ✓
+  - Employee Portal (arjun.sharma/Employee@123) — 7 modules, profile, attendance, leaves ✓
+  - Client Portal (infosys.client/Client@123) — 4 modules, project data, work orders, invoices ✓
+
+Stage Summary:
+- Root cause: Prisma schema pointed to PostgreSQL (Neon) instead of local SQLite, causing connection failures
+- Fixed by switching to SQLite provider and re-seeding
+- All portals verified working end-to-end in browser
