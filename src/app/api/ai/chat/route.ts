@@ -4,7 +4,7 @@ import { getCurrentUser } from '@/lib/auth'
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-// In-memory conversation store (simple Map keyed by userId)
+// In-memory conversation store (keyed by userId)
 const conversations = new Map<string, { role: string; content: string }[]>()
 
 const SYSTEM_PROMPT = `You are HPAI, the intelligent HR assistant for HP ENTERPRISE Safety Service & Man Power Supply. You help with:
@@ -18,51 +18,110 @@ const SYSTEM_PROMPT = `You are HPAI, the intelligent HR assistant for HP ENTERPR
 
 Keep responses concise (2-4 sentences max unless asked for details). Be friendly but professional. Use bullet points for lists. If unsure, advise the user to contact HR at hr@hpenterprise.co.in.`
 
-/** Call Gemini API directly via fetch */
+/* ─── Models to try on the Vercel AI Gateway (in priority order) ─── */
+const GATEWAY_MODELS = [
+  'google/gemini-2.0-flash-001',
+  'google/gemini-2.0-flash',
+  'openai/gpt-4o-mini',
+  'openai/gpt-4o',
+]
+
+/* ─── Vercel AI Gateway (primary — works on Vercel & everywhere) ─── */
+async function callGateway(messages: { role: string; content: string }[]): Promise<string> {
+  const apiKey = process.env.AI_GATEWAY_API_KEY
+  if (!apiKey) throw new Error('AI_GATEWAY_API_KEY not configured')
+
+  let lastErr: Error | undefined
+  for (const model of GATEWAY_MODELS) {
+    try {
+      const res = await fetch('https://gateway.ai.vercel.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + apiKey,
+        },
+        body: JSON.stringify({
+          model,
+          messages,
+          temperature: 0.7,
+          max_tokens: 1024,
+        }),
+        signal: AbortSignal.timeout(20000),
+      })
+
+      if (res.status === 404 || res.status === 400) {
+        // Model not available, try next
+        console.warn('[HPAI] Gateway model ' + model + ' not available (' + res.status + ')')
+        continue
+      }
+
+      if (!res.ok) {
+        const errBody = await res.text()
+        throw new Error('Gateway ' + res.status + ': ' + errBody.slice(0, 200))
+      }
+
+      const data = await res.json()
+      const text = data?.choices?.[0]?.message?.content
+      if (!text) throw new Error('Empty response from gateway')
+      console.log('[HPAI] Gateway success via model:', model)
+      return text
+    } catch (e) {
+      lastErr = e as Error
+      if (lastErr.name === 'TimeoutError' || lastErr.message?.includes('404') || lastErr.message?.includes('400')) {
+        console.warn('[HPAI] Gateway model ' + model + ' failed:', lastErr.message)
+        continue
+      }
+      // Network / auth errors — don't bother trying more models
+      throw lastErr
+    }
+  }
+  throw lastErr || new Error('All gateway models failed')
+}
+
+/* ─── Gemini direct (fallback — needs valid GEMINI_API_KEY) ─── */
 async function callGemini(messages: { role: string; content: string }[]): Promise<string> {
   const apiKey = process.env.GEMINI_API_KEY
   if (!apiKey) throw new Error('GEMINI_API_KEY not configured')
 
-  // Convert messages to Gemini format
   const geminiContents = messages
-    .filter((m) => m.role !== 'system')
-    .map((m) => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] }))
-
-  const systemInstruction = messages.find((m) => m.role === 'system')
+    .filter(function (m) { return m.role !== 'system' })
+    .map(function (m) {
+      return { role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] }
+    })
+  const systemInstruction = messages.find(function (m) { return m.role === 'system' })
 
   const body: Record<string, unknown> = {
     contents: geminiContents,
-    generationConfig: {
-      temperature: 0.7,
-      maxOutputTokens: 1024,
-    },
+    generationConfig: { temperature: 0.7, maxOutputTokens: 1024 },
   }
   if (systemInstruction) {
     body.systemInstruction = { parts: [{ text: systemInstruction.content }] }
   }
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`
+  const url =
+    'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' +
+    apiKey
 
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
-    signal: AbortSignal.timeout(15000), // 15s timeout
+    signal: AbortSignal.timeout(15000),
   })
 
   if (!res.ok) {
     const errBody = await res.text()
-    console.error('Gemini API error:', res.status, errBody)
-    throw new Error(`Gemini API returned ${res.status}`)
+    console.error('[HPAI] Gemini error:', res.status, errBody)
+    throw new Error('Gemini returned ' + res.status)
   }
 
   const data = await res.json()
   const text = data?.candidates?.[0]?.content?.parts?.[0]?.text
-  if (!text) throw new Error('No response text from Gemini')
+  if (!text) throw new Error('No response from Gemini')
   return text
 }
 
-/** Call Z.ai SDK (only works inside Z.ai sandbox) */
+/* ─── Z.ai SDK (only works in Z.ai sandbox, NOT on Vercel) ─── */
 async function callZai(messages: { role: string; content: string }[]): Promise<string> {
   const ZAI = (await import('z-ai-web-dev-sdk')).default
   const zai = await ZAI.create()
@@ -73,6 +132,7 @@ async function callZai(messages: { role: string; content: string }[]): Promise<s
   return completion.choices[0]?.message?.content || 'No response from AI.'
 }
 
+/* ─── POST handler ─── */
 export async function POST(req: NextRequest) {
   const cu = await getCurrentUser()
   if (!cu) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -93,27 +153,38 @@ export async function POST(req: NextRequest) {
 
     history.push({ role: 'user', content: message.trim() })
 
-    // Keep last 20 messages (10 turns) to avoid token limits
+    // Keep last 20 messages (10 turns) to stay within token limits
     if (history.length > 21) {
       history = [history[0], ...history.slice(-20)]
     }
 
     let aiResponse: string | undefined
     let lastError: Error | undefined
+    const isVercel = typeof process.env.VERCEL !== 'undefined'
 
-    // Strategy 1: Gemini API (works on Vercel and everywhere)
-    if (process.env.GEMINI_API_KEY) {
+    // Strategy 1: Vercel AI Gateway (works everywhere, primary on Vercel)
+    if (!aiResponse && process.env.AI_GATEWAY_API_KEY) {
+      try {
+        aiResponse = await callGateway(history)
+      } catch (e) {
+        lastError = e as Error
+        console.error('[HPAI] Gateway failed:', lastError?.message)
+      }
+    }
+
+    // Strategy 2: Gemini direct API (fallback if gateway key missing / fails)
+    if (!aiResponse && process.env.GEMINI_API_KEY) {
       try {
         aiResponse = await callGemini(history)
-        console.log('[HPAI] Response via Gemini')
+        console.log('[HPAI] Response via Gemini direct')
       } catch (e) {
         lastError = e as Error
         console.error('[HPAI] Gemini failed:', lastError?.message)
       }
     }
 
-    // Strategy 2: Z.ai SDK (only works inside Z.ai sandbox)
-    if (!aiResponse) {
+    // Strategy 3: Z.ai SDK (Z.ai sandbox only — will fail on Vercel)
+    if (!aiResponse && !isVercel) {
       try {
         aiResponse = await callZai(history)
         console.log('[HPAI] Response via Z.ai')
@@ -124,14 +195,14 @@ export async function POST(req: NextRequest) {
     }
 
     if (!aiResponse) {
-      console.error('[HPAI] All providers failed')
+      console.error('[HPAI] All providers failed:', lastError?.message)
       return NextResponse.json(
         { error: 'AI service unavailable. Please try again later.' },
-        { status: 503 }
+        { status: 503 },
       )
     }
 
-    // Clean up response - remove markdown code blocks if model wraps in them
+    // Clean up response — strip markdown code block wrappers
     aiResponse = aiResponse
       .replace(/^```(?:markdown|text)?\n?/i, '')
       .replace(/\n?```$/i, '')
@@ -142,7 +213,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ response: aiResponse })
   } catch (e: unknown) {
-    console.error('HPAI error:', e)
+    console.error('[HPAI] Unhandled error:', e)
     return NextResponse.json({ error: 'AI service unavailable' }, { status: 503 })
   }
 }

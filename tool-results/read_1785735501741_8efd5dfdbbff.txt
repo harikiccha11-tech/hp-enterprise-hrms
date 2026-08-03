@@ -1,0 +1,737 @@
+     1→     1→'use client'
+     2→     2→import { useEffect, useState, useCallback } from 'react'
+     3→     3→import { Card, CardContent } from '@/components/ui/card'
+     4→     4→import { Button } from '@/components/ui/button'
+     5→     5→import { Input } from '@/components/ui/input'
+     6→     6→import { Label } from '@/components/ui/label'
+     7→     7→import { Skeleton } from '@/components/ui/skeleton'
+     8→     8→import { Badge } from '@/components/ui/badge'
+     9→     9→import {
+    10→    10→  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+    11→    11→} from '@/components/ui/select'
+    12→    12→import {
+    13→    13→  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+    14→    14→} from '@/components/ui/table'
+    15→    15→import {
+    16→    16→  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+    17→    17→} from '@/components/ui/dialog'
+    18→    18→import {
+    19→    19→  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
+    20→    20→  AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+    21→    21→} from '@/components/ui/alert-dialog'
+    22→    22→import { SectionTitle, StatusBadge, EmptyState } from '@/components/shared'
+    23→    23→import { toast } from 'sonner'
+    24→    24→import { Fingerprint, Calendar, Pencil, MapPin, Trash2, Download, Camera, Building2 } from 'lucide-react'
+    25→    25→import { useAuth } from '@/lib/store'
+    26→    26→import { api, fmtDate, fmtTime } from '../lib'
+    27→    27→
+    28→    28→interface AttendanceRecord {
+    29→    29→  id: string
+    30→    30→  date: string
+    31→    31→  punchIn: string | null
+    32→    32→  punchOut: string | null
+    33→    33→  workingHours: number | null
+    34→    34→  overtime: number | null
+    35→    35→  lateArrival: boolean
+    36→    36→  status: string
+    37→    37→  punchInLat?: number | null
+    38→    38→  punchInLng?: number | null
+    39→    39→  punchInAddress?: string | null
+    40→    40→  punchOutLat?: number | null
+    41→    41→  punchOutLng?: number | null
+    42→    42→  punchOutAddress?: string | null
+    43→    43→  punchInSelfie?: string | null
+    44→    44→  punchOutSelfie?: string | null
+    45→    45→  employee: {
+    46→    46→    id: string
+    47→    47→    fullName: string
+    48→    48→    employeeCode: string | null
+    49→    49→    designation: string | null
+    50→    50→    department: string | null
+    51→    51→    assignedClient?: { id: string; clientName: string } | null
+    52→    52→  }
+    53→    53→}
+    54→    54→
+    55→    55→interface ClientOption {
+    56→    56→  id: string
+    57→    57→  clientName: string
+    58→    58→}
+    59→    59→
+    60→    60→const STATUS_OPTIONS = [
+    61→    61→  { value: 'PRESENT', label: 'Present' },
+    62→    62→  { value: 'LATE', label: 'Late' },
+    63→    63→  { value: 'HALF_DAY', label: 'Half Day' },
+    64→    64→  { value: 'ABSENT', label: 'Absent' },
+    65→    65→  { value: 'LEAVE', label: 'On Leave' },
+    66→    66→  { value: 'HOLIDAY', label: 'Holiday' },
+    67→    67→]
+    68→    68→
+    69→    69→/* ── Helper: Selfie thumbnail column cell ─────────── */
+    70→    70→function SelfieCell(props: {
+    71→    71→  record: AttendanceRecord
+    72→    72→  onOpen: (url: string, label: string) => void
+    73→    73→}) {
+    74→    74→  const { record, onOpen } = props
+    75→    75→  const hasIn = !!record.punchInSelfie
+    76→    76→  const hasOut = !!record.punchOutSelfie
+    77→    77→
+    78→    78→  if (!hasIn && !hasOut) {
+    79→    79→    return <span className="text-xs text-muted-foreground">—</span>
+    80→    80→  }
+    81→    81→
+    82→    82→  const inUrl = '/api/uploads/' + (record.punchInSelfie || '')
+    83→    83→  const outUrl = '/api/uploads/' + (record.punchOutSelfie || '')
+    84→    84→  const base = record.employee.fullName + ' - ' + fmtDate(record.date)
+    85→    85→
+    86→    86→  return (
+    87→    87→    <div className="flex gap-1.5">
+    88→    88→      {hasIn && (
+    89→    89→        <button
+    90→    90→          type="button"
+    91→    91→          onClick={function () { onOpen(inUrl, 'Punch In - ' + base) }}
+    92→    92→        >
+    93→    93→          <img
+    94→    94→            src={inUrl}
+    95→    95→            alt="In"
+    96→    96→            className="h-7 w-7 rounded-full object-cover border-2 border-emerald-400 hover:scale-110 transition-transform cursor-pointer"
+    97→    97→          />
+    98→    98→        </button>
+    99→    99→      )}
+   100→   100→      {hasOut && (
+   101→   101→        <button
+   102→   102→          type="button"
+   103→   103→          onClick={function () { onOpen(outUrl, 'Punch Out - ' + base) }}
+   104→   104→        >
+   105→   105→          <img
+   106→   106→            src={outUrl}
+   107→   107→            alt="Out"
+   108→   108→            className="h-7 w-7 rounded-full object-cover border-2 border-rose-400 hover:scale-110 transition-transform cursor-pointer"
+   109→   109→          />
+   110→   110→        </button>
+   111→   111→      )}
+   112→   112→    </div>
+   113→   113→  )
+   114→   114→}
+   115→   115→
+   116→   116→/* ── Helper: Location link column cell ─────────────── */
+   117→   117→function LocationCell(props: { record: AttendanceRecord }) {
+   118→   118→  const { record } = props
+   119→   119→  if (!record.punchInAddress) {
+   120→   120→    return <span className="text-muted-foreground">—</span>
+   121→   121→  }
+   122→   122→  const href =
+   123→   123→    'https://www.openstreetmap.org/?mlat=' +
+   124→   124→    record.punchInLat +
+   125→   125→    '&mlon=' +
+   126→   126→    record.punchInLng +
+   127→   127→    '#map=16/' +
+   128→   128→    record.punchInLat +
+   129→   129→    '/' +
+   130→   130→    record.punchInLng
+   131→   131→
+   132→   132→  return (
+   133→   133→    <a
+   134→   134→      href={href}
+   135→   135→      target="_blank"
+   136→   136→      rel="noopener noreferrer"
+   137→   137→      className="flex items-start gap-1 text-muted-foreground hover:text-[var(--navy)] dark:hover:text-[var(--gold)]"
+   138→   138→      title={record.punchInAddress}
+   139→   139→    >
+   140→   140→      <MapPin className="mt-0.5 h-3 w-3 shrink-0 text-[var(--gold)]" />
+   141→   141→      <span className="line-clamp-1">{record.punchInAddress}</span>
+   142→   142→    </a>
+   143→   143→  )
+   144→   144→}
+   145→   145→
+   146→   146→/* ── Helper: Client name column cell ───────────────── */
+   147→   147→function ClientNameCell(props: { record: AttendanceRecord }) {
+   148→   148→  const client = props.record.employee.assignedClient
+   149→   149→  const name = client ? client.clientName : ''
+   150→   150→  if (!name) {
+   151→   151→    return <span className="text-muted-foreground">—</span>
+   152→   152→  }
+   153→   153→  return <span className="text-xs">{name}</span>
+   154→   154→}
+   155→   155→
+   156→   156→/* ── Helper: Tracked location card in the sidebar ──── */
+   157→   157→function LocationCard(props: { record: AttendanceRecord }) {
+   158→   158→  const r = props.record
+   159→   159→  const href =
+   160→   160→    'https://www.openstreetmap.org/?mlat=' +
+   161→   161→    r.punchInLat +
+   162→   162→    '&mlon=' +
+   163→   163→    r.punchInLng +
+   164→   164→    '#map=16/' +
+   165→   165→    r.punchInLat +
+   166→   166→    '/' +
+   167→   167→    r.punchInLng
+   168→   168→
+   169→   169→  return (
+   170→   170→    <a
+   171→   171→      href={href}
+   172→   172→      target="_blank"
+   173→   173→      rel="noopener noreferrer"
+   174→   174→      className="flex items-start gap-2 rounded-lg border border-[var(--gold)]/20 bg-card p-2.5 hover:border-[var(--gold)] transition"
+   175→   175→    >
+   176→   176→      {r.punchInSelfie && (
+   177→   177→        <img
+   178→   178→          src={'/api/uploads/' + r.punchInSelfie}
+   179→   179→          alt={r.employee.fullName}
+   180→   180→          className="h-8 w-8 rounded-full object-cover border-2 border-[var(--gold)]/30"
+   181→   181→        />
+   182→   182→      )}
+   183→   183→      <div className="min-w-0 flex-1">
+   184→   184→        <p className="truncate text-xs font-semibold text-[var(--navy)] dark:text-white">{r.employee.fullName}</p>
+   185→   185→        <p className="truncate text-[11px] text-muted-foreground">{r.punchInAddress}</p>
+   186→   186→        <p className="text-[10px] text-[var(--gold)] mt-0.5">
+   187→   187→          {r.punchIn ? fmtTime(r.punchIn) : ''} → {r.punchOut ? fmtTime(r.punchOut) : 'working…'}
+   188→   188→        </p>
+   189→   189→      </div>
+   190→   190→    </a>
+   191→   191→  )
+   192→   192→}
+   193→   193→
+   194→   194→/* ── Main component ─────────────────────────────────── */
+   195→   195→export function Attendance({ refreshKey }: { refreshKey: number }) {
+   196→   196→  const { user } = useAuth()
+   197→   197→  const isSuperAdmin = user?.role === 'OWNER' || user?.role === 'SUPER_ADMIN'
+   198→   198→  const isClient = user?.role === 'CLIENT'
+   199→   199→  const [list, setList] = useState<AttendanceRecord[]>([])
+   200→   200→  const [loading, setLoading] = useState(true)
+   201→   201→  const [date, setDate] = useState('')
+   202→   202→  const [clientId, setClientId] = useState<string | null>(null)
+   203→   203→  const [clients, setClients] = useState<ClientOption[]>([])
+   204→   204→  const [editing, setEditing] = useState<AttendanceRecord | null>(null)
+   205→   205→  const [deleting, setDeleting] = useState<AttendanceRecord | null>(null)
+   206→   206→  const [selfieView, setSelfieView] = useState<{ url: string; label: string } | null>(null)
+   207→   207→
+   208→   208→  /* ── Load clients for filter dropdown ── */
+   209→   209→  useEffect(
+   210→   210→    function () {
+   211→   211→      if (isClient) return
+   212→   212→      api<{ clients: ClientOption[] }>('/api/admin/clients?limit=100')
+   213→   213→        .then(function (d) {
+   214→   214→          setClients(d.clients || [])
+   215→   215→        })
+   216→   216→        .catch(function () {
+   217→   217→          /* ignore */
+   218→   218→        })
+   219→   219→    },
+   220→   220→    [isClient],
+   221→   221→  )
+   222→   222→
+   223→   223→  /* ── Load attendance records ── */
+   224→   224→  const load = useCallback(
+   225→   225→    async function () {
+   226→   226→      setLoading(true)
+   227→   227→      try {
+   228→   228→        const params = new URLSearchParams()
+   229→   229→        if (date) params.set('date', date)
+   230→   230→        if (clientId) params.set('clientId', clientId)
+   231→   231→        const data = await api<{ records: AttendanceRecord[] }>(
+   232→   232→          '/api/admin/attendance?' + params.toString(),
+   233→   233→        )
+   234→   234→        setList(data.records || [])
+   235→   235→      } catch (e: any) {
+   236→   236→        toast.error(e.message || 'Failed to load attendance')
+   237→   237→      } finally {
+   238→   238→        setLoading(false)
+   239→   239→      }
+   240→   240→    },
+   241→   241→    [date, clientId],
+   242→   242→  )
+   243→   243→
+   244→   244→  useEffect(
+   245→   245→    function () {
+   246→   246→      load()
+   247→   247→    },
+   248→   248→    [load, refreshKey],
+   249→   249→  )
+   250→   250→
+   251→   251→  /* ── Named handlers (no inline arrow fns in JSX) ── */
+   252→   252→  const handleClientFilterChange = function (v: string) {
+   253→   253→    if (v === '_all') {
+   254→   254→      setClientId(undefined)
+   255→   255→    } else {
+   256→   256→      setClientId(v)
+   257→   257→    }
+   258→   258→  }
+   259→   259→
+   260→   260→  const handleClearFilters = function () {
+   261→   261→    setDate('')
+   262→   262→    setClientId(undefined)
+   263→   263→  }
+   264→   264→
+   265→   265→  const handleOpenSelfie = function (url: string, label: string) {
+   266→   266→    setSelfieView({ url: url, label: label })
+   267→   267→  }
+   268→   268→
+   269→   269→  const handleCloseSelfie = function () {
+   270→   270→    setSelfieView(null)
+   271→   271→  }
+   272→   272→
+   273→   273→  const handleExportCSV = function () {
+   274→   274→    const esc = function (s: string) {
+   275→   275→      return '"' + s.replace(/"/g, '""') + '"'
+   276→   276→    }
+   277→   277→    const cols = [
+   278→   278→      { key: 'employee.employeeCode', label: 'Code' },
+   279→   279→      { key: 'employee.fullName', label: 'Name' },
+   280→   280→      { key: 'employee.assignedClient.clientName', label: 'Client' },
+   281→   281→      { key: 'date', label: 'Date' },
+   282→   282→      { key: 'punchIn', label: 'Punch In' },
+   283→   283→      { key: 'punchOut', label: 'Punch Out' },
+   284→   284→      { key: 'workingHours', label: 'Hours' },
+   285→   285→      { key: 'overtime', label: 'OT' },
+   286→   286→      { key: 'status', label: 'Status' },
+   287→   287→    ]
+   288→   288→    let csv = cols.map(function (c) {
+   289→   289→      return c.label
+   290→   290→    }).join(',') + '\n'
+   291→   291→    for (const r of list) {
+   292→   292→      const row = cols
+   293→   293→        .map(function (c) {
+   294→   294→          const parts = c.key.split('.')
+   295→   295→          let v: any = r
+   296→   296→          for (const p of parts) {
+   297→   297→            v = v && v[p]
+   298→   298→          }
+   299→   299→          return typeof v === 'string' ? esc(v) : v != null ? String(v) : ''
+   300→   300→        })
+   301→   301→        .join(',')
+   302→   302→      csv += row + '\n'
+   303→   303→    }
+   304→   304→    const blob = new Blob([csv], { type: 'text/csv' })
+   305→   305→    const url = URL.createObjectURL(blob)
+   306→   306→    const a = document.createElement('a')
+   307→   307→    a.href = url
+   308→   308→    a.download = 'attendance_' + new Date().toISOString().slice(0, 10) + '.csv'
+   309→   309→    a.click()
+   310→   310→    URL.revokeObjectURL(url)
+   311→   311→  }
+   312→   312→
+   313→   313→  /* ── Pre-computed values (avoid complex expressions in JSX) ── */
+   314→   314→  const trackedRecords = list.filter(function (r) {
+   315→   315→    return r.punchInAddress
+   316→   316→  })
+   317→   317→  const trackedCount = trackedRecords.length
+   318→   318→  const showLocationCards = !loading && list.length > 0 && trackedCount > 0
+   319→   319→  const showClientFilter = !isClient && clients.length > 0
+   320→   320→  const hasFilters = !!(date || clientId)
+   321→   321→  const sectionDesc = isClient
+   322→   322→    ? 'Attendance records for your assigned employees'
+   323→   323→    : 'Daily punch records — filter by date and client'
+   324→   324→  const deletingName = deleting ? deleting.employee.fullName : ''
+   325→   325→  const deletingDate = deleting ? fmtDate(deleting.date) : ''
+   326→   326→
+   327→   327→  return (
+   328→   328→    <div className="space-y-5">
+   329→   329→      <SectionTitle
+   330→   330→        title="Attendance"
+   331→   331→        desc={sectionDesc}
+   332→   332→        action={
+   333→   333→          <div className="flex flex-wrap items-center gap-2">
+   334→   334→            {list.length > 0 && (
+   335→   335→              <Button variant="outline" size="sm" onClick={handleExportCSV}>
+   336→   336→                <Download className="mr-1.5 h-3.5 w-3.5" /> Export CSV
+   337→   337→              </Button>
+   338→   338→            )}
+   339→   339→            {showClientFilter && (
+   340→   340→              <Select value={clientId || '_all'} onValueChange={handleClientFilterChange}>
+   341→   341→                <SelectTrigger className="w-[180px] h-9">
+   342→   342→                  <Building2 className="mr-1.5 h-3.5 w-3.5 text-muted-foreground" />
+   343→   343→                  <SelectValue placeholder="All Clients" />
+   344→   344→                </SelectTrigger>
+   345→   345→                <SelectContent>
+   346→   346→                  <SelectItem value="_all">All Clients</SelectItem>
+   347→   347→                  {clients.map(function (c) {
+   348→   348→                    return (
+   349→   349→                      <SelectItem key={c.id} value={c.id}>
+   350→   350→                        {c.clientName}
+   351→   351→                      </SelectItem>
+   352→   352→                    )
+   353→   353→                  })}
+   354→   354→                </SelectContent>
+   355→   355→              </Select>
+   356→   356→            )}
+   357→   357→            <div className="relative">
+   358→   358→              <Calendar className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+   359→   359→              <Input
+   360→   360→                type="date"
+   361→   361→                value={date}
+   362→   362→                onChange={function (e) {
+   363→   363→                  setDate(e.target.value)
+   364→   364→                }}
+   365→   365→                className="pl-9 w-[180px] h-9"
+   366→   366→              />
+   367→   367→            </div>
+   368→   368→            {hasFilters && (
+   369→   369→              <Button variant="ghost" size="sm" onClick={handleClearFilters}>
+   370→   370→                Clear
+   371→   371→              </Button>
+   372→   372→            )}
+   373→   373→          </div>
+   374→   374→        }
+   375→   375→      />
+   376→   376→
+   377→   377→      {/* Live check-in locations */}
+   378→   378→      {showLocationCards && (
+   379→   379→        <Card className="border-[var(--gold)]/30 bg-[var(--gold)]/5">
+   380→   380→          <CardContent className="pt-5 pb-5">
+   381→   381→            <div className="flex items-center gap-2 mb-3">
+   382→   382→              <MapPin className="h-4 w-4 text-[var(--gold)]" />
+   383→   383→              <h3 className="text-sm font-bold text-[var(--navy)] dark:text-white">Live Check-in Locations</h3>
+   384→   384→              <Badge variant="outline" className="border-[var(--gold)]/40 text-[#8a6f24]">
+   385→   385→                {trackedCount} tracked
+   386→   386→              </Badge>
+   387→   387→            </div>
+   388→   388→            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 max-h-48 overflow-y-auto scroll-thin">
+   389→   389→              {trackedRecords.map(function (r) {
+   390→   390→                return <LocationCard key={r.id} record={r} />
+   391→   391→              })}
+   392→   392→            </div>
+   393→   393→          </CardContent>
+   394→   394→        </Card>
+   395→   395→      )}
+   396→   396→
+   397→   397→      <Card>
+   398→   398→        <CardContent className="pt-6">
+   399→   399→          {loading ? (
+   400→   400→            <div className="space-y-2">
+   401→   401→              {Array.from({ length: 8 }).map(function (_, i) {
+   402→   402→                return <Skeleton key={i} className="h-14 w-full" />
+   403→   403→              })}
+   404→   404→            </div>
+   405→   405→          ) : list.length === 0 ? (
+   406→   406→            <EmptyState
+   407→   407→              icon={Fingerprint}
+   408→   408→              title="No attendance records"
+   409→   409→              desc="Try selecting a different date or client"
+   410→   410→            />
+   411→   411→          ) : (
+   412→   412→            <div className="max-h-[65vh] overflow-y-auto scroll-thin rounded-lg border">
+   413→   413→              <Table>
+   414→   414→                <TableHeader className="sticky top-0 z-10 bg-card">
+   415→   415→                  <TableRow>
+   416→   416→                    <TableHead>Employee</TableHead>
+   417→   417→                    {!isClient && (
+   418→   418→                      <TableHead className="hidden lg:table-cell">Client</TableHead>
+   419→   419→                    )}
+   420→   420→                    <TableHead>Date</TableHead>
+   421→   421→                    <TableHead>Punch In</TableHead>
+   422→   422→                    <TableHead>Punch Out</TableHead>
+   423→   423→                    <TableHead className="hidden md:table-cell">Hours</TableHead>
+   424→   424→                    <TableHead className="hidden lg:table-cell">OT</TableHead>
+   425→   425→                    <TableHead className="hidden sm:table-cell">Selfie</TableHead>
+   426→   426→                    <TableHead className="hidden xl:table-cell">Location</TableHead>
+   427→   427→                    <TableHead>Status</TableHead>
+   428→   428→                    <TableHead className="text-right">Actions</TableHead>
+   429→   429→                  </TableRow>
+   430→   430→                </TableHeader>
+   431→   431→                <TableBody>
+   432→   432→                  {list.map(function (r) {
+   433→   433→                    return (
+   434→   434→                      <TableRow key={r.id} className="hover:bg-muted/40">
+   435→   435→                        <TableCell>
+   436→   436→                          <div className="min-w-0">
+   437→   437→                            <p className="truncate text-sm font-semibold text-[var(--navy)] dark:text-white">
+   438→   438→                              {r.employee.fullName}
+   439→   439→                            </p>
+   440→   440→                            <p className="truncate text-[11px] text-muted-foreground">
+   441→   441→                              {r.employee.employeeCode || '—'} • {r.employee.department || '—'}
+   442→   442→                            </p>
+   443→   443→                          </div>
+   444→   444→                        </TableCell>
+   445→   445→                        {!isClient && (
+   446→   446→                          <TableCell className="hidden lg:table-cell">
+   447→   447→                            <ClientNameCell record={r} />
+   448→   448→                          </TableCell>
+   449→   449→                        )}
+   450→   450→                        <TableCell className="text-sm whitespace-nowrap">{fmtDate(r.date)}</TableCell>
+   451→   451→                        <TableCell className="text-sm whitespace-nowrap">
+   452→   452→                          {r.punchIn ? fmtTime(r.punchIn) : '—'}
+   453→   453→                        </TableCell>
+   454→   454→                        <TableCell className="text-sm whitespace-nowrap">
+   455→   455→                          {r.punchOut ? fmtTime(r.punchOut) : '—'}
+   456→   456→                        </TableCell>
+   457→   457→                        <TableCell className="hidden md:table-cell text-sm">
+   458→   458→                          {r.workingHours ? r.workingHours + 'h' : '—'}
+   459→   459→                        </TableCell>
+   460→   460→                        <TableCell className="hidden lg:table-cell text-sm">
+   461→   461→                          {r.overtime ? (
+   462→   462→                            <Badge variant="outline" className="border-[var(--gold)]/40 text-[#8a6f24]">
+   463→   463→                              {r.overtime}h
+   464→   464→                            </Badge>
+   465→   465→                          ) : (
+   466→   466→                            '—'
+   467→   467→                          )}
+   468→   468→                        </TableCell>
+   469→   469→                        <TableCell className="hidden sm:table-cell">
+   470→   470→                          <SelfieCell record={r} onOpen={handleOpenSelfie} />
+   471→   471→                        </TableCell>
+   472→   472→                        <TableCell className="hidden xl:table-cell text-xs max-w-[200px]">
+   473→   473→                          <LocationCell record={r} />
+   474→   474→                        </TableCell>
+   475→   475→                        <TableCell>
+   476→   476→                          <div className="flex items-center gap-1.5">
+   477→   477→                            <StatusBadge status={r.status} />
+   478→   478→                            {r.lateArrival && (
+   479→   479→                              <Badge variant="outline" className="border-amber-500/30 text-amber-700">
+   480→   480→                                Late
+   481→   481→                              </Badge>
+   482→   482→                            )}
+   483→   483→                          </div>
+   484→   484→                        </TableCell>
+   485→   485→                        <TableCell className="text-right">
+   486→   486→                          <div className="flex items-center justify-end gap-1">
+   487→   487→                            <Button
+   488→   488→                              size="sm"
+   489→   489→                              variant="outline"
+   490→   490→                              className="h-8 gap-1"
+   491→   491→                              onClick={function () {
+   492→   492→                                setEditing(r)
+   493→   493→                              }}
+   494→   494→                            >
+   495→   495→                              <Pencil className="h-3.5 w-3.5" /> Edit
+   496→   496→                            </Button>
+   497→   497→                            {isSuperAdmin && (
+   498→   498→                              <Button
+   499→   499→                                size="sm"
+   500→   500→                                variant="ghost"
+   501→   501→                                className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+   502→   502→                                title="Delete record"
+   503→   503→                                onClick={function () {
+   504→   504→                                  setDeleting(r)
+   505→   505→                                }}
+   506→   506→                              >
+   507→   507→                                <Trash2 className="h-3.5 w-3.5" />
+   508→   508→                              </Button>
+   509→   509→                            )}
+   510→   510→                          </div>
+   511→   511→                        </TableCell>
+   512→   512→                      </TableRow>
+   513→   513→                    )
+   514→   514→                  })}
+   515→   515→                </TableBody>
+   516→   516→              </Table>
+   517→   517→            </div>
+   518→   518→          )}
+   519→   519→          {!loading && list.length > 0 && (
+   520→   520→            <p className="mt-3 text-xs text-muted-foreground">
+   521→   521→              {list.length} record{list.length > 1 ? 's' : ''}
+   522→   522→            </p>
+   523→   523→          )}
+   524→   524→        </CardContent>
+   525→   525→      </Card>
+   526→   526→
+   527→   527→      {editing && (
+   528→   528→        <EditAttendanceDialog
+   529→   529→          record={editing}
+   530→   530→          onClose={function () {
+   531→   531→            setEditing(null)
+   532→   532→          }}
+   533→   533→          onSuccess={function () {
+   534→   534→            setEditing(null)
+   535→   535→            load()
+   536→   536→          }}
+   537→   537→        />
+   538→   538→      )}
+   539→   539→
+   540→   540→      {/* Selfie viewer dialog */}
+   541→   541→      <Dialog
+   542→   542→        open={!!selfieView}
+   543→   543→        onOpenChange={function (o) {
+   544→   544→          if (!o) handleCloseSelfie()
+   545→   545→        }}
+   546→   546→      >
+   547→   547→        <DialogContent className="max-w-md p-0 overflow-hidden">
+   548→   548→          <DialogHeader className="sr-only">
+   549→   549→            <DialogTitle>{selfieView ? selfieView.label : ''}</DialogTitle>
+   550→   550→            <DialogDescription>Attendance selfie capture</DialogDescription>
+   551→   551→          </DialogHeader>
+   552→   552→          {selfieView && (
+   553→   553→            <div className="space-y-0">
+   554→   554→              <div className="bg-black flex items-center justify-center">
+   555→   555→                <img
+   556→   556→                  src={selfieView.url}
+   557→   557→                  alt={selfieView.label}
+   558→   558→                  className="max-h-[70vh] w-full object-contain"
+   559→   559→                />
+   560→   560→              </div>
+   561→   561→              <div className="p-3 text-center">
+   562→   562→                <p className="text-sm font-medium">{selfieView.label}</p>
+   563→   563→              </div>
+   564→   564→            </div>
+   565→   565→          )}
+   566→   566→        </DialogContent>
+   567→   567→      </Dialog>
+   568→   568→
+   569→   569→      {/* Delete confirmation */}
+   570→   570→      <AlertDialog
+   571→   571→        open={!!deleting}
+   572→   572→        onOpenChange={function (o) {
+   573→   573→          if (!o) setDeleting(null)
+   574→   574→        }}
+   575→   575→      >
+   576→   576→        <AlertDialogContent>
+   577→   577→          <AlertDialogHeader>
+   578→   578→            <AlertDialogTitle className="text-red-700">Delete attendance record?</AlertDialogTitle>
+   579→   579→            <AlertDialogDescription>
+   580→   580→              This will permanently delete the attendance record for{' '}
+   581→   581→              <strong>{deletingName}</strong> on <strong>{deletingDate}</strong>. This action
+   582→   582→              cannot be undone.
+   583→   583→            </AlertDialogDescription>
+   584→   584→          </AlertDialogHeader>
+   585→   585→          <AlertDialogFooter>
+   586→   586→            <AlertDialogCancel>Cancel</AlertDialogCancel>
+   587→   587→            <AlertDialogAction
+   588→   588→              className="bg-red-600 hover:bg-red-700"
+   589→   589→              onClick={async function () {
+   590→   590→                if (!deleting) return
+   591→   591→                try {
+   592→   592→                  await api('/api/admin/attendance', {
+   593→   593→                    method: 'DELETE',
+   594→   594→                    body: JSON.stringify({ id: deleting.id }),
+   595→   595→                  })
+   596→   596→                  toast.success('Attendance record deleted')
+   597→   597→                  setDeleting(null)
+   598→   598→                  load()
+   599→   599→                } catch (e: any) {
+   600→   600→                  toast.error(e.message || 'Delete failed')
+   601→   601→                }
+   602→   602→              }}
+   603→   603→            >
+   604→   604→              <Trash2 className="mr-1 h-4 w-4" /> Delete Permanently
+   605→   605→            </AlertDialogAction>
+   606→   606→          </AlertDialogFooter>
+   607→   607→        </AlertDialogContent>
+   608→   608→      </AlertDialog>
+   609→   609→    </div>
+   610→   610→  )
+   611→   611→}
+   612→   612→
+   613→   613→/* ── Edit dialog (separate component, no Turbopack issue) ── */
+   614→   614→function EditAttendanceDialog(props: {
+   615→   615→  record: AttendanceRecord
+   616→   616→  onClose: () => void
+   617→   617→  onSuccess: () => void
+   618→   618→}) {
+   619→   619→  const { record, onClose, onSuccess } = props
+   620→   620→  const toLocalInput = function (d: string | null) {
+   621→   621→    if (!d) return ''
+   622→   622→    try {
+   623→   623→      const dt = new Date(d)
+   624→   624→      const pad = function (n: number) {
+   625→   625→        return String(n).padStart(2, '0')
+   626→   626→      }
+   627→   627→      return (
+   628→   628→        dt.getFullYear() +
+   629→   629→        '-' +
+   630→   630→        pad(dt.getMonth() + 1) +
+   631→   631→        '-' +
+   632→   632→        pad(dt.getDate()) +
+   633→   633→        'T' +
+   634→   634→        pad(dt.getHours()) +
+   635→   635→        ':' +
+   636→   636→        pad(dt.getMinutes())
+   637→   637→      )
+   638→   638→    } catch {
+   639→   639→      return ''
+   640→   640→    }
+   641→   641→  }
+   642→   642→
+   643→   643→  const [punchIn, setPunchIn] = useState(toLocalInput(record.punchIn))
+   644→   644→  const [punchOut, setPunchOut] = useState(toLocalInput(record.punchOut))
+   645→   645→  const [status, setStatus] = useState(record.status)
+   646→   646→  const [saving, setSaving] = useState(false)
+   647→   647→
+   648→   648→  const submit = async function () {
+   649→   649→    setSaving(true)
+   650→   650→    try {
+   651→   651→      await api('/api/admin/attendance', {
+   652→   652→        method: 'PATCH',
+   653→   653→        body: JSON.stringify({
+   654→   654→          id: record.id,
+   655→   655→          punchIn: punchIn ? new Date(punchIn).toISOString() : undefined,
+   656→   656→          punchOut: punchOut ? new Date(punchOut).toISOString() : undefined,
+   657→   657→          status,
+   658→   658→        }),
+   659→   659→      })
+   660→   660→      toast.success('Attendance updated')
+   661→   661→      onSuccess()
+   662→   662→    } catch (e: any) {
+   663→   663→      toast.error(e.message || 'Update failed')
+   664→   664→    } finally {
+   665→   665→      setSaving(false)
+   666→   666→    }
+   667→   667→  }
+   668→   668→
+   669→   669→  return (
+   670→   670→    <Dialog open onOpenChange={function (o) { if (!o) onClose() }}>
+   671→   671→      <DialogContent className="max-w-md">
+   672→   672→        <DialogHeader>
+   673→   673→          <DialogTitle className="flex items-center gap-2">
+   674→   674→            <Pencil className="h-5 w-5" /> Edit Attendance
+   675→   675→          </DialogTitle>
+   676→   676→          <DialogDescription>
+   677→   677→            {record.employee.fullName} • {fmtDate(record.date)}
+   678→   678→          </DialogDescription>
+   679→   679→        </DialogHeader>
+   680→   680→        <div className="space-y-3">
+   681→   681→          <div className="space-y-1.5">
+   682→   682→            <Label htmlFor="at-in">Punch In</Label>
+   683→   683→            <Input
+   684→   684→              id="at-in"
+   685→   685→              type="datetime-local"
+   686→   686→              value={punchIn}
+   687→   687→              onChange={function (e) {
+   688→   688→                setPunchIn(e.target.value)
+   689→   689→              }}
+   690→   690→            />
+   691→   691→          </div>
+   692→   692→          <div className="space-y-1.5">
+   693→   693→            <Label htmlFor="at-out">Punch Out</Label>
+   694→   694→            <Input
+   695→   695→              id="at-out"
+   696→   696→              type="datetime-local"
+   697→   697→              value={punchOut}
+   698→   698→              onChange={function (e) {
+   699→   699→                setPunchOut(e.target.value)
+   700→   700→              }}
+   701→   701→            />
+   702→   702→          </div>
+   703→   703→          <div className="space-y-1.5">
+   704→   704→            <Label htmlFor="at-status">Status</Label>
+   705→   705→            <Select value={status} onValueChange={setStatus}>
+   706→   706→              <SelectTrigger id="at-status">
+   707→   707→                <SelectValue />
+   708→   708→              </SelectTrigger>
+   709→   709→              <SelectContent>
+   710→   710→                {STATUS_OPTIONS.map(function (s) {
+   711→   711→                  return (
+   712→   712→                    <SelectItem key={s.value} value={s.value}>
+   713→   713→                      {s.label}
+   714→   714→                    </SelectItem>
+   715→   715→                  )
+   716→   716→                })}
+   717→   717→              </SelectContent>
+   718→   718→            </Select>
+   719→   719→          </div>
+   720→   720→        </div>
+   721→   721→        <DialogFooter>
+   722→   722→          <Button variant="outline" onClick={onClose}>
+   723→   723→            Cancel
+   724→   724→          </Button>
+   725→   725→          <Button
+   726→   726→            className="bg-[var(--navy)] text-white hover:bg-[var(--navy-light)]"
+   727→   727→            onClick={submit}
+   728→   728→            disabled={saving}
+   729→   729→          >
+   730→   730→            {saving ? 'Saving…' : 'Save'}
+   731→   731→          </Button>
+   732→   732→        </DialogFooter>
+   733→   733→      </DialogContent>
+   734→   734→    </Dialog>
+   735→   735→  )
+   736→   736→}
+   737→   737→
