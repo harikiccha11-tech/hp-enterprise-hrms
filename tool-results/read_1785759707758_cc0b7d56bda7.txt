@@ -534,3 +534,181 @@
    534→- Bulk standard task templates for both onboarding (19 tasks) and offboarding (21 tasks)
    535→- All modules follow existing Clients.tsx pattern (Dialog for create/edit, AlertDialog for delete, Table for list, Skeleton for loading)
    536→- ESLint passed with no errors, dev server compiled successfully
+   537→---
+   538→Task ID: 4-c
+   539→Agent: Module Builder
+   540→Task: Create Performance, Goals, Training, and Expenses admin modules (API + Frontend)
+   541→
+   542→Work Log:
+   543→- Created 4 API routes under /api/admin/ with full CRUD operations
+   544→- Created 4 frontend modules under /components/admin/modules/ following existing patterns
+   545→- All files pass ESLint, dev server compiles successfully
+   546→
+   547→## Files Created:
+   548→
+   549→### API Routes:
+   550→1. **src/app/api/admin/performance/route.ts** — GET (list with filters: status, period, year, search), POST (create), PATCH (update rating/feedback/status), DELETE
+   551→2. **src/app/api/admin/goals/route.ts** — GET (list with filters: status, category, search), POST (create), PATCH (update progress/status/title), DELETE
+   552→3. **src/app/api/admin/training/route.ts** — GET (list courses with _count.enrollments OR list enrollments), POST (create course / enroll / update-enrollment), PATCH (update course), DELETE (course + cascading enrollments)
+   553→4. **src/app/api/admin/expenses/route.ts** — GET (list with filters: status, category, search), POST (create), PATCH (approve/reject/reimburse with approvedBy/approvedAt), DELETE
+   554→
+   555→### Frontend Modules:
+   556→5. **src/components/admin/modules/Performance.tsx** — Summary stats (total reviews, avg rating, completed this quarter), table with star ratings, status workflow actions (Submit→Review→Complete), Create/Edit dialog with employee selector, period/year/rating slider, textareas, status/status filter/period filter/year filter
+   557→6. **src/components/admin/modules/Goals.tsx** — Table with color-coded category/priority badges, progress bar with inline quick-update (click to edit slider), Create/Edit dialog with employee selector, all fields, category/status filters, search
+   558→7. **src/components/admin/modules/Training.tsx** — Two tabs (Courses + Enrollments), Courses tab: CRUD with category/mode badges and enrolled/max count, Enrollments tab: enroll form row + enrollment table with status/score update dialog, filters
+   559→8. **src/components/admin/modules/Expenses.tsx** — Summary cards (Pending/Approved/Reimbursed/Total amounts in INR), table with category badges and INR formatting, Approve/Reject/Reimburse action buttons, reject dialog with remarks, create dialog, status/category filters
+   560→
+   561→## Patterns Followed:
+   562→- All API routes use `requireRole` from `@/lib/guards`, `runtime = nodejs`, `dynamic = force-dynamic`
+   563→- All frontend modules use `use client`, `api` helper from `../lib`, `SectionTitle`/`EmptyState` from shared, `toast` from sonner, Lucide icons
+   564→- Navy/gold brand buttons: `bg-[var(--navy)] text-white hover:bg-[var(--navy-light)]`
+   565→- Skeleton loading states, AlertDialog for deletes, Dialog for create/edit
+   566→- Sticky table headers with `max-h-[65vh] overflow-y-auto scroll-thin`
+   567→
+   568→---
+   569→Task ID: 4-d
+   570→Agent: Module Builder
+   571→Task: Create 10 API routes + 10 frontend modules for KnowledgeBase, EmailTemplates, NotificationTemplates, SubscriptionPlans, FeatureFlags, PaymentGateways, SecurityCenter, SystemHealth, GlobalSearch, RoleManagement
+   572→
+   573→Work Log:
+   574→- Created 10 API routes with full CRUD (GET/POST/PATCH/DELETE) patterns
+   575→- Created 10 frontend modules following existing project conventions
+   576→- All files pass ESLint linting
+   577→- All modules use `use client` directive, `api` helper, `SectionTitle`/`EmptyState`, `toast` from sonner, Lucide icons
+   578→- Navy/gold brand buttons applied consistently
+   579→
+   580→## API Routes Created (10 files):
+   581→
+   582→1. **`/api/admin/knowledge-base/route.ts`** — Full CRUD for KnowledgeBase. GET with category filter and search (question+answer+tags). PATCH/DELETE.
+   583→2. **`/api/admin/email-templates/route.ts`** — Full CRUD for EmailTemplate. GET with category filter. Name uniqueness enforced. PATCH/DELETE.
+   584→3. **`/api/admin/notification-templates/route.ts`** — Full CRUD for NotificationTemplate. GET with category filter. Name uniqueness enforced. PATCH/DELETE.
+   585→4. **`/api/admin/subscription-plans/route.ts`** — Full CRUD for SubscriptionPlan. GET with status filter. Features stored as JSON string. PATCH/DELETE.
+   586→5. **`/api/admin/feature-flags/route.ts`** — Full CRUD for FeatureFlag. GET all. Toggle enabled via PATCH. Key uniqueness enforced. PATCH/DELETE.
+   587→6. **`/api/admin/payment-gateways/route.ts`** — Full CRUD for PaymentGateway. GET all. Setting isDefault unsets others. PATCH/DELETE.
+   588→7. **`/api/admin/security/route.ts`** — GET only: Failed logins (24h), active sessions, locked accounts, security events count, last 50 security audit logs.
+   589→8. **`/api/admin/system-health/route.ts`** — GET only: DB connection check via `$queryRaw`, entity counts, weekly activity stats, memory usage, uptime.
+   590→9. **`/api/admin/global-search/route.ts`** — GET with `?q=` search: Searches employees, clients, projects, vendors, candidates, assets with case-insensitive matching. Returns grouped results.
+   591→10. **`/api/admin/roles/route.ts`** — GET: All users with role grouping. POST: Create user with password (bcrypt). PATCH: Update user role (OWNER only). Self-role-change prevented.
+   592→
+   593→## Frontend Modules Created (10 files):
+   594→
+   595→11. **`KnowledgeBase.tsx`** — Table with category badge, question/answer truncated, tags, enabled Switch toggle, sort order. Create/Edit dialog with rich textarea, category select, keyword fields. Search + category filter.
+   596→12. **`EmailTemplates.tsx`** — Table with name, subject, category badge (color-coded), status. Create/Edit dialog with HTML body textarea, JSON variables field, category select.
+   597→13. **`NotificationTemplates.tsx`** — Same pattern as EmailTemplates with type badge (push/email/sms/in_app color-coded), category filter.
+   598→14. **`SubscriptionPlans.tsx`** — Card grid layout (pricing cards) with plan name, INR/USD pricing, interval, features list (JSON parsed), trial days, popular gold badge, status. Create/Edit dialog with all fields.
+   599→15. **`FeatureFlags.tsx`** — Table with name, key (monospace code), description, enabled Switch toggle (calls PATCH), environments badges, created date. Create/Edit dialog.
+   600→16. **`PaymentGateways.tsx`** — Table with name, type badge, masked merchant ID, UPI/bank details, isDefault gold star badge, status. Create/Edit dialog with conditional fields (UPI shows UPI fields, bank_transfer shows bank fields, razorpay/stripe show API key/secret).
+   601→17. **`SecurityCenter.tsx`** — Display-only dashboard: 4 stat cards (failed logins, active sessions, locked accounts, security events). Recent audit logs table (security actions only). Auto-refresh every 30s.
+   602→18. **`SystemHealth.tsx`** — Display-only dashboard: Status cards (DB connection green/red with latency, API server, memory, heap). Entity counts table with weekly created/updated stats. Manual refresh button.
+   603→19. **`GlobalSearch.tsx`** — Large search input (Google-style), 300ms debounced search. Results grouped by entity type with icons, counts, and clickable rows calling onNavigate.
+   604→20. **`RoleManagement.tsx`** — Role hierarchy cards at top (color-coded with counts). Table with username, full name, email, role badge, last login, status. Change role dropdown (OWNER only). Create new user dialog (username/email/password/role).
+   605→
+   606→## Files Created: 20 total (10 API + 10 frontend)
+   607→
+   608→---
+   609→
+   610→---
+   611→Task ID: session-recovery
+   612→Agent: Main Orchestrator
+   613→Task: Fix dev server crash and database misconfiguration to restore preview
+   614→
+   615→Work Log:
+   616→- Found dev server process was dead (no running Next.js process)
+   617→- Found Prisma schema was set to PostgreSQL (for Vercel) but local env uses SQLite
+   618→- Changed prisma/schema.prisma datasource from postgresql to sqlite (file:../db/custom.db)
+   619→- Ran `bun run db:push` to sync schema with local SQLite database
+   620→- Ran seed script (bun run src/lib/seed.ts) — created owner, superadmin, hrmanager, 2 employees, client, project, work order, announcements, attendance records
+   621→- Started dev server with nohup to keep it alive
+   622→- Verified all 3 portals via agent-browser:
+   623→  - Admin Console (superadmin/Admin@123) — 30+ modules, dashboard with stats ✓
+   624→  - Employee Portal (arjun.sharma/Employee@123) — 7 modules, profile, attendance, leaves ✓
+   625→  - Client Portal (infosys.client/Client@123) — 4 modules, project data, work orders, invoices ✓
+   626→
+   627→Stage Summary:
+   628→- Root cause: Prisma schema pointed to PostgreSQL (Neon) instead of local SQLite, causing connection failures
+   629→- Fixed by switching to SQLite provider and re-seeding
+   630→- All portals verified working end-to-end in browser
+   631→
+   632→---
+   633→Task ID: fix-admin-menus-portals
+   634→Agent: Main Orchestrator
+   635→Task: Fix SUPER_ADMIN missing menus (Users, Roles, Settings) and portal access issues
+   636→
+   637→Work Log:
+   638→- Identified SUPER_ADMIN was missing 3 menu items (User Accounts, Role Management, Settings) due to `ownerOnly` flag filtering
+   639→- Fixed AdminLayout.tsx nav filter to include SUPER_ADMIN for ownerOnly items
+   640→- Fixed AdminLayout.tsx render conditions: UserAccounts now renders for isSuperAdmin, RoleManagement and Settings pass isOwner||isSuperAdmin
+   641→- Fixed /api/admin/users/route.ts: Changed OWNER-only gates to allow SUPER_ADMIN (GET, POST)
+   642→- Fixed /api/admin/users/[id]/route.ts: Changed OWNER-only gates to allow SUPER_ADMIN (PATCH, DELETE)
+   643→- Fixed /api/admin/roles/route.ts: Changed OWNER-only gates to allow SUPER_ADMIN (POST, PATCH)
+   644→- Fixed /api/admin/settings/route.ts: Changed OWNER-only PUT gate to allow SUPER_ADMIN
+   645→- Installed missing `bcryptjs` dependency (was causing Role Management module crash)
+   646→- Verified all 4 portals in browser:
+   647→  - SUPER_ADMIN: 36 modules visible (was 33) ✓
+   648→  - HR_MANAGER: 32 modules (correctly reduced) ✓
+   649→  - Employee: 8 modules + dashboard ✓
+   650→  - Client: 4 modules + dashboard ✓
+   651→
+   652→Stage Summary:
+   653→- SUPER_ADMIN now has full access to all 36 admin modules including User Accounts, Role Management, Settings
+   654→- All backend APIs updated to allow SUPER_ADMIN access (previously OWNER-only)
+   655→- All portal logins verified working
+   656→- Zero API errors in dev log
+   657→
+   658→---
+   659→Task ID: fix-hpai-and-branding
+   660→Agent: Main Orchestrator
+   661→Task: Fix HPAI chatbot, bcryptjs error, and update company branding
+   662→
+   663→Work Log:
+   664→- Fixed bcryptjs module not found: Replaced direct bcrypt import in roles API with hashPassword from auth.ts
+   665→- Diagnosed Gemini API location restriction (not available from server region)
+   666→- Rewrote /api/ai/chat/route.ts to use Z.ai SDK as primary provider (always works locally), Gemini as fallback
+   667→- Tested HPAI in browser: sends messages, gets responses in ~1.3s, knows company info
+   668→- Updated constants.ts with real company info: hpserve.site, official email, MD/EHS directors, phone numbers
+   669→- Added SOCIAL object with all social media links (WhatsApp, Instagram, Threads, LinkedIn, Facebook, X, YouTube, Reddit)
+   670→- Updated Landing.tsx footer with: Contact & Social section, real phone numbers, MD/EHS Director names, 6 social media icon links, CIN number
+   671→
+   672→Stage Summary:
+   673→- HPAI chatbot is fully functional - tested with 2 messages, both responded correctly
+   674→- Z.ai SDK used as primary AI provider (reliable in local environment)
+   675→- All official company branding and social links integrated into landing page footer
+   676→- bcryptjs dependency removed from roles API (uses existing auth.ts hashPassword)
+   677→---
+   678→Task ID: 3
+   679→Agent: full-stack-developer
+   680→Task: Premium Landing page redesign for HPHRMS
+   681→
+   682→Work Log:
+   683→- Read and analyzed existing Landing.tsx (534 lines) to preserve all functional sub-components
+   684→- Identified all required imports, sub-components (PortalLoginForm, SubscriptionForm), and view routing logic
+   685→- Designed and wrote complete premium Landing.tsx (~770 lines) with architect-level UX/UI
+   686→- Implemented 9 sections in order: GST Trust Bar, Navigation, Hero, Stats, Modules Grid, Portals, Pricing, CTA, Footer
+   687→- Created inline SVG components for all 6 social icons (WhatsApp, Instagram, LinkedIn, YouTube, X/Twitter, Facebook)
+   688→- Built custom useAnimatedCounter hook with easing for stats section (IntersectionObserver-triggered)
+   689→- Implemented responsive mobile menu with hamburger toggle
+   690→- Applied premium color scheme: Navy (#002B5C), Gold (#D4AF37), Deep Navy (#001A3D), Navy Light (#0A4488)
+   691→- Used CSS custom properties (--navy, --gold, --navy-light, --navy-deep) throughout
+   692→- Applied glassmorphism effects with backdrop-blur on nav, login cards, and overlays
+   693→- Added smooth hover animations (scale, translate-y, shadow transitions) on all interactive cards
+   694→- Made GST: 29AAGCH4521K1ZP prominent at the very top in gold trust bar with shield/award icons
+   695→- Removed all CIN references (verified with rg word-boundary search)
+   696→- No SOCIAL import from constants - all 6 social URLs inlined directly as strings
+   697→- Website https://hpserve.site shown prominently in hero section and footer
+   698→- HPHRMS name used prominently as main headline with gold gradient
+   699→- Implemented dark mode support using dark: classes and CSS variable references
+   700→- Sticky footer implemented with flex-col layout
+   701→- Preserved PortalLoginForm (posts to /api/auth/login, calls setUser on success)
+   702→- Preserved SubscriptionForm (posts to /api/subscription/request)
+   703→- Preserved RegistrationForm integration
+   704→- Maintained same View type routing: 'home' | 'login-admin' | 'login-employee' | 'login-client' | 'register' | 'subscribe'
+   705→- Ran bun run lint - passed with zero errors
+   706→- Verified dev.log shows clean compilation
+   707→
+   708→Stage Summary:
+   709→- Complete premium landing page rewrite delivered with GST trust bar, animated stats counter, 15 module cards, 3 portal cards, 4 pricing plans, professional footer with inline social links
+   710→- Zero lint errors, clean compilation
+   711→- All CIN references removed, GST number prominently displayed
+   712→- Mobile-first responsive design with hamburger nav
+   713→- Dark mode fully supported
+   714→

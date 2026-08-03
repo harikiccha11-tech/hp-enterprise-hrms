@@ -214,7 +214,7 @@ function ClientFormDialog({ client, onClose, onSuccess }: {
             <Input value={form.clientName} onChange={(e) => set('clientName', e.target.value)} placeholder="e.g. Infosys Ltd" />
           </div>
           <div className="space-y-1.5"><Label>Company Name</Label><Input value={form.companyName} onChange={(e) => set('companyName', e.target.value)} /></div>
-          <div className="space-y-1.5"><Label>GST</Label><Input value={form.gst} onChange={(e) => set('gst', e.target.value)} placeholder="29AAGCH4521K1ZP" /></div>
+          <div className="space-y-1.5"><Label>GST</Label><Input value={form.gst} onChange={(e) => set('gst', e.target.value)} placeholder="29ANZPH4067Q1ZS" /></div>
           <div className="space-y-1.5"><Label>Email</Label><Input type="email" value={form.email} onChange={(e) => set('email', e.target.value)} /></div>
           <div className="space-y-1.5"><Label>Phone</Label><Input value={form.phone} onChange={(e) => set('phone', e.target.value)} /></div>
           <div className="space-y-1.5 sm:col-span-2"><Label>Address</Label><Textarea value={form.address} onChange={(e) => set('address', e.target.value)} rows={2} /></div>

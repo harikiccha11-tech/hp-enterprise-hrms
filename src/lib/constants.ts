@@ -2,10 +2,10 @@
 
 export const BRAND = {
   name: 'HP ENTERPRISE',
-  legalName: 'HP ENTERPRISE Safety Service & Man Power Supply',
-  tagline: 'Safety Service & Man Power Supply',
-  taglineFull: 'Safety Services \u2022 Manpower Supply \u2022 EHS Consultancy \u2022 Project Support',
-  subTagline: 'Comprehensive Workforce Solutions For Every Project',
+  legalName: 'HP ENTERPRISE',
+  tagline: 'Building Safer Tomorrow. Empowering Smarter Workplaces.',
+  taglineFull: 'Human Resource Management \u2022 Recruitment & Manpower Supply \u2022 EHS Consultancy \u2022 Engineering Services',
+  subTagline: 'Next-Generation AI Powered Workforce Solutions',
   navy: '#002B5C',
   navyDeep: '#001A3D',
   navyLight: '#0A4488',
@@ -13,33 +13,96 @@ export const BRAND = {
   goldLight: '#E8C96A',
   silver: '#C0C0C0',
   accent: '#0A4488',
-  address: 'Bengaluru, Karnataka, India',
+  // Contact
   phone: '+91 80737 48271',
+  hrPhone: '+91 73377 92436',
   email: 'hpenterpriseofficial11@gmail.com',
   website: 'https://hpserve.site',
-  gst: '29AAGCH4521K1ZP',
-  cin: 'U72900KA2015PTC112233',
-  logoPath: '/hp-logo.jpg',
+  hphrmsUrl: 'https://hphrms.com',
+  // Legal
+  gstin: '29ANZPH4067Q1ZS',
+  udyam: 'UDYAM-KR-10-0014648',
+  pan: 'ANZPH4067Q',
+  // People
   managingDirector: 'Hariprasad N P',
   ehsDirector: 'Rajesh S',
   mdPhone: '+91 80737 48271',
   ehsPhone: '+91 73377 92436',
-}
+  // Logo
+  logoPath: '/hp-logo.jpg',
+  // Office Locations
+  headOffice: {
+    building: 'JeevaGurunadan Building, Kalkere Market Road',
+    area: 'Ramamurthy Nagar',
+    city: 'Bengaluru – 560016',
+    state: 'Karnataka',
+    country: 'India',
+    full: 'JeevaGurunadan Building, Kalkere Market Road, Ramamurthy Nagar, Bengaluru – 560016, Karnataka, India',
+  },
+  branchOffice: {
+    building: 'Venkateshwara Nilaya Building, Behind Hanuman Mandir, Nagenahalli',
+    area: 'Hosadurga Taluk',
+    city: 'Chitradurga – 577515',
+    state: 'Karnataka',
+    country: 'India',
+    full: 'Venkateshwara Nilaya Building, Behind Hanuman Mandir, Nagenahalli, Hosadurga Taluk, Chitradurga – 577515, Karnataka, India',
+  },
+} as const
 
 export const SOCIAL = {
   website: 'https://hpserve.site',
-  aiPreview: 'https://hphrms.netlify.app/app',
+  hphrms: 'https://hphrms.com',
   email: 'hpenterpriseofficial11@gmail.com',
   whatsapp: 'https://wa.me/message/65PDYODAFJZAN1',
-  instagram: 'https://www.instagram.com/hpenterpirse',
+  instagram: 'https://www.instagram.com/hpenterpriseofficial',
   threads: 'https://www.threads.com/@hpenterpriseofficial',
   linkedin: 'https://www.linkedin.com/in/hariprasad-np-4408a8423',
   facebook: 'https://www.facebook.com/share/1DNBdqGcvb/',
   twitter: 'https://x.com/hpenterpri5nww',
   youtube: 'https://www.youtube.com/@HPEnterpriseIndia',
   reddit: 'https://www.reddit.com/u/HPEnterpriseIndia/',
-  recruitment: 'https://docs.google.com/forms/d/e/1FAIpQLSfxMyayr18xiVYf8L9MlZjxrRHfGpvzC7KAubf3fGUuUSNWtQ/viewform?usp=header',
+  recruitment: 'https://docs.google.com/forms/d/e/1FAIpQLSfxMyayr18xiVYf8L9MlZjxrRHfGpvzC7KAubf3fGUuUSNWtQ/viewForm?usp=header',
 } as const
+
+export const SERVICES = [
+  'Human Resource Management',
+  'Recruitment & Talent Acquisition',
+  'Skilled & Unskilled Manpower Supply',
+  'Safety (EHS) Consultancy',
+  'Engineering & Project Support',
+  'Construction Labour Supply',
+  'Land Survey & Engineering Services',
+  'Vendor Coordination',
+  'Payroll Management',
+  'Website Design & Development',
+  'Safety Training & Compliance Support',
+] as const
+
+export const HPHRMS_FEATURES = [
+  'AI HR Assistant',
+  'Employee Management',
+  'Recruitment & ATS',
+  'Attendance Management',
+  'Leave Management',
+  'Payroll Processing',
+  'Employee Self Service (ESS)',
+  'Shift & Roster Management',
+  'Document Management',
+  'Reports & Analytics',
+  'Multi Branch Management',
+  'Enterprise Grade Security',
+] as const
+
+export const TRUST_BADGES = [
+  'GST Registered Business',
+  'UDYAM Registered',
+  'GST Invoice Available',
+  'Professional Documentation',
+  'Pan India Service Network',
+  'Secure AI Platform',
+  'Professional Customer Support',
+  'Trusted Workforce Solutions',
+] as const
 
 export const NAVY = BRAND.navy
 export const GOLD = BRAND.gold
@@ -104,7 +167,6 @@ export const ROLE_LABELS: Record<string, string> = {
   CLIENT: 'Client',
 }
 
-// Role hierarchy: OWNER > SUPER_ADMIN > HR_MANAGER > EMPLOYEE
 export const ROLE_RANK: Record<string, number> = {
   OWNER: 5,
   SUPER_ADMIN: 4,

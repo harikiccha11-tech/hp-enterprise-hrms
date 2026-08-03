@@ -286,7 +286,7 @@ function VendorFormDialog({ vendor, onClose, onSuccess }: { vendor: Vendor | nul
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div className="space-y-1.5 sm:col-span-2"><Label>Vendor Name *</Label><Input value={form.vendorName} onChange={(e) => set('vendorName', e.target.value)} placeholder="e.g. Acme Supplies" /></div>
           <div className="space-y-1.5"><Label>Company Name</Label><Input value={form.companyName} onChange={(e) => set('companyName', e.target.value)} /></div>
-          <div className="space-y-1.5"><Label>GST</Label><Input value={form.gst} onChange={(e) => set('gst', e.target.value)} placeholder="29AAGCH4521K1ZP" /></div>
+          <div className="space-y-1.5"><Label>GST</Label><Input value={form.gst} onChange={(e) => set('gst', e.target.value)} placeholder="29ANZPH4067Q1ZS" /></div>
           <div className="space-y-1.5"><Label>PAN</Label><Input value={form.pan} onChange={(e) => set('pan', e.target.value)} /></div>
           <div className="space-y-1.5">
             <Label>Category</Label>

@@ -118,8 +118,8 @@ function Header({ docTitle, refNo, date }: { docTitle: string; refNo: string; da
 function Footer() {
   return (
     <View style={brandStyles.footer} fixed>
-      <Text>HP ENTERPRISE Safety Service & Man Power Supply • Plot 14, Tech Park Phase II, Whitefield, Bengaluru 560066</Text>
-      <Text>hr@hpenterprise.co.in • www.hpenterprise.co.in • CIN: U72900KA2015PTC112233</Text>
+      <Text>HP ENTERPRISE • JeevaGurunadan Building, Kalkere Market Road, Ramamurthy Nagar, Bengaluru – 560016, Karnataka, India</Text>
+      <Text>hr@hpenterprise.co.in • www.hpenterprise.co.in • GSTIN: 29ANZPH4067Q1ZS • UDYAM: UDYAM-KR-10-0014648</Text>
     </View>
   )
 }
@@ -138,7 +138,7 @@ export function OfferLetterDoc(m: DocMeta) {
           Dear {m.fullName.split(' ')[0]},
         </Text>
         <Text style={brandStyles.body}>
-          We are delighted to extend to you a formal offer of employment with <Text style={brandStyles.bold}>HP ENTERPRISE Safety Service & Man Power Supply</Text> Based on your interview and our assessment of your profile, we are confident that your skills and experience will be a valuable addition to our team.
+          We are delighted to extend to you a formal offer of employment with <Text style={brandStyles.bold}>HP ENTERPRISE</Text> Based on your interview and our assessment of your profile, we are confident that your skills and experience will be a valuable addition to our team.
         </Text>
         <Text style={brandStyles.sectionTitle}>Position & Joining</Text>
         <View style={brandStyles.table}>
@@ -159,7 +159,7 @@ export function OfferLetterDoc(m: DocMeta) {
         <Text style={brandStyles.body}>Kindly sign and return a copy of this letter as your token of acceptance.</Text>
         <View style={brandStyles.signBlock}>
           <View style={brandStyles.signCol}><Text style={brandStyles.signLine}>Candidate Signature</Text></View>
-          <View style={brandStyles.signCol}><Text style={brandStyles.signLine}>For HP ENTERPRISE Safety Service & Man Power Supply</Text><Text style={{ fontSize: 9, color: NAVY, fontFamily: 'Helvetica-Bold', marginTop: 2 }}>Authorized Signatory</Text></View>
+          <View style={brandStyles.signCol}><Text style={brandStyles.signLine}>For HP ENTERPRISE</Text><Text style={{ fontSize: 9, color: NAVY, fontFamily: 'Helvetica-Bold', marginTop: 2 }}>Authorized Signatory</Text></View>
         </View>
         <Footer />
       </Page>
@@ -179,7 +179,7 @@ export function AppointmentLetterDoc(m: DocMeta) {
           Dear {m.fullName.split(' ')[0]},
         </Text>
         <Text style={brandStyles.body}>
-          With reference to your offer of employment, we are pleased to formally appoint you as <Text style={brandStyles.bold}>{m.designation || 'Employee'}</Text> in the <Text style={brandStyles.bold}>{m.department || 'Operations'}</Text> department of HP ENTERPRISE Safety Service & Man Power Supply with effect from <Text style={brandStyles.bold}>{m.joinDate || today()}</Text>.
+          With reference to your offer of employment, we are pleased to formally appoint you as <Text style={brandStyles.bold}>{m.designation || 'Employee'}</Text> in the <Text style={brandStyles.bold}>{m.department || 'Operations'}</Text> department of HP ENTERPRISE with effect from <Text style={brandStyles.bold}>{m.joinDate || today()}</Text>.
         </Text>
         <Text style={brandStyles.sectionTitle}>Terms of Appointment</Text>
         <View style={brandStyles.table}>
@@ -198,7 +198,7 @@ export function AppointmentLetterDoc(m: DocMeta) {
         <Text style={brandStyles.body}>We look forward to a long and mutually rewarding association.</Text>
         <View style={brandStyles.signBlock}>
           <View style={brandStyles.signCol}><Text style={brandStyles.signLine}>Employee Signature</Text></View>
-          <View style={brandStyles.signCol}><Text style={brandStyles.signLine}>For HP ENTERPRISE Safety Service & Man Power Supply</Text><Text style={{ fontSize: 9, color: NAVY, fontFamily: 'Helvetica-Bold', marginTop: 2 }}>Head — Safety & Workforce Management</Text></View>
+          <View style={brandStyles.signCol}><Text style={brandStyles.signLine}>For HP ENTERPRISE</Text><Text style={{ fontSize: 9, color: NAVY, fontFamily: 'Helvetica-Bold', marginTop: 2 }}>Head — Safety & Workforce Management</Text></View>
         </View>
         <Footer />
       </Page>
@@ -238,11 +238,11 @@ export function IdCardDoc(m: DocMeta) {
             </View>
           </View>
           <View style={{ backgroundColor: NAVY_LIGHT, paddingVertical: 8, paddingHorizontal: 18, borderTopWidth: 1, borderTopColor: GOLD }}>
-            <Text style={{ color: GOLD_LIGHT, fontSize: 7, textAlign: 'center', letterSpacing: 1 }}>IF FOUND, PLEASE RETURN TO HP ENTERPRISE Safety Service & Man Power Supply • PLOT 14, TECH PARK PHASE II, WHITEFIELD, BENGALURU 560066</Text>
+            <Text style={{ color: GOLD_LIGHT, fontSize: 7, textAlign: 'center', letterSpacing: 1 }}>IF FOUND, PLEASE RETURN TO HP ENTERPRISE • PLOT 14, TECH PARK PHASE II, WHITEFIELD, BENGALURU 560066</Text>
           </View>
         </View>
         <Text style={{ fontSize: 8, color: MUTED, textAlign: 'center', marginTop: 16, marginHorizontal: 80 }}>
-          This card is the property of HP ENTERPRISE Safety Service & Man Power Supply and must be returned upon separation. Valid until employment termination.
+          This card is the property of HP ENTERPRISE and must be returned upon separation. Valid until employment termination.
         </Text>
         <Footer />
       </Page>
@@ -367,10 +367,10 @@ export function InvoiceDoc(m: {
         <View style={{ flexDirection: 'row', marginBottom: 18, gap: 20 }}>
           <View style={{ flex: 1 }}>
             <Text style={{ ...brandStyles.sectionTitle, marginTop: 0, marginBottom: 6 }}>From</Text>
-            <Text style={{ ...brandStyles.body, marginBottom: 2, fontSize: 9.5 }}>HP ENTERPRISE Safety Service &amp; Man Power Supply</Text>
+            <Text style={{ ...brandStyles.body, marginBottom: 2, fontSize: 9.5 }}>HP ENTERPRISE</Text>
             <Text style={{ ...brandStyles.body, marginBottom: 2, fontSize: 9 }}>Plot 14, Tech Park Phase II, Whitefield</Text>
             <Text style={{ ...brandStyles.body, marginBottom: 2, fontSize: 9 }}>Bengaluru, Karnataka 560066</Text>
-            <Text style={{ ...brandStyles.body, fontSize: 9 }}>GST: 29AAGCH4521K1ZP</Text>
+            <Text style={{ ...brandStyles.body, fontSize: 9 }}>GST: 29ANZPH4067Q1ZS</Text>
           </View>
           <View style={{ flex: 1 }}>
             <Text style={{ ...brandStyles.sectionTitle, marginTop: 0, marginBottom: 6 }}>Bill To</Text>
@@ -443,7 +443,7 @@ export function GenericLetterDoc(m: DocMeta & { docTitle: string; bodyParagraphs
         ))}
         <View style={brandStyles.signBlock}>
           <View style={brandStyles.signCol} />
-          <View style={brandStyles.signCol}><Text style={brandStyles.signLine}>For HP ENTERPRISE Safety Service & Man Power Supply</Text><Text style={{ fontSize: 9, color: NAVY, fontFamily: 'Helvetica-Bold', marginTop: 2 }}>{m.signatory}</Text></View>
+          <View style={brandStyles.signCol}><Text style={brandStyles.signLine}>For HP ENTERPRISE</Text><Text style={{ fontSize: 9, color: NAVY, fontFamily: 'Helvetica-Bold', marginTop: 2 }}>{m.signatory}</Text></View>
         </View>
         <Footer />
       </Page>
