@@ -1,13 +1,11 @@
-// HP Enterprise HRMS — Prisma Schema
-// Note: SQLite is used as the local engine (Prisma-compatible). Schema is designed
-// to be portable to PostgreSQL for production cloud deployment.
+// HP Enterprise HRMS — Prisma Schema (PostgreSQL)
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
