@@ -679,3 +679,27 @@ Stage Summary:
 - Design: Sophisticated ledger/notebook aesthetic with ruled lines, mono eyebrow labels, display headings
 - All auth flows (login, register, subscribe, forgot-password) fully functional
 - Production-ready for hphrms.com
+---
+Task ID: GA-1
+Agent: Main
+Task: Production GA Release — Enterprise AI SaaS HRMS
+
+Work Log:
+- Set DATABASE_URL on Vercel production via API (vcp token, no rebuild trigger)
+- Updated Prisma schema with 8 new models: AiConversation, AiMessage, AiInsight, AiUsageLedger, ClientBranding, ClientSite, Timesheet, TimesheetLine, GeneratedDocument
+- Enhanced Notification model with accountId, severity, channel, status, scheduledFor, sentAt, readAt
+- Enhanced EmployeeDocument with accountId, expiryDate, clientVisible
+- Pushed full schema to Neon PostgreSQL (force-reset, all tables created in 48.68s)
+- Seeded database: HP ENTERPRISE account, 2 users (admin/HR), 8 departments, 12 designations, 4 subscription plans, 2 branches, client branding, default settings, welcome notification
+- Built enterprise landing page with ledger-rule design system from uploaded hphrms_landing.html
+- Created portal APIs: /api/portal/branding, /api/portal/summary
+- Pushed commit 90000d7 to GitHub main branch
+
+Stage Summary:
+- DATABASE_URL set on Vercel production (no rebuild)
+- All 50+ tables created on Neon PostgreSQL
+- Database seeded with production-ready data
+- Enterprise landing page with Bricolage Grotesque typography, ink/amber/ledger design system
+- Portal APIs ready for client branding and dashboard summary
+- Credentials: admin@hphrms.com / Admin@2025, hr@hphrms.com / Hr@2025
+- Domain: hphrms.com (Vercel deployment, Neon DB)
