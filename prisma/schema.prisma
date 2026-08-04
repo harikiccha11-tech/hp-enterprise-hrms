@@ -1,12 +1,50 @@
-// HP Enterprise HRMS — Prisma Schema (SQLite)
+// HP Enterprise HPHRMS — Dual-Mode Prisma Schema (PostgreSQL)
+// Supports: HRMS SaaS | Manpower Supply | Hybrid
+
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:../db/custom.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// ACCOUNTS (Multi-tenant Organizations)
+// ============================================================
+
+model Account {
+  id                String   @id @default(cuid())
+  organizationName  String
+  accountType       String   @default("hrms_saas") // hrms_saas | manpower_supply | hybrid
+  status            String   @default("active")     // active | trial | suspended | cancelled
+  billingContactEmail String?
+  billingPhone      String?
+  gstNumber         String?
+  panNumber         String?
+  billingAddress    String?
+  city              String?
+  state             String?
+  pincode           String?
+  notes             String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  expiresAt         DateTime?
+
+  users             User[]
+  employees         Employee[]
+  siteAssignments   SiteAssignment[]
+  invoices          Invoice[]
+  attendance        Attendance[]
+  leaves            Leave[]
+  payrolls          Payroll[]
+  salarySlips       SalarySlip[]
+  auditLogs         AuditLog[]
+
+  @@index([status])
+  @@index([accountType])
 }
 
 // ============================================================
@@ -19,20 +57,26 @@ model User {
   email            String   @unique
   passwordHash     String
   role             String   @default("EMPLOYEE") // OWNER | SUPER_ADMIN | HR_MANAGER | EMPLOYEE | CLIENT
-  clientId         String?  // For CLIENT role users — links to Client record
+  clientId         String?  // Legacy: For CLIENT role users — links to Client record
+  // Dual-mode fields
+  accountId        String?
+  clientRole       String   @default("employee") // admin | hr | manager | employee | viewer
+  // System fields
   mustResetPassword Boolean @default(true)
   locked           Boolean  @default(false)
   lastLoginAt      DateTime?
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
-  employee       Employee?
-  notifications  Notification[]
-  auditLogs      AuditLog[]
+  account          Account? @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  employee         Employee?
+  notifications    Notification[]
+  auditLogs        AuditLog[]
   attendanceRecords Attendance[] @relation("AttendanceMarkedBy")
-  leaveActions   LeaveAction[]
+  leaveActions     LeaveAction[]
 
   @@index([role])
+  @@index([accountId])
 }
 
 // ============================================================
@@ -42,7 +86,10 @@ model User {
 model Employee {
   id              String   @id @default(cuid())
   employeeCode    String?  @unique // e.g. HPE-0042 — generated on approval
-  status          String   @default("PENDING") // PENDING | APPROVED | REJECTED | TERMINATED
+  status          String   @default("PENDING") // PENDING | APPROVED | REJECTED | TERMINATED | ACTIVE | INACTIVE | ON_LEAVE | CONTRACT_ENDED
+  // Dual-mode: employee type
+  employeeType    String   @default("internal") // internal | hp_deployed
+  accountId       String?
 
   // Personal
   fullName        String
@@ -108,6 +155,7 @@ model Employee {
   // Links
   userId         String?  @unique
   user           User?    @relation(fields: [userId], references: [id])
+  account        Account? @relation(fields: [accountId], references: [id], onDelete: Cascade)
   documents      EmployeeDocument[]
   attendance     Attendance[]
   leaves         Leave[]
@@ -118,6 +166,8 @@ model Employee {
   leaveBalance   LeaveBalance?
   onboardingTasks OnboardingTask[]
   offboardingTasks OffboardingTask[]
+  siteAssignments SiteAssignment[]
+  invoiceLineItems InvoiceLineItem[]
 
   reviewedBy     String?
   reviewedAt     DateTime?
@@ -135,6 +185,9 @@ model Employee {
   updatedAt      DateTime @updatedAt
 
   @@index([status])
+  @@index([accountId])
+  @@index([employeeType])
+  @@unique([accountId, employeeCode])
 }
 
 model EmployeeDocument {
@@ -156,19 +209,49 @@ model EmployeeDocument {
 }
 
 // ============================================================
+// SITE ASSIGNMENTS (Manpower Supply Deployments)
+// ============================================================
+
+model SiteAssignment {
+  id              String    @id @default(cuid())
+  accountId       String
+  employeeId      String
+  siteName        String
+  location        String?
+  deploymentDate  DateTime
+  expectedEndDate DateTime?
+  actualEndDate   DateTime?
+  dailyRate       Float
+  status          String    @default("active") // active | completed | on_hold | cancelled
+  clientVisible   Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  createdByUserId String?
+
+  account         Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  employee        Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  invoiceLineItems InvoiceLineItem[]
+
+  @@index([accountId])
+  @@index([employeeId])
+  @@index([status])
+}
+
+// ============================================================
 // ATTENDANCE
 // ============================================================
 
 model Attendance {
   id          String   @id @default(cuid())
   employeeId  String
+  accountId   String?
   date        DateTime
   punchIn     DateTime?
   punchOut    DateTime?
   workingHours Float?  // hours
   overtime    Float?   // hours
   lateArrival Boolean @default(false)
-  status      String  @default("PRESENT") // PRESENT | ABSENT | LATE | HALF_DAY | LEAVE | HOLIDAY
+  status      String  @default("PRESENT") // PRESENT | ABSENT | LATE | HALF_DAY | LEAVE | HOLIDAY | WFH | ON_LEAVE
   markedBy    String?
   markedById  String?
   // Geolocation captured on punch in/out (no continuous tracking)
@@ -184,9 +267,11 @@ model Attendance {
 
   employee    Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   markedByUser User?   @relation("AttendanceMarkedBy", fields: [markedById], references: [id])
+  account     Account? @relation(fields: [accountId], references: [id], onDelete: Cascade)
 
   @@unique([employeeId, date])
   @@index([date])
+  @@index([accountId])
 }
 
 // ============================================================
@@ -196,7 +281,8 @@ model Attendance {
 model Leave {
   id          String   @id @default(cuid())
   employeeId  String
-  leaveType   String // CL | SL | EL | PL | LOP | WFH
+  accountId   String?
+  leaveType   String // CL | SL | EL | PL | LOP | WFH | casual | sick | annual | unpaid | maternity | paternity
   fromDate    DateTime
   toDate      DateTime
   days        Float
@@ -208,9 +294,11 @@ model Leave {
   comments    String?
 
   employee    Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  account     Account? @relation(fields: [accountId], references: [id], onDelete: Cascade)
   actions     LeaveAction[]
 
   @@index([employeeId, status])
+  @@index([accountId])
 }
 
 model LeaveAction {
@@ -246,6 +334,7 @@ model LeaveBalance {
 model Payroll {
   id           String   @id @default(cuid())
   employeeId   String
+  accountId    String?
   month        Int      // 1-12
   year         Int
   basic        Float
@@ -261,20 +350,24 @@ model Payroll {
   esiEmployee  Float    @default(0)
   esiEmployer  Float    @default(0)
   professionalTax Float @default(0)
+  incomeTaxDeduction Float @default(0)
   netSalary    Float
-  status       String   @default("GENERATED") // GENERATED | PAID | HELD
+  status       String   @default("GENERATED") // GENERATED | PAID | HELD | draft | generated | approved | processed
   processedAt  DateTime @default(now())
   processedBy  String?
 
   salarySlip   SalarySlip?
   employee     Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  account      Account? @relation(fields: [accountId], references: [id], onDelete: Cascade)
 
   @@unique([employeeId, month, year])
+  @@index([accountId])
 }
 
 model SalarySlip {
   id          String   @id @default(cuid())
   employeeId  String
+  accountId   String?
   payrollId   String   @unique
   month       Int
   year        Int
@@ -283,6 +376,7 @@ model SalarySlip {
 
   payroll     Payroll  @relation(fields: [payrollId], references: [id], onDelete: Cascade)
   employee    Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  account     Account? @relation(fields: [accountId], references: [id], onDelete: Cascade)
 }
 
 model GeneratedDocument {
@@ -301,7 +395,7 @@ model GeneratedDocument {
 }
 
 // ============================================================
-// CLIENTS & PROJECTS
+// CLIENTS & PROJECTS (Legacy + Enhanced)
 // ============================================================
 
 model Client {
@@ -367,21 +461,62 @@ model WorkOrder {
   invoices    Invoice[]
 }
 
-model Invoice {
-  id          String   @id @default(cuid())
-  invoiceNumber String @unique
-  clientId    String
-  workOrderId String?
-  amount      Float
-  tax         Float    @default(0)
-  total       Float
-  status      String   @default("DRAFT") // DRAFT | SENT | PAID | OVERDUE
-  issueDate   DateTime @default(now())
-  dueDate     DateTime?
-  filePath    String?
+// ============================================================
+// INVOICES (Dual-mode: Project billing + Manpower supply billing)
+// ============================================================
 
-  client      Client     @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  workOrder   WorkOrder? @relation(fields: [workOrderId], references: [id])
+model Invoice {
+  id                 String   @id @default(cuid())
+  invoiceNumber      String   @unique
+  // Legacy fields
+  clientId           String?
+  workOrderId        String?
+  amount             Float?
+  tax                Float    @default(0)
+  total              Float?
+  issueDate          DateTime @default(now())
+  dueDate            DateTime?
+  filePath           String?
+  status             String   @default("DRAFT") // DRAFT | SENT | PAID | OVERDUE | draft | sent | overdue | paid | cancelled
+  // Dual-mode: Account-based invoicing (manpower supply)
+  accountId          String?
+  billingPeriodStart DateTime?
+  billingPeriodEnd   DateTime?
+  gstAmount          Float?
+  finalAmount        Float?
+  paymentDueDate     DateTime?
+  paymentDate        DateTime?
+  notes              String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  client             Client?    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  workOrder          WorkOrder? @relation(fields: [workOrderId], references: [id])
+  account            Account?   @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  lineItems          InvoiceLineItem[]
+
+  @@index([accountId])
+  @@index([status])
+  @@index([issueDate])
+  @@unique([accountId, invoiceNumber])
+}
+
+model InvoiceLineItem {
+  id               String  @id @default(cuid())
+  invoiceId        String
+  siteAssignmentId String?
+  employeeId       String
+  dailyRate        Float
+  daysDeployed     Int
+  lineTotal        Float
+  createdAt        DateTime @default(now())
+
+  invoice          Invoice        @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  siteAssignment   SiteAssignment? @relation(fields: [siteAssignmentId], references: [id])
+  employee         Employee       @relation(fields: [employeeId], references: [id])
+
+  @@index([invoiceId])
+  @@index([employeeId])
 }
 
 // ============================================================
@@ -406,16 +541,21 @@ model Notification {
 model AuditLog {
   id        String   @id @default(cuid())
   userId    String?
+  accountId String?
   action    String
   entity    String
   entityId  String?
   details   String?
+  oldValues String?  // JSON
+  newValues String?  // JSON
   ip        String?
   at        DateTime @default(now())
 
-  user      User? @relation(fields: [userId], references: [id])
+  user      User?    @relation(fields: [userId], references: [id])
+  account   Account? @relation(fields: [accountId], references: [id])
 
   @@index([entity, at])
+  @@index([accountId])
 }
 
 // ============================================================
@@ -467,7 +607,7 @@ model Department {
   description String?
   headName    String?
   headEmail   String?
-  status      String   @default("ACTIVE") // ACTIVE | INACTIVE
+  status      String   @default("ACTIVE")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -477,12 +617,12 @@ model Department {
 model Designation {
   id          String   @id @default(cuid())
   title       String   @unique
-  level       String?  // Junior | Mid | Senior | Lead | Manager | Director
+  level       String?
   department  String?
   minSalary   Float?
   maxSalary   Float?
   description String?
-  status      String   @default("ACTIVE") // ACTIVE | INACTIVE
+  status      String   @default("ACTIVE")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -500,7 +640,7 @@ model Branch {
   phone       String?
   email       String?
   isHead      Boolean  @default(false)
-  status      String   @default("ACTIVE") // ACTIVE | INACTIVE
+  status      String   @default("ACTIVE")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -519,13 +659,13 @@ model Vendor {
   email       String?
   phone       String?
   address     String?
-  category    String?  // Equipment | Material | Service | Contractor | Consultant
+  category    String?
   pan         String?
   bankName    String?
   bankAccount String?
   bankIfsc    String?
-  rating      Float?   // 1-5
-  status      String   @default("ACTIVE") // ACTIVE | INACTIVE | BLACKLISTED
+  rating      Float?
+  status      String   @default("ACTIVE")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -542,13 +682,13 @@ model JobPosting {
   department  String?
   designation String?
   location    String?
-  type        String   @default("FULL_TIME") // FULL_TIME | CONTRACT | PART_TIME | INTERNSHIP
+  type        String   @default("FULL_TIME")
   experience   String?
   salaryMin   Float?
   salaryMax   Float?
   description String?
   requirements String?
-  status      String   @default("OPEN") // DRAFT | OPEN | CLOSED | FILLED
+  status      String   @default("OPEN")
   postedBy    String?
   postedAt    DateTime @default(now())
   closedAt    DateTime?
@@ -570,8 +710,8 @@ model Candidate {
   expectedCtc Float?
   noticePeriod String?
   skills      String?
-  source      String?  // Referral | JobPortal | LinkedIn | Website | WalkIn | Other
-  status      String   @default("NEW") // NEW | SCREENING | SHORTLISTED | INTERVIEW | OFFERED | HIRED | REJECTED | WITHDRAWN
+  source      String?
+  status      String   @default("NEW")
   jobPostingId String?
   remarks     String?
   appliedAt   DateTime @default(now())
@@ -590,9 +730,9 @@ model OnboardingTask {
   id          String   @id @default(cuid())
   employeeId  String
   task        String
-  category    String?  // Documents | IT | HR | Finance | Training | General
+  category    String?
   dueDate     DateTime?
-  status      String   @default("PENDING") // PENDING | IN_PROGRESS | COMPLETED | SKIPPED
+  status      String   @default("PENDING")
   completedBy String?
   completedAt DateTime?
   notes       String?
@@ -607,9 +747,9 @@ model OffboardingTask {
   id          String   @id @default(cuid())
   employeeId  String
   task        String
-  category    String?  // Documents | IT | HR | Finance | Assets | General
+  category    String?
   dueDate     DateTime?
-  status      String   @default("PENDING") // PENDING | IN_PROGRESS | COMPLETED | SKIPPED
+  status      String   @default("PENDING")
   completedBy String?
   completedAt DateTime?
   notes       String?
@@ -627,16 +767,16 @@ model OffboardingTask {
 model PerformanceReview {
   id          String   @id @default(cuid())
   employeeId  String
-  reviewPeriod String  // Q1 | Q2 | Q3 | Q4 | H1 | H2 | Annual
+  reviewPeriod String
   year        Int
-  rating      Float?   // 1-5
+  rating      Float?
   strengths   String?
   improvements String?
   goals       String?
   feedback    String?
   reviewerId  String?
   reviewerName String?
-  status      String   @default("DRAFT") // DRAFT | SUBMITTED | REVIEWED | COMPLETED
+  status      String   @default("DRAFT")
   reviewedAt  DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -650,12 +790,12 @@ model Goal {
   employeeId  String
   title       String
   description String?
-  category    String?  // Performance | Learning | Project | Personal
-  priority    String   @default("MEDIUM") // LOW | MEDIUM | HIGH | CRITICAL
-  progress    Float    @default(0) // 0-100
+  category    String?
+  priority    String   @default("MEDIUM")
+  progress    Float    @default(0)
   targetDate  DateTime?
-  status      String   @default("NOT_STARTED") // NOT_STARTED | IN_PROGRESS | ON_TRACK | AT_RISK | COMPLETED | CANCELLED
-  weight      Float?   // For weighted goal scoring
+  status      String   @default("NOT_STARTED")
+  weight      Float?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -670,12 +810,12 @@ model TrainingCourse {
   id          String   @id @default(cuid())
   title       String
   description String?
-  category    String?  // Safety | Technical | SoftSkills | Compliance | Leadership
-  duration    String?  // e.g. "2 hours", "3 days"
-  mode        String?  // Online | Offline | Hybrid
+  category    String?
+  duration    String?
+  mode        String?
   instructor  String?
   maxParticipants Int?
-  status      String   @default("ACTIVE") // ACTIVE | INACTIVE | ARCHIVED
+  status      String   @default("ACTIVE")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -688,10 +828,10 @@ model TrainingEnrollment {
   id          String   @id @default(cuid())
   courseId    String
   employeeId  String
-  status      String   @default("ENROLLED") // ENROLLED | IN_PROGRESS | COMPLETED | FAILED | CANCELLED
+  status      String   @default("ENROLLED")
   enrolledAt  DateTime @default(now())
   completedAt DateTime?
-  score       Float?   // 0-100
+  score       Float?
   certificatePath String?
   feedback    String?
 
@@ -708,12 +848,12 @@ model TrainingEnrollment {
 model Expense {
   id          String   @id @default(cuid())
   employeeId  String
-  category    String   // Travel | Food | Accommodation | Medical | Communication | Equipment | Other
+  category    String
   amount      Float
   description String
   date        DateTime
   receiptPath String?
-  status      String   @default("PENDING") // PENDING | APPROVED | REJECTED | REIMBURSED
+  status      String   @default("PENDING")
   approvedBy  String?
   approvedAt  DateTime?
   remarks     String?
@@ -731,7 +871,7 @@ model Expense {
 model Asset {
   id          String   @id @default(cuid())
   name        String
-  category    String   // Laptop | Desktop | Phone | Vehicle | Equipment | Furniture | Other
+  category    String
   serialNumber String?
   make        String?
   model       String?
@@ -739,7 +879,7 @@ model Asset {
   purchaseCost Float?
   currentValue  Float?
   warrantyExpiry DateTime?
-  status      String   @default("AVAILABLE") // AVAILABLE | ASSIGNED | IN_REPAIR | DISPOSED | LOST
+  status      String   @default("AVAILABLE")
   location    String?
   notes       String?
   createdAt   DateTime @default(now())
@@ -756,7 +896,7 @@ model AssetAssignment {
   employeeId  String
   assignedAt  DateTime @default(now())
   returnedAt  DateTime?
-  condition   String?  // Good | Fair | Damaged
+  condition   String?
   notes       String?
 
   asset       Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
@@ -791,10 +931,10 @@ model EmailTemplate {
   id          String   @id @default(cuid())
   name        String   @unique
   subject     String
-  body        String   // HTML body
-  variables   String?  // JSON array of variable placeholders
-  category    String?  // onboarding | leave | payroll | general
-  status      String   @default("ACTIVE") // ACTIVE | INACTIVE
+  body        String
+  variables   String?
+  category    String?
+  status      String   @default("ACTIVE")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -804,9 +944,9 @@ model NotificationTemplate {
   name        String   @unique
   title       String
   body        String
-  type        String?  // push | email | sms | in_app
-  category    String?  // leave | payroll | attendance | general
-  status      String   @default("ACTIVE") // ACTIVE | INACTIVE
+  type        String?
+  category    String?
+  status      String   @default("ACTIVE")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -821,10 +961,10 @@ model SubscriptionPlan {
   description String?
   priceINR    Float?
   priceUSD    Float?
-  interval    String   @default("MONTHLY") // MONTHLY | YEARLY
+  interval    String   @default("MONTHLY")
   maxEmployees Int?
-  features    String?  // JSON array of features
-  status      String   @default("ACTIVE") // ACTIVE | INACTIVE
+  features    String?
+  status      String   @default("ACTIVE")
   trialDays   Int      @default(14)
   sortOrder   Int      @default(0)
   isPopular   Boolean  @default(false)
@@ -842,7 +982,7 @@ model FeatureFlag {
   name        String
   description String?
   enabled     Boolean  @default(false)
-  environments String? // JSON array: ["production", "staging"]
+  environments String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -850,16 +990,16 @@ model FeatureFlag {
 model PaymentGateway {
   id          String   @id @default(cuid())
   name        String   @unique
-  type        String   // razorpay | stripe | upi | bank_transfer
+  type        String
   apiKey      String?
   apiSecret   String?
   merchantId  String?
   isDefault   Boolean  @default(false)
-  upiId       String?  // For UPI
+  upiId       String?
   bankName    String?
   bankAccount String?
   bankIfsc    String?
-  status      String   @default("ACTIVE") // ACTIVE | INACTIVE
+  status      String   @default("ACTIVE")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }

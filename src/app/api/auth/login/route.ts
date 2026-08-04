@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
     }
     const user = await db.user.findUnique({
       where: { username: String(username).toLowerCase().trim() },
-      include: { employee: true },
+      include: { employee: true, account: true },
     })
     if (!user) {
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 })
@@ -38,6 +38,10 @@ export async function POST(req: NextRequest) {
       username: user.username,
       role: user.role as 'OWNER' | 'SUPER_ADMIN' | 'HR_MANAGER' | 'EMPLOYEE' | 'CLIENT',
       employeeId: user.employee?.id,
+      // Dual-mode fields
+      accountId: user.accountId ?? undefined,
+      accountType: (user.account?.accountType as 'hrms_saas' | 'manpower_supply' | 'hybrid') ?? undefined,
+      clientRole: (user.clientRole as 'admin' | 'hr' | 'manager' | 'employee' | 'viewer') ?? 'employee',
     })
     await setSessionCookie(token)
     await audit(user.id, 'LOGIN', 'User', user.id)
@@ -51,6 +55,10 @@ export async function POST(req: NextRequest) {
         mustResetPassword: user.mustResetPassword,
         employeeId: user.employee?.id ?? null,
         clientId: linkedClient?.id ?? null,
+        // Dual-mode fields
+        accountId: user.accountId ?? null,
+        accountType: user.account?.accountType ?? null,
+        clientRole: user.clientRole,
         client: linkedClient
           ? {
               id: linkedClient.id,
@@ -67,6 +75,14 @@ export async function POST(req: NextRequest) {
               fullName: user.employee.fullName,
               designation: user.employee.designation,
               department: user.employee.department,
+            }
+          : null,
+        account: user.account
+          ? {
+              id: user.account.id,
+              organizationName: user.account.organizationName,
+              accountType: user.account.accountType,
+              status: user.account.status,
             }
           : null,
       },

@@ -53,3 +53,11 @@ server.log
 # Skills directory
 /skills/
 /tool-results/
+/db/
+*.db
+*.db-journal
+
+# Database files (migrated to Neon PostgreSQL)
+/db/
+*.db
+*.db-journal

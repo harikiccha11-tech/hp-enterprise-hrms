@@ -3,7 +3,7 @@ import { Geist } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
-import { ThemeInit } from "@/components/shared/ThemeInit";
+import { Providers } from "@/components/shared/Providers";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -200,8 +200,9 @@ export default function RootLayout({
         <meta name="theme-color" content="#002B5C" />
       </head>
       <body className={`${geistSans.variable} antialiased bg-background text-foreground`}>
-        <ThemeInit />
-        {children}
+        <Providers>
+          {children}
+        </Providers>
         <Toaster />
         <SonnerToaster position="top-right" richColors closeButton />
       </body>

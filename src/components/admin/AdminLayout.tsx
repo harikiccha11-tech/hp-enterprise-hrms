@@ -32,6 +32,7 @@ import {
 import { ROLE_LABELS } from '@/lib/constants'
 import { t, type LangCode } from '@/lib/i18n'
 import { fmtRelative, initials } from './lib'
+import { AccountTypeBadge } from '@/components/shared/AccountTypeBadge'
 // Existing modules
 import { Dashboard } from './modules/Dashboard'
 import { Employees } from './modules/Employees'
@@ -386,6 +387,7 @@ export function AdminLayout() {
                 <p className="hidden text-xs text-muted-foreground sm:block">{currentNav?.desc}</p>
               </div>
               {currentNav?.superAdminOnly && (<Badge variant="outline" className="hidden md:inline-flex border-[var(--gold)]/40 text-[#8a6f24] gap-1"><Lock className="h-3 w-3" /> Super Admin</Badge>)}
+              <div className="hidden md:block"><AccountTypeBadge /></div>
             </div>
             <div className="flex items-center gap-2 sm:gap-3">
               <LanguageSwitcher />

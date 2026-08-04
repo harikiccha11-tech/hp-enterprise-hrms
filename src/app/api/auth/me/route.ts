@@ -26,6 +26,10 @@ export async function GET() {
         mustResetPassword: user.mustResetPassword,
         employeeId: user.employee?.id ?? null,
         clientId: linkedClient?.id ?? null,
+        // Dual-mode fields
+        accountId: user.accountId ?? null,
+        accountType: user.account?.accountType ?? null,
+        clientRole: user.clientRole,
         client: linkedClient
           ? {
               id: linkedClient.id,
@@ -42,6 +46,14 @@ export async function GET() {
               fullName: user.employee.fullName,
               designation: user.employee.designation,
               department: user.employee.department,
+            }
+          : null,
+        account: user.account
+          ? {
+              id: user.account.id,
+              organizationName: user.account.organizationName,
+              accountType: user.account.accountType,
+              status: user.account.status,
             }
           : null,
       },

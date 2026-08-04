@@ -577,3 +577,77 @@ Stage Summary:
 - GitHub push successful: main branch updated to 2495d2e
 - Vercel deployment blocked: needs user's Vercel token or manual dashboard setup
 - Repo URL: https://github.com/harikiccha11-tech/hp-enterprise-hrms
+
+---
+Task ID: 3-a
+Agent: Auth System Updater
+Task: Update auth system to support dual-mode (HRMS SaaS / Manpower Supply / Hybrid) architecture
+
+Work Log:
+- Updated SessionPayload interface in /src/lib/auth.ts with accountId, accountType, clientRole optional fields
+- Updated getCurrentUser() to include account relation in Prisma query
+- Added getAccountType() helper — returns session.accountType or 'hrms_saas' default
+- Added getClientRole() helper — returns 'admin' for OWNER/SUPER_ADMIN, falls back to session.clientRole or 'employee'
+- Updated /src/app/api/auth/login/route.ts — added include: { account: true }, embedded accountId/accountType/clientRole in session token, added account object to JSON response
+- Updated /src/app/api/auth/me/route.ts — same pattern, includes account info in response via getCurrentUser (which now eagerly loads account)
+- Created /src/app/api/auth/account/route.ts — GET endpoint returning current user's account { id, organizationName, accountType, status, createdAt }
+- Created /src/app/api/auth/user/route.ts — GET endpoint returning { id, email, full_name, client_role, department }
+- All existing fields preserved for backward compatibility (role, employeeId, clientId, client, employee)
+- ESLint passes clean, dev server compiles without errors
+
+Stage Summary:
+- Auth system now supports dual-mode multi-tenant architecture
+- Session JWT carries accountId, accountType, clientRole
+- Two new helper functions (getAccountType, getClientRole) available for downstream authorization logic
+- Two new API endpoints: /api/auth/account and /api/auth/user
+- Full backward compatibility maintained — existing OWNER/EMPLOYEE role flows unchanged
+
+---
+Task ID: 4-a
+Agent: Frontend Dual-Mode Updater
+Task: Create AccountContext and update frontend for dual-mode (HRMS SaaS / Manpower Supply / Hybrid) architecture
+
+Work Log:
+- Created /src/lib/account-context.tsx — AccountProvider, useAccountContext hook, Account/AccountUser types, formatAccountType/formatClientRole helpers
+- Created /src/lib/module-definitions.ts — MODULE_DEFINITIONS array with 20+ nav items, account type filtering, role-based visibility, getVisibleModules() function
+- Created /src/components/shared/AccountTypeBadge.tsx — badge component showing account type (blue/green/purple) + AccountStatusBadge (green/amber/red)
+- Created /src/components/shared/ModuleGuard.tsx — wraps children with loading spinner, session check, and account type/role access control
+- Removed non-existent SeparatorType import from lucide-react
+- formatAccountType/formatClientRole helpers placed in account-context.tsx (single source of truth) and imported by module-definitions.ts consumers
+- ESLint passes clean, zero errors
+
+Stage Summary:
+- 4 new frontend files created for dual-mode architecture
+- AccountContext fetches from /api/auth/account and /api/auth/user (created in task 3-a) on mount
+- MODULE_DEFINITIONS supports 3 account types with role-based access control
+- ModuleGuard provides declarative access control wrapper for any page/component
+- AccountTypeBadge and AccountStatusBadge provide visual indicators for account mode
+- All components are 'use client' and use shadcn/ui Badge
+- Existing store/auth system untouched — AccountContext is additional layer only
+
+---
+Task ID: 7-a
+Agent: Seed Script Updater
+Task: Update seed script to support dual-mode architecture
+
+Work Log:
+- Rewrote /src/lib/seed.ts completely for dual-mode architecture
+- Creates 4 accounts: HP Enterprise (hybrid), Acme Technologies (hrms_saas), BuildRight Construction (manpower_supply), Metro Retail Chain (hybrid)
+- Creates 5 admin users with linked Employee records: hpadmin, admin (legacy), acmeadmin, buildadmin, metroadmin
+- Creates 3 internal employees for Acme (Rajesh Sharma, Priya Patel, Amit Kumar)
+- Creates 2 hp_deployed employees for BuildRight (Suresh Yadav, Ramesh Gowda)
+- Creates 5 employees for Metro Retail: 3 internal (Vikram Singh, Deepa Nair, Rahul Desai) + 2 hp_deployed (Mohan Das, Kiran Reddy)
+- Creates 4 SiteAssignments: 2 for BuildRight deployed staff, 2 for Metro Retail deployed staff
+- Preserved legacy HP Enterprise employees (Arjun Sharma, Priya Patil) linked to HP Enterprise account
+- Preserved legacy client/project/workOrder/announcement data linked to HP Enterprise account
+- All admin users and employees properly linked with accountId, clientRole, employeeType
+- All upserts use deterministic IDs for accounts, email-based lookups for employees
+- Fixed missing auditLogs back-relation in Account model in schema.prisma
+- Regenerated Prisma client successfully
+- ESLint passes clean, zero errors
+
+Stage Summary:
+- Seed script fully supports dual-mode (hrms_saas / manpower_supply / hybrid)
+- 4 accounts, 5 admin users, 12 total employees, 4 site assignments
+- Schema fix: Added auditLogs AuditLog[] to Account model
+- Idempotent: uses upsert + findFirst pattern throughout

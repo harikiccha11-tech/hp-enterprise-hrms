@@ -18,6 +18,10 @@ export interface SessionPayload {
   username: string
   role: 'OWNER' | 'SUPER_ADMIN' | 'HR_MANAGER' | 'EMPLOYEE' | 'CLIENT'
   employeeId?: string
+  // Dual-mode fields
+  accountId?: string
+  accountType?: 'hrms_saas' | 'manpower_supply' | 'hybrid'
+  clientRole?: 'admin' | 'hr' | 'manager' | 'employee' | 'viewer'
 }
 
 // --- Password hashing (Web Crypto, works in edge/node) ---
@@ -112,11 +116,28 @@ export async function getCurrentUser() {
   if (!session) return null
   const user = await db.user.findUnique({
     where: { id: session.userId },
-    include: { employee: true },
+    include: { employee: true, account: true },
   })
   if (!user) return null
   if (user.locked) return null
   return { session, user }
+}
+
+// --- Dual-mode helpers ---
+
+/** Get account type from session (falls back to 'hrms_saas' for backward compat) */
+export async function getAccountType(): Promise<'hrms_saas' | 'manpower_supply' | 'hybrid'> {
+  const session = await getSession()
+  return session?.accountType ?? 'hrms_saas'
+}
+
+/** Get client-level role from session (falls back to 'employee' for backward compat) */
+export async function getClientRole(): Promise<'admin' | 'hr' | 'manager' | 'employee' | 'viewer'> {
+  const session = await getSession()
+  if (!session) return 'employee'
+  // OWNER/SUPER_ADMIN users are treated as account admins
+  if (session.role === 'OWNER' || session.role === 'SUPER_ADMIN') return 'admin'
+  return session.clientRole ?? 'employee'
 }
 
 // --- Role checks ---
