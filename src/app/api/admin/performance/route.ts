@@ -21,8 +21,8 @@ export async function GET(req: NextRequest) {
     if (search) {
       where.employee = {
         OR: [
-          { fullName: { contains: search, mode: 'insensitive' } },
-          { employeeCode: { contains: search, mode: 'insensitive' } },
+          { fullName: { contains: search } },
+          { employeeCode: { contains: search } },
         ],
       }
     }
@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
         goals: goals || '',
         feedback: feedback || '',
         reviewerId: cu!.user.id,
-        reviewerName: reviewerName || cu!.user.name || '',
+        reviewerName: reviewerName || cu!.user.username || '',
         status: status || 'DRAFT',
       },
     })

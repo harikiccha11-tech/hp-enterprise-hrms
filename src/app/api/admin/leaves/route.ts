@@ -10,6 +10,8 @@ export const dynamic = 'force-dynamic'
 export async function GET(req: NextRequest) {
   const cu = await getCurrentUser()
   if (!cu) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!['OWNER', 'SUPER_ADMIN', 'HR_MANAGER', 'EMPLOYEE'].includes(cu.user.role))
+    return NextResponse.json({ error: 'Forbidden — insufficient permissions' }, { status: 403 })
   const { searchParams } = new URL(req.url)
   const status = searchParams.get('status')
 

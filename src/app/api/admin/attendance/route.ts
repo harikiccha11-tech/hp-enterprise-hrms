@@ -23,12 +23,12 @@ export async function GET(req: NextRequest) {
   if (cu.user.role === 'EMPLOYEE') {
     where.employeeId = cu.user.employee?.id
   }
-  // Scope CLIENT role to employees assigned to their client
-  if (cu.user.role === 'CLIENT' && cu.user.clientId) {
+  // Scope CLIENT role to employees assigned to their client (always, regardless of query param)
+  if (cu.user.role === 'CLIENT') {
+    if (!cu.user.clientId) return NextResponse.json({ error: 'Forbidden — no client linked' }, { status: 403 })
     where.employee = { assignedClientId: cu.user.clientId }
-  }
-  // Admin filter by client
-  if (clientId) {
+  } else if (clientId) {
+    // Admin filter by client (only for non-CLIENT roles)
     where.employee = { ...(where.employee || {}), assignedClientId: clientId }
   }
   if (employeeId) where.employeeId = employeeId

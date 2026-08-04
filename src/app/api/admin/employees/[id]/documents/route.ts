@@ -7,9 +7,18 @@ import { notify } from '@/lib/notify'
 export const runtime = 'nodejs'
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { error } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER', 'EMPLOYEE')
+  const { error, cu } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER', 'EMPLOYEE')
   if (error) return error
   const { id } = await params
+
+  // If EMPLOYEE role, verify they access their own documents
+  if (cu!.user.role === 'EMPLOYEE') {
+    const emp = await db.employee.findUnique({ where: { id }, select: { userId: true } })
+    if (!emp || emp.userId !== cu!.user.id) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+  }
+
   const [generated, uploaded] = await Promise.all([
     db.generatedDocument.findMany({ where: { employeeId: id }, orderBy: { generatedAt: 'desc' } }),
     db.employeeDocument.findMany({ where: { employeeId: id }, orderBy: { uploadedAt: 'desc' } }),

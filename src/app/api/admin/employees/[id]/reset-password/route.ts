@@ -32,7 +32,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       'WARNING',
     )
     await audit(cu!.user.id, 'RESET_PASSWORD', 'User', emp.user.id, `Reset password for ${emp.fullName}`)
-    return NextResponse.json({ ok: true, tempPassword })
+    return NextResponse.json({ ok: true, message: 'Password reset. New credentials sent via notification.' })
   } catch (e) {
     return NextResponse.json({ error: 'Failed' }, { status: 500 })
   }

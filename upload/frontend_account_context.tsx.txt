@@ -1,0 +1,386 @@
+// HPHRMS Enterprise – Frontend Account Context & Sidebar
+// React + Next.js App Router
+// app/(dashboard)/context/AccountContext.tsx & components/Sidebar.tsx
+
+'use client';
+
+import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { useRouter } from 'next/navigation';
+
+// ============================================================================
+// TYPES
+// ============================================================================
+
+export type AccountType = 'hrms_saas' | 'manpower_supply' | 'hybrid';
+export type ClientRole = 'admin' | 'hr' | 'manager' | 'employee' | 'viewer';
+
+export interface Account {
+  id: string;
+  organization_name: string;
+  account_type: AccountType;
+  status: 'active' | 'trial' | 'suspended';
+  created_at: string;
+}
+
+export interface User {
+  id: string;
+  email: string;
+  full_name: string;
+  client_role: ClientRole;
+  department?: string;
+}
+
+export interface AccountContextType {
+  account: Account | null;
+  user: User | null;
+  loading: boolean;
+  error: string | null;
+  logout: () => void;
+}
+
+// ============================================================================
+// ACCOUNT CONTEXT
+// ============================================================================
+
+const AccountContext = createContext<AccountContextType | undefined>(undefined);
+
+export function AccountProvider({ children }: { children: ReactNode }) {
+  const [account, setAccount] = useState<Account | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    const fetchSession = async () => {
+      try {
+        const [accountRes, userRes] = await Promise.all([
+          fetch('/api/auth/account'),
+          fetch('/api/auth/user'),
+        ]);
+
+        if (!accountRes.ok || !userRes.ok) {
+          setError('Session expired');
+          router.push('/login');
+          return;
+        }
+
+        const accountData = await accountRes.json();
+        const userData = await userRes.json();
+
+        setAccount(accountData);
+        setUser(userData);
+      } catch (err) {
+        console.error('Session fetch error:', err);
+        setError('Failed to load session');
+        router.push('/login');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSession();
+  }, [router]);
+
+  const logout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+      router.push('/login');
+    } catch (err) {
+      console.error('Logout error:', err);
+    }
+  };
+
+  return (
+    <AccountContext.Provider value={{ account, user, loading, error, logout }}>
+      {children}
+    </AccountContext.Provider>
+  );
+}
+
+// ============================================================================
+// HOOK: useAccountContext
+// ============================================================================
+
+export function useAccountContext() {
+  const context = useContext(AccountContext);
+  if (!context) {
+    throw new Error('useAccountContext must be used within AccountProvider');
+  }
+  return context;
+}
+
+// ============================================================================
+// MODULE DEFINITIONS
+// ============================================================================
+
+export interface NavModule {
+  id: string;
+  label: string;
+  href: string;
+  icon: string;
+  requiresRole?: ClientRole[];
+  accountTypes?: AccountType[];
+  section?: string; // For grouping (e.g., '--- Internal Staff ---')
+}
+
+export const MODULE_DEFINITIONS: NavModule[] = [
+  // Common (all accounts)
+  { id: 'dashboard', label: 'Dashboard', href: '/dashboard', icon: '📊' },
+  { id: 'settings', label: 'Settings', href: '/settings', icon: '⚙️' },
+  { id: 'support', label: 'Support', href: '/support', icon: '❓' },
+
+  // HRMS SaaS + Hybrid – Internal Staff
+  { id: 'internal_staff_header', label: '--- Internal Staff ---', section: 'internal', icon: '' },
+  { id: 'employees', label: 'Employees', href: '/employees', icon: '👥', accountTypes: ['hrms_saas', 'hybrid'] },
+  { id: 'attendance_internal', label: 'Attendance', href: '/attendance', icon: '📋', accountTypes: ['hrms_saas', 'hybrid'] },
+  { id: 'payroll', label: 'Payroll', href: '/payroll', icon: '💰', accountTypes: ['hrms_saas', 'hybrid'], requiresRole: ['admin', 'hr'] },
+  { id: 'leave', label: 'Leave', href: '/leave', icon: '📅', accountTypes: ['hrms_saas', 'hybrid'] },
+  { id: 'recruitment', label: 'Recruitment', href: '/recruitment', icon: '🎯', accountTypes: ['hrms_saas', 'hybrid'] },
+  { id: 'documents', label: 'Documents', href: '/documents', icon: '📄', accountTypes: ['hrms_saas', 'hybrid'] },
+  { id: 'performance', label: 'Performance', href: '/performance', icon: '⭐', accountTypes: ['hrms_saas', 'hybrid'] },
+
+  // Manpower Supply + Hybrid – Deployed Staff
+  { id: 'deployed_staff_header', label: '--- Deployed Staff ---', section: 'deployed', icon: '' },
+  { id: 'deployed_staff', label: 'Deployed Staff', href: '/deployed-staff', icon: '🏗️', accountTypes: ['manpower_supply', 'hybrid'] },
+  { id: 'site_assignments', label: 'Site Assignments', href: '/site-assignments', icon: '📍', accountTypes: ['manpower_supply', 'hybrid'], requiresRole: ['admin', 'hr'] },
+  { id: 'attendance_deployed', label: 'Attendance (Deployed)', href: '/attendance-deployed', icon: '✓', accountTypes: ['manpower_supply', 'hybrid'] },
+  { id: 'leave_status', label: 'Leave Status', href: '/leave-status', icon: '📅', accountTypes: ['manpower_supply', 'hybrid'] },
+  { id: 'timesheets', label: 'Timesheets', href: '/timesheets', icon: '⏱️', accountTypes: ['manpower_supply', 'hybrid'] },
+  { id: 'invoices', label: 'Invoices', href: '/invoices', icon: '📄', accountTypes: ['manpower_supply', 'hybrid'] },
+  { id: 'payments', label: 'Payments', href: '/payments', icon: '💳', accountTypes: ['manpower_supply', 'hybrid'], requiresRole: ['admin', 'viewer'] },
+
+  // Reports & AI (hybrid)
+  { id: 'reports', label: 'Reports', href: '/reports', icon: '📈', accountTypes: ['hrms_saas', 'hybrid', 'manpower_supply'] },
+  { id: 'ai_assistant', label: 'AI Assistant', href: '/ai-assistant', icon: '🤖', accountTypes: ['hrms_saas', 'hybrid'] },
+];
+
+// ============================================================================
+// FUNCTION: Get visible modules based on account type & role
+// ============================================================================
+
+export function getVisibleModules(
+  accountType: AccountType | null,
+  userRole: ClientRole | null
+): NavModule[] {
+  if (!accountType || !userRole) {
+    return MODULE_DEFINITIONS.filter(m => ['dashboard', 'settings', 'support'].includes(m.id));
+  }
+
+  return MODULE_DEFINITIONS.filter(m => {
+    // Always show common modules & section headers
+    if (['dashboard', 'settings', 'support', ''].includes(m.id) || m.section) {
+      return true;
+    }
+
+    // Filter by account type
+    if (m.accountTypes && !m.accountTypes.includes(accountType)) {
+      return false;
+    }
+
+    // Filter by role
+    if (m.requiresRole && !m.requiresRole.includes(userRole)) {
+      return false;
+    }
+
+    return true;
+  });
+}
+
+// ============================================================================
+// COMPONENT: Sidebar
+// ============================================================================
+
+interface SidebarProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+}
+
+export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
+  const { account, user, logout } = useAccountContext();
+  const router = useRouter();
+  const [activeModule, setActiveModule] = useState<string | null>(null);
+
+  const visibleModules = getVisibleModules(account?.account_type || null, user?.client_role || null);
+
+  const handleModuleClick = (href: string) => {
+    router.push(href);
+    setActiveModule(href);
+    onClose?.();
+  };
+
+  const handleLogout = () => {
+    logout();
+  };
+
+  return (
+    <aside
+      className={`
+        ${isOpen ? 'block' : 'hidden'} md:block
+        w-64 bg-slate-900 text-white h-screen overflow-y-auto
+        flex flex-col transition-all duration-300
+      `}
+    >
+      {/* Header */}
+      <div className="p-6 border-b border-slate-700">
+        <h1 className="text-2xl font-bold text-blue-400">HPHRMS</h1>
+        <p className="text-sm text-slate-400 mt-2">{account?.organization_name || 'Loading...'}</p>
+        <div className="mt-4 text-xs text-slate-500">
+          <p>Mode: <span className="font-semibold text-slate-300">{formatAccountType(account?.account_type)}</span></p>
+          <p>Role: <span className="font-semibold text-slate-300">{formatRole(user?.client_role)}</span></p>
+        </div>
+      </div>
+
+      {/* Navigation */}
+      <nav className="flex-1 px-4 py-6 space-y-2">
+        {visibleModules.map(module => {
+          // Section header
+          if (module.section) {
+            return (
+              <div key={module.id} className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                {module.label}
+              </div>
+            );
+          }
+
+          // Regular module
+          return (
+            <button
+              key={module.id}
+              onClick={() => handleModuleClick(module.href)}
+              className={`
+                w-full text-left px-4 py-3 rounded-lg transition-colors
+                flex items-center gap-3
+                ${
+                  activeModule === module.href
+                    ? 'bg-blue-600 text-white'
+                    : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                }
+              `}
+            >
+              <span className="text-lg">{module.icon}</span>
+              <span className="text-sm font-medium">{module.label}</span>
+            </button>
+          );
+        })}
+      </nav>
+
+      {/* Footer */}
+      <div className="p-4 border-t border-slate-700 space-y-3">
+        <div className="text-xs text-slate-400 px-4">
+          <p>{user?.full_name}</p>
+          <p className="text-slate-500">{user?.email}</p>
+        </div>
+        <button
+          onClick={handleLogout}
+          className="w-full px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white text-sm font-medium transition-colors"
+        >
+          Logout
+        </button>
+      </div>
+    </aside>
+  );
+}
+
+// ============================================================================
+// HELPER FUNCTIONS
+// ============================================================================
+
+function formatAccountType(type: AccountType | undefined): string {
+  const map: Record<AccountType, string> = {
+    hrms_saas: 'HRMS Software',
+    manpower_supply: 'Manpower Supply',
+    hybrid: 'Hybrid (Both)',
+  };
+  return map[type || 'hrms_saas'];
+}
+
+function formatRole(role: ClientRole | undefined): string {
+  const map: Record<ClientRole, string> = {
+    admin: 'Administrator',
+    hr: 'HR Manager',
+    manager: 'Manager',
+    employee: 'Employee',
+    viewer: 'Viewer',
+  };
+  return map[role || 'employee'];
+}
+
+// ============================================================================
+// COMPONENT: Module Guard (Access Control)
+// ============================================================================
+
+interface ModuleGuardProps {
+  accountTypes?: AccountType[];
+  roles?: ClientRole[];
+  children: ReactNode;
+  fallback?: ReactNode;
+}
+
+export function ModuleGuard({ accountTypes, roles, children, fallback }: ModuleGuardProps) {
+  const { account, user } = useAccountContext();
+
+  if (!account || !user) {
+    return <>{fallback || <p>Loading...</p>}</>;
+  }
+
+  const typeAllowed = !accountTypes || accountTypes.includes(account.account_type);
+  const roleAllowed = !roles || roles.includes(user.client_role);
+
+  if (!typeAllowed || !roleAllowed) {
+    return <>{fallback || <p className="text-red-600">Access denied</p>}</>;
+  }
+
+  return <>{children}</>;
+}
+
+// ============================================================================
+// COMPONENT: Dashboard Layout
+// ============================================================================
+
+interface DashboardLayoutProps {
+  children: ReactNode;
+}
+
+export function DashboardLayout({ children }: DashboardLayoutProps) {
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  return (
+    <div className="flex h-screen bg-slate-50">
+      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <main className="flex-1 overflow-y-auto">
+        <div className="md:hidden p-4 bg-white border-b border-slate-200">
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="p-2 hover:bg-slate-100 rounded-lg"
+          >
+            ☰
+          </button>
+        </div>
+        {children}
+      </main>
+    </div>
+  );
+}
+
+// ============================================================================
+// COMPONENT: Account Type Badge
+// ============================================================================
+
+export function AccountTypeBadge() {
+  const { account } = useAccountContext();
+
+  if (!account) return null;
+
+  const colors: Record<AccountType, string> = {
+    hrms_saas: 'bg-blue-100 text-blue-800',
+    manpower_supply: 'bg-green-100 text-green-800',
+    hybrid: 'bg-purple-100 text-purple-800',
+  };
+
+  return (
+    <span className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${colors[account.account_type]}`}>
+      {formatAccountType(account.account_type)}
+    </span>
+  );
+}

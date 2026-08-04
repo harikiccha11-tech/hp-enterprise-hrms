@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { useAuth } from '@/lib/store'
+import { useAuth, prefetch, cachedFetch, cacheInvalidate } from '@/lib/store'
 import { BrandLogo } from '@/components/brand/BrandLogo'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -23,7 +23,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu'
-import { Toaster } from '@/components/ui/sonner'
+// Toaster is in root layout
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { format } from 'date-fns'
@@ -49,6 +49,7 @@ import {
 import { t, type LangCode } from '@/lib/i18n'
 import { HpAiChat } from '@/components/shared/HpAiChat'
 import { LanguageSwitcher } from '@/components/shared/LanguageSwitcher'
+import { ThemeToggle } from '@/components/shared/ThemeToggle'
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -641,16 +642,20 @@ export function ClientLayout() {
   const client = user?.client
   const clientName = data?.client?.clientName || client?.clientName || client?.companyName || user?.username || 'Client'
 
+  // Prefetch key data on mount for instant loads
+  useEffect(() => {
+    prefetch(['client:notifications'], '/api/notifications')
+    prefetch(['client:dashboard'], '/api/client/dashboard')
+  }, [])
+
   // Fetch dashboard data
   useEffect(() => {
     let cancelled = false
-    fetch('/api/client/dashboard', { cache: 'no-store' })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((json) => {
-        if (cancelled || !json) return
-        setData(json)
-        setUnread(json.unreadNotifications ?? 0)
-      })
+    cachedFetch('client:dashboard', '/api/client/dashboard').then(({ data: json }) => {
+      if (cancelled || !json) return
+      setData(json)
+      setUnread(json.unreadNotifications ?? 0)
+    })
       .catch(() => {})
       .finally(() => {
         if (!cancelled) setLoading(false)
@@ -661,12 +666,10 @@ export function ClientLayout() {
   // Fetch notifications separately
   useEffect(() => {
     let cancelled = false
-    fetch('/api/notifications', { cache: 'no-store' })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (cancelled || !data) return
-        setNotifications(data.notifications || [])
-      })
+    cachedFetch('client:notifications', '/api/notifications').then(({ data: notifData }) => {
+      if (cancelled || !notifData) return
+      setNotifications(notifData.notifications || [])
+    })
       .catch(() => {})
     return () => { cancelled = true }
   }, [])
@@ -710,6 +713,7 @@ export function ClientLayout() {
   }
 
   const handleLogout = async () => {
+    cacheInvalidate()
     await logout()
     toast.success(t('nav.signedOut', lang))
   }
@@ -834,7 +838,7 @@ export function ClientLayout() {
 
             <div className="flex items-center gap-2 sm:gap-3">
               <LanguageSwitcher />
-
+              <ThemeToggle />
               {/* Date / Time */}
               <div className="hidden md:flex flex-col items-end leading-tight">
                 <span className="text-xs font-medium text-[var(--navy)] dark:text-white">
@@ -942,7 +946,7 @@ export function ClientLayout() {
 
       <HpAiChat />
 
-      <Toaster richColors position="top-right" />
+
     </div>
   )
 }

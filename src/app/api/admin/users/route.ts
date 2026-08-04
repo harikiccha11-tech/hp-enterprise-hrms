@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getCurrentUser, hashPassword, audit } from '@/lib/auth'
+import { requireRole } from '@/lib/guards'
 import { ROLE_LABELS } from '@/lib/constants'
 
 export const runtime = 'nodejs'
@@ -8,9 +9,8 @@ export const dynamic = 'force-dynamic'
 
 export async function GET() {
   try {
-    const cu = await getCurrentUser()
-    if (!cu) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    if (!['OWNER', 'SUPER_ADMIN'].includes(cu.user.role)) return NextResponse.json({ error: 'Only the Owner or Super Admin can manage users' }, { status: 403 })
+    const { error } = await requireRole('OWNER', 'SUPER_ADMIN')
+    if (error) return error
     const users = await db.user.findMany({
       where: { role: { in: ['OWNER', 'SUPER_ADMIN', 'HR_MANAGER', 'CLIENT'] } },
       orderBy: { createdAt: 'asc' },

@@ -21,7 +21,6 @@ export async function GET(req: NextRequest) {
       const rows = await db.trainingEnrollment.findMany({
         include: {
           course: { select: { id: true, title: true } },
-          employee: { select: { id: true, fullName: true, employeeCode: true } },
         },
         orderBy: { enrolledAt: 'desc' },
       })

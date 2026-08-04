@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -15,7 +15,8 @@ import {
   ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area,
   XAxis, YAxis, Tooltip, CartesianGrid,
 } from 'recharts'
-import { formatINR, fmtRelative, initials } from '../lib'
+import { api, formatINR, fmtRelative, initials } from '../lib'
+import { cacheGet } from '@/lib/store'
 import type { ModuleKey } from '../AdminLayout'
 
 interface Stats {
@@ -59,38 +60,26 @@ export function Dashboard({
   onNavigate: (k: ModuleKey) => void
   refreshKey: number
 }) {
-  const [stats, setStats] = useState<Stats | null>(null)
+  const [stats, setStats] = useState<Stats | null>(() => cacheGet<Stats>('/api/admin/stats'))
   const [pending, setPending] = useState<PendingEmp[]>([])
   const [logs, setLogs] = useState<AuditLog[]>([])
-  const [loading, setLoading] = useState(true)
 
-  const load = useCallback(async () => {
-    setLoading(true)
-    try {
-      const [sRes, pRes, lRes] = await Promise.all([
-        fetch('/api/admin/stats', { cache: 'no-store' }),
-        fetch('/api/admin/employees?status=PENDING', { cache: 'no-store' }),
-        fetch('/api/admin/audit?limit=8', { cache: 'no-store' }),
-      ])
-      if (sRes.ok) setStats(await sRes.json())
-      if (pRes.ok) {
-        const d = await pRes.json()
-        setPending((d.employees || []).slice(0, 6))
-      }
-      if (lRes.ok) {
-        const d = await lRes.json()
-        setLogs(d.logs || [])
-      }
-    } catch {
-      toast.error('Failed to load dashboard data')
-    } finally {
-      setLoading(false)
-    }
-  }, [])
+  useEffect(() => {
+    let cancelled = false
+    Promise.all([
+      api<Stats>('/api/admin/stats'),
+      api<{ employees: PendingEmp[] }>('/api/admin/employees?status=PENDING'),
+      api<{ logs: AuditLog[] }>('/api/admin/audit?limit=8'),
+    ]).then(([s, p, l]) => {
+      if (cancelled) return
+      setStats(s)
+      setPending((p.employees || []).slice(0, 6))
+      setLogs(l.logs || [])
+    }).catch(() => toast.error('Failed to load dashboard data'))
+    return () => { cancelled = true }
+  }, [refreshKey])
 
-  useEffect(() => { load() }, [load, refreshKey])
-
-  if (loading || !stats) {
+  if (!stats) {
     return (
       <div className="space-y-6">
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">

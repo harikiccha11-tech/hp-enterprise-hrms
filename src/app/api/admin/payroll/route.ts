@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
     const netSalary = Math.max(0, grossSalary + overtimePay - totalDeductions)
 
     // upsert payroll
-    const existing = await db.payroll.findUnique({ where: { employeeId_month_year: { employeeId, month: m, year: y } } })
+    const existing = await db.payroll.findUnique({ where: { employeeId_month_year: { employeeId, month: m, year: y } }, include: { salarySlip: true } })
     const payload = {
       basic, hra, allowances, specialAllowance, grossSalary,
       overtimePay, lopDays, lopAmount,

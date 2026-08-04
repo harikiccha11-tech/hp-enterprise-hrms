@@ -5,13 +5,22 @@ import { writeFile, mkdir } from 'fs/promises'
 import path from 'path'
 import { randomUUID } from 'crypto'
 import { notify } from '@/lib/notify'
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
 
 export const runtime = 'nodejs'
+
+const ALLOWED_MIME = new Set(['image/jpeg', 'image/png', 'image/webp', 'application/pdf'])
+const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
 
 const UPLOAD_ROOT = path.join(process.cwd(), 'upload')
 
 export async function POST(req: NextRequest) {
   try {
+    const ip = getClientIp(req)
+    if (!checkRateLimit(`register:${ip}`, 3, 60 * 60 * 1000)) {
+      return NextResponse.json({ error: 'Too many registration attempts. Please try again later.' }, { status: 429 })
+    }
+
     const form = await req.formData()
     const get = (k: string) => (form.get(k) as string) || ''
 
@@ -103,6 +112,12 @@ export async function POST(req: NextRequest) {
     for (const field of fileFields) {
       const file = form.get(field) as File | null
       if (file && file.size > 0) {
+        if (file.size > MAX_FILE_SIZE) {
+          return NextResponse.json({ error: `File ${field} exceeds 5MB limit` }, { status: 400 })
+        }
+        if (!ALLOWED_MIME.has(file.type)) {
+          return NextResponse.json({ error: `File ${field} has unsupported type: ${file.type}` }, { status: 400 })
+        }
         const ext = path.extname(file.name) || '.bin'
         const docType = docTypeMap[field]
         const fileName = `${docType}${ext}`

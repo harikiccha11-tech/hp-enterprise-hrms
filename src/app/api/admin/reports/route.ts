@@ -6,6 +6,7 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 export async function GET(req: NextRequest) {
+  try {
   const { error } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER')
   if (error) return error
   const { searchParams } = new URL(req.url)
@@ -48,5 +49,8 @@ export async function GET(req: NextRequest) {
     }
     default:
       return NextResponse.json({ rows: [], columns: [] })
+  }
+  } catch {
+    return NextResponse.json({ error: 'Report generation failed' }, { status: 500 })
   }
 }

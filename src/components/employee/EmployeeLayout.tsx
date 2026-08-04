@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState, useCallback, useRef } from 'react'
-import { useAuth } from '@/lib/store'
+import { useAuth, prefetch, cachedFetch, cacheInvalidate, cacheGet } from '@/lib/store'
 import { BrandLogo } from '@/components/brand/BrandLogo'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from '@/components/ui/sheet'
@@ -12,7 +12,7 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { Toaster } from '@/components/ui/sonner'
+// Toaster is in root layout
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { format } from 'date-fns'
@@ -34,16 +34,37 @@ import {
 } from 'lucide-react'
 import { t, type LangCode } from '@/lib/i18n'
 import { fmtDateTime, fmtRelative, initials } from './lib'
-import { Dashboard } from './modules/Dashboard'
-import { MyProfile } from './modules/MyProfile'
-import { Attendance } from './modules/Attendance'
-import { ApplyLeave } from './modules/ApplyLeave'
-import { Documents } from './modules/Documents'
-import { SalarySlips } from './modules/SalarySlips'
-import { Notifications } from './modules/Notifications'
-import { ChangePassword } from './modules/ChangePassword'
+import dynamic from 'next/dynamic'
+import { Skeleton } from '@/components/ui/skeleton'
+
+function ModuleSkeleton() {
+  return (
+    <div className="space-y-4 p-1" role="status" aria-label="Loading module">
+      <Skeleton className="h-8 w-48" />
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Skeleton key={i} className="h-28 rounded-xl" />
+        ))}
+      </div>
+      <Skeleton className="h-64 rounded-xl" />
+    </div>
+  )
+}
+
+const DynModules: Record<string, React.ComponentType<any>> = {
+  'dashboard': dynamic(() => import('./modules/Dashboard').then(m => ({ default: (p: any) => <m.Dashboard {...p} /> })), { loading: ModuleSkeleton }),
+  'profile': dynamic(() => import('./modules/MyProfile').then(m => ({ default: (p: any) => <m.MyProfile {...p} /> })), { loading: ModuleSkeleton }),
+  'attendance': dynamic(() => import('./modules/Attendance').then(m => ({ default: (p: any) => <m.Attendance {...p} /> })), { loading: ModuleSkeleton }),
+  'leave': dynamic(() => import('./modules/ApplyLeave').then(m => ({ default: (p: any) => <m.ApplyLeave {...p} /> })), { loading: ModuleSkeleton }),
+  'documents': dynamic(() => import('./modules/Documents').then(m => ({ default: (p: any) => <m.Documents {...p} /> })), { loading: ModuleSkeleton }),
+  'salary': dynamic(() => import('./modules/SalarySlips').then(m => ({ default: (p: any) => <m.SalarySlips {...p} /> })), { loading: ModuleSkeleton }),
+  'notifications': dynamic(() => import('./modules/Notifications').then(m => ({ default: (p: any) => <m.Notifications {...p} /> })), { loading: ModuleSkeleton }),
+  'password': dynamic(() => import('./modules/ChangePassword').then(m => ({ default: (p: any) => <m.ChangePassword {...p} /> })), { loading: ModuleSkeleton }),
+}
+
 import { HpAiChat } from '@/components/shared/HpAiChat'
 import { LanguageSwitcher } from '@/components/shared/LanguageSwitcher'
+import { ThemeToggle } from '@/components/shared/ThemeToggle'
 
 export type ModuleKey =
   | 'dashboard'
@@ -113,12 +134,20 @@ export function EmployeeLayout() {
     } catch {}
   }, [])
 
+  // Prefetch all employee data for instant module loads
+  useEffect(() => {
+    prefetch(['emp:notifications'], '/api/notifications')
+    prefetch(['emp:dashboard'], '/api/employee/dashboard')
+    prefetch(['emp:profile'], '/api/employee/profile')
+    prefetch(['emp:attendance'], '/api/employee/attendance')
+    prefetch(['emp:salary-slips'], '/api/employee/salary-slips')
+  }, [])
+
   // Initial notifications load
   useEffect(() => {
     let cancelled = false
-    fetch('/api/notifications', { cache: 'no-store' })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
+    cachedFetch('emp:notifications', '/api/notifications')
+      .then(({ data }) => {
         if (cancelled || !data) return
         setNotifications(data.notifications || [])
         setUnread(data.unread || 0)
@@ -195,6 +224,7 @@ export function EmployeeLayout() {
   }
 
   const handleLogout = async () => {
+    cacheInvalidate()
     await logout()
     toast.success(t('nav.signedOut', lang))
   }
@@ -319,7 +349,7 @@ export function EmployeeLayout() {
 
             <div className="flex items-center gap-2 sm:gap-3">
               <LanguageSwitcher />
-
+              <ThemeToggle />
               <div className="hidden md:flex flex-col items-end leading-tight">
                 <span className="text-xs font-medium text-[var(--navy)] dark:text-white">
                   {format(now, 'EEEE, dd MMM yyyy')}
@@ -416,14 +446,14 @@ export function EmployeeLayout() {
           {/* Module content */}
           <main className="flex-1 overflow-y-auto scroll-thin">
             <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-              {active === 'dashboard' && <Dashboard onNavigate={handleNavigate} refreshKey={refreshKey} />}
-              {active === 'profile' && <MyProfile refreshKey={refreshKey} />}
-              {active === 'attendance' && <Attendance refreshKey={refreshKey} />}
-              {active === 'leave' && <ApplyLeave refreshKey={refreshKey} />}
-              {active === 'documents' && <Documents />}
-              {active === 'salary' && <SalarySlips />}
-              {active === 'notifications' && <Notifications onChanged={loadNotifications} />}
-              {active === 'password' && <ChangePassword />}
+              {active === 'dashboard' && <DynModules.dashboard onNavigate={handleNavigate} refreshKey={refreshKey} />}
+              {active === 'profile' && <DynModules.profile refreshKey={refreshKey} />}
+              {active === 'attendance' && <DynModules.attendance refreshKey={refreshKey} />}
+              {active === 'leave' && <DynModules.leave refreshKey={refreshKey} />}
+              {active === 'documents' && <DynModules.documents />}
+              {active === 'salary' && <DynModules.salary />}
+              {active === 'notifications' && <DynModules.notifications onChanged={loadNotifications} />}
+              {active === 'password' && <DynModules.password />}
             </div>
           </main>
         </div>
@@ -442,7 +472,7 @@ export function EmployeeLayout() {
 
       <HpAiChat />
 
-      <Toaster richColors position="top-right" />
+
     </div>
   )
 }

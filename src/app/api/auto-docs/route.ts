@@ -29,7 +29,8 @@ export async function POST(req: NextRequest) {
         await generateDocument(employeeId, docType, cu!.user.id)
         results.push({ type: docType, ok: true })
       } catch (e: any) {
-        results.push({ type: docType, ok: false, error: e.message || 'Failed' })
+        console.error('[auto-docs] failed to generate', docType, e)
+        results.push({ type: docType, ok: false, error: 'Failed' })
       }
     }
 

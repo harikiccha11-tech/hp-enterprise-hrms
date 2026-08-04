@@ -30,5 +30,30 @@ export function ThemeInit() {
     applyTheme()
   }, [applyTheme, setLang, setDarkMode, setThemeColors])
 
+  useEffect(() => {
+    // Auto-recover from ChunkLoadError (Turbopack HMR stale chunks)
+    const handler = (e: Event) => {
+      const err = e as ErrorEvent
+      if (err.message && (err.message.includes('ChunkLoadError') || err.message.includes('Failed to load chunk') || err.message.includes('Loading chunk'))) {
+        console.warn('[HPHRMS] Chunk load error detected, reloading...')
+        window.location.reload()
+      }
+    }
+    // Also catch unhandled promise rejections (dynamic import failures)
+    const rejectionHandler = (e: PromiseRejectionEvent) => {
+    const msg = e.reason?.message || ''
+    if (msg.includes('ChunkLoadError') || msg.includes('Failed to load chunk') || msg.includes('Loading chunk') || msg.includes('Loading CSS chunk')) {
+      console.warn('[HPHRMS] Chunk load error detected, reloading...')
+      window.location.reload()
+    }
+    }
+    window.addEventListener('error', handler)
+    window.addEventListener('unhandledrejection', rejectionHandler)
+    return () => {
+      window.removeEventListener('error', handler)
+      window.removeEventListener('unhandledrejection', rejectionHandler)
+    }
+  }, [])
+
   return null
 }

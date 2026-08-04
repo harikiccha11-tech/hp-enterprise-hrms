@@ -12,7 +12,12 @@ export async function GET() {
     const items = await db.paymentGateway.findMany({
       orderBy: { createdAt: 'desc' },
     })
-    return NextResponse.json({ items })
+    // Mask apiSecret before returning
+    const masked = items.map(gateway => ({
+      ...gateway,
+      apiSecret: gateway.apiSecret ? '****' + gateway.apiSecret.slice(-4) : null,
+    }))
+    return NextResponse.json({ items: masked })
   } catch (e) {
     return NextResponse.json({ error: 'Failed to load payment gateways' }, { status: 500 })
   }

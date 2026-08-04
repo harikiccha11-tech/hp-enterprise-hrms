@@ -38,6 +38,7 @@ import {
 } from 'lucide-react'
 import { DEPARTMENTS } from '@/lib/constants'
 import { api, fmtDate, formatINR, initials, parseJSON } from '../lib'
+import { cacheGet } from '@/lib/store'
 
 interface EmployeeDoc {
   id: string; documentType: string; fileName: string; filePath: string; uploadedAt: string
@@ -93,8 +94,11 @@ const DOC_LABELS: Record<string, string> = {
 }
 
 export function Employees({ refreshKey, canDelete }: { refreshKey: number; canDelete: boolean }) {
-  const [list, setList] = useState<Employee[]>([])
-  const [loading, setLoading] = useState(true)
+  const [list, setList] = useState<Employee[]>(() => {
+    const cached = cacheGet<{ employees: Employee[] }>('/api/admin/employees')
+    return cached?.employees || []
+  })
+  const [loading, setLoading] = useState(() => !cacheGet('/api/admin/employees'))
   const [status, setStatus] = useState('ALL')
   const [q, setQ] = useState('')
   const [searchInput, setSearchInput] = useState('')

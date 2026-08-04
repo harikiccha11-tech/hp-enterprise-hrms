@@ -12,6 +12,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const { id } = await params
   const doc = await db.generatedDocument.findUnique({ where: { id }, include: { employee: { include: { user: true } } } })
   if (!doc) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  if (!doc.filePath) return NextResponse.json({ error: 'File not generated yet' }, { status: 404 })
 
   if (cu.user.role === 'EMPLOYEE' && doc.employee.userId !== cu.user.id) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })

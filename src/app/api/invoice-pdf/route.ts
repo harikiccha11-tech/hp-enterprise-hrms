@@ -8,7 +8,7 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 export async function GET(req: NextRequest) {
-  const { error } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER', 'CLIENT')
+  const { error, cu } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER', 'CLIENT')
   if (error) return error
   try {
     const invoiceId = new URL(req.url).searchParams.get('id')
@@ -19,6 +19,11 @@ export async function GET(req: NextRequest) {
       include: { client: true, workOrder: { select: { title: true } } },
     })
     if (!inv) return NextResponse.json({ error: 'Invoice not found' }, { status: 404 })
+
+    // Scope CLIENT role to their own invoices only
+    if (cu!.user.role === 'CLIENT' && inv.clientId !== cu!.user.clientId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
 
     const doc = InvoiceDoc({
       invoiceNumber: inv.invoiceNumber,

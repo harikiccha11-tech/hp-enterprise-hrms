@@ -20,10 +20,10 @@ export async function GET(req: NextRequest) {
   if (source) where.source = source
   if (search) {
     where.OR = [
-      { fullName: { contains: search, mode: 'insensitive' } },
-      { email: { contains: search, mode: 'insensitive' } },
-      { skills: { contains: search, mode: 'insensitive' } },
-      { currentCompany: { contains: search, mode: 'insensitive' } },
+      { fullName: { contains: search } },
+      { email: { contains: search } },
+      { skills: { contains: search } },
+      { currentCompany: { contains: search } },
     ]
   }
 
@@ -61,7 +61,8 @@ export async function POST(req: NextRequest) {
     })
     return NextResponse.json({ ok: true, candidate })
   } catch (e: any) {
-    return NextResponse.json({ error: e.message || 'Failed to create candidate' }, { status: 500 })
+    console.error('[candidates] POST failed:', e)
+    return NextResponse.json({ error: 'Failed to create candidate' }, { status: 500 })
   }
 }
 
@@ -80,7 +81,8 @@ export async function PATCH(req: NextRequest) {
     const candidate = await db.candidate.update({ where: { id }, data: update })
     return NextResponse.json({ ok: true, candidate })
   } catch (e: any) {
-    return NextResponse.json({ error: e.message || 'Failed to update candidate' }, { status: 500 })
+    console.error('[candidates] PATCH failed:', e)
+    return NextResponse.json({ error: 'Failed to update candidate' }, { status: 500 })
   }
 }
 
@@ -93,6 +95,7 @@ export async function DELETE(req: NextRequest) {
     await db.candidate.delete({ where: { id } })
     return NextResponse.json({ ok: true })
   } catch (e: any) {
-    return NextResponse.json({ error: e.message || 'Failed to delete' }, { status: 500 })
+    console.error('[candidates] DELETE failed:', e)
+    return NextResponse.json({ error: 'Failed to delete' }, { status: 500 })
   }
 }

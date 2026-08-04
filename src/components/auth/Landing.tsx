@@ -6,6 +6,7 @@ import { BrandLogo } from '@/components/brand/BrandLogo'
 import { RegistrationForm } from '@/components/auth/RegistrationForm'
 import { ForgotPasswordDialog } from '@/components/auth/ForgotPasswordDialog'
 import { LanguageSwitcher } from '@/components/shared/LanguageSwitcher'
+import { ThemeToggle } from '@/components/shared/ThemeToggle'
 import { HpAiChat } from '@/components/shared/HpAiChat'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -73,37 +74,37 @@ interface ServiceDetail {
 }
 
 const SERVICE_DETAILS: ServiceDetail[] = [
-  { title: 'Human Resource Management', short: 'Complete workforce lifecycle management powered by AI', icon: Users, image: '/service-hr.png',
+  { title: 'Human Resource Management', short: 'Complete workforce lifecycle management powered by AI', icon: Users, image: '/images/hr-management.jpg',
     description: 'Our comprehensive HR management service covers the entire employee lifecycle from onboarding to exit. We handle employee records, performance tracking, policy compliance, and organizational development.',
     benefits: ['End-to-end employee lifecycle management', 'AI-powered performance analytics', 'Compliance with Indian labour laws', 'Employee engagement & retention programs', 'Organizational structure optimization'],
     industries: ['IT & Technology', 'Construction & Infrastructure', 'Manufacturing', 'Healthcare', 'BFSI'],
     process: ['Workforce assessment & planning', 'HR policy design & implementation', 'Employee onboarding & documentation', 'Ongoing HR operations & support', 'Performance reviews & analytics'],
   },
-  { title: 'Recruitment & Talent Acquisition', short: 'End-to-end hiring pipeline with smart screening', icon: Target, image: '/service-recruitment.png',
+  { title: 'Recruitment & Talent Acquisition', short: 'End-to-end hiring pipeline with smart screening', icon: Target, image: '/images/recruitment.jpg',
     description: 'We manage the complete recruitment cycle from job posting and candidate sourcing to interviewing, offer negotiation, and onboarding. Our AI-powered ATS helps you find the right talent faster.',
     benefits: ['AI-powered applicant tracking system (ATS)', 'Multi-channel candidate sourcing', 'Structured interview frameworks', 'Background verification support', 'Faster time-to-hire with smart screening'],
     industries: ['IT & Technology', 'Construction', 'Manufacturing', 'Healthcare', 'BFSI', 'Logistics'],
     process: ['Requirement gathering & job description', 'Candidate sourcing & screening', 'Interview coordination & assessment', 'Offer negotiation & acceptance', 'Onboarding & documentation'],
   },
-  { title: 'Safety (EHS) Consultancy', short: 'Environmental, Health & Safety compliance solutions', icon: HardHat, image: '/service-safety.png',
+  { title: 'Safety (EHS) Consultancy', short: 'Environmental, Health & Safety compliance solutions', icon: HardHat, image: '/images/ehs-safety.jpg',
     description: 'Our EHS consultancy ensures your organization meets all safety regulations and standards. From safety audits to training programs, we build a culture of safety at your workplace.',
     benefits: ['Comprehensive safety audits & inspections', 'Regulatory compliance management', 'Safety training & certification programs', 'Incident investigation & reporting', 'Emergency response planning'],
     industries: ['Construction', 'Manufacturing', 'Oil & Gas', 'Chemical Plants', 'Mining', 'Infrastructure'],
     process: ['Site assessment & hazard identification', 'Safety audit & gap analysis', 'Compliance plan development', 'Training implementation', 'Ongoing monitoring & support'],
   },
-  { title: 'Engineering & Project Support', short: 'Multi-discipline engineering for construction & industrial projects', icon: Wrench, image: '/service-engineering.png',
+  { title: 'Engineering & Project Support', short: 'Multi-discipline engineering for construction & industrial projects', icon: Wrench, image: '/images/engineering.jpg',
     description: 'We provide skilled engineering professionals across all disciplines for construction, industrial, and infrastructure projects.',
     benefits: ['Multi-discipline engineering professionals', 'Project planning & scheduling support', 'Quality assurance & quality control', 'Construction management services', 'Technical documentation & reporting'],
     industries: ['Construction', 'Infrastructure', 'Industrial Plants', 'Oil & Gas', 'Power Generation', 'Metro & Rail'],
     process: ['Project requirement analysis', 'Resource planning & deployment', 'Engineering execution & monitoring', 'Quality control & documentation', 'Project handover & close-out'],
   },
-  { title: 'Payroll Management', short: 'Accurate, compliant payroll processing for your workforce', icon: Wallet, image: '/service-payroll.png',
+  { title: 'Payroll Management', short: 'Accurate, compliant payroll processing for your workforce', icon: Wallet, image: '/images/payroll.jpg',
     description: 'Our payroll management service handles salary processing, statutory compliance (PF, ESI, PT, TDS), and payslip generation.',
     benefits: ['Timely monthly payroll processing', 'Statutory compliance (PF, ESI, PT, TDS)', 'Automated payslip generation', 'Leave & attendance integration', 'Year-end tax forms (Form 16)'],
     industries: ['All Industries', 'IT & Technology', 'Construction', 'Manufacturing', 'Healthcare'],
     process: ['Employee data verification', 'Attendance & leave processing', 'Salary calculation & statutory deductions', 'Payslip generation & distribution', 'Compliance filing & reporting'],
   },
-  { title: 'Manpower Supply', short: 'Skilled & unskilled workforce deployment across India', icon: Truck, image: '/service-manpower.png',
+  { title: 'Manpower Supply', short: 'Skilled & unskilled workforce deployment across India', icon: Truck, image: '/images/construction.jpg',
     description: 'We supply skilled, semi-skilled, and unskilled manpower for construction, industrial, and service sectors across India.',
     benefits: ['Pan-India manpower deployment', 'Skilled & unskilled workforce', 'Rapid mobilization capability', 'Compliance-managed staffing', 'Flexible contract durations'],
     industries: ['Construction', 'Manufacturing', 'Logistics', 'Hospitality', 'Facility Management', 'Security Services'],
@@ -300,7 +301,7 @@ function SubscriptionForm({ onBack }: { onBack: () => void }) {
     } catch { toast.error('Network error. Please try again.') } finally { setLoading(false) }
   }
   if (sent) return (
-    <section className="min-h-screen flex items-center justify-center px-4 bg-gray-50">
+    <section data-landing="true" className="min-h-screen flex items-center justify-center px-4 bg-gray-50">
       <Card className="shadow-xl max-w-md w-full text-center"><CardContent className="py-12">
         <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50"><Check className="h-8 w-8 text-emerald-600" /></div>
         <h2 className="text-2xl font-bold text-gray-900 mb-2">Request Submitted!</h2>
@@ -310,7 +311,7 @@ function SubscriptionForm({ onBack }: { onBack: () => void }) {
     </section>
   )
   return (
-    <section className="min-h-screen py-20 px-4 bg-gray-50">
+    <section data-landing="true" className="min-h-screen py-20 px-4 bg-gray-50">
       <div className="max-w-2xl mx-auto">
         <div className="text-center mb-10">
           <Badge className="mb-4 px-4 py-1 text-sm font-bold" style={{ background: '#D4AF37', color: '#002B5C' }}>Get Started</Badge>
@@ -339,7 +340,7 @@ function SubscriptionForm({ onBack }: { onBack: () => void }) {
             <div className="space-y-2"><Label className="text-gray-800 text-sm font-bold">Message</Label><Textarea placeholder="Tell us about your requirements..." rows={3} value={form.message} onChange={(e) => update('message', e.target.value)} /></div>
             <div className="flex gap-3 pt-2">
               <Button type="submit" className="flex-1 h-11 font-bold text-white" style={{ background: '#002B5C' }} disabled={loading}>{loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}Submit Request</Button>
-              <Button type="button" variant="outline" onClick={onBack} className="font-bold">Cancel</Button>
+              <Button type="button" variant="outline" onClick={onBack} className="font-bold">Back</Button>
             </div>
           </form>
         </CardContent></Card>
@@ -378,7 +379,7 @@ function SinglePortalLoginView({ portalId, onBack, onApply }: { portalId: string
     } catch { toast.error('Network error. Please try again.') } finally { setLoading(false) }
   }
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-gray-50 to-white">
+    <div data-landing="true" className="min-h-screen flex flex-col bg-gradient-to-b from-gray-50 to-white">
       <header className="sticky top-0 z-40 border-b bg-white/90 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
           <BrandLogo />
@@ -453,7 +454,7 @@ function SinglePortalLoginView({ portalId, onBack, onApply }: { portalId: string
 function PortalPickerView({ onPick, onBack }: { onPick: (title: string) => void; onBack: () => void }) {
   const [hovered, setHovered] = useState<string | null>(null)
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-gray-50 to-white">
+    <div data-landing="true" className="min-h-screen flex flex-col bg-gradient-to-b from-gray-50 to-white">
       <header className="sticky top-0 z-40 border-b bg-white/90 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
           <BrandLogo />
@@ -527,7 +528,7 @@ function PortalLoginPickerView({ onBack, onSelect, onApply }: { onBack: () => vo
   const filteredApply = APPLY_PORTALS.filter((p) => !search || p.title.toLowerCase().includes(search.toLowerCase()) || p.description.toLowerCase().includes(search.toLowerCase()))
   const hasResults = filteredLogin.length > 0 || filteredApply.length > 0
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-gray-50 to-white">
+    <div data-landing="true" className="min-h-screen flex flex-col bg-gradient-to-b from-gray-50 to-white">
       <header className="sticky top-0 z-40 border-b bg-white/90 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
           <BrandLogo />
@@ -642,6 +643,7 @@ export function Landing() {
   const [serviceModalOpen, setServiceModalOpen] = useState(false)
   const [appliedPortal, setAppliedPortal] = useState<string>('')
   const [selectedPortalId, setSelectedPortalId] = useState<string>('')
+  const [applyBackView, setApplyBackView] = useState<'home' | 'apply-pick' | 'portal-login'>('home')
   const homeRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -661,17 +663,22 @@ export function Landing() {
     { id: 'join', label: 'Join Now' }, { id: 'portals', label: 'All Portals' }, { id: 'pricing', label: 'Pricing' }, { id: 'contact', label: 'Contact' },
   ]
 
-  const openApplyForm = useCallback((portalTitle?: string) => { if (portalTitle) { setAppliedPortal(portalTitle); setView('apply') } else { setView('apply-pick') } }, [])
+  const openApplyForm = useCallback((portalTitle?: string, fromView: 'home' | 'apply-pick' | 'portal-login' = 'home') => {
+    setApplyBackView(fromView)
+    if (portalTitle) { setAppliedPortal(portalTitle); setView('apply') } else { setView('apply-pick') }
+  }, [])
+
+  const applyFormBack = useCallback(() => { setView(applyBackView) }, [applyBackView])
 
   if (view === 'register') return <RegistrationForm onBack={goHome} />
-  if (view === 'apply') return <RegistrationForm onBack={goHome} appliedFor={appliedPortal} />
-  if (view === 'apply-pick') return <PortalPickerView onPick={(title) => { setAppliedPortal(title); setView('apply') }} onBack={goHome} />
-  if (view === 'portal-pick') return <PortalLoginPickerView onBack={goHome} onSelect={(id) => { setSelectedPortalId(id); setView('portal-login') }} onApply={() => openApplyForm()} />
-  if (view === 'portal-login') return <SinglePortalLoginView portalId={selectedPortalId} onBack={() => setView('portal-pick')} onApply={() => { const p = PORTALS.find((pp) => pp.id === selectedPortalId); openApplyForm(p?.title) }} />
+  if (view === 'apply') return <RegistrationForm onBack={applyFormBack} appliedFor={appliedPortal} />
+  if (view === 'apply-pick') return <PortalPickerView onPick={(title) => { setAppliedPortal(title); setApplyBackView('apply-pick'); setView('apply') }} onBack={goHome} />
+  if (view === 'portal-pick') return <PortalLoginPickerView onBack={goHome} onSelect={(id) => { setSelectedPortalId(id); setView('portal-login') }} onApply={() => openApplyForm(undefined, 'portal-pick')} />
+  if (view === 'portal-login') return <SinglePortalLoginView portalId={selectedPortalId} onBack={() => setView('portal-pick')} onApply={() => { const p = PORTALS.find((pp) => pp.id === selectedPortalId); openApplyForm(p?.title, 'portal-login') }} />
   if (view === 'subscribe') return <SubscriptionForm onBack={goHome} />
 
   return (
-    <div ref={homeRef} className="min-h-screen flex flex-col" style={{ background: '#FFFFFF' }}>
+    <div ref={homeRef} data-landing="true" role="region" aria-label="Landing page" className="min-h-screen flex flex-col bg-white dark:bg-[#050B18]" style={{}}>
       <SocialSideMenu />
       <ServiceModal service={activeService} open={serviceModalOpen} onClose={() => setServiceModalOpen(false)} />
 
@@ -691,6 +698,7 @@ export function Landing() {
               ))}
             </div>
             <div className="hidden lg:flex items-center gap-3">
+              <ThemeToggle />
               <LanguageSwitcher />
               <Button variant="ghost" className="text-sm font-bold h-10 text-gray-600 hover:text-gray-900 hover:bg-gray-100 px-5" onClick={() => setView('portal-pick')}>Login</Button>
               <Button className="text-sm font-bold h-10 px-5 rounded-xl text-white shadow-md hover:shadow-lg transition-all duration-300" style={{ background: '#166534' }} onClick={() => openApplyForm()}>Apply to Join</Button>
@@ -709,6 +717,9 @@ export function Landing() {
                   <button key={link.id} onClick={() => scrollTo(link.id)} className="block w-full text-left px-4 py-3 rounded-xl text-sm font-bold text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors capitalize">{link.label}</button>
                 ))}
                 <div className="pt-3 flex flex-col gap-2">
+                  <div className="flex items-center gap-2">
+                    <ThemeToggle /> <LanguageSwitcher />
+                  </div>
                   <Button variant="outline" className="w-full text-sm font-bold" onClick={() => { setView('portal-pick'); setMobileMenu(false) }}>Login to Portal</Button>
                   <Button className="w-full text-sm font-bold text-white" style={{ background: '#166534' }} onClick={() => { openApplyForm(); setMobileMenu(false) }}>Apply to Join</Button>
                   <Button className="w-full text-sm font-bold text-gray-900" style={{ background: '#D4AF37' }} onClick={() => { setView('subscribe'); setMobileMenu(false) }}>Start Free Trial</Button>
@@ -791,7 +802,7 @@ export function Landing() {
                   <div className="flex items-center gap-3">
                     <div className="h-10 w-10 rounded-xl flex items-center justify-center" style={{ background: '#D4AF37' }}><Bot className="h-5 w-5 text-white" /></div>
                     <div>
-                      <p className="text-xs font-bold text-gray-900">HP AI Assistant</p>
+                      <p className="text-xs font-bold text-gray-900">HPAI — Best AI</p>
                       <p className="text-[11px] text-gray-500 font-medium">Always ready to help</p>
                     </div>
                   </div>

@@ -6,6 +6,13 @@ import { hashPassword } from '@/lib/auth'
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
+function genTempPassword(): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789@#$'
+  let p = ''
+  for (let i = 0; i < 12; i++) p += chars[Math.floor(Math.random() * chars.length)]
+  return p
+}
+
 export async function GET() {
   const { error } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER')
   if (error) return error
@@ -27,7 +34,7 @@ export async function POST(req: NextRequest) {
 
     // Auto-create a CLIENT user account linked to this client
     let generatedUsername = ''
-    let generatedPassword = 'Client@123'
+    let generatedPassword = genTempPassword()
     try {
       // Generate username from client name: lowercase, spaces→dots, append '.client'
       const base = body.clientName.toLowerCase().replace(/[^a-z0-9]+/g, '.').replace(/\.+$/, '') + '.client'
@@ -61,7 +68,7 @@ export async function POST(req: NextRequest) {
       // Don't fail the client creation if user creation fails
     }
 
-    return NextResponse.json({ ok: true, client, credentials: { username: generatedUsername, password: generatedPassword } })
+    return NextResponse.json({ ok: true, client, message: 'Client created. Credentials sent via notification.' })
   } catch (e) { return NextResponse.json({ error: 'Failed' }, { status: 500 }) }
 }
 

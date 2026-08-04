@@ -39,7 +39,7 @@ export function ForgotPasswordDialog() {
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog data-auth="true" open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <button className="text-xs text-muted-foreground hover:text-[var(--navy)] dark:hover:text-[var(--gold)]">Forgot password?</button>
       </DialogTrigger>

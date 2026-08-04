@@ -116,24 +116,31 @@ export function HpAiChat() {
       {/* Floating button */}
       <button
         onClick={() => setHpaiOpen(!hpaiOpen)}
-        aria-label={t('hpai.title', lang)}
+        aria-label="HPAI — Best AI Assistant"
+        title="HPAI — Best AI Assistant"
         className={cn(
-          'fixed bottom-20 right-4 z-50 grid h-14 w-14 place-items-center rounded-full shadow-lg transition-all duration-300 hover:scale-105 active:scale-95',
+          'fixed bottom-20 right-4 z-50 flex flex-col items-center justify-center gap-0.5 rounded-2xl shadow-lg transition-all duration-300 hover:scale-105 active:scale-95 px-2 py-2.5 sm:gap-1',
           'bg-gradient-to-br from-[var(--navy)] to-[var(--navy-light)]',
           !hpaiOpen && 'animate-hpai-pulse'
         )}
       >
-        <Sparkles className="h-6 w-6 text-[var(--gold)]" />
+        <Sparkles className="h-5 w-5 text-[var(--gold)]" />
+        <span className="text-[9px] font-black tracking-wider text-[var(--gold)] leading-none">HPAI</span>
       </button>
 
       {/* Chat panel */}
       {hpaiOpen && (
-        <div className="fixed bottom-36 right-4 z-50 flex w-[calc(100vw-2rem)] max-w-[380px] flex-col overflow-hidden rounded-2xl border bg-card shadow-xl sm:w-[380px]">
+        <div role="dialog" aria-label="HPAI — Best AI Assistant chat" className="fixed bottom-40 right-4 z-50 flex w-[calc(100vw-2rem)] max-w-[400px] flex-col overflow-hidden rounded-2xl border bg-card shadow-xl sm:w-[400px]">
           {/* Header */}
-          <div className="flex items-center justify-between bg-gradient-to-r from-[var(--navy)] to-[var(--navy-light)] px-4 py-3">
-            <div className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-[var(--gold)]" />
-              <h2 className="text-sm font-bold text-white">{t('hpai.title', lang)}</h2>
+          <div className="flex items-center justify-between bg-gradient-to-r from-[var(--navy)] to-[var(--navy-light)] px-4 py-3.5">
+            <div className="flex items-center gap-2.5">
+              <div className="grid h-8 w-8 place-items-center rounded-lg bg-[var(--gold)]/20">
+                <Sparkles className="h-4 w-4 text-[var(--gold)]" />
+              </div>
+              <div>
+                <h2 className="text-sm font-bold text-white leading-tight">HPAI</h2>
+                <p className="text-[10px] font-medium text-[var(--gold-light)] leading-tight">Best AI for HR & Workforce</p>
+              </div>
             </div>
             <div className="flex items-center gap-1">
               <button

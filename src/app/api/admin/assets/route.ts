@@ -18,10 +18,10 @@ export async function GET(req: NextRequest) {
     if (category) where.category = category
     if (search) {
       where.OR = [
-        { name: { contains: search, mode: 'insensitive' } },
-        { serialNumber: { contains: search, mode: 'insensitive' } },
-        { make: { contains: search, mode: 'insensitive' } },
-        { model: { contains: search, mode: 'insensitive' } },
+        { name: { contains: search } },
+        { serialNumber: { contains: search } },
+        { make: { contains: search } },
+        { model: { contains: search } },
       ]
     }
     const assets = await db.asset.findMany({

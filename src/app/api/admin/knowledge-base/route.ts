@@ -16,9 +16,9 @@ export async function GET(req: NextRequest) {
     if (category) where.category = category
     if (search) {
       where.OR = [
-        { question: { contains: search, mode: 'insensitive' } },
-        { answer: { contains: search, mode: 'insensitive' } },
-        { tags: { contains: search, mode: 'insensitive' } },
+        { question: { contains: search } },
+        { answer: { contains: search } },
+        { tags: { contains: search } },
       ]
     }
     const items = await db.knowledgeBase.findMany({

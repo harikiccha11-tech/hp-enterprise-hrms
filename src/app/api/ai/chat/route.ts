@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -96,6 +97,7 @@ function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise
 async function callZai(messages: { role: string; content: string }[]): Promise<string> {
   let ZAI: any
   try {
+    // @ts-expect-error z-ai-web-dev-sdk dynamic import
     const mod = await import('z-ai-web-dev-sdk')
     ZAI = (mod as any).default || mod
   } catch (importErr) {
@@ -192,6 +194,13 @@ async function callGemini(messages: { role: string; content: string }[]): Promis
 
 /* ─── POST handler ─── */
 export async function POST(req: NextRequest) {
+  const ip = getClientIp(req)
+
+  // Rate limit check
+  if (!checkRateLimit(`chat:${ip}`, 30, 60 * 60 * 1000)) {
+    return NextResponse.json({ error: 'Too many chat requests. Please try again later.' }, { status: 429 })
+  }
+
   let userId = 'anonymous-visitor'
   try {
     const cu = await getCurrentUser()

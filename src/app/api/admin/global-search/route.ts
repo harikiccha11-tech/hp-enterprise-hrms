@@ -19,20 +19,20 @@ export async function GET(req: NextRequest) {
       db.employee.findMany({
         where: {
           OR: [
-            { fullName: { contains: term, mode: 'insensitive' } },
-            { personalEmail: { contains: term, mode: 'insensitive' } },
-            { employeeCode: { contains: term, mode: 'insensitive' } },
+            { fullName: { contains: term } },
+            { email: { contains: term } },
+            { employeeCode: { contains: term } },
           ],
         },
         take: 10,
-        select: { id: true, fullName: true, employeeCode: true, personalEmail: true, status: true, designation: true },
+        select: { id: true, fullName: true, employeeCode: true, email: true, status: true, designation: true },
       }),
       db.client.findMany({
         where: {
           OR: [
-            { clientName: { contains: term, mode: 'insensitive' } },
-            { companyName: { contains: term, mode: 'insensitive' } },
-            { email: { contains: term, mode: 'insensitive' } },
+            { clientName: { contains: term } },
+            { companyName: { contains: term } },
+            { email: { contains: term } },
           ],
         },
         take: 10,
@@ -41,8 +41,8 @@ export async function GET(req: NextRequest) {
       db.project.findMany({
         where: {
           OR: [
-            { projectName: { contains: term, mode: 'insensitive' } },
-            { description: { contains: term, mode: 'insensitive' } },
+            { projectName: { contains: term } },
+            { description: { contains: term } },
           ],
         },
         take: 10,
@@ -51,9 +51,9 @@ export async function GET(req: NextRequest) {
       db.vendor.findMany({
         where: {
           OR: [
-            { vendorName: { contains: term, mode: 'insensitive' } },
-            { companyName: { contains: term, mode: 'insensitive' } },
-            { email: { contains: term, mode: 'insensitive' } },
+            { vendorName: { contains: term } },
+            { companyName: { contains: term } },
+            { email: { contains: term } },
           ],
         },
         take: 10,
@@ -62,9 +62,9 @@ export async function GET(req: NextRequest) {
       db.candidate.findMany({
         where: {
           OR: [
-            { fullName: { contains: term, mode: 'insensitive' } },
-            { email: { contains: term, mode: 'insensitive' } },
-            { skills: { contains: term, mode: 'insensitive' } },
+            { fullName: { contains: term } },
+            { email: { contains: term } },
+            { skills: { contains: term } },
           ],
         },
         take: 10,
@@ -73,8 +73,8 @@ export async function GET(req: NextRequest) {
       db.asset.findMany({
         where: {
           OR: [
-            { name: { contains: term, mode: 'insensitive' } },
-            { serialNumber: { contains: term, mode: 'insensitive' } },
+            { name: { contains: term } },
+            { serialNumber: { contains: term } },
           ],
         },
         take: 10,

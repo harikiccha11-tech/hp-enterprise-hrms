@@ -64,7 +64,8 @@ export async function POST(req: NextRequest) {
     })
     return NextResponse.json({ ok: true, task })
   } catch (e: any) {
-    return NextResponse.json({ error: e.message || 'Failed to create task' }, { status: 500 })
+    console.error('[onboarding] POST failed:', e)
+    return NextResponse.json({ error: 'Failed to create task' }, { status: 500 })
   }
 }
 
@@ -85,7 +86,8 @@ export async function PATCH(req: NextRequest) {
     const task = await db.onboardingTask.update({ where: { id }, data: update })
     return NextResponse.json({ ok: true, task })
   } catch (e: any) {
-    return NextResponse.json({ error: e.message || 'Failed to update task' }, { status: 500 })
+    console.error('[onboarding] PATCH failed:', e)
+    return NextResponse.json({ error: 'Failed to update task' }, { status: 500 })
   }
 }
 
@@ -98,6 +100,7 @@ export async function DELETE(req: NextRequest) {
     await db.onboardingTask.delete({ where: { id } })
     return NextResponse.json({ ok: true })
   } catch (e: any) {
-    return NextResponse.json({ error: e.message || 'Failed to delete' }, { status: 500 })
+    console.error('[onboarding] DELETE failed:', e)
+    return NextResponse.json({ error: 'Failed to delete' }, { status: 500 })
   }
 }

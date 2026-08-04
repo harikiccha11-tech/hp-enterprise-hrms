@@ -1,5 +1,6 @@
 // Shared helpers for the Employee Portal (pure functions, safe for client)
 import { format, formatDistanceToNow } from 'date-fns'
+import { cacheGet, cacheSet, cacheInvalidate } from '@/lib/store'
 
 /** Format currency in Indian numbering system: ₹ 1,23,456 */
 export function formatINR(n: number | null | undefined): string {
@@ -107,22 +108,37 @@ export function hoursBetween(a: string | Date, b: string | Date): number {
   }
 }
 
-/** Wrapper around fetch with JSON + error handling */
+/** Wrapper around fetch with JSON + error handling + instant cache */
 export async function api<T = any>(
   url: string,
   opts: RequestInit = {}
 ): Promise<T> {
-  const res = await fetch(url, {
+  const method = (opts.method || 'GET').toUpperCase()
+  const isMutation = method !== 'GET'
+  const fetchOpts: RequestInit = {
     ...opts,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(opts.headers || {}),
-    },
+    headers: { 'Content-Type': 'application/json', ...(opts.headers || {}) },
     cache: 'no-store',
-  })
+  }
+
+  // GET: return cached data instantly, refresh in background
+  if (!isMutation) {
+    const cached = cacheGet<T>(url)
+    if (cached) {
+      fetch(url, fetchOpts)
+        .then(r => r.ok ? r.json() : null)
+        .then(d => { if (d) cacheSet(url, d) })
+        .catch(() => {})
+      return cached
+    }
+  }
+
+  const res = await fetch(url, fetchOpts)
   const data = await res.json().catch(() => ({}))
   if (!res.ok) {
     throw new Error((data as any)?.error || `Request failed (${res.status})`)
   }
+  if (!isMutation) cacheSet(url, data)
+  if (isMutation) cacheInvalidate(url.split('?')[0])
   return data as T
 }

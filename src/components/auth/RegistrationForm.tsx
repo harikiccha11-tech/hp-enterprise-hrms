@@ -121,7 +121,7 @@ export function RegistrationForm({ onBack, appliedFor }: { onBack: () => void; a
 
   if (done) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-background px-4">
+      <div data-auth="true" className="min-h-screen flex flex-col items-center justify-center bg-background px-4">
         <Card className="max-w-lg w-full text-center border-0 shadow-xl">
           <CardContent className="pt-10 pb-10">
             <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-emerald-500/10">
@@ -144,7 +144,7 @@ export function RegistrationForm({ onBack, appliedFor }: { onBack: () => void; a
               </ol>
             </div>
             <Button className="mt-6 bg-[var(--navy)] hover:bg-[var(--navy-light)]" onClick={onBack}>
-              Back to Home
+              Back
             </Button>
           </CardContent>
         </Card>
@@ -153,14 +153,14 @@ export function RegistrationForm({ onBack, appliedFor }: { onBack: () => void; a
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div data-auth="true" className="min-h-screen flex flex-col bg-background">
       <header className="sticky top-0 z-40 border-b bg-white/90 backdrop-blur dark:bg-[var(--navy-deep)]/90">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
           <BrandLogo />
           {appliedFor && (
             <Badge className="px-3 py-0.5 text-xs font-bold" style={{ background: '#D4AF37', color: '#002B5C' }}>Joining: {appliedFor}</Badge>
           )}
-          <Button variant="ghost" size="sm" onClick={onBack}><ArrowLeft className="mr-1 h-4 w-4" /> Back to Home</Button>
+          <Button variant="ghost" size="sm" onClick={onBack}><ArrowLeft className="mr-1 h-4 w-4" /> Back</Button>
         </div>
       </header>
 
@@ -333,7 +333,7 @@ export function RegistrationForm({ onBack, appliedFor }: { onBack: () => void; a
 
             {/* Nav buttons */}
             <div className="mt-8 flex items-center justify-between border-t pt-6">
-              <Button variant="outline" onClick={prev} disabled={step === 0}><ArrowLeft className="mr-1 h-4 w-4" /> Previous</Button>
+              <Button variant="outline" onClick={step === 0 ? onBack : prev}><ArrowLeft className="mr-1 h-4 w-4" /> {step === 0 ? 'Back' : 'Previous'}</Button>
               {step < STEPS.length - 1 ? (
                 <Button onClick={next} className="bg-[var(--navy)] hover:bg-[var(--navy-light)]">Next <ArrowRight className="ml-1 h-4 w-4" /></Button>
               ) : (

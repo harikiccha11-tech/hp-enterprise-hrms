@@ -16,10 +16,10 @@ export async function GET(req: NextRequest) {
     const where: any = {}
     if (search) {
       where.OR = [
-        { vendorName: { contains: search, mode: 'insensitive' } },
-        { companyName: { contains: search, mode: 'insensitive' } },
-        { gst: { contains: search, mode: 'insensitive' } },
-        { email: { contains: search, mode: 'insensitive' } },
+        { vendorName: { contains: search } },
+        { companyName: { contains: search } },
+        { gst: { contains: search } },
+        { email: { contains: search } },
       ]
     }
     if (status) where.status = status

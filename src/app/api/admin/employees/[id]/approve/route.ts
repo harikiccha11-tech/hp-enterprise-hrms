@@ -114,7 +114,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     return NextResponse.json({
       ok: true,
       employee: updated,
-      credentials: { username, tempPassword },
+      message: 'Employee approved. Temporary credentials sent via notification.',
     })
   } catch (e) {
     console.error('approve error', e)

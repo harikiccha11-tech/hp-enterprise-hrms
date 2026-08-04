@@ -79,6 +79,12 @@ export async function PATCH(req: NextRequest) {
     // Don't allow changing own role
     if (id === cu!.user.id) return NextResponse.json({ error: 'Cannot change your own role' }, { status: 400 })
 
+    // Don't allow non-OWNER to modify OWNER role
+    const targetUser = await db.user.findUnique({ where: { id }, select: { role: true } })
+    if (targetUser?.role === 'OWNER' && cu!.user.role !== 'OWNER') {
+      return NextResponse.json({ error: 'Cannot modify OWNER role' }, { status: 403 })
+    }
+
     const user = await db.user.update({
       where: { id },
       data: { role },

@@ -18,10 +18,10 @@ export async function GET(req: NextRequest) {
   if (status) where.status = status
   if (search) {
     where.OR = [
-      { title: { contains: search, mode: 'insensitive' } },
-      { department: { contains: search, mode: 'insensitive' } },
-      { designation: { contains: search, mode: 'insensitive' } },
-      { location: { contains: search, mode: 'insensitive' } },
+      { title: { contains: search } },
+      { department: { contains: search } },
+      { designation: { contains: search } },
+      { location: { contains: search } },
     ]
   }
 
@@ -57,7 +57,8 @@ export async function POST(req: NextRequest) {
     })
     return NextResponse.json({ ok: true, job })
   } catch (e: any) {
-    return NextResponse.json({ error: e.message || 'Failed to create job posting' }, { status: 500 })
+    console.error('[recruitment] POST failed:', e)
+    return NextResponse.json({ error: 'Failed to create job posting' }, { status: 500 })
   }
 }
 
@@ -77,7 +78,8 @@ export async function PATCH(req: NextRequest) {
     const job = await db.jobPosting.update({ where: { id }, data: update })
     return NextResponse.json({ ok: true, job })
   } catch (e: any) {
-    return NextResponse.json({ error: e.message || 'Failed to update job posting' }, { status: 500 })
+    console.error('[recruitment] PATCH failed:', e)
+    return NextResponse.json({ error: 'Failed to update job posting' }, { status: 500 })
   }
 }
 
@@ -90,6 +92,7 @@ export async function DELETE(req: NextRequest) {
     await db.jobPosting.delete({ where: { id } })
     return NextResponse.json({ ok: true })
   } catch (e: any) {
-    return NextResponse.json({ error: e.message || 'Failed to delete' }, { status: 500 })
+    console.error('[recruitment] DELETE failed:', e)
+    return NextResponse.json({ error: 'Failed to delete' }, { status: 500 })
   }
 }

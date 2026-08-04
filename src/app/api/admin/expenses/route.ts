@@ -18,15 +18,11 @@ export async function GET(req: NextRequest) {
     if (category) where.category = category
     if (search) {
       where.OR = [
-        { description: { contains: search, mode: 'insensitive' } },
-        { employee: { fullName: { contains: search, mode: 'insensitive' } } },
+        { description: { contains: search } },
       ]
     }
     const expenses = await db.expense.findMany({
       where,
-      include: {
-        employee: { select: { id: true, fullName: true, employeeCode: true } },
-      },
       orderBy: { createdAt: 'desc' },
     })
     return NextResponse.json({ expenses })

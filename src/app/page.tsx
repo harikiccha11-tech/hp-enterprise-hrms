@@ -5,13 +5,12 @@ import { Landing } from '@/components/auth/Landing'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { EmployeeLayout } from '@/components/employee/EmployeeLayout'
 import { ClientLayout } from '@/components/client/ClientLayout'
-import { BrandLogo } from '@/components/brand/BrandLogo'
 
 export default function Page() {
-  const { user, loading, refresh } = useAuth()
+  const { user, refresh } = useAuth()
   const mounted = useRef(false)
 
-  // Only call refresh once on initial mount — never re-run on re-renders
+  // Silent auth check in background — no loading spinner, no blocking
   useEffect(() => {
     if (!mounted.current) {
       mounted.current = true
@@ -19,30 +18,46 @@ export default function Page() {
     }
   }, [refresh])
 
-  if (loading) {
+  // If authenticated, show the right portal instantly
+  if (user) {
+    if (user.role === 'CLIENT') {
+      return (
+        <>
+          <a href="#main-content" className="skip-link">Skip to main content</a>
+          <main id="main-content" role="main" tabIndex={-1}>
+            <ClientLayout />
+          </main>
+        </>
+      )
+    }
+    if (user.role === 'EMPLOYEE' || user.role === 'HR_MANAGER') {
+      return (
+        <>
+          <a href="#main-content" className="skip-link">Skip to main content</a>
+          <main id="main-content" role="main" tabIndex={-1}>
+            <EmployeeLayout />
+          </main>
+        </>
+      )
+    }
+    // OWNER, SUPER_ADMIN, HR_MANAGER
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-background">
-        <div className="animate-pulse">
-          <BrandLogo size="lg" />
-        </div>
-        <div className="h-1 w-40 overflow-hidden rounded-full bg-muted">
-          <div className="h-full w-1/2 animate-[loading_1.2s_ease-in-out_infinite] hpe-gold-bar" />
-        </div>
-        <p className="text-sm text-muted-foreground">Loading HP ENTERPRISE Workforce…</p>
-        <style>{`@keyframes loading{0%{transform:translateX(-100%)}100%{transform:translateX(200%)}}`}</style>
-      </div>
+      <>
+        <a href="#main-content" className="skip-link">Skip to main content</a>
+        <main id="main-content" role="main" tabIndex={-1}>
+          <AdminLayout />
+        </main>
+      </>
     )
   }
 
-  if (!user) {
-    return <Landing />
-  }
-
-  if (user.role === 'OWNER' || user.role === 'SUPER_ADMIN' || user.role === 'HR_MANAGER') {
-    return <AdminLayout />
-  }
-  if (user.role === 'CLIENT') {
-    return <ClientLayout />
-  }
-  return <EmployeeLayout />
+  // Default: Landing page — renders instantly, no spinner
+  return (
+    <>
+      <a href="#main-content" className="skip-link">Skip to main content</a>
+      <main id="main-content" role="main" tabIndex={-1}>
+        <Landing />
+      </main>
+    </>
+  )
 }
