@@ -651,3 +651,31 @@ Stage Summary:
   - Metro Retail (hybrid): metroadmin / MetroRetail@2026
 - All existing modules (30+) preserved and working
 - New APIs: /api/auth/account, /api/auth/user, /api/onboarding/create-account, /api/admin/site-assignments
+
+---
+Task ID: 4
+Agent: frontend-styling-expert
+Task: Build enterprise landing page
+
+Work Log:
+- Replaced the entire Landing.tsx (1247 lines navy/gold design) with a 929-line ledger-rule design system
+- Implemented the 'ruled' background lines using CSS repeating-linear-gradient (ledger-ruled, ledger-ruled-dark classes)
+- Adopted the ink/amber/verify/ledger color palette from the uploaded hphrms_landing.html reference
+- Added Google Fonts loading (Bricolage Grotesque, Public Sans, IBM Plex Mono) via dynamic link injection
+- Built all 8 sections: Nav (sticky, blurred), Hero with muster roll signature table, Three Modes, AI Features (10-cell grid), Module Register (23 modules), India Compliance (PF/ESI/Gratuity/PT/CLRA/BOCW/Factories/Maternity), Data Access Separation, Trust/Verification with legal IDs, CTA, Footer
+- Implemented the signature Muster Roll table with animated row reveals and AI readout bar
+- Login flow preserved via inline LoginDialog modal with ForgotPasswordDialog integration
+- Views: home | register | subscribe — RegistrationForm and SubscriptionForm intact
+- Responsive mobile-first design with mobile hamburger menu
+- framer-motion Reveal animations on every section
+- HpAiChat floating widget preserved
+- No personal conversations or personal info shown in the UI
+- BrandLogo, Brand constants, TRUST_BADGES, SOCIAL links all imported from existing modules
+
+Stage Summary:
+- ESLint: 0 errors
+- Build: successful (0 errors)
+- File size: 929 lines (down from 1247)
+- Design: Sophisticated ledger/notebook aesthetic with ruled lines, mono eyebrow labels, display headings
+- All auth flows (login, register, subscribe, forgot-password) fully functional
+- Production-ready for hphrms.com

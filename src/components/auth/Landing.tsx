@@ -1,728 +1,563 @@
 'use client'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useAppStore } from '@/lib/store'
-import { BRAND, SERVICES, HPHRMS_FEATURES, TRUST_BADGES, SOCIAL } from '@/lib/constants'
+import { BRAND, HPHRMS_FEATURES, TRUST_BADGES, SOCIAL } from '@/lib/constants'
 import { BrandLogo } from '@/components/brand/BrandLogo'
 import { RegistrationForm } from '@/components/auth/RegistrationForm'
 import { ForgotPasswordDialog } from '@/components/auth/ForgotPasswordDialog'
-import { LanguageSwitcher } from '@/components/shared/LanguageSwitcher'
-import { ThemeToggle } from '@/components/shared/ThemeToggle'
 import { HpAiChat } from '@/components/shared/HpAiChat'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { motion, useInView, AnimatePresence } from 'framer-motion'
 import {
-  Building2, ShieldCheck, Users, FileText, Clock, Wallet, ArrowRight, ArrowLeft, Lock, User as UserIcon,
-  Sparkles, Crown, Check, Bot,
-  CalendarDays, ClipboardList, BarChart3,
-  Settings, UserCog, Zap, Shield, Bell, Star, Headphones, Send, Loader2,
-  Phone, Mail, MapPin, ChevronRight, Menu, X, Award, Globe2,
-  HardHat, Truck, DollarSign, MonitorSmartphone,
-  type LucideIcon, Eye, Target, Wrench, UserPlus, Briefcase, FileUp, GraduationCap, Landmark, Search,
+  Building2, ShieldCheck, Users, FileText, ArrowRight, ArrowLeft, Lock,
+  Sparkles, Check, Bot, Menu, X, Phone, Mail, MapPin, ChevronRight,
+  Send, Loader2, Eye, EyeOff, User as UserIcon, Zap, BarChart3,
+  ClipboardList, Brain, FileSearch, Bell, Settings, Briefcase,
+  type LucideIcon,
 } from 'lucide-react'
-import Image from 'next/image'
 
-type LandingView = 'home' | 'register' | 'subscribe' | 'apply' | 'apply-pick' | 'portal-pick' | 'portal-login'
+/* ═══════════════════════════════════════════════════════
+   LEDGER DESIGN SYSTEM
+   ═══════════════════════════════════════════════════════ */
+const C = {
+  ink:      '#16213E',
+  inkDeep:  '#0A0F1E',
+  inkSoft:  '#4A5673',
+  ledger:   '#EEF1F0',
+  ledgerW:  '#F6F7F5',
+  rule:     '#C9D3D0',
+  ruleSoft: '#DEE5E3',
+  amber:    '#E8A33D',
+  verify:   '#2E7D5B',
+  paper:    '#FFFFFF',
+} as const
 
-function InstagramIcon({ className, style }: { className?: string; style?: React.CSSProperties }) {
-  return <svg className={className} style={style} viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
-}
-function LinkedInIcon({ className, style }: { className?: string; style?: React.CSSProperties }) {
-  return <svg className={className} style={style} viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
-}
-function FacebookIcon({ className, style }: { className?: string; style?: React.CSSProperties }) {
-  return <svg className={className} style={style} viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-}
-function TwitterXIcon({ className, style }: { className?: string; style?: React.CSSProperties }) {
-  return <svg className={className} style={style} viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-}
-function YouTubeIcon({ className, style }: { className?: string; style?: React.CSSProperties }) {
-  return <svg className={className} style={style} viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
-}
-function ThreadsIcon({ className, style }: { className?: string; style?: React.CSSProperties }) {
-  return <svg className={className} style={style} viewBox="0 0 24 24" fill="currentColor"><path d="M12.186 24h-.007c-3.581-.024-6.334-1.205-8.184-3.509C2.35 18.44 1.5 15.586 1.472 12.01v-.017c.03-3.579.879-6.43 2.525-8.482C5.845 1.205 8.6.024 12.18 0h.014c2.746.02 5.043.725 6.826 2.098 1.677 1.29 2.858 3.13 3.509 5.467l-2.04.569c-1.104-3.96-3.898-5.984-8.304-6.015-2.91.022-5.11.936-6.54 2.717C4.307 6.504 3.616 8.914 3.589 12c.027 3.086.718 5.496 2.057 7.164 1.43 1.783 3.631 2.698 6.54 2.717 2.623-.02 4.358-.631 5.796-2.045 1.647-1.619 1.618-3.593 1.09-4.798-.31-.71-.873-1.3-1.634-1.75-.192 1.352-.622 2.446-1.284 3.272-.886 1.102-2.14 1.704-3.73 1.79-1.202.065-2.361-.218-3.259-.797-1.063-.684-1.685-1.74-1.752-2.976-.065-1.218.42-2.33 1.366-3.129.906-.763 2.143-1.192 3.678-1.274 1.062-.058 2.043.042 2.928.291-.082-.584-.262-1.058-.534-1.411-.4-.521-1.08-.838-2.077-.965l.249-2.022c1.45.178 2.556.713 3.287 1.591.505.605.847 1.37 1.024 2.281.936-.655 1.637-1.441 2.11-2.383.67-1.33.716-2.712.14-3.716-.68-1.19-2.282-1.868-4.505-2.012l.127-2.03c2.868.18 5.064 1.165 6.19 2.878.866 1.326.949 3.04.23 4.715-.48 1.126-1.258 2.078-2.32 2.857.084.228.16.465.226.714.31 1.157.27 3.395-1.7 5.327-1.766 1.735-3.868 2.58-6.42 2.6zM10.67 14.22c-.987.053-1.787.296-2.376.722-.566.41-.825.93-.79 1.5.033.58.35 1.07.895 1.42.47.295 1.077.434 1.712.4.954-.05 1.656-.38 2.139-.98.344-.425.576-1.01.7-1.75-.633-.147-1.34-.21-2.28-.312z"/></svg>
-}
-function RedditIcon({ className, style }: { className?: string; style?: React.CSSProperties }) {
-  return <svg className={className} style={style} viewBox="0 0 24 24" fill="currentColor"><path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z"/></svg>
-}
-function WhatsAppIcon({ className, style }: { className?: string; style?: React.CSSProperties }) {
-  return <svg className={className} style={style} viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+type LandingView = 'home' | 'register' | 'subscribe'
+
+/* ═══════════════════════════════════════════════════════
+   FONTS — load Bricolage Grotesque, Public Sans, IBM Plex Mono
+   ═══════════════════════════════════════════════════════ */
+function useLedgerFonts() {
+  useEffect(() => {
+    if (typeof document === 'undefined') return
+    const id = 'ledger-fonts'
+    if (document.getElementById(id)) return
+    const link = document.createElement('link')
+    link.id = id
+    link.rel = 'stylesheet'
+    link.href = 'https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400;12..96,75..100,600;12..96,75..100,800&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap'
+    document.head.appendChild(link)
+  }, [])
 }
 
-const SOCIAL_ITEMS: { label: string; icon: LucideIcon; href: string; color: string }[] = [
-  { label: 'Website', icon: Globe2, href: SOCIAL.website, color: '#002B5C' },
-  { label: 'HPHRMS', icon: MonitorSmartphone, href: SOCIAL.hphrms, color: '#002B5C' },
-  { label: 'Instagram', icon: InstagramIcon, href: SOCIAL.instagram, color: '#E4405F' },
-  { label: 'Threads', icon: ThreadsIcon, href: SOCIAL.threads, color: '#000000' },
-  { label: 'LinkedIn', icon: LinkedInIcon, href: SOCIAL.linkedin, color: '#0A66C2' },
-  { label: 'Facebook', icon: FacebookIcon, href: SOCIAL.facebook, color: '#1877F2' },
-  { label: 'Twitter / X', icon: TwitterXIcon, href: SOCIAL.twitter, color: '#000000' },
-  { label: 'YouTube', icon: YouTubeIcon, href: SOCIAL.youtube, color: '#FF0000' },
-  { label: 'Reddit', icon: RedditIcon, href: SOCIAL.reddit, color: '#FF4500' },
-  { label: 'WhatsApp', icon: WhatsAppIcon, href: SOCIAL.whatsapp, color: '#25D366' },
+/* ═══════════════════════════════════════════════════════
+   FONT STYLE HELPERS
+   ═══════════════════════════════════════════════════════ */
+const fontDisplay = { fontFamily: "'Bricolage Grotesque', sans-serif" }
+const fontBody    = { fontFamily: "'Public Sans', sans-serif" }
+const fontMono    = { fontFamily: "'IBM Plex Mono', monospace" }
+
+/* ═══════════════════════════════════════════════════════
+   DATA: Muster Roll (signature table)
+   ═══════════════════════════════════════════════════════ */
+interface MusterRow { num: string; name: string; code: string; role: string; marks: ('P'|'A'|'H')[]; mandays: number }
+const MUSTER_DATA: MusterRow[] = [
+  { num: '01', name: 'Manjunath B', code: 'HPE-0412', role: 'Safety Steward', marks: ['P','P','P','P','P'], mandays: 5.0 },
+  { num: '02', name: 'Shivakumar R', code: 'HPE-0418', role: 'Helper — Gr II', marks: ['P','A','A','A','P'], mandays: 2.0 },
+  { num: '03', name: 'Lakshmi Devi', code: 'HPE-0431', role: 'Housekeeping', marks: ['P','P','H','P','P'], mandays: 4.5 },
+  { num: '04', name: 'Anand Kumar', code: 'HPE-0455', role: 'Electrician', marks: ['P','P','P','P','A'], mandays: 4.0 },
+  { num: '05', name: 'Ravi Shankar', code: 'HPE-0467', role: 'Security — Night', marks: ['P','P','P','P','P'], mandays: 5.0 },
 ]
 
-interface ServiceDetail {
-  title: string; short: string; icon: LucideIcon; image: string
-  description: string; benefits: string[]; industries: string[]; process: string[]
-}
-
-const SERVICE_DETAILS: ServiceDetail[] = [
-  { title: 'Human Resource Management', short: 'Complete workforce lifecycle management powered by AI', icon: Users, image: '/images/hr-management.jpg',
-    description: 'Our comprehensive HR management service covers the entire employee lifecycle from onboarding to exit. We handle employee records, performance tracking, policy compliance, and organizational development.',
-    benefits: ['End-to-end employee lifecycle management', 'AI-powered performance analytics', 'Compliance with Indian labour laws', 'Employee engagement & retention programs', 'Organizational structure optimization'],
-    industries: ['IT & Technology', 'Construction & Infrastructure', 'Manufacturing', 'Healthcare', 'BFSI'],
-    process: ['Workforce assessment & planning', 'HR policy design & implementation', 'Employee onboarding & documentation', 'Ongoing HR operations & support', 'Performance reviews & analytics'],
-  },
-  { title: 'Recruitment & Talent Acquisition', short: 'End-to-end hiring pipeline with smart screening', icon: Target, image: '/images/recruitment.jpg',
-    description: 'We manage the complete recruitment cycle from job posting and candidate sourcing to interviewing, offer negotiation, and onboarding. Our AI-powered ATS helps you find the right talent faster.',
-    benefits: ['AI-powered applicant tracking system (ATS)', 'Multi-channel candidate sourcing', 'Structured interview frameworks', 'Background verification support', 'Faster time-to-hire with smart screening'],
-    industries: ['IT & Technology', 'Construction', 'Manufacturing', 'Healthcare', 'BFSI', 'Logistics'],
-    process: ['Requirement gathering & job description', 'Candidate sourcing & screening', 'Interview coordination & assessment', 'Offer negotiation & acceptance', 'Onboarding & documentation'],
-  },
-  { title: 'Safety (EHS) Consultancy', short: 'Environmental, Health & Safety compliance solutions', icon: HardHat, image: '/images/ehs-safety.jpg',
-    description: 'Our EHS consultancy ensures your organization meets all safety regulations and standards. From safety audits to training programs, we build a culture of safety at your workplace.',
-    benefits: ['Comprehensive safety audits & inspections', 'Regulatory compliance management', 'Safety training & certification programs', 'Incident investigation & reporting', 'Emergency response planning'],
-    industries: ['Construction', 'Manufacturing', 'Oil & Gas', 'Chemical Plants', 'Mining', 'Infrastructure'],
-    process: ['Site assessment & hazard identification', 'Safety audit & gap analysis', 'Compliance plan development', 'Training implementation', 'Ongoing monitoring & support'],
-  },
-  { title: 'Engineering & Project Support', short: 'Multi-discipline engineering for construction & industrial projects', icon: Wrench, image: '/images/engineering.jpg',
-    description: 'We provide skilled engineering professionals across all disciplines for construction, industrial, and infrastructure projects.',
-    benefits: ['Multi-discipline engineering professionals', 'Project planning & scheduling support', 'Quality assurance & quality control', 'Construction management services', 'Technical documentation & reporting'],
-    industries: ['Construction', 'Infrastructure', 'Industrial Plants', 'Oil & Gas', 'Power Generation', 'Metro & Rail'],
-    process: ['Project requirement analysis', 'Resource planning & deployment', 'Engineering execution & monitoring', 'Quality control & documentation', 'Project handover & close-out'],
-  },
-  { title: 'Payroll Management', short: 'Accurate, compliant payroll processing for your workforce', icon: Wallet, image: '/images/payroll.jpg',
-    description: 'Our payroll management service handles salary processing, statutory compliance (PF, ESI, PT, TDS), and payslip generation.',
-    benefits: ['Timely monthly payroll processing', 'Statutory compliance (PF, ESI, PT, TDS)', 'Automated payslip generation', 'Leave & attendance integration', 'Year-end tax forms (Form 16)'],
-    industries: ['All Industries', 'IT & Technology', 'Construction', 'Manufacturing', 'Healthcare'],
-    process: ['Employee data verification', 'Attendance & leave processing', 'Salary calculation & statutory deductions', 'Payslip generation & distribution', 'Compliance filing & reporting'],
-  },
-  { title: 'Manpower Supply', short: 'Skilled & unskilled workforce deployment across India', icon: Truck, image: '/images/construction.jpg',
-    description: 'We supply skilled, semi-skilled, and unskilled manpower for construction, industrial, and service sectors across India.',
-    benefits: ['Pan-India manpower deployment', 'Skilled & unskilled workforce', 'Rapid mobilization capability', 'Compliance-managed staffing', 'Flexible contract durations'],
-    industries: ['Construction', 'Manufacturing', 'Logistics', 'Hospitality', 'Facility Management', 'Security Services'],
-    process: ['Workforce requirement assessment', 'Candidate sourcing & screening', 'Documentation & compliance', 'Deployment & orientation', 'Ongoing management & support'],
-  },
+/* ═══════════════════════════════════════════════════════
+   DATA: Three Things We Do
+   ═══════════════════════════════════════════════════════ */
+const THREE_MODES = [
+  { tag: 'Mode 1', label: 'HRMS SAAS', title: 'You employ them', desc: 'Your permanent staff, your payroll, your data. HPHRMS is the software you run it on.',
+    items: ['Full employee lifecycle', 'Payroll with PF, ESI and TDS', 'Attendance, leave, performance', 'Recruitment and onboarding', 'You own every record'] },
+  { tag: 'Mode 2', label: 'MANPOWER SUPPLY', title: 'HP Enterprise employs them', desc: 'We supply the workforce and carry the statutory liability. You see the work, not our cost sheet.',
+    items: ['Who is deployed, at which site', 'Site-wise daily attendance', 'Timesheets you approve', 'Invoices and payment status', 'No access to worker salaries'] },
+  { tag: 'Mode 3', label: 'HYBRID', title: 'Both, kept separate', desc: '80 of your own people and 20 of ours, in one portal, with two sets of permissions.',
+    items: ['Internal staff on full HRMS', 'Contract workers on deployment view', 'Payroll runs only on your staff', 'Invoices raised only on ours', 'No accidental crossover'] },
 ]
 
-interface PortalConfig {
-  id: string; title: string; description: string; icon: LucideIcon
-  features: string[]; role: string; color: string; requestAccess?: boolean
-}
-
-const PORTALS: PortalConfig[] = [
-  { id: 'owner', title: 'Owner Dashboard', description: 'Full system ownership with billing, company settings, and complete control over all modules.',
-    icon: Crown, role: 'OWNER', color: '#D4AF37',
-    features: ['Company Settings & Branding', 'Billing & Subscription Management', 'User & Role Management', 'Audit Logs & Activity Reports', 'System Configuration'],
-  },
-  { id: 'admin', title: 'Admin Console', description: 'Complete HR & workforce management dashboard with full operational control.',
-    icon: Shield, role: 'SUPER_ADMIN', color: '#002B5C',
-    features: ['Employee Management', 'Payroll & Attendance', 'Recruitment & ATS', 'Reports & Analytics', 'Document Management', 'Shift & Roster Management'],
-  },
-  { id: 'hr', title: 'HR Manager Portal', description: 'Day-to-day HR operations including recruitment, onboarding, and employee management.',
-    icon: UserCog, role: 'HR_MANAGER', color: '#0A4488',
-    features: ['Employee Onboarding', 'Leave Management', 'Recruitment Pipeline', 'Performance Tracking', 'Employee Grievances', 'Policy Management'],
-  },
-  { id: 'employee', title: 'Employee Portal', description: 'Self-service portal for all employees to manage their work life.',
-    icon: UserIcon, role: 'EMPLOYEE', color: '#166534',
-    features: ['View Payslips', 'Apply Leaves', 'Attendance History', 'Document Downloads', 'Profile Management', 'Task & Assignment View'],
-  },
-  { id: 'client', title: 'Client Portal', description: 'Dedicated access for business clients to track workforce and invoices.',
-    icon: Building2, role: 'CLIENT', color: '#7C2D12',
-    features: ['Workforce Dashboard', 'Invoice Management', 'Project Tracking', 'Compliance Reports', 'Support Tickets'],
-  },
-  { id: 'recruitment', title: 'Recruitment Portal', description: 'AI-powered recruitment portal for candidates and hiring managers.',
-    icon: Target, role: 'CANDIDATE', color: '#6D28D9',
-    features: ['Job Search & Apply', 'Application Tracking', 'Interview Scheduling', 'Offer Management', 'Candidate Assessment'], requestAccess: true,
-  },
-  { id: 'ehs', title: 'EHS Safety Portal', description: 'Safety compliance management, incident reporting, and audit tracking.',
-    icon: HardHat, role: 'EHS', color: '#B45309',
-    features: ['Safety Audit Management', 'Incident Reporting', 'Compliance Tracking', 'Safety Training Records', 'PPE Management', 'Emergency Protocols'], requestAccess: true,
-  },
-  { id: 'payroll', title: 'Payroll Portal', description: 'Dedicated payroll processing, statutory compliance, and salary management.',
-    icon: DollarSign, role: 'FINANCE', color: '#0369A1',
-    features: ['Salary Processing', 'PF/ESI/TDS Filing', 'Payslip Generation', 'Reimbursement Management', 'Tax Reports (Form 16)', 'Bank Integration'], requestAccess: true,
-  },
-  { id: 'manpower', title: 'Manpower Supply Portal', description: 'Manpower deployment tracking, vendor management, and workforce allocation.',
-    icon: Truck, role: 'VENDOR', color: '#4338CA',
-    features: ['Workforce Deployment', 'Vendor Management', 'Attendance & Billing', 'Contract Management', 'Site Allocation', 'Compliance Documents'], requestAccess: true,
-  },
-  { id: 'engineering', title: 'Engineering Portal', description: 'Engineering project support, resource planning, and discipline tracking.',
-    icon: Wrench, role: 'MANAGER', color: '#0F766E',
-    features: ['Project Resource Planning', 'Discipline Tracking', 'Site Progress Reports', 'QA/QC Management', 'Technical Documentation', 'Billing & Measurement'], requestAccess: true,
-  },
+/* ═══════════════════════════════════════════════════════
+   DATA: AI Features
+   ═══════════════════════════════════════════════════════ */
+interface AiFeature { title: string; desc: string; query: string; icon: LucideIcon }
+const AI_FEATURES: AiFeature[] = [
+  { title: 'HR Chat Assistant', desc: 'Ask anything about your workforce and get an answer grounded in your live records.', query: '"Who\'s on leave next week at Site 04?"', icon: Bot },
+  { title: 'Attendance Assistant', desc: 'Spots absence patterns against each worker\'s own baseline, not a blanket threshold.', query: '"Which sites ran short-staffed last month?"', icon: ClipboardList },
+  { title: 'Payroll Assistant', desc: 'Explains what moved and why — department cost, PF and ESI totals, month on month.', query: '"Why did payroll rise 8% in July?"', icon: BarChart3 },
+  { title: 'Recruitment Assistant', desc: 'Drafts job descriptions and interview structures grounded in your current headcount.', query: '"Draft a JD for a site safety officer"', icon: Users },
+  { title: 'Document Assistant', desc: 'Offer letters, deployment letters, experience certificates — filled from real records.', query: '"Experience certificate for HPE-0412"', icon: FileText },
+  { title: 'Report Generator', desc: 'Describe the report you want. Get a table you can export, not a paragraph.', query: '"Site-wise mandays, last quarter"', icon: FileSearch },
+  { title: 'Workforce Planning', desc: 'Flags where you\'ll be short before the shift starts, based on deployment and leave.', query: '"Where am I short next week?"', icon: Brain },
+  { title: 'Compliance Alerts', desc: 'Contracts, safety training, police verification and medical fitness, before they lapse.', query: '"What expires in the next 30 days?"', icon: ShieldCheck },
+  { title: 'Executive Dashboard', desc: 'A daily brief on what changed and what needs a decision. Under 200 words.', query: '"What needs my attention today?"', icon: Zap },
+  { title: 'Notification Center', desc: 'Every alert the system raises, ranked by severity, in one place across all sites.', query: 'Delivered in-app, email or WhatsApp', icon: Bell },
 ]
 
-interface PricingPlan { name: string; price: string; period: string; description: string; popular?: boolean; features: string[] }
-
-const PRICING_PLANS: PricingPlan[] = [
-  { name: 'Starter', price: '₹4,999', period: '/month', description: 'For small businesses getting started with HR digitization.', features: ['Up to 50 Employees', 'Basic HR Management', 'Attendance Tracking', 'Leave Management', 'Payslip Generation', 'Email Support'] },
-  { name: 'Professional', price: '₹14,999', period: '/month', description: 'For growing companies that need complete workforce management.', popular: true, features: ['Up to 500 Employees', 'All Starter Features', 'Recruitment & ATS', 'Payroll Processing', 'PF/ESI Compliance', 'Multi-Branch Support', 'Reports & Analytics', 'Priority Support'] },
-  { name: 'Enterprise', price: 'Custom', period: '', description: 'For large organizations with complex workforce requirements.', features: ['Unlimited Employees', 'All Professional Features', 'API Management', 'Custom Integrations', 'Dedicated Account Manager', 'SLA Guarantee', 'On-Premise Option', '24/7 Phone Support'] },
+/* ═══════════════════════════════════════════════════════
+   DATA: India Compliance
+   ═══════════════════════════════════════════════════════ */
+const INDIA_COMPLIANCE = [
+  { label: 'PF', full: 'Provident Fund', desc: 'EPF auto-calculation, monthly ECR filing, KYC management' },
+  { label: 'ESI', full: 'Employee State Insurance', desc: 'ESI contribution, IP registration, claim tracking' },
+  { label: 'Gratuity', full: 'Payment of Gratuity Act', desc: 'Gratuity liability calculation, Form-I, annual returns' },
+  { label: 'PT', full: 'Professional Tax', desc: 'State-wise slab calculation, monthly/annual filing' },
+  { label: 'CLRA', full: 'Contract Labour Act', desc: 'License management, contractor compliance, RC filing' },
+  { label: 'BOCW', full: 'Building & Other Construction Workers', desc: 'Registration, cess calculation, welfare fund' },
+  { label: 'Factories', full: 'Factories Act 1948', desc: 'License renewal, returns, safety compliance records' },
+  { label: 'Maternity', full: 'Maternity Benefit Act', desc: 'Leave tracking, advance payment, crèche compliance' },
 ]
 
-const LUXURY_EASE = [0.22, 1, 0.36, 1] as const
+/* ═══════════════════════════════════════════════════════
+   DATA: Module Register
+   ═══════════════════════════════════════════════════════ */
+interface ModRow { num: string; name: string; layer: 'AI' | 'Core' | 'Manpower' | 'Platform' }
+const MODULES: ModRow[] = [
+  { num: '01', name: 'AI Dashboard', layer: 'AI' },
+  { num: '02', name: 'AI Chat Assistant', layer: 'AI' },
+  { num: '03', name: 'Core HR', layer: 'Core' },
+  { num: '04', name: 'Employee Management', layer: 'Core' },
+  { num: '05', name: 'Attendance & GPS', layer: 'Core' },
+  { num: '06', name: 'Shift & Rosters', layer: 'Core' },
+  { num: '07', name: 'Leave Management', layer: 'Core' },
+  { num: '08', name: 'Payroll', layer: 'Core' },
+  { num: '09', name: 'Recruitment', layer: 'Core' },
+  { num: '10', name: 'Onboarding', layer: 'Core' },
+  { num: '11', name: 'Performance Management', layer: 'Core' },
+  { num: '12', name: 'Learning & Training', layer: 'Core' },
+  { num: '13', name: 'Asset Management', layer: 'Core' },
+  { num: '14', name: 'Help Desk', layer: 'Core' },
+  { num: '15', name: 'Client Portal', layer: 'Manpower' },
+  { num: '16', name: 'Manpower Management', layer: 'Manpower' },
+  { num: '17', name: 'Project & Site Management', layer: 'Manpower' },
+  { num: '18', name: 'Document Management', layer: 'Core' },
+  { num: '19', name: 'Compliance', layer: 'Core' },
+  { num: '20', name: 'Analytics & BI', layer: 'AI' },
+  { num: '21', name: 'Mobile App', layer: 'Platform' },
+  { num: '22', name: 'API & Integrations', layer: 'Platform' },
+  { num: '23', name: 'Multi-Company & Multi-Branch', layer: 'Platform' },
+]
+
+/* ═══════════════════════════════════════════════════════
+   DATA: Data Access Separation
+   ═══════════════════════════════════════════════════════ */
+const HP_SEES = ['Worker salary and CTC', 'Bank, Aadhaar and PAN details', 'PF, ESI and statutory filings', 'Daily rate versus internal cost', 'Margin per site, per worker', 'Every client account']
+const CLIENT_SEES = [
+  { text: 'Who is deployed at their sites', visible: true },
+  { text: 'Daily attendance and timesheets', visible: true },
+  { text: 'Leave and shift status', visible: true },
+  { text: 'Invoices and payment history', visible: true },
+  { text: 'Worker salaries', visible: false },
+  { text: 'Your cost or margin', visible: false },
+]
+
+/* ═══════════════════════════════════════════════════════
+   REVEAL ANIMATION
+   ═══════════════════════════════════════════════════════ */
+const EASE = [0.22, 1, 0.36, 1] as const
 
 function Reveal({ children, delay = 0, direction = 'up', className = '' }: { children: React.ReactNode; delay?: number; direction?: 'up' | 'left' | 'right'; className?: string }) {
   const ref = useRef<HTMLDivElement>(null)
-  const isInView = useInView(ref, { once: true, margin: '-20px' })
-  const offsets = { up: { y: 30, x: 0 }, left: { y: 0, x: -30 }, right: { y: 0, x: 30 } }
+  const isInView = useInView(ref, { once: true, margin: '-40px' })
+  const offsets = { up: { y: 28, x: 0 }, left: { y: 0, x: -28 }, right: { y: 0, x: 28 } }
   return (
     <motion.div ref={ref} className={className}
       initial={{ opacity: 0, ...offsets[direction] }}
       animate={isInView ? { opacity: 1, x: 0, y: 0 } : { opacity: 0, ...offsets[direction] }}
-      transition={{ duration: 0.4, delay, ease: LUXURY_EASE }}
-    >
+      transition={{ duration: 0.5, delay, ease: EASE as unknown as number[] }}>
       {children}
     </motion.div>
   )
 }
 
-function SocialSideMenu() {
-  const [expanded, setExpanded] = useState(false)
+/* ═══════════════════════════════════════════════════════
+   SECTION EYEBROW — mono uppercase label
+   ═══════════════════════════════════════════════════════ */
+function Eyebrow({ children, className = '', style }: { children: React.ReactNode; className?: string; style?: React.CSSProperties }) {
   return (
-    <div className="fixed left-0 top-1/2 -translate-y-1/2 z-50 flex items-center">
-      <AnimatePresence>
-        {expanded && (
-          <motion.div initial={{ width: 0, opacity: 0 }} animate={{ width: 'auto', opacity: 1 }} exit={{ width: 0, opacity: 0 }}
-            className="overflow-hidden bg-white/95 backdrop-blur-md shadow-2xl rounded-r-2xl border border-l-0 border-gray-200"
-          >
-            <div className="flex flex-col py-3 px-2 gap-1">
-              {SOCIAL_ITEMS.map((s) => (
-                <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer"
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors whitespace-nowrap" aria-label={s.label}>
-                  <s.icon className="h-4 w-4 shrink-0" style={{ color: s.color }} />
-                  <span className="text-gray-800 font-semibold">{s.label}</span>
-                </a>
-              ))}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-      <button onClick={() => setExpanded(!expanded)}
-        className="h-11 w-11 rounded-r-2xl bg-white shadow-xl border border-l-0 border-gray-200 flex items-center justify-center text-gray-600 hover:text-gray-900 transition-all duration-300"
-        aria-label={expanded ? 'Close social menu' : 'Open social menu'}>
-        {expanded ? <X className="h-4 w-4" /> : <Globe2 className="h-4 w-4" />}
-      </button>
-    </div>
+    <p className={cn('text-[11px] sm:text-[11.5px] font-semibold tracking-[0.16em] uppercase', className)} style={{ ...fontMono, color: C.inkSoft, ...style }}>
+      {children}
+    </p>
   )
 }
 
-function ServiceModal({ service, open, onClose }: { service: ServiceDetail | null; open: boolean; onClose: () => void }) {
-  if (!service) return null
-  const Icon = service.icon
+/* ═══════════════════════════════════════════════════════
+   SECTION HEADING — display font
+   ═══════════════════════════════════════════════════════ */
+function SectionHeading({ children, className = '' }: { children: React.ReactNode; className?: string }) {
   return (
-    <AnimatePresence>
-      {open && (
-        <motion.div className="fixed inset-0 z-[100] flex items-center justify-center p-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-          <motion.div className="relative z-10 bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
-            initial={{ scale: 0.92, opacity: 0, y: 30 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.92, opacity: 0, y: 30 }}
-            transition={{ type: 'spring', stiffness: 280, damping: 28 }}>
-            <div className="relative h-52 sm:h-60 overflow-hidden rounded-t-3xl">
-              <Image src={service.image} alt={service.title} fill className="object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-              <button onClick={onClose} className="absolute top-4 right-4 h-10 w-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/40 transition-colors">
-                <X className="h-5 w-5" />
-              </button>
-              <div className="absolute bottom-5 left-6 flex items-center gap-3">
-                <div className="h-12 w-12 rounded-2xl flex items-center justify-center shadow-lg" style={{ background: '#D4AF37' }}>
-                  <Icon className="h-6 w-6" style={{ color: '#002B5C' }} />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-white">{service.title}</h3>
-                  <p className="text-sm text-gray-200 font-medium">{service.short}</p>
-                </div>
-              </div>
-            </div>
-            <div className="p-7 space-y-6">
-              <p className="text-gray-800 leading-relaxed font-medium">{service.description}</p>
-              <div>
-                <h4 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-3">Key Benefits</h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  {service.benefits.map((b) => (
-                    <div key={b} className="flex items-start gap-2 text-sm text-gray-700 font-medium"><Check className="h-4 w-4 mt-0.5 shrink-0 text-emerald-600" />{b}</div>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <h4 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-3">Industries We Serve</h4>
-                <div className="flex flex-wrap gap-2">
-                  {service.industries.map((ind) => (<Badge key={ind} variant="outline" className="text-xs font-semibold border-gray-200 text-gray-700">{ind}</Badge>))}
-                </div>
-              </div>
-              <div>
-                <h4 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-3">Our Process</h4>
-                <ol className="space-y-3">
-                  {service.process.map((step, i) => (
-                    <li key={i} className="flex items-start gap-3">
-                      <span className="flex-shrink-0 h-7 w-7 rounded-full flex items-center justify-center text-xs font-bold text-white" style={{ background: '#002B5C' }}>{i + 1}</span>
-                      <span className="text-sm text-gray-700 font-medium pt-0.5">{step}</span>
-                    </li>
-                  ))}
-                </ol>
-              </div>
-              <div className="flex flex-col sm:flex-row gap-3 pt-2">
-                <a href={SOCIAL.whatsapp} target="_blank" rel="noopener noreferrer" className="flex-1 h-12 rounded-2xl flex items-center justify-center gap-2 text-sm font-bold text-white transition-all hover:opacity-90" style={{ background: '#25D366' }}>
-                  <WhatsAppIcon className="h-4 w-4" />Chat on WhatsApp
-                </a>
-                <a href={`tel:${BRAND.phone}`} className="flex-1 h-12 rounded-2xl flex items-center justify-center gap-2 text-sm font-bold text-white transition-all hover:opacity-90" style={{ background: '#002B5C' }}>
-                  <Phone className="h-4 w-4" />Call {BRAND.phone}
-                </a>
-              </div>
-            </div>
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+    <h2 className={cn('text-[clamp(1.75rem,4vw,2.75rem)] font-extrabold leading-[1.05] tracking-[-0.03em] max-w-[20ch]', className)} style={fontDisplay}>
+      {children}
+    </h2>
   )
 }
 
-function SubscriptionForm({ onBack }: { onBack: () => void }) {
-  const [form, setForm] = useState({ companyName: '', contactName: '', email: '', phone: '', address: '', plan: '', employeeCount: '', message: '' })
-  const [loading, setLoading] = useState(false)
-  const [sent, setSent] = useState(false)
-  const update = (f: string, v: string) => setForm((p) => ({ ...p, [f]: v }))
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!form.companyName.trim() || !form.contactName.trim() || !form.email.trim() || !form.phone.trim()) { toast.error('Please fill in all required fields'); return }
-    setLoading(true)
-    try {
-      const res = await fetch('/api/subscription/request', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) })
-      const data = await res.json()
-      if (res.ok) { toast.success('Subscription request submitted!'); setSent(true) } else { toast.error(data.error || 'Failed to submit request') }
-    } catch { toast.error('Network error. Please try again.') } finally { setLoading(false) }
+/* ═══════════════════════════════════════════════════════
+   MUSTER ROLL TABLE (signature element)
+   ═══════════════════════════════════════════════════════ */
+function MusterRoll() {
+  const ref = useRef<HTMLDivElement>(null)
+  const isInView = useInView(ref, { once: true, margin: '-60px' })
+  const markStyle = (m: string) => {
+    if (m === 'P') return { background: 'rgba(46,125,91,.13)', color: C.verify, borderColor: 'rgba(46,125,91,.3)' }
+    if (m === 'A') return { background: 'rgba(200,60,60,.1)', color: '#B03636', borderColor: 'rgba(176,54,54,.28)' }
+    return { background: 'rgba(232,163,61,.16)', color: '#996213', borderColor: 'rgba(232,163,61,.38)' }
   }
-  if (sent) return (
-    <section data-landing="true" className="min-h-screen flex items-center justify-center px-4 bg-gray-50">
-      <Card className="shadow-xl max-w-md w-full text-center"><CardContent className="py-12">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50"><Check className="h-8 w-8 text-emerald-600" /></div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Request Submitted!</h2>
-        <p className="text-gray-600 mb-6 font-medium">Our team will contact you within 24 hours.</p>
-        <Button onClick={onBack} style={{ background: '#002B5C' }} className="text-white font-bold">Back to Home</Button>
-      </CardContent></Card>
-    </section>
-  )
   return (
-    <section data-landing="true" className="min-h-screen py-20 px-4 bg-gray-50">
-      <div className="max-w-2xl mx-auto">
-        <div className="text-center mb-10">
-          <Badge className="mb-4 px-4 py-1 text-sm font-bold" style={{ background: '#D4AF37', color: '#002B5C' }}>Get Started</Badge>
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900">Request a Subscription</h2>
-          <p className="text-gray-600 mt-2 font-medium">Fill in the details and our team will reach out to you.</p>
-        </div>
-        <Card className="shadow-lg"><CardContent className="pt-6">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2"><Label className="text-gray-800 text-sm font-bold">Company Name *</Label><Input placeholder="Your company" value={form.companyName} onChange={(e) => update('companyName', e.target.value)} /></div>
-              <div className="space-y-2"><Label className="text-gray-800 text-sm font-bold">Contact Name *</Label><Input placeholder="Full name" value={form.contactName} onChange={(e) => update('contactName', e.target.value)} /></div>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2"><Label className="text-gray-800 text-sm font-bold">Email *</Label><Input type="email" placeholder="email@company.com" value={form.email} onChange={(e) => update('email', e.target.value)} /></div>
-              <div className="space-y-2"><Label className="text-gray-800 text-sm font-bold">Phone *</Label><Input placeholder="+91 XXXXX XXXXX" value={form.phone} onChange={(e) => update('phone', e.target.value)} /></div>
-            </div>
-            <div className="space-y-2"><Label className="text-gray-800 text-sm font-bold">Address</Label><Input placeholder="Office address" value={form.address} onChange={(e) => update('address', e.target.value)} /></div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2"><Label className="text-gray-800 text-sm font-bold">Plan</Label>
-                <select value={form.plan} onChange={(e) => update('plan', e.target.value)} className="w-full h-11 rounded-md border border-gray-200 bg-white px-3 text-sm font-medium">
-                  <option value="">Select plan</option><option value="free">Free</option><option value="starter">Starter</option><option value="professional">Professional</option><option value="enterprise">Enterprise</option>
-                </select>
-              </div>
-              <div className="space-y-2"><Label className="text-gray-800 text-sm font-bold">Employee Count</Label><Input placeholder="e.g. 50" value={form.employeeCount} onChange={(e) => update('employeeCount', e.target.value)} /></div>
-            </div>
-            <div className="space-y-2"><Label className="text-gray-800 text-sm font-bold">Message</Label><Textarea placeholder="Tell us about your requirements..." rows={3} value={form.message} onChange={(e) => update('message', e.target.value)} /></div>
-            <div className="flex gap-3 pt-2">
-              <Button type="submit" className="flex-1 h-11 font-bold text-white" style={{ background: '#002B5C' }} disabled={loading}>{loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}Submit Request</Button>
-              <Button type="button" variant="outline" onClick={onBack} className="font-bold">Back</Button>
-            </div>
-          </form>
-        </CardContent></Card>
+    <motion.div ref={ref}
+      initial={{ opacity: 0, y: 24 }} animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }}
+      transition={{ duration: 0.6, delay: 0.2, ease: EASE as unknown as number[] }}
+      className="mt-12 sm:mt-14 bg-[var(--paper,#FFF)] border rounded-lg overflow-hidden"
+      style={{ borderColor: C.rule, boxShadow: '0 1px 0 var(--rule-soft), 0 14px 40px -22px rgba(10,15,30,.32)' }}>
+      {/* Header */}
+      <div className="flex justify-between items-center px-4 sm:px-[18px] py-3 sm:py-[13px] border-b-2" style={{ borderBottomColor: C.ink, background: C.ledgerW }}>
+        <span className="text-[10px] sm:text-[11.5px] font-semibold tracking-[0.1em] uppercase" style={{ ...fontMono }}>Muster Roll · Site 04 · Peenya</span>
+        <span className="text-[10px] sm:text-[11px] hidden sm:block" style={{ ...fontMono, color: C.inkSoft }}>Week 32 · Mon–Fri</span>
       </div>
-    </section>
+      {/* Table */}
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[500px]" style={{ ...fontBody, fontSize: '13.5px', borderCollapse: 'collapse' }}>
+          <thead>
+            <tr style={{ ...fontMono, fontSize: '10.5px', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: C.inkSoft }}>
+              <th className="text-center w-10 p-2.5 sm:p-[10px] sm:px-3.5 border-b" style={{ borderColor: C.rule, background: C.ledgerW }}>#</th>
+              <th className="text-left p-2.5 sm:p-[10px] sm:px-3.5 border-b" style={{ borderColor: C.rule, background: C.ledgerW }}>Worker</th>
+              <th className="text-left p-2.5 sm:p-[10px] sm:px-3.5 border-b hidden sm:table-cell" style={{ borderColor: C.rule, background: C.ledgerW }}>Posting</th>
+              <th className="text-left p-2.5 sm:p-[10px] sm:px-3.5 border-b" style={{ borderColor: C.rule, background: C.ledgerW }}>M T W T F</th>
+              <th className="text-left p-2.5 sm:p-[10px] sm:px-3.5 border-b" style={{ borderColor: C.rule, background: C.ledgerW }}>Mandays</th>
+            </tr>
+          </thead>
+          <tbody>
+            {MUSTER_DATA.map((row, i) => (
+              <motion.tr key={row.num}
+                initial={{ opacity: 0, y: 7 }} animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 7 }}
+                transition={{ duration: 0.42, delay: 0.4 + i * 0.15, ease: [0.2, 0.7, 0.3, 1] as unknown as number[] }}
+                className="hover:bg-[var(--ledger-warm,#F6F7F5)] transition-colors">
+                <td className="text-center p-2.5 sm:p-[11px] sm:px-3.5 border-b" style={{ ...fontMono, fontSize: '11px', color: C.inkSoft, borderColor: C.ruleSoft }}>{row.num}</td>
+                <td className="p-2.5 sm:p-[11px] sm:px-3.5 border-b" style={{ borderColor: C.ruleSoft }}>
+                  <span className="font-semibold block" style={{ color: C.ink }}>{row.name}</span>
+                  <span className="block" style={{ ...fontMono, fontSize: '11px', color: C.inkSoft }}>{row.code}</span>
+                </td>
+                <td className="p-2.5 sm:p-[11px] sm:px-3.5 border-b hidden sm:table-cell" style={{ fontSize: '12.5px', color: C.inkSoft, borderColor: C.ruleSoft }}>{row.role}</td>
+                <td className="p-2.5 sm:p-[11px] sm:px-3.5 border-b" style={{ borderColor: C.ruleSoft }}>
+                  <span className="flex gap-1 sm:gap-[5px]">
+                    {row.marks.map((m, j) => (
+                      <span key={j} className="w-5 h-5 sm:w-[21px] sm:h-[21px] rounded-[3px] grid place-items-center text-[10px] sm:text-[10.5px] font-semibold border" style={{ ...fontMono, ...markStyle(m) }}>{m === 'H' ? '½' : m}</span>
+                    ))}
+                  </span>
+                </td>
+                <td className="p-2.5 sm:p-[11px] sm:px-3.5 border-b font-bold" style={{ borderColor: C.ruleSoft, color: C.ink }}>{row.mandays.toFixed(1)}</td>
+              </motion.tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {/* AI Readout */}
+      <motion.div
+        initial={{ opacity: 0 }} animate={isInView ? { opacity: 1 } : { opacity: 0 }}
+        transition={{ duration: 0.5, delay: 1.3, ease: 'easeOut' }}
+        className="border-t-2 flex gap-3.5 items-start p-4 sm:px-[18px] sm:py-[17px]" style={{ borderColor: C.ink, background: C.ink }}>
+        <span className="text-[10px] font-semibold tracking-[0.1em] whitespace-nowrap px-2 py-1 rounded-[3px] shrink-0" style={{ ...fontMono, background: C.amber, color: C.inkDeep }}>AI</span>
+        <p className="text-[13px] sm:text-[14px] leading-[1.55]" style={{ color: 'rgba(255,255,255,.9)' }}>
+          <b className="text-white font-semibold">Shivakumar R was absent 3 of 5 days</b> against his own 8-week average of 0.4.
+          Site 04 ran below contracted strength on Tue–Thu. Two safety training certificates
+          at this site expire before the 28th. <b className="text-white font-semibold">Billable mandays this week: 20.5 of 25.</b>
+        </p>
+      </motion.div>
+    </motion.div>
   )
 }
 
-const APPLY_OPTIONS = [
-  { id: 'general', title: 'General Application', description: 'Apply for any open position at HP Enterprise', icon: UserPlus, color: '#002B5C', tag: 'All Departments' },
-  { id: 'recruitment', title: 'Recruitment Portal', description: 'Join our recruitment and talent acquisition team', icon: Target, color: '#6D28D9', tag: 'HR & Recruitment' },
-  { id: 'ehs', title: 'EHS Safety Portal', description: 'Join the Environment, Health & Safety division', icon: HardHat, color: '#B45309', tag: 'Safety' },
-  { id: 'payroll', title: 'Payroll Portal', description: 'Join the payroll processing and finance team', icon: DollarSign, color: '#0369A1', tag: 'Finance' },
-  { id: 'manpower', title: 'Manpower Supply Portal', description: 'Join workforce deployment and vendor management', icon: Truck, color: '#4338CA', tag: 'Operations' },
-  { id: 'engineering', title: 'Engineering Portal', description: 'Join engineering project support and planning', icon: Wrench, color: '#0F766E', tag: 'Engineering' },
-]
-
-function SinglePortalLoginView({ portalId, onBack, onApply }: { portalId: string; onBack: () => void; onApply: () => void }) {
-  const portal = PORTALS.find((p) => p.id === portalId)
+/* ═══════════════════════════════════════════════════════
+   LOGIN DIALOG (inline, not a modal)
+   ═══════════════════════════════════════════════════════ */
+function LoginDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { setUser } = useAppStore()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const [showPw, setShowPw] = useState(false)
   const [forgotOpen, setForgotOpen] = useState(false)
-  if (!portal) return <div>Portal not found</div>
-  const Icon = portal.icon
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!username.trim() || !password.trim()) { toast.error('Please enter username and password'); return }
     setLoading(true)
     try {
-      const res = await fetch('/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: username.trim(), password, role: portal.role }) })
+      const res = await fetch('/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: username.trim(), password }) })
       const data = await res.json()
-      if (res.ok && data.user) { setUser(data.user); toast.success(`Welcome to ${portal.title}!`) }
-      else { toast.error(data.error || 'Login failed. Please check your credentials.') }
+      if (res.ok && data.user) { setUser(data.user); toast.success('Welcome back!') }
+      else { toast.error(data.error || 'Login failed. Check your credentials.') }
     } catch { toast.error('Network error. Please try again.') } finally { setLoading(false) }
   }
+
   return (
-    <div data-landing="true" className="min-h-screen flex flex-col bg-gradient-to-b from-gray-50 to-white">
-      <header className="sticky top-0 z-40 border-b bg-white/90 backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
-          <BrandLogo />
-          <Button variant="ghost" size="sm" onClick={onBack}><ArrowLeft className="mr-1 h-4 w-4" /> All Portals</Button>
-        </div>
-      </header>
-      <div className="flex-1 flex items-center justify-center px-4 py-10">
-        <div className="w-full max-w-md">
-          <div className="text-center mb-8">
-            <div className="mx-auto mb-4 h-16 w-16 rounded-2xl flex items-center justify-center shadow-lg" style={{ background: portal.color }}>
-              <Icon className="h-8 w-8 text-white" />
-            </div>
-            <h1 className="text-2xl font-extrabold text-gray-900 mb-1">{portal.title}</h1>
-            <p className="text-sm text-gray-500 font-medium">Sign in to access your {portal.title}</p>
-          </div>
-          <Card className="shadow-xl border-gray-200">
-            <CardContent className="pt-6">
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="portal-username" className="text-gray-800 text-xs font-bold uppercase tracking-wider">Username</Label>
-                  <Input id="portal-username" placeholder="Enter your username" value={username} onChange={(e) => setUsername(e.target.value)} className="h-12 text-sm" autoComplete="username" />
+    <>
+      <AnimatePresence>
+        {open && (
+          <motion.div className="fixed inset-0 z-[100] flex items-center justify-center p-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={onClose} />
+            <motion.div className="relative z-10 w-full max-w-sm"
+              initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 28 }}>
+              <div className="rounded-lg border p-6 sm:p-8" style={{ background: C.paper, borderColor: C.rule }}>
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-lg font-bold" style={{ ...fontDisplay, color: C.ink }}>Sign In</h3>
+                  <button onClick={onClose} className="p-1.5 rounded-md hover:bg-[var(--ledger,#EEF1F0)] transition-colors" aria-label="Close">
+                    <X className="h-4 w-4" style={{ color: C.inkSoft }} />
+                  </button>
                 </div>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="portal-password" className="text-gray-800 text-xs font-bold uppercase tracking-wider">Password</Label>
-                    <button type="button" onClick={() => setForgotOpen(true)} className="text-[11px] font-bold hover:underline" style={{ color: portal.color }}>Forgot Password?</button>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold" style={{ ...fontMono, color: C.inkSoft }}>Username</Label>
+                    <Input placeholder="Enter username" value={username} onChange={(e) => setUsername(e.target.value)} className="h-10 text-sm rounded-md" />
                   </div>
-                  <Input id="portal-password" type="password" placeholder="Enter your password" value={password} onChange={(e) => setPassword(e.target.value)} className="h-12 text-sm" autoComplete="current-password" />
-                </div>
-                <Button type="submit" className="w-full h-12 font-bold text-sm text-white" style={{ background: portal.color }} disabled={loading}>
-                  {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Lock className="mr-2 h-4 w-4" />}Sign In to {portal.title}
-                </Button>
-              </form>
-              <div className="mt-4 flex items-center gap-3">
-                <div className="flex-1 h-px bg-gray-200" />
-                <span className="text-[11px] text-gray-400 font-bold uppercase">or</span>
-                <div className="flex-1 h-px bg-gray-200" />
-              </div>
-              <div className="mt-4 grid grid-cols-2 gap-2">
-                <a href={SOCIAL.whatsapp} target="_blank" rel="noopener noreferrer" className="h-10 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold text-white transition-all hover:opacity-90" style={{ background: '#25D366' }}>
-                  <WhatsAppIcon className="h-3.5 w-3.5" />WhatsApp
-                </a>
-                <a href={`tel:${BRAND.phone}`} className="h-10 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold text-white transition-all hover:opacity-90" style={{ background: portal.color }}>
-                  <Phone className="h-3.5 w-3.5" />Call Support
-                </a>
-              </div>
-              {portal.requestAccess && (
-                <div className="mt-4 rounded-xl bg-amber-50 border border-amber-200/60 p-4">
-                  <p className="text-xs font-bold text-gray-800 mb-2">Don&apos;t have an account?</p>
-                  <Button onClick={onApply} className="w-full h-10 font-bold text-sm text-white" style={{ background: '#166534' }}>
-                    <UserPlus className="mr-2 h-4 w-4" />Apply to Join {portal.title}
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold" style={{ ...fontMono, color: C.inkSoft }}>Password</Label>
+                    <div className="relative">
+                      <Input type={showPw ? 'text' : 'password'} placeholder="Enter password" value={password} onChange={(e) => setPassword(e.target.value)} className="h-10 text-sm rounded-md pr-10" />
+                      <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                        {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
+                  </div>
+                  <Button type="submit" className="w-full h-10 rounded-md text-sm font-semibold text-white" style={{ background: C.ink }} disabled={loading}>
+                    {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}Sign In
                   </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-          <div className="mt-6 flex flex-wrap gap-1.5 justify-center">
-            {portal.features.map((f) => (
-              <span key={f} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white border border-gray-200 text-[10px] font-bold text-gray-500">
-                <Check className="h-2.5 w-2.5" style={{ color: portal.color }} />{f}
-              </span>
-            ))}
-          </div>
-          <p className="mt-4 text-center text-[11px] text-gray-400 font-medium">{BRAND.name} &middot; GSTIN: {BRAND.gstin}</p>
-          <ForgotPasswordDialog open={forgotOpen} onOpenChange={setForgotOpen} />
-        </div>
-      </div>
-    </div>
+                  <button type="button" onClick={() => setForgotOpen(true)} className="block w-full text-center text-xs font-medium hover:underline" style={{ color: C.inkSoft }}>
+                    Forgot password?
+                  </button>
+                </form>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <ForgotPasswordDialog open={forgotOpen} onOpenChange={setForgotOpen} />
+    </>
   )
 }
 
-function PortalPickerView({ onPick, onBack }: { onPick: (title: string) => void; onBack: () => void }) {
-  const [hovered, setHovered] = useState<string | null>(null)
+/* ═══════════════════════════════════════════════════════
+   SUBSCRIPTION FORM VIEW
+   ═══════════════════════════════════════════════════════ */
+function SubscriptionForm({ onBack }: { onBack: () => void }) {
+  const [form, setForm] = useState({ companyName: '', contactName: '', email: '', phone: '', address: '', plan: '', employeeCount: '', message: '' })
+  const [loading, setLoading] = useState(false)
+  const [sent, setSent] = useState(false)
+  const update = (k: string, v: string) => setForm((p) => ({ ...p, [k]: v }))
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!form.companyName.trim() || !form.contactName.trim() || !form.email.trim() || !form.phone.trim()) { toast.error('Please fill required fields'); return }
+    setLoading(true)
+    try {
+      const res = await fetch('/api/subscription/request', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) })
+      const data = await res.json()
+      if (res.ok) { toast.success('Subscription request submitted!'); setSent(true) }
+      else { toast.error(data.error || 'Failed to submit request') }
+    } catch { toast.error('Network error. Please try again.') } finally { setLoading(false) }
+  }
+
+  if (sent) return (
+    <section data-landing="true" className="min-h-screen flex items-center justify-center px-4" style={{ background: C.ledger }}>
+      <div className="max-w-md w-full text-center p-8 rounded-lg border" style={{ background: C.paper, borderColor: C.rule }}>
+        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full" style={{ background: `rgba(46,125,91,.12)` }}><Check className="h-7 w-7" style={{ color: C.verify }} /></div>
+        <h2 className="text-2xl font-bold mb-2" style={{ ...fontDisplay, color: C.ink }}>Request Submitted!</h2>
+        <p className="mb-6" style={{ ...fontBody, color: C.inkSoft }}>Our team will contact you within 24 hours.</p>
+        <Button onClick={onBack} className="h-10 text-sm font-semibold rounded-md text-white" style={{ background: C.ink }}>Back to Home</Button>
+      </div>
+    </section>
+  )
+
   return (
-    <div data-landing="true" className="min-h-screen flex flex-col bg-gradient-to-b from-gray-50 to-white">
-      <header className="sticky top-0 z-40 border-b bg-white/90 backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
-          <BrandLogo />
-          <Button variant="ghost" size="sm" onClick={onBack}><ArrowLeft className="mr-1 h-4 w-4" /> Back to Home</Button>
+    <section data-landing="true" className="min-h-screen py-16 sm:py-20 px-4" style={{ background: C.ledger }}>
+      <div className="max-w-2xl mx-auto">
+        <div className="flex items-center justify-between mb-8">
+          <button onClick={onBack} className="flex items-center gap-1.5 text-sm font-medium hover:underline" style={{ ...fontMono, color: C.inkSoft }}>
+            <ArrowLeft className="h-3.5 w-3.5" /> Back
+          </button>
         </div>
-      </header>
-      <div className="mx-auto w-full max-w-5xl flex-1 px-4 py-10 sm:py-16">
-        <div className="text-center mb-10">
-          <Badge className="mb-4 px-4 py-1 text-sm font-bold" style={{ background: '#D4AF37', color: '#002B5C' }}><UserPlus className="h-3.5 w-3.5 mr-1.5" />Join HP Enterprise</Badge>
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-3">Where Do You Want to Join?</h1>
-          <p className="text-gray-600 text-lg font-medium max-w-2xl mx-auto">Select the department or portal you are applying for. You will fill a complete onboarding form with all your details and documents.</p>
+        <div className="text-center mb-8">
+          <Eyebrow className="mb-3">Get Started</Eyebrow>
+          <h1 className="text-3xl md:text-4xl font-extrabold mb-2" style={{ ...fontDisplay, color: C.ink }}>Request a Subscription</h1>
+          <p style={{ ...fontBody, color: C.inkSoft, fontSize: '16px' }}>Fill in the details and our team will reach out to you.</p>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {APPLY_OPTIONS.map((opt) => {
-            const Icon = opt.icon
-            const isHovered = hovered === opt.id
-            return (
-              <motion.button key={opt.id}
-                onClick={() => onPick(opt.title)}
-                onMouseEnter={() => setHovered(opt.id)}
-                onMouseLeave={() => setHovered(null)}
-                whileHover={{ y: -4, scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="relative text-left rounded-2xl border-2 bg-white p-6 shadow-sm transition-all duration-300 group cursor-pointer"
-                style={{ borderColor: isHovered ? opt.color : '#E5E7EB', boxShadow: isHovered ? `0 10px 30px ${opt.color}20` : undefined }}
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="h-14 w-14 rounded-2xl flex items-center justify-center shadow-md" style={{ background: opt.color }}>
-                    <Icon className="h-7 w-7 text-white" />
-                  </div>
-                  <Badge variant="outline" className="text-[10px] font-bold px-2 py-0.5" style={{ borderColor: `${opt.color}40`, color: opt.color }}>{opt.tag}</Badge>
-                </div>
-                <h3 className="text-lg font-bold text-gray-900 mb-1.5">{opt.title}</h3>
-                <p className="text-sm text-gray-500 font-medium leading-relaxed mb-4">{opt.description}</p>
-                <div className="flex items-center gap-1.5 text-sm font-bold" style={{ color: opt.color }}>
-                  Select & Fill Application <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                </div>
-              </motion.button>
-            )
-          })}
-        </div>
-        <div className="mt-10 rounded-2xl bg-amber-50 border border-amber-200/60 p-6">
-          <div className="flex items-start gap-3">
-            <div className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: '#D4AF37' }}><ClipboardList className="h-5 w-5" style={{ color: '#002B5C' }} /></div>
-            <div>
-              <h3 className="font-bold text-gray-900 mb-1">Complete Onboarding Form — 7 Steps</h3>
-              <div className="flex flex-wrap gap-2 mt-2">
-                {[`Personal Details`, `Identity (Aadhaar/PAN)`, `Bank Details`, `Education`, `Experience`, `Documents Upload (14 files)`, `Declaration`].map((step) => (
-                  <span key={step} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-100 text-[11px] font-bold text-amber-800">
-                    <Check className="h-2.5 w-2.5" />{step}
-                  </span>
-                ))}
+        <div className="rounded-lg border p-6 sm:p-8" style={{ background: C.paper, borderColor: C.rule }}>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold" style={{ ...fontMono, color: C.inkSoft }}>Company Name *</Label>
+                <Input placeholder="Your company" value={form.companyName} onChange={(e) => update('companyName', e.target.value)} className="h-10 text-sm rounded-md" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold" style={{ ...fontMono, color: C.inkSoft }}>Contact Name *</Label>
+                <Input placeholder="Full name" value={form.contactName} onChange={(e) => update('contactName', e.target.value)} className="h-10 text-sm rounded-md" />
               </div>
             </div>
-          </div>
-        </div>
-        <div className="mt-4 flex items-center justify-center gap-2 text-xs text-gray-400 font-medium">
-          <Building2 className="h-3.5 w-3.5" /> {BRAND.name} · GSTIN: {BRAND.gstin}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold" style={{ ...fontMono, color: C.inkSoft }}>Email *</Label>
+                <Input type="email" placeholder="email@company.com" value={form.email} onChange={(e) => update('email', e.target.value)} className="h-10 text-sm rounded-md" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold" style={{ ...fontMono, color: C.inkSoft }}>Phone *</Label>
+                <Input placeholder="+91 XXXXX XXXXX" value={form.phone} onChange={(e) => update('phone', e.target.value)} className="h-10 text-sm rounded-md" />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold" style={{ ...fontMono, color: C.inkSoft }}>Address</Label>
+              <Input placeholder="Office address" value={form.address} onChange={(e) => update('address', e.target.value)} className="h-10 text-sm rounded-md" />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold" style={{ ...fontMono, color: C.inkSoft }}>Plan</Label>
+                <select value={form.plan} onChange={(e) => update('plan', e.target.value)} className="w-full h-10 rounded-md border bg-white px-3 text-sm" style={{ borderColor: C.rule, ...fontBody }}>
+                  <option value="">Select plan</option><option value="free">Free</option><option value="starter">Starter</option><option value="professional">Professional</option><option value="enterprise">Enterprise</option>
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold" style={{ ...fontMono, color: C.inkSoft }}>Employee Count</Label>
+                <Input placeholder="e.g. 50" value={form.employeeCount} onChange={(e) => update('employeeCount', e.target.value)} className="h-10 text-sm rounded-md" />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold" style={{ ...fontMono, color: C.inkSoft }}>Message</Label>
+              <Textarea placeholder="Tell us about your requirements..." rows={3} value={form.message} onChange={(e) => update('message', e.target.value)} className="text-sm rounded-md" />
+            </div>
+            <div className="flex gap-3 pt-2">
+              <Button type="submit" className="flex-1 h-10 text-sm font-semibold rounded-md text-white" style={{ background: C.ink }} disabled={loading}>
+                {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}Submit Request
+              </Button>
+              <Button type="button" variant="outline" onClick={onBack} className="h-10 font-semibold rounded-md">Back</Button>
+            </div>
+          </form>
         </div>
       </div>
-    </div>
+    </section>
   )
 }
 
-const LOGIN_PORTALS = PORTALS.filter((p) => !p.requestAccess)
-const APPLY_PORTALS = PORTALS.filter((p) => p.requestAccess)
-
-function PortalLoginPickerView({ onBack, onSelect, onApply }: { onBack: () => void; onSelect: (id: string) => void; onApply: () => void }) {
-  const [search, setSearch] = useState('')
-  const filteredLogin = LOGIN_PORTALS.filter((p) => !search || p.title.toLowerCase().includes(search.toLowerCase()) || p.description.toLowerCase().includes(search.toLowerCase()))
-  const filteredApply = APPLY_PORTALS.filter((p) => !search || p.title.toLowerCase().includes(search.toLowerCase()) || p.description.toLowerCase().includes(search.toLowerCase()))
-  const hasResults = filteredLogin.length > 0 || filteredApply.length > 0
-  return (
-    <div data-landing="true" className="min-h-screen flex flex-col bg-gradient-to-b from-gray-50 to-white">
-      <header className="sticky top-0 z-40 border-b bg-white/90 backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
-          <BrandLogo />
-          <Button variant="ghost" size="sm" onClick={onBack}><ArrowLeft className="mr-1 h-4 w-4" /> Back to Home</Button>
-        </div>
-      </header>
-      <div className="mx-auto w-full max-w-6xl flex-1 px-4 py-10 sm:py-16">
-        <div className="text-center mb-10">
-          <Badge className="mb-4 px-4 py-1 text-sm font-bold" style={{ background: '#D4AF37', color: '#002B5C' }}><Shield className="h-3.5 w-3.5 mr-1.5" />All Portals</Badge>
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-3">Select Your Portal</h1>
-          <p className="text-gray-600 text-lg font-medium max-w-2xl mx-auto mb-6">Choose from {PORTALS.length} specialized portals. Sign in or apply to join.</p>
-          <div className="max-w-md mx-auto relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input placeholder="Search portals..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10 h-11" />
-          </div>
-        </div>
-        {!hasResults && (
-          <div className="text-center py-12">
-            <p className="text-gray-400 font-medium">No portals found matching your search.</p>
-          </div>
-        )}
-        {filteredLogin.length > 0 && (
-          <div className="mb-10">
-            <div className="flex items-center gap-2 mb-5">
-              <div className="h-8 w-8 rounded-lg flex items-center justify-center" style={{ background: '#002B5C' }}><Lock className="h-4 w-4 text-white" /></div>
-              <h2 className="text-lg font-extrabold text-gray-900">Login Portals</h2>
-              <span className="text-xs font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{filteredLogin.length}</span>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {filteredLogin.map((portal) => {
-                const Icon = portal.icon
-                return (
-                  <motion.button key={portal.id} onClick={() => onSelect(portal.id)} whileHover={{ y: -3 }} whileTap={{ scale: 0.98 }}
-                    className="text-left rounded-2xl border-2 border-gray-200 bg-white p-6 shadow-sm hover:shadow-lg transition-all duration-300 group cursor-pointer" style={{ borderColor: undefined }}>
-                    <div className="h-14 w-14 rounded-2xl flex items-center justify-center shadow-md mb-4" style={{ background: portal.color }}>
-                      <Icon className="h-7 w-7 text-white" />
-                    </div>
-                    <h3 className="text-lg font-bold text-gray-900 mb-1">{portal.title}</h3>
-                    <p className="text-sm text-gray-500 font-medium leading-relaxed mb-3">{portal.description}</p>
-                    <div className="flex flex-wrap gap-1.5 mb-4">
-                      {portal.features.slice(0, 3).map((f) => (
-                        <span key={f} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 text-[10px] font-bold text-gray-600">
-                          <Check className="h-2.5 w-2.5" />{f}
-                        </span>
-                      ))}
-                      {portal.features.length > 3 && <span className="text-[10px] font-bold text-gray-400">+{portal.features.length - 3} more</span>}
-                    </div>
-                    <div className="flex items-center gap-1.5 text-sm font-bold" style={{ color: portal.color }}>
-                      <Lock className="h-3.5 w-3.5" />Sign In <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform" />
-                    </div>
-                  </motion.button>
-                )
-              })}
-            </div>
-          </div>
-        )}
-        {filteredApply.length > 0 && (
-          <div className="mb-8">
-            <div className="flex items-center gap-2 mb-5">
-              <div className="h-8 w-8 rounded-lg flex items-center justify-center" style={{ background: '#166534' }}><UserPlus className="h-4 w-4 text-white" /></div>
-              <h2 className="text-lg font-extrabold text-gray-900">Apply to Join Portals</h2>
-              <span className="text-xs font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{filteredApply.length}</span>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {filteredApply.map((portal) => {
-                const Icon = portal.icon
-                return (
-                  <motion.button key={portal.id} onClick={() => onSelect(portal.id)} whileHover={{ y: -3 }} whileTap={{ scale: 0.98 }}
-                    className="text-left rounded-2xl border-2 border-green-200 bg-white p-6 shadow-sm hover:shadow-lg hover:border-green-400 transition-all duration-300 group cursor-pointer">
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="h-14 w-14 rounded-2xl flex items-center justify-center shadow-md" style={{ background: portal.color }}>
-                        <Icon className="h-7 w-7 text-white" />
-                      </div>
-                      <Badge className="text-[10px] font-bold px-2 py-0.5" style={{ background: '#166534', color: '#fff' }}>Apply</Badge>
-                    </div>
-                    <h3 className="text-lg font-bold text-gray-900 mb-1">{portal.title}</h3>
-                    <p className="text-sm text-gray-500 font-medium leading-relaxed mb-3">{portal.description}</p>
-                    <div className="flex flex-wrap gap-1.5 mb-4">
-                      {portal.features.slice(0, 3).map((f) => (
-                        <span key={f} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-50 text-[10px] font-bold text-green-700">
-                          <Check className="h-2.5 w-2.5" />{f}
-                        </span>
-                      ))}
-                      {portal.features.length > 3 && <span className="text-[10px] font-bold text-gray-400">+{portal.features.length - 3} more</span>}
-                    </div>
-                    <div className="flex items-center gap-1.5 text-sm font-bold" style={{ color: '#166534' }}>
-                      <UserPlus className="h-3.5 w-3.5" />Apply & Fill Form <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform" />
-                    </div>
-                  </motion.button>
-                )
-              })}
-            </div>
-          </div>
-        )}
-        <div className="text-center pt-4">
-          <p className="text-sm text-gray-500 font-medium mb-3">Or apply for any department directly?</p>
-          <Button size="lg" className="h-11 font-bold text-white" style={{ background: '#166534' }} onClick={onApply}>
-            <UserPlus className="mr-2 h-4 w-4" />Apply to Join HP Enterprise
-          </Button>
-        </div>
-      </div>
-    </div>
-  )
+/* ═══════════════════════════════════════════════════════
+   LAYER TAG COLORS
+   ═══════════════════════════════════════════════════════ */
+function layerTagStyle(layer: string) {
+  switch (layer) {
+    case 'AI': return { background: 'rgba(232,163,61,.18)', color: '#8A5A11' }
+    case 'Core': return { background: 'rgba(22,33,62,.08)', color: C.inkSoft }
+    case 'Manpower': return { background: 'rgba(46,125,91,.13)', color: C.verify }
+    default: return { background: 'rgba(74,86,115,.12)', color: C.inkSoft }
+  }
 }
 
+/* ═══════════════════════════════════════════════════════
+   MAIN LANDING COMPONENT
+   ═══════════════════════════════════════════════════════ */
 export function Landing() {
-  const { setUser } = useAppStore()
+  useLedgerFonts()
   const [view, setView] = useState<LandingView>('home')
   const [mobileMenu, setMobileMenu] = useState(false)
   const [scrolled, setScrolled] = useState(false)
-  const [activeService, setActiveService] = useState<ServiceDetail | null>(null)
-  const [serviceModalOpen, setServiceModalOpen] = useState(false)
-  const [appliedPortal, setAppliedPortal] = useState<string>('')
-  const [selectedPortalId, setSelectedPortalId] = useState<string>('')
-  const [applyBackView, setApplyBackView] = useState<'home' | 'apply-pick' | 'portal-login'>('home')
+  const [loginOpen, setLoginOpen] = useState(false)
   const homeRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     document.documentElement.style.scrollBehavior = 'smooth'
-    const h = () => setScrolled(window.scrollY > 60)
+    const h = () => setScrolled(window.scrollY > 40)
     window.addEventListener('scroll', h, { passive: true })
     return () => window.removeEventListener('scroll', h)
   }, [])
 
   const scrollTo = useCallback((id: string) => { setMobileMenu(false); const el = document.getElementById(id); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }) }, [])
   const goHome = useCallback(() => { setView('home'); window.scrollTo({ top: 0, behavior: 'smooth' }) }, [])
-  const openServiceModal = useCallback((s: ServiceDetail) => { setActiveService(s); setServiceModalOpen(true) }, [])
 
-
-  const NAV_LINKS = [
-    { id: 'features', label: 'Features' }, { id: 'services', label: 'Services' },
-    { id: 'join', label: 'Join Now' }, { id: 'portals', label: 'All Portals' }, { id: 'pricing', label: 'Pricing' }, { id: 'contact', label: 'Contact' },
-  ]
-
-  const openApplyForm = useCallback((portalTitle?: string, fromView: 'home' | 'apply-pick' | 'portal-login' = 'home') => {
-    setApplyBackView(fromView)
-    if (portalTitle) { setAppliedPortal(portalTitle); setView('apply') } else { setView('apply-pick') }
-  }, [])
-
-  const applyFormBack = useCallback(() => { setView(applyBackView) }, [applyBackView])
-
+  // Route to sub-views
   if (view === 'register') return <RegistrationForm onBack={goHome} />
-  if (view === 'apply') return <RegistrationForm onBack={applyFormBack} appliedFor={appliedPortal} />
-  if (view === 'apply-pick') return <PortalPickerView onPick={(title) => { setAppliedPortal(title); setApplyBackView('apply-pick'); setView('apply') }} onBack={goHome} />
-  if (view === 'portal-pick') return <PortalLoginPickerView onBack={goHome} onSelect={(id) => { setSelectedPortalId(id); setView('portal-login') }} onApply={() => openApplyForm(undefined, 'portal-pick')} />
-  if (view === 'portal-login') return <SinglePortalLoginView portalId={selectedPortalId} onBack={() => setView('portal-pick')} onApply={() => { const p = PORTALS.find((pp) => pp.id === selectedPortalId); openApplyForm(p?.title, 'portal-login') }} />
   if (view === 'subscribe') return <SubscriptionForm onBack={goHome} />
 
-  return (
-    <div ref={homeRef} data-landing="true" role="region" aria-label="Landing page" className="min-h-screen flex flex-col bg-white dark:bg-[#050B18]" style={{}}>
-      <SocialSideMenu />
-      <ServiceModal service={activeService} open={serviceModalOpen} onClose={() => setServiceModalOpen(false)} />
+  const NAV_LINKS = [
+    { id: 'modes', label: 'How it works' },
+    { id: 'ai', label: 'AI' },
+    { id: 'modules', label: 'Modules' },
+    { id: 'compliance', label: 'Compliance' },
+    { id: 'separation', label: 'Data access' },
+  ]
 
-      <nav className={cn('sticky top-0 z-40 w-full transition-all duration-500', scrolled ? 'bg-white/90 shadow-lg shadow-gray-200/50 backdrop-blur-xl' : 'bg-white/50 backdrop-blur-sm')} role="navigation" aria-label="Main navigation">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-[76px]">
-            <button onClick={goHome} className="flex items-center gap-2.5 shrink-0" aria-label="HPHRMS Home">
-              <BrandLogo size={38} />
-              <div className="flex flex-col">
-                <span className="font-extrabold text-[16px] tracking-tight leading-tight text-gray-900">HPHRMS</span>
-                <span className="text-[10px] font-bold tracking-[0.2em] uppercase leading-tight text-gray-400">by HP Enterprise</span>
-              </div>
+  return (
+    <div ref={homeRef} data-landing="true" role="region" aria-label="Landing page" className="min-h-screen flex flex-col" style={{ ...fontBody, background: C.ledger, color: C.ink }}>
+      {/* Scoped styles for ruled background and font overrides */}
+      <style>{`
+        .ledger-ruled {
+          background-image: repeating-linear-gradient(
+            to bottom,
+            transparent 0, transparent 43px,
+            ${C.ruleSoft} 43px, ${C.ruleSoft} 44px
+          );
+        }
+        .ledger-ruled-dark {
+          background-image: repeating-linear-gradient(
+            to bottom,
+            transparent 0, transparent 43px,
+            rgba(255,255,255,.06) 43px, rgba(255,255,255,.06) 44px
+          );
+        }
+      `}</style>
+
+      {/* ─── NAV ─── */}
+      <nav className="sticky top-0 z-50 transition-all duration-300" style={{
+        background: scrolled ? 'rgba(238,241,240,.92)' : 'rgba(238,241,240,.88)',
+        backdropFilter: 'blur(12px)',
+        borderBottom: `1px solid ${C.rule}`
+      }}>
+        <div className="max-w-[1160px] mx-auto px-5 sm:px-6 flex items-center justify-between h-[58px] sm:h-[62px]">
+          {/* Brand */}
+          <button onClick={goHome} className="flex items-center gap-2.5 shrink-0" aria-label="HPHRMS Home">
+            <BrandLogo size="sm" showText={false} />
+            <div className="leading-none">
+              <span className="text-[17px] sm:text-[19px] font-extrabold tracking-[-0.02em] block" style={fontDisplay}>HPHRMS</span>
+            </div>
+          </button>
+
+          {/* Desktop Nav */}
+          <div className="hidden lg:flex items-center gap-6" style={{ fontSize: '14px', fontWeight: 500 }}>
+            {NAV_LINKS.map((link) => (
+              <button key={link.id} onClick={() => scrollTo(link.id)} className="transition-colors hover:text-[var(--ink,#16213E)]" style={{ color: C.inkSoft }}>{link.label}</button>
+            ))}
+            <button onClick={() => setLoginOpen(true)} className="px-4 py-2 rounded-md text-sm font-semibold transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_6px_18px_rgba(22,33,62,.24)]" style={{ background: C.ink, color: '#fff' }}>
+              Login
             </button>
-            <div className="hidden lg:flex items-center gap-1">
-              {NAV_LINKS.map((link) => (
-                <button key={link.id} onClick={() => scrollTo(link.id)} className="px-4 py-2.5 rounded-xl text-[13px] font-bold text-gray-500 hover:text-gray-900 hover:bg-gray-100/80 transition-all duration-300">{link.label}</button>
-              ))}
-            </div>
-            <div className="hidden lg:flex items-center gap-3">
-              <ThemeToggle />
-              <LanguageSwitcher />
-              <Button variant="ghost" className="text-sm font-bold h-10 text-gray-600 hover:text-gray-900 hover:bg-gray-100 px-5" onClick={() => setView('portal-pick')}>Login</Button>
-              <Button className="text-sm font-bold h-10 px-5 rounded-xl text-white shadow-md hover:shadow-lg transition-all duration-300" style={{ background: '#166534' }} onClick={() => openApplyForm()}>Apply to Join</Button>
-              <Button className="text-sm font-bold h-10 px-6 rounded-xl text-gray-900 shadow-md shadow-amber-200/50 hover:shadow-lg transition-all duration-300" style={{ background: '#D4AF37' }} onClick={() => setView('subscribe')}>Start Free Trial</Button>
-            </div>
-            <button className="lg:hidden p-2 rounded-xl text-gray-600" onClick={() => setMobileMenu(!mobileMenu)} aria-label={mobileMenu ? 'Close menu' : 'Open menu'} aria-expanded={mobileMenu}>
-              {mobileMenu ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            <button onClick={() => setView('register')} className="px-4 py-2 rounded-md text-sm font-semibold border-[1.5px] transition-all duration-200 hover:bg-[var(--ink,#16213E)] hover:text-white" style={{ borderColor: C.ink, color: C.ink }}>
+              Register
             </button>
           </div>
+
+          {/* Mobile Menu Toggle */}
+          <button className="lg:hidden p-2 rounded-md" onClick={() => setMobileMenu(!mobileMenu)} style={{ color: C.ink }} aria-label={mobileMenu ? 'Close menu' : 'Open menu'}>
+            {mobileMenu ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
         </div>
+
+        {/* Mobile Menu */}
         <AnimatePresence>
           {mobileMenu && (
-            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.4, ease: LUXURY_EASE }} className="lg:hidden overflow-hidden bg-white/95 backdrop-blur-xl border-t border-gray-100 shadow-xl">
-              <div className="px-4 py-5 space-y-1">
+            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.3 }} className="lg:hidden overflow-hidden border-t" style={{ background: 'rgba(238,241,240,.97)', borderColor: C.rule }}>
+              <div className="px-5 py-4 space-y-1">
                 {NAV_LINKS.map((link) => (
-                  <button key={link.id} onClick={() => scrollTo(link.id)} className="block w-full text-left px-4 py-3 rounded-xl text-sm font-bold text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors capitalize">{link.label}</button>
+                  <button key={link.id} onClick={() => scrollTo(link.id)} className="block w-full text-left px-4 py-3 rounded-md text-sm font-medium capitalize transition-colors" style={{ color: C.inkSoft }}>{link.label}</button>
                 ))}
-                <div className="pt-3 flex flex-col gap-2">
-                  <div className="flex items-center gap-2">
-                    <ThemeToggle /> <LanguageSwitcher />
-                  </div>
-                  <Button variant="outline" className="w-full text-sm font-bold" onClick={() => { setView('portal-pick'); setMobileMenu(false) }}>Login to Portal</Button>
-                  <Button className="w-full text-sm font-bold text-white" style={{ background: '#166534' }} onClick={() => { openApplyForm(); setMobileMenu(false) }}>Apply to Join</Button>
-                  <Button className="w-full text-sm font-bold text-gray-900" style={{ background: '#D4AF37' }} onClick={() => { setView('subscribe'); setMobileMenu(false) }}>Start Free Trial</Button>
+                <div className="flex gap-2 pt-3">
+                  <button onClick={() => { setMobileMenu(false); setLoginOpen(true) }} className="flex-1 py-2.5 rounded-md text-sm font-semibold text-white text-center" style={{ background: C.ink }}>Login</button>
+                  <button onClick={() => { setMobileMenu(false); setView('register') }} className="flex-1 py-2.5 rounded-md text-sm font-semibold text-center border-[1.5px]" style={{ borderColor: C.ink, color: C.ink }}>Register</button>
                 </div>
               </div>
             </motion.div>
@@ -730,319 +565,185 @@ export function Landing() {
         </AnimatePresence>
       </nav>
 
-      {/* Hero Section */}
-      <section className="relative overflow-hidden bg-white">
-        <div className="absolute inset-0" style={{ background: 'linear-gradient(160deg, #F8FAFC 0%, #FEFCE8 30%, #FFFFFF 60%, #F0FDF4 100%)' }} />
-        <div className="absolute top-0 right-0 w-[600px] h-[600px] rounded-full opacity-30 blur-3xl" style={{ background: 'radial-gradient(circle, #D4AF37 0%, transparent 70%)' }} />
-        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full opacity-20 blur-3xl" style={{ background: 'radial-gradient(circle, #002B5C 0%, transparent 70%)' }} />
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 sm:py-32 lg:py-40">
-          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-            <div className="space-y-8">
-              <Reveal>
-                <Badge className="px-4 py-1.5 text-sm font-bold shadow-sm" style={{ background: '#D4AF37', color: '#002B5C' }}>
-                  <Sparkles className="h-3.5 w-3.5 mr-1.5" />AI-Powered Workforce Solutions
-                </Badge>
-              </Reveal>
-              <Reveal delay={0.1}>
-                <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.1]" style={{ color: '#002B5C' }}>
-                  {BRAND.tagline}
-                </h1>
-              </Reveal>
-              <Reveal delay={0.2}>
-                <p className="text-lg sm:text-xl text-gray-600 font-medium leading-relaxed max-w-xl">
-                  {BRAND.subTagline}. From HR management to EHS consultancy, engineering support to payroll — we deliver excellence across every vertical.
-                </p>
-              </Reveal>
-              <Reveal delay={0.3}>
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <Button size="lg" className="h-13 text-base font-bold px-8 rounded-2xl text-white shadow-lg shadow-gray-900/20 hover:shadow-xl transition-all duration-300" style={{ background: '#002B5C' }} onClick={() => setView('portal-pick')}>
-                    Access Portals <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                  <Button size="lg" className="h-13 text-base font-bold px-8 rounded-2xl text-white shadow-lg shadow-emerald-900/20 hover:shadow-xl transition-all duration-300" style={{ background: '#166534' }} onClick={() => openApplyForm()}>
-                    <UserPlus className="mr-2 h-5 w-5" />Apply to Join
-                  </Button>
-                  <Button size="lg" className="h-13 text-base font-bold px-8 rounded-2xl text-gray-900 shadow-md shadow-amber-200/50 hover:shadow-lg transition-all duration-300" style={{ background: '#D4AF37' }} onClick={() => setView('subscribe')}>
-                    Start Free Trial <Zap className="ml-2 h-4 w-4" />
-                  </Button>
-                </div>
-              </Reveal>
-              <Reveal delay={0.4}>
-                <div className="flex items-center gap-3 pt-2">
-                  <div className="flex -space-x-2">
-                    {[1, 2, 3, 4].map((i) => (
-                      <div key={i} className="h-9 w-9 rounded-full border-2 border-white shadow-md flex items-center justify-center text-[11px] font-bold text-white" style={{ background: ['#002B5C', '#0A4488', '#D4AF37', '#166534'][i - 1] }}>
-                        {['HP', 'HR', 'EHS', 'EN'][i - 1]}
-                      </div>
-                    ))}
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-gray-900">10+ Specialized Portals</p>
-                    <p className="text-xs text-gray-500 font-medium">One platform, complete workforce management</p>
-                  </div>
-                </div>
-              </Reveal>
-            </div>
-            <Reveal delay={0.2} direction="right">
-              <div className="relative">
-                <div className="rounded-3xl overflow-hidden shadow-2xl shadow-gray-900/10 border border-gray-100 bg-gradient-to-br from-gray-50 to-gray-100 p-8 flex items-center justify-center min-h-[400px]">
-                  <div className="grid grid-cols-3 gap-3 w-full max-w-md">
-                    {HPHRMS_FEATURES.slice(0, 9).map((f, idx) => {
-                      const ics: LucideIcon[] = [Bot, Users, Target, Clock, CalendarDays, Wallet, UserIcon, Settings, FileText]
-                      const Ic = ics[idx]
-                      return (
-                        <div key={f} className="bg-white rounded-xl p-3 shadow-sm border border-gray-100 flex flex-col items-center gap-1.5">
-                          <Ic className="h-5 w-5" style={{ color: idx % 2 === 0 ? '#002B5C' : '#D4AF37' }} />
-                          <span className="text-[9px] font-bold text-gray-500 text-center leading-tight">{f.split(' ').slice(0, 2).join(' ')}</span>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-                <div className="absolute -bottom-4 -left-4 bg-white rounded-2xl shadow-xl p-4 border border-gray-100">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-xl flex items-center justify-center" style={{ background: '#D4AF37' }}><Bot className="h-5 w-5 text-white" /></div>
-                    <div>
-                      <p className="text-xs font-bold text-gray-900">HPAI — Best AI</p>
-                      <p className="text-[11px] text-gray-500 font-medium">Always ready to help</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="absolute -top-4 -right-4 bg-white rounded-2xl shadow-xl p-4 border border-gray-100">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-xl flex items-center justify-center bg-emerald-100"><ShieldCheck className="h-5 w-5 text-emerald-600" /></div>
-                    <div>
-                      <p className="text-xs font-bold text-gray-900">Enterprise Security</p>
-                      <p className="text-[11px] text-gray-500 font-medium">Bank-grade encryption</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </Reveal>
-          </div>
-        </div>
-      </section>
+      <LoginDialog open={loginOpen} onClose={() => setLoginOpen(false)} />
 
-      {/* Trust Badges */}
-      <section className="relative z-10 -mt-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* ─── HERO ─── */}
+      <header className="ledger-ruled py-16 sm:py-20 lg:py-[76px] border-b" style={{ borderColor: C.rule }}>
+        <div className="max-w-[1160px] mx-auto px-5 sm:px-6">
           <Reveal>
-            <div className="bg-white rounded-2xl shadow-lg shadow-gray-200/50 border border-gray-100 p-6">
-              <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3">
-                {TRUST_BADGES.map((badge) => (
-                  <div key={badge} className="flex items-center gap-2 text-sm font-semibold text-gray-600">
-                    <Award className="h-4 w-4 text-amber-500" />
-                    {badge}
-                  </div>
-                ))}
-              </div>
+            <div className="flex items-center gap-2.5 mb-5 sm:mb-[22px]" style={{ ...fontMono, fontSize: '11.5px', fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: C.inkSoft }}>
+              <span>Workforce Operating System · Karnataka · PAN India</span>
+              <span className="hidden sm:block flex-1 h-px max-w-[180px]" style={{ background: C.rule }} />
             </div>
           </Reveal>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section id="features" className="py-20 sm:py-28 bg-gray-50/50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Reveal>
-            <div className="text-center max-w-2xl mx-auto mb-16">
-              <Badge className="mb-4 px-4 py-1 text-sm font-bold" style={{ background: '#D4AF37', color: '#002B5C' }}>Features</Badge>
-              <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-4">Everything You Need to Manage Your Workforce</h2>
-              <p className="text-gray-600 text-lg font-medium">HPHRMS is packed with powerful features designed for modern Indian businesses.</p>
+          <Reveal delay={0.05}>
+            <h1 className="text-[clamp(2.4rem,6.4vw,4.5rem)] font-extrabold leading-[0.98] tracking-[-0.035em] max-w-[16ch]" style={fontDisplay}>
+              Your muster roll already knows. Now it{' '}
+              <span style={{ color: C.amber, WebkitTextStroke: '1.5px ' + C.ink, paintOrder: 'stroke fill' }}>tells you.</span>
+            </h1>
+          </Reveal>
+          <Reveal delay={0.1}>
+            <p className="mt-5 sm:mt-6 max-w-[56ch] leading-[1.6]" style={{ fontSize: 'clamp(16.5px,2vw,19px)', color: C.inkSoft }}>
+              HPHRMS Enterprise AI runs HRMS software, manpower outsourcing and client workforce management
+              on one platform — with every company's data walled off from every other company's.
+              Built for Indian statutory payroll, not adapted to it.
+            </p>
+          </Reveal>
+          <Reveal delay={0.15}>
+            <div className="flex flex-wrap gap-3 sm:gap-3.5 mt-7 sm:mt-[34px]">
+              <button onClick={() => setView('subscribe')} className="px-5 py-2.5 rounded-md text-sm font-semibold text-white transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_6px_18px_rgba(22,33,62,.24)]" style={{ background: C.ink }}>
+                Book a Demo <ArrowRight className="inline ml-1.5 h-3.5 w-3.5" />
+              </button>
+              <button onClick={() => scrollTo('modes')} className="px-5 py-2.5 rounded-md text-sm font-semibold border-[1.5px] transition-all duration-200 hover:bg-[var(--ink,#16213E)] hover:text-white" style={{ borderColor: C.ink, color: C.ink }}>
+                See the three modes
+              </button>
             </div>
           </Reveal>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-            {HPHRMS_FEATURES.map((feature, i) => {
-              const icons: LucideIcon[] = [Bot, Users, Target, Clock, CalendarDays, Wallet, UserIcon, Settings, FileText, BarChart3, Building2, Shield]
-              const FeatureIcon = icons[i % icons.length]
-              return (
-                <Reveal key={feature} delay={i * 0.05}>
-                  <div className="group bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-lg hover:border-amber-200/60 transition-all duration-300 hover:-translate-y-1">
-                    <div className="h-11 w-11 rounded-xl flex items-center justify-center mb-4 shadow-sm" style={{ background: '#002B5C' }}>
-                      <FeatureIcon className="h-5 w-5 text-white" />
-                    </div>
-                    <h3 className="font-bold text-gray-900 mb-1.5">{feature}</h3>
-                    <p className="text-sm text-gray-500 font-medium leading-relaxed">Comprehensive {feature.toLowerCase()} capabilities for your organization.</p>
-                  </div>
-                </Reveal>
-              )
-            })}
-          </div>
-        </div>
-      </section>
 
-      {/* Services Section */}
-      <section id="services" className="py-20 sm:py-28 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Reveal>
-            <div className="text-center max-w-2xl mx-auto mb-16">
-              <Badge className="mb-4 px-4 py-1 text-sm font-bold" style={{ background: '#D4AF37', color: '#002B5C' }}>Our Services</Badge>
-              <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-4">End-to-End Workforce Solutions</h2>
-              <p className="text-gray-600 text-lg font-medium">From hiring to payroll, safety to engineering — we cover every aspect of workforce management.</p>
-            </div>
-          </Reveal>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {SERVICE_DETAILS.map((service, i) => {
-              const Icon = service.icon
-              return (
-                <Reveal key={service.title} delay={i * 0.08}>
-                  <div className="group bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer" onClick={() => openServiceModal(service)}>
-                    <div className="relative h-48 overflow-hidden">
-                      <Image src={service.image} alt={service.title} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-                      <div className="absolute bottom-4 left-4 right-4">
-                        <div className="flex items-center gap-2 mb-1">
-                          <div className="h-8 w-8 rounded-lg flex items-center justify-center" style={{ background: '#D4AF37' }}>
-                            <Icon className="h-4 w-4" style={{ color: '#002B5C' }} />
-                          </div>
-                          <h3 className="text-lg font-bold text-white">{service.title}</h3>
-                        </div>
-                        <p className="text-sm text-gray-200 font-medium">{service.short}</p>
-                      </div>
-                    </div>
-                    <div className="p-5">
-                      <div className="flex flex-wrap gap-2 mb-4">
-                        {service.industries.slice(0, 3).map((ind) => (
-                          <Badge key={ind} variant="secondary" className="text-[11px] font-semibold px-2.5 py-0.5">{ind}</Badge>
-                        ))}
-                        {service.industries.length > 3 && <Badge variant="secondary" className="text-[11px] font-semibold px-2.5 py-0.5">+{service.industries.length - 3}</Badge>}
-                      </div>
-                      <div className="flex items-center gap-1.5 text-sm font-bold" style={{ color: '#002B5C' }}>
-                        Learn More <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                      </div>
-                    </div>
-                  </div>
-                </Reveal>
-              )
-            })}
-          </div>
+          {/* Muster Roll Signature Table */}
+          <MusterRoll />
         </div>
-      </section>
+      </header>
 
-      {/* Join Our Team Banner */}
-      <section id="join" className="py-20 sm:py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* ─── THREE THINGS WE DO ─── */}
+      <section id="modes" className="py-16 sm:py-20 lg:py-[84px] border-b" style={{ borderColor: C.rule }}>
+        <div className="max-w-[1160px] mx-auto px-5 sm:px-6">
           <Reveal>
-            <div className="relative overflow-hidden rounded-3xl" style={{ background: 'linear-gradient(135deg, #002B5C 0%, #0A4488 50%, #166534 100%)' }}>
-              <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 20% 80%, #D4AF37 0%, transparent 50%), radial-gradient(circle at 80% 20%, #D4AF37 0%, transparent 50%)' }} />
-              <div className="relative z-10 px-8 sm:px-12 lg:px-16 py-14 sm:py-20">
-                <div className="grid lg:grid-cols-2 gap-10 items-center">
-                  <div className="space-y-6">
-                    <Badge className="px-4 py-1.5 text-sm font-bold shadow-sm" style={{ background: '#D4AF37', color: '#002B5C' }}>
-                      <UserPlus className="h-3.5 w-3.5 mr-1.5" />We're Hiring
-                    </Badge>
-                    <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white leading-tight">Join HP Enterprise — Build Your Career</h2>
-                    <p className="text-lg text-gray-200 font-medium leading-relaxed max-w-lg">Apply with your complete profile — personal details, education, experience, identity documents, bank details, and more. One form, everything we need.</p>
-                    <div className="flex flex-wrap gap-3 pt-2">
-                      <Button size="lg" className="h-13 text-base font-bold px-8 rounded-2xl text-white shadow-xl hover:shadow-2xl transition-all duration-300" style={{ background: '#D4AF37', color: '#002B5C' }} onClick={() => openApplyForm()}>
-                        <UserPlus className="mr-2 h-5 w-5" />Apply Now — Fill All Details
-                      </Button>
-                      <a href={SOCIAL.whatsapp} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center h-13 px-6 rounded-2xl text-sm font-bold text-white bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20 transition-all duration-300">
-                        <WhatsAppIcon className="mr-2 h-4 w-4" />Chat on WhatsApp
-                      </a>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    {[
-                      { icon: UserIcon, title: 'Personal Details', desc: 'Name, DOB, Gender, Address, Emergency Contact' },
-                      { icon: FileText, title: 'Identity Documents', desc: 'Aadhaar, PAN, Passport Photo, Medical Cert' },
-                      { icon: Landmark, title: 'Bank Details', desc: 'Account, IFSC, Passbook Upload' },
-                      { icon: GraduationCap, title: 'Education', desc: 'Multiple Qualifications with Certificates' },
-                      { icon: Briefcase, title: 'Experience & Salary', desc: 'Company, Designation, CTC, Notice Period' },
-                      { icon: FileUp, title: 'All Documents', desc: 'Resume, Salary Slips, Relieving, Address Proof' },
-                    ].map((item) => (
-                      <div key={item.title} className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/10 hover:bg-white/15 transition-colors">
-                        <item.icon className="h-6 w-6 mb-2" style={{ color: '#D4AF37' }} />
-                        <h3 className="text-sm font-bold text-white mb-1">{item.title}</h3>
-                        <p className="text-[11px] text-gray-300 font-medium leading-relaxed">{item.desc}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
+            <Eyebrow className="mb-3.5">One platform, three businesses</Eyebrow>
           </Reveal>
-        </div>
-      </section>
-
-      {/* Portals Section */}
-      <section id="portals" className="py-20 sm:py-28 bg-gray-50/50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Reveal>
-            <div className="text-center max-w-2xl mx-auto mb-16">
-              <Badge className="mb-4 px-4 py-1 text-sm font-bold" style={{ background: '#D4AF37', color: '#002B5C' }}>All Portals</Badge>
-              <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-4">Access Your Dedicated Portal</h2>
-              <p className="text-gray-600 text-lg font-medium">Each role gets a tailored experience. Select your portal and sign in.</p>
-            </div>
+          <Reveal delay={0.05}>
+            <SectionHeading>Software, manpower, or both — the same login</SectionHeading>
           </Reveal>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-            {PORTALS.map((portal, i) => {
-              const Icon = portal.icon
-              return (
-                <Reveal key={portal.id} delay={i * 0.02}>
-                  <motion.button onClick={() => { setSelectedPortalId(portal.id); setView('portal-login') }} whileHover={{ y: -3 }} whileTap={{ scale: 0.98 }}
-                    className={cn('text-left rounded-2xl border-2 bg-white p-5 shadow-sm hover:shadow-lg transition-all duration-300 group cursor-pointer w-full', portal.requestAccess ? 'border-green-200 hover:border-green-400' : 'border-gray-200 hover:border-gray-400')}>
-                    <div className="h-12 w-12 rounded-2xl flex items-center justify-center shadow-md mb-3" style={{ background: portal.color }}>
-                      <Icon className="h-6 w-6 text-white" />
-                    </div>
-                    <h3 className="text-sm font-bold text-gray-900 mb-0.5 leading-tight">{portal.title}</h3>
-                    <p className="text-xs text-gray-500 font-medium leading-relaxed mb-3 line-clamp-2">{portal.description}</p>
-                    <div className="flex items-center gap-1 text-xs font-bold" style={{ color: portal.requestAccess ? '#166534' : portal.color }}>
-                      {portal.requestAccess ? <UserPlus className="h-3 w-3" /> : <Lock className="h-3 w-3" />}
-                      {portal.requestAccess ? 'Apply to Join' : 'Sign In'}
-                      <ArrowRight className="h-3 w-3 ml-auto group-hover:translate-x-1 transition-transform" />
-                    </div>
-                  </motion.button>
-                </Reveal>
-              )
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* Pricing Section */}
-      <section id="pricing" className="py-20 sm:py-28 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Reveal>
-            <div className="text-center max-w-2xl mx-auto mb-16">
-              <Badge className="mb-4 px-4 py-1 text-sm font-bold" style={{ background: '#D4AF37', color: '#002B5C' }}>Pricing</Badge>
-              <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-4">Simple, Transparent Pricing</h2>
-              <p className="text-gray-600 text-lg font-medium">Choose the plan that fits your business. No hidden fees, no surprises.</p>
-            </div>
+          <Reveal delay={0.1}>
+            <p className="mt-4 max-w-[60ch]" style={{ fontSize: '16.5px', color: C.inkSoft }}>
+              Most HR systems assume you employ everyone you manage. In India, that assumption breaks the
+              moment you take on contract labour. HPHRMS handles both relationships without pretending they're the same thing.
+            </p>
           </Reveal>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            {PRICING_PLANS.map((plan, i) => (
-              <Reveal key={plan.name} delay={i * 0.1}>
-                <div className={cn(
-                  'relative bg-white rounded-2xl p-6 border-2 transition-all duration-300 hover:-translate-y-1',
-                  plan.popular ? 'border-amber-400 shadow-xl shadow-amber-100/50 scale-[1.02]' : 'border-gray-200 shadow-md hover:shadow-lg'
-                )}>
-                  {plan.popular && (
-                    <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
-                      <Badge className="px-4 py-1 text-sm font-bold shadow-sm" style={{ background: '#D4AF37', color: '#002B5C' }}>Most Popular</Badge>
-                    </div>
-                  )}
-                  <div className="text-center mb-6">
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">{plan.name}</h3>
-                    <div className="flex items-baseline justify-center gap-1">
-                      <span className="text-3xl font-extrabold" style={{ color: '#002B5C' }}>{plan.price}</span>
-                      {plan.period && <span className="text-gray-500 font-medium">{plan.period}</span>}
-                    </div>
-                    <p className="text-sm text-gray-500 font-medium mt-2">{plan.description}</p>
-                  </div>
-                  <ul className="space-y-3 mb-6">
-                    {plan.features.map((f) => (
-                      <li key={f} className="flex items-center gap-2.5 text-sm text-gray-700 font-medium">
-                        <Check className="h-4 w-4 shrink-0 text-emerald-600" />{f}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mt-10 sm:mt-11">
+            {THREE_MODES.map((mode, i) => (
+              <Reveal key={mode.tag} delay={0.15 + i * 0.06}>
+                <motion.div className="relative p-6 sm:p-[26px_24px] rounded-lg border transition-all duration-200 hover:-translate-y-[3px] cursor-default"
+                  style={{ background: C.paper, borderColor: C.rule }}
+                  whileHover={{ boxShadow: '0 16px 38px -24px rgba(10,15,30,.4)' }}>
+                  <span className="absolute top-6 right-6 text-[10px] font-semibold tracking-[0.08em] uppercase px-2 py-1 rounded-[3px]" style={{ ...fontMono, background: C.ledger, color: C.inkSoft }}>{mode.tag}</span>
+                  <p className="text-[11px] font-semibold tracking-[0.1em] uppercase mb-3.5" style={{ ...fontMono, color: C.inkSoft }}>{mode.label}</p>
+                  <h3 className="text-xl font-extrabold tracking-[-0.02em] mb-2" style={fontDisplay}>{mode.title}</h3>
+                  <p className="text-[14.5px] mb-4" style={{ color: C.inkSoft }}>{mode.desc}</p>
+                  <ul className="list-none text-[13.5px]">
+                    {mode.items.map((item) => (
+                      <li key={item} className="py-1.5 border-t flex gap-2.5 items-baseline" style={{ borderColor: C.ruleSoft }}>
+                        <span className="w-[5px] h-[5px] rounded-full shrink-0 mt-[7px]" style={{ background: C.amber }} />
+                        {item}
                       </li>
                     ))}
                   </ul>
-                  <Button
-                    className={cn('w-full h-11 font-bold text-sm transition-all duration-300', plan.popular ? 'text-gray-900 shadow-md shadow-amber-200/50 hover:shadow-lg' : 'text-white hover:opacity-90')}
-                    style={{ background: plan.popular ? '#D4AF37' : '#002B5C' }}
-                    onClick={() => setView('subscribe')}
-                  >
-                    {plan.price === 'Custom' ? 'Contact Sales' : 'Get Started'} <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
+                </motion.div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── AI FEATURES ─── */}
+      <section id="ai" className="ledger-ruled-dark py-16 sm:py-20 lg:py-[84px]" style={{ background: C.ink, color: '#fff', borderBottom: 'none' }}>
+        <div className="max-w-[1160px] mx-auto px-5 sm:px-6">
+          <Reveal>
+            <Eyebrow className="mb-3.5" style={{ color: C.amber }}>AI that reads your records — not the internet</Eyebrow>
+          </Reveal>
+          <Reveal delay={0.05}>
+            <SectionHeading className="text-white">Ask in plain language. Get answers from your own data.</SectionHeading>
+          </Reveal>
+          <Reveal delay={0.1}>
+            <p className="mt-4 max-w-[60ch]" style={{ fontSize: '16.5px', color: 'rgba(255,255,255,.72)' }}>
+              Every assistant is scoped to one company's records and one user's permissions. It reads;
+              it does not write. And it will tell you when it doesn't have the number rather than inventing one.
+            </p>
+          </Reveal>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-px mt-10 sm:mt-11 border overflow-hidden rounded-lg" style={{ background: 'rgba(255,255,255,.13)', borderColor: 'rgba(255,255,255,.13)' }}>
+            {AI_FEATURES.map((feat, i) => {
+              const Icon = feat.icon
+              return (
+                <Reveal key={feat.title} delay={0.15 + i * 0.03}>
+                  <motion.div className="p-5 sm:p-6 transition-colors duration-200" style={{ background: C.ink }} whileHover={{ background: '#1D2B4F' }}>
+                    <Icon className="h-5 w-5 mb-2" style={{ color: C.amber }} />
+                    <h4 className="text-[15px] sm:text-[16.5px] font-semibold tracking-[-0.01em] mb-1.5" style={fontDisplay}>{feat.title}</h4>
+                    <p className="text-[13.5px] leading-[1.5]" style={{ color: 'rgba(255,255,255,.65)' }}>{feat.desc}</p>
+                    <span className="mt-2.5 block text-[11.5px] leading-[1.45]" style={{ ...fontMono, color: C.amber }}>{feat.query}</span>
+                  </motion.div>
+                </Reveal>
+              )
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── MODULE REGISTER ─── */}
+      <section id="modules" className="py-16 sm:py-20 lg:py-[84px] border-b" style={{ borderColor: C.rule }}>
+        <div className="max-w-[1160px] mx-auto px-5 sm:px-6">
+          <Reveal>
+            <Eyebrow className="mb-3.5">The full register</Eyebrow>
+          </Reveal>
+          <Reveal delay={0.05}>
+            <SectionHeading>Twenty-three modules, switched on by account type</SectionHeading>
+          </Reveal>
+          <Reveal delay={0.1}>
+            <p className="mt-4 max-w-[60ch]" style={{ fontSize: '16.5px', color: C.inkSoft }}>
+              A manpower client never sees a payroll screen. An HRMS client never sees an invoice.
+              The platform shows each company only what its contract entitles it to.
+            </p>
+          </Reveal>
+          <Reveal delay={0.15}>
+            <div className="mt-10 sm:mt-11 border rounded-lg overflow-hidden" style={{ borderColor: C.rule }}>
+              {/* Header Row */}
+              <div className="hidden sm:grid grid-cols-[44px_1fr_128px] px-4 py-2.5 border-b-2" style={{ ...fontMono, fontSize: '10.5px', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: C.inkSoft, borderColor: C.ink, background: C.ledgerW }}>
+                <span>#</span><span>Module</span><span>Layer</span>
+              </div>
+              <div className="sm:hidden grid grid-cols-[34px_1fr] px-4 py-2.5 border-b-2" style={{ ...fontMono, fontSize: '10.5px', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: C.inkSoft, borderColor: C.ink, background: C.ledgerW }}>
+                <span>#</span><span>Module</span>
+              </div>
+              {/* Module Rows */}
+              {MODULES.map((mod) => (
+                <div key={mod.num} className="hidden sm:grid grid-cols-[44px_1fr_128px] px-4 py-3 border-b last:border-b-0 items-center transition-colors hover:bg-[var(--ledger-warm,#F6F7F5)]" style={{ borderColor: C.ruleSoft }}>
+                  <span className="text-[11px]" style={{ ...fontMono, color: C.inkSoft }}>{mod.num}</span>
+                  <span className="text-[14.5px] font-medium" style={{ color: C.ink }}>{mod.name}</span>
+                  <span className="text-[10px] font-semibold tracking-[0.06em] uppercase px-2 py-[3px] rounded-[3px] justify-self-start" style={{ ...fontMono, ...layerTagStyle(mod.layer) }}>{mod.layer}</span>
+                </div>
+              ))}
+              {/* Mobile: simpler rows */}
+              {MODULES.map((mod) => (
+                <div key={`m-${mod.num}`} className="sm:hidden grid grid-cols-[34px_1fr] px-4 py-3 border-b last:border-b-0 items-center" style={{ borderColor: C.ruleSoft }}>
+                  <span className="text-[11px]" style={{ ...fontMono, color: C.inkSoft }}>{mod.num}</span>
+                  <span className="text-[14px] font-medium" style={{ color: C.ink }}>{mod.name}</span>
+                </div>
+              ))}
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ─── INDIA COMPLIANCE ─── */}
+      <section id="compliance" className="py-16 sm:py-20 lg:py-[84px] border-b" style={{ borderColor: C.rule, background: C.ledgerW }}>
+        <div className="max-w-[1160px] mx-auto px-5 sm:px-6">
+          <Reveal>
+            <Eyebrow className="mb-3.5">India statutory compliance</Eyebrow>
+          </Reveal>
+          <Reveal delay={0.05}>
+            <SectionHeading>Built for Indian payroll. Not adapted to it.</SectionHeading>
+          </Reveal>
+          <Reveal delay={0.1}>
+            <p className="mt-4 max-w-[60ch]" style={{ fontSize: '16.5px', color: C.inkSoft }}>
+              PF, ESI, Gratuity, Professional Tax — the platform was designed in Karnataka for Indian statutory
+              compliance from day one. No bolt-on modules, no afterthought.
+            </p>
+          </Reveal>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-10 sm:mt-11">
+            {INDIA_COMPLIANCE.map((item, i) => (
+              <Reveal key={item.label} delay={0.15 + i * 0.04}>
+                <div className="p-5 rounded-lg border transition-all duration-200 hover:-translate-y-[2px] hover:shadow-[0_8px_24px_-16px_rgba(10,15,30,.2)]" style={{ background: C.paper, borderColor: C.rule }}>
+                  <span className="text-[11px] font-semibold tracking-[0.1em] uppercase px-2 py-1 rounded-[3px] inline-block mb-3" style={{ ...fontMono, background: `rgba(46,125,91,.12)`, color: C.verify }}>{item.label}</span>
+                  <h4 className="text-[15px] font-semibold mb-1.5" style={fontDisplay}>{item.full}</h4>
+                  <p className="text-[13px] leading-[1.5]" style={{ color: C.inkSoft }}>{item.desc}</p>
                 </div>
               </Reveal>
             ))}
@@ -1050,197 +751,179 @@ export function Landing() {
         </div>
       </section>
 
-      {/* Contact Section */}
-      <section id="contact" className="py-20 sm:py-28 bg-gray-50/50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* ─── DATA ACCESS SEPARATION ─── */}
+      <section id="separation" className="py-16 sm:py-20 lg:py-[84px] border-b" style={{ borderColor: C.rule }}>
+        <div className="max-w-[1160px] mx-auto px-5 sm:px-6">
           <Reveal>
-            <div className="text-center max-w-2xl mx-auto mb-16">
-              <Badge className="mb-4 px-4 py-1 text-sm font-bold" style={{ background: '#D4AF37', color: '#002B5C' }}>Contact Us</Badge>
-              <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-4">Get In Touch</h2>
-              <p className="text-gray-600 text-lg font-medium">Have questions? We would love to hear from you. Reach out to us anytime.</p>
-            </div>
+            <Eyebrow className="mb-3.5">Data access</Eyebrow>
           </Reveal>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            <Reveal delay={0.1}>
-              <a href={`tel:${BRAND.phone}`} className="block bg-white rounded-2xl p-6 border border-gray-200 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 text-center">
-                <div className="mx-auto h-14 w-14 rounded-2xl flex items-center justify-center mb-4" style={{ background: '#002B5C' }}>
-                  <Phone className="h-6 w-6 text-white" />
-                </div>
-                <h3 className="font-bold text-gray-900 mb-1">Call Us</h3>
-                <p className="text-sm text-gray-500 font-medium">{BRAND.phone}</p>
-                <p className="text-sm text-gray-400 font-medium mt-1">Mon–Sat, 9 AM–7 PM</p>
-              </a>
+          <Reveal delay={0.05}>
+            <SectionHeading>Your client sees the work. Not your cost sheet.</SectionHeading>
+          </Reveal>
+          <Reveal delay={0.1}>
+            <p className="mt-4 max-w-[60ch]" style={{ fontSize: '16.5px', color: C.inkSoft }}>
+              In manpower supply, the margin is the business. HPHRMS enforces that boundary in the database
+              itself — through row-level security, not through a hidden button.
+            </p>
+          </Reveal>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-10 sm:mt-11">
+            <Reveal delay={0.15} direction="left">
+              <div className="rounded-lg border overflow-hidden" style={{ borderColor: C.rule }}>
+                <div className="px-5 py-3 border-b" style={{ ...fontMono, fontSize: '11px', fontWeight: 600, letterSpacing: '0.09em', textTransform: 'uppercase', background: C.ink, color: '#fff' }}>HP Enterprise sees</div>
+                <ul className="list-none py-2" style={{ background: C.paper }}>
+                  {HP_SEES.map((item) => (
+                    <li key={item} className="px-5 py-2.5 text-[14px] flex items-center gap-2.5 border-b last:border-b-0" style={{ borderColor: C.ruleSoft }}>
+                      <span className="text-[13px] font-semibold w-4 shrink-0" style={{ ...fontMono, color: C.verify }}>✓</span>
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </Reveal>
-            <Reveal delay={0.2}>
-              <a href={`mailto:${BRAND.email}`} className="block bg-white rounded-2xl p-6 border border-gray-200 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 text-center">
-                <div className="mx-auto h-14 w-14 rounded-2xl flex items-center justify-center mb-4" style={{ background: '#0A4488' }}>
-                  <Mail className="h-6 w-6 text-white" />
-                </div>
-                <h3 className="font-bold text-gray-900 mb-1">Email Us</h3>
-                <p className="text-sm text-gray-500 font-medium">{BRAND.email}</p>
-                <p className="text-sm text-gray-400 font-medium mt-1">We reply within 24 hours</p>
-              </a>
-            </Reveal>
-            <Reveal delay={0.3}>
-              <a href={SOCIAL.whatsapp} target="_blank" rel="noopener noreferrer" className="block bg-white rounded-2xl p-6 border border-gray-200 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 text-center">
-                <div className="mx-auto h-14 w-14 rounded-2xl flex items-center justify-center mb-4" style={{ background: '#25D366' }}>
-                  <WhatsAppIcon className="h-6 w-6 text-white" />
-                </div>
-                <h3 className="font-bold text-gray-900 mb-1">WhatsApp</h3>
-                <p className="text-sm text-gray-500 font-medium">Chat with us instantly</p>
-                <p className="text-sm text-gray-400 font-medium mt-1">Quick response guaranteed</p>
-              </a>
+            <Reveal delay={0.2} direction="right">
+              <div className="rounded-lg border overflow-hidden" style={{ borderColor: C.rule }}>
+                <div className="px-5 py-3 border-b" style={{ ...fontMono, fontSize: '11px', fontWeight: 600, letterSpacing: '0.09em', textTransform: 'uppercase', background: C.ledgerW, color: C.inkSoft }}>The client sees</div>
+                <ul className="list-none py-2" style={{ background: C.paper }}>
+                  {CLIENT_SEES.map((item) => (
+                    <li key={item.text} className="px-5 py-2.5 text-[14px] flex items-center gap-2.5 border-b last:border-b-0" style={{ borderColor: C.ruleSoft }}>
+                      {item.visible
+                        ? <span className="text-[13px] font-semibold w-4 shrink-0" style={{ ...fontMono, color: C.verify }}>✓</span>
+                        : <span className="text-[13px] font-semibold w-4 shrink-0" style={{ ...fontMono, color: '#B03636' }}>✕</span>
+                      }
+                      <span style={item.visible ? {} : { color: C.inkSoft }}>{item.text}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </Reveal>
           </div>
-          <Reveal delay={0.35}>
-            <div className="mt-12 bg-white rounded-2xl p-8 border border-gray-200 shadow-sm max-w-5xl mx-auto">
-              <h3 className="text-lg font-bold text-gray-900 mb-6">Leadership</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                <div className="flex items-start gap-4 p-4 rounded-xl bg-gray-50 border border-gray-100">
-                  <div className="h-14 w-14 rounded-2xl flex items-center justify-center shrink-0 shadow-sm" style={{ background: '#002B5C' }}>
-                    <Crown className="h-6 w-6 text-white" />
-                  </div>
-                  <div>
-                    <p className="font-bold text-gray-900 text-base">{BRAND.managingDirector}</p>
-                    <p className="text-sm text-gray-500 font-medium">Managing Director</p>
-                    <a href={`tel:${BRAND.mdPhone}`} className="inline-flex items-center gap-1.5 mt-2 text-xs font-bold" style={{ color: '#002B5C' }}>
-                      <Phone className="h-3 w-3" />{BRAND.mdPhone}
-                    </a>
-                  </div>
-                </div>
-                <div className="flex items-start gap-4 p-4 rounded-xl bg-gray-50 border border-gray-100">
-                  <div className="h-14 w-14 rounded-2xl flex items-center justify-center shrink-0 shadow-sm" style={{ background: '#B45309' }}>
-                    <HardHat className="h-6 w-6 text-white" />
-                  </div>
-                  <div>
-                    <p className="font-bold text-gray-900 text-base">{BRAND.ehsDirector}</p>
-                    <p className="text-sm text-gray-500 font-medium">EHS Director</p>
-                    <a href={`tel:${BRAND.ehsPhone}`} className="inline-flex items-center gap-1.5 mt-2 text-xs font-bold" style={{ color: '#B45309' }}>
-                      <Phone className="h-3 w-3" />{BRAND.ehsPhone}
-                    </a>
-                  </div>
-                </div>
-              </div>
+        </div>
+      </section>
+
+      {/* ─── TRUST / VERIFICATION ─── */}
+      <section className="py-16 sm:py-20 lg:py-[84px] border-b" style={{ borderColor: C.rule, background: C.ledgerW }}>
+        <div className="max-w-[1160px] mx-auto px-5 sm:px-6">
+          <Reveal>
+            <div className="text-center max-w-2xl mx-auto">
+              <Eyebrow className="mb-3.5 justify-center">Verification & Trust</Eyebrow>
+              <SectionHeading className="mx-auto text-center">Registered. Verified. Accountable.</SectionHeading>
+              <p className="mt-4" style={{ fontSize: '16.5px', color: C.inkSoft }}>
+                Every claim verified with government registrations. No anonymous entity.
+              </p>
             </div>
           </Reveal>
-          <Reveal delay={0.4}>
-            <div className="mt-6 bg-white rounded-2xl p-8 border border-gray-200 shadow-sm max-w-5xl mx-auto">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-4">Office Locations</h3>
-                  <div className="space-y-4">
-                    <div className="flex items-start gap-3">
-                      <MapPin className="h-5 w-5 mt-0.5 shrink-0" style={{ color: '#002B5C' }} />
-                      <div>
-                        <p className="text-sm font-bold text-gray-900">Head Office</p>
-                        <p className="text-sm text-gray-500 font-medium">{BRAND.headOffice.full}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-3">
-                      <MapPin className="h-5 w-5 mt-0.5 shrink-0" style={{ color: '#0A4488' }} />
-                      <div>
-                        <p className="text-sm font-bold text-gray-900">Branch Office</p>
-                        <p className="text-sm text-gray-500 font-medium">{BRAND.branchOffice.full}</p>
-                      </div>
-                    </div>
-                  </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-10 sm:mt-11">
+            {TRUST_BADGES.map((badge, i) => (
+              <Reveal key={badge} delay={0.1 + i * 0.03}>
+                <div className="flex items-center gap-3 px-5 py-3.5 rounded-lg border" style={{ background: C.paper, borderColor: C.rule }}>
+                  <ShieldCheck className="h-4 w-4 shrink-0" style={{ color: C.verify }} />
+                  <span className="text-[14px] font-medium" style={{ color: C.ink }}>{badge}</span>
                 </div>
-                <div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-4">Business Details</h3>
-                  <div className="space-y-2.5">
-                    <div className="flex items-center gap-3">
-                      <FileText className="h-4 w-4 text-gray-400" />
-                      <span className="text-sm text-gray-600 font-medium">GSTIN: {BRAND.gstin}</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <FileText className="h-4 w-4 text-gray-400" />
-                      <span className="text-sm text-gray-600 font-medium">UDYAM: {BRAND.udyam}</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <FileText className="h-4 w-4 text-gray-400" />
-                      <span className="text-sm text-gray-600 font-medium">PAN: {BRAND.pan}</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <UserIcon className="h-4 w-4 text-gray-400" />
-                      <span className="text-sm text-gray-600 font-medium">Managing Director: {BRAND.managingDirector}</span>
-                    </div>
-                  </div>
+              </Reveal>
+            ))}
+          </div>
+          {/* Legal IDs */}
+          <Reveal delay={0.3}>
+            <div className="mt-8 flex flex-wrap justify-center gap-4 sm:gap-6">
+              {[{ label: 'GSTIN', value: BRAND.gstin }, { label: 'UDYAM', value: BRAND.udyam }, { label: 'PAN', value: BRAND.pan }].map((item) => (
+                <div key={item.label} className="flex items-center gap-2 px-4 py-2 rounded-md border" style={{ borderColor: C.rule, background: C.paper }}>
+                  <span className="text-[10px] font-semibold tracking-[0.1em] uppercase" style={{ ...fontMono, color: C.inkSoft }}>{item.label}</span>
+                  <span className="text-[12px] font-medium" style={{ ...fontMono, color: C.ink }}>{item.value}</span>
                 </div>
-              </div>
+              ))}
             </div>
           </Reveal>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="mt-auto" style={{ background: '#002B5C' }}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div className="sm:col-span-2 lg:col-span-1">
-              <div className="flex items-center gap-2.5 mb-4">
-                <BrandLogo size={34} />
-                <div className="flex flex-col">
-                  <span className="font-extrabold text-[15px] tracking-tight leading-tight text-white">HPHRMS</span>
-                  <span className="text-[9px] font-bold tracking-[0.2em] uppercase leading-tight text-gray-400">by HP Enterprise</span>
-                </div>
-              </div>
-              <p className="text-sm text-gray-300 font-medium leading-relaxed mb-4">{BRAND.taglineFull}</p>
-              <div className="flex items-center gap-2">
-                {SOCIAL_ITEMS.slice(2).map((s) => (
-                  <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer" className="h-9 w-9 rounded-lg bg-white/10 flex items-center justify-center text-gray-300 hover:bg-white/20 hover:text-white transition-colors" aria-label={s.label}>
-                    <s.icon className="h-4 w-4" />
-                  </a>
-                ))}
+      {/* ─── CTA ─── */}
+      <section className="py-16 sm:py-20 lg:py-[84px] text-center" style={{ background: C.ledgerW, borderBottom: 'none' }}>
+        <div className="max-w-[1160px] mx-auto px-5 sm:px-6">
+          <Reveal>
+            <Eyebrow className="mb-3.5 justify-center">Get started</Eyebrow>
+          </Reveal>
+          <Reveal delay={0.05}>
+            <SectionHeading className="mx-auto text-center">See it running on your own site data</SectionHeading>
+          </Reveal>
+          <Reveal delay={0.1}>
+            <p className="mt-4 mx-auto" style={{ fontSize: '16.5px', color: C.inkSoft, maxWidth: '56ch' }}>
+              A 30-minute walkthrough on your numbers — one site, one week of attendance, one invoice.
+              You'll know within the demo whether it fits how you already work.
+            </p>
+          </Reveal>
+          <Reveal delay={0.15}>
+            <div className="flex flex-wrap gap-3 sm:gap-3.5 justify-center mt-7 sm:mt-8">
+              <button onClick={() => setView('subscribe')} className="px-5 py-2.5 rounded-md text-sm font-semibold text-white transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_6px_18px_rgba(22,33,62,.24)]" style={{ background: C.ink }}>
+                Book a Demo <ArrowRight className="inline ml-1.5 h-3.5 w-3.5" />
+              </button>
+              <a href={SOCIAL.whatsapp} target="_blank" rel="noopener noreferrer" className="px-5 py-2.5 rounded-md text-sm font-semibold border-[1.5px] transition-all duration-200 hover:bg-[var(--ink,#16213E)] hover:text-white" style={{ borderColor: C.ink, color: C.ink }}>
+                Message on WhatsApp
+              </a>
+            </div>
+          </Reveal>
+          <Reveal delay={0.2}>
+            <p className="mt-5" style={{ ...fontMono, fontSize: '11.5px', color: C.inkSoft, letterSpacing: '0.03em' }}>
+              Data hosted in India · Mumbai region · No card required to trial
+            </p>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ─── FOOTER ─── */}
+      <footer className="mt-auto" style={{ background: C.inkDeep, color: 'rgba(255,255,255,.62)', padding: '52px 0 34px', fontSize: '13.5px' }}>
+        <div className="max-w-[1160px] mx-auto px-5 sm:px-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 sm:gap-9">
+            {/* Brand Column */}
+            <div>
+              <p className="text-[19px] font-extrabold text-white mb-3" style={fontDisplay}>HPHRMS Enterprise AI</p>
+              <p className="leading-[1.6] max-w-[38ch]">
+                An AI-powered Workforce Operating System for HRMS software, manpower outsourcing and
+                client workforce management — in one secure, multi-tenant platform.
+              </p>
+              <div className="mt-4 leading-[1.7]" style={{ ...fontMono, fontSize: '11.5px' }}>
+                <p>HP Enterprise</p>
+                <p>{BRAND.headOffice.full}</p>
               </div>
             </div>
+            {/* Platform Links */}
             <div>
-              <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-4">Services</h4>
-              <ul className="space-y-2">
-                {SERVICE_DETAILS.map((s) => (
-                  <li key={s.title}>
-                    <button onClick={() => openServiceModal(s)} className="text-sm text-gray-300 hover:text-white font-medium transition-colors text-left">{s.title}</button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-4">Quick Links</h4>
-              <ul className="space-y-2">
+              <h5 className="text-[10.5px] font-semibold tracking-[0.13em] uppercase mb-3" style={{ ...fontMono, color: 'rgba(255,255,255,.42)' }}>Platform</h5>
+              <div className="space-y-1">
                 {NAV_LINKS.map((link) => (
-                  <li key={link.id}>
-                    <button onClick={() => scrollTo(link.id)} className="text-sm text-gray-300 hover:text-white font-medium transition-colors text-left">{link.label}</button>
-                  </li>
+                  <button key={link.id} onClick={() => scrollTo(link.id)} className="block py-1 transition-colors hover:text-white">{link.label}</button>
                 ))}
-                <li>
-                  <button onClick={() => setView('subscribe')} className="text-sm text-gray-300 hover:text-white font-medium transition-colors text-left">Start Free Trial</button>
-                </li>
-              </ul>
+                <button onClick={() => setView('subscribe')} className="block py-1 transition-colors hover:text-white">Book a Demo</button>
+              </div>
             </div>
+            {/* Company / Contact */}
             <div>
-              <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-4">Contact</h4>
-              <ul className="space-y-3">
-                <li className="flex items-start gap-2.5">
-                  <Phone className="h-4 w-4 mt-0.5 shrink-0 text-gray-400" />
-                  <a href={`tel:${BRAND.phone}`} className="text-sm text-gray-300 hover:text-white font-medium transition-colors">{BRAND.phone}</a>
-                </li>
-                <li className="flex items-start gap-2.5">
-                  <Mail className="h-4 w-4 mt-0.5 shrink-0 text-gray-400" />
-                  <a href={`mailto:${BRAND.email}`} className="text-sm text-gray-300 hover:text-white font-medium transition-colors">{BRAND.email}</a>
-                </li>
-                <li className="flex items-start gap-2.5">
-                  <MapPin className="h-4 w-4 mt-0.5 shrink-0 text-gray-400" />
-                  <span className="text-sm text-gray-300 font-medium">{BRAND.headOffice.city}, {BRAND.headOffice.state}</span>
-                </li>
-              </ul>
+              <h5 className="text-[10.5px] font-semibold tracking-[0.13em] uppercase mb-3" style={{ ...fontMono, color: 'rgba(255,255,255,.42)' }}>Company</h5>
+              <div className="space-y-1">
+                <a href={`tel:${BRAND.phone}`} className="flex items-center gap-2.5 py-1 transition-colors hover:text-white">
+                  <Phone className="h-3.5 w-3.5 shrink-0" />{BRAND.phone}
+                </a>
+                <a href={`mailto:${BRAND.email}`} className="flex items-center gap-2.5 py-1 transition-colors hover:text-white">
+                  <Mail className="h-3.5 w-3.5 shrink-0" />{BRAND.email}
+                </a>
+                <span className="flex items-center gap-2.5 py-1">
+                  <MapPin className="h-3.5 w-3.5 shrink-0" />{BRAND.headOffice.city}, {BRAND.headOffice.state}
+                </span>
+              </div>
+              <h5 className="text-[10.5px] font-semibold tracking-[0.13em] uppercase mt-6 mb-3" style={{ ...fontMono, color: 'rgba(255,255,255,.42)' }}>HR Enquiries</h5>
+              <a href={`tel:${BRAND.hrPhone}`} className="flex items-center gap-2.5 py-1 transition-colors hover:text-white">
+                <Phone className="h-3.5 w-3.5 shrink-0" />{BRAND.hrPhone}
+              </a>
             </div>
           </div>
-          <div className="mt-10 pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-sm text-gray-400 font-medium">&copy; {new Date().getFullYear()} {BRAND.legalName}. All rights reserved.</p>
-            <p className="text-sm text-gray-400 font-medium">GSTIN: {BRAND.gstin} &middot; UDYAM: {BRAND.udyam}</p>
+          {/* Bottom Bar */}
+          <div className="mt-9 pt-5 border-t flex flex-col sm:flex-row items-center justify-between gap-3 flex-wrap" style={{ borderColor: 'rgba(255,255,255,.11)', ...fontMono, fontSize: '11px', color: 'rgba(255,255,255,.42)' }}>
+            <span>© {new Date().getFullYear()} HP Enterprise · hphrms.com</span>
+            <span>{BRAND.gstin} · {BRAND.udyam}</span>
           </div>
         </div>
       </footer>
 
+      {/* Floating AI Chat */}
       <HpAiChat />
     </div>
   )

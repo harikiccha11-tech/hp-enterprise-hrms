@@ -42,6 +42,16 @@ model Account {
   payrolls          Payroll[]
   salarySlips       SalarySlip[]
   auditLogs         AuditLog[]
+  aiConversations   AiConversation[]
+  aiMessages        AiMessage[]
+  aiInsights        AiInsight[]
+  aiUsageLedger     AiUsageLedger[]
+  notifications     Notification[]
+  clientBranding    ClientBranding?
+  clientSites       ClientSite[]
+  timesheets        Timesheet[]
+  generatedDocuments GeneratedDocument[] @relation("GeneratedDocAccount")
+  employeeDocuments EmployeeDocument[]
 
   @@index([status])
   @@index([accountType])
@@ -74,6 +84,7 @@ model User {
   auditLogs        AuditLog[]
   attendanceRecords Attendance[] @relation("AttendanceMarkedBy")
   leaveActions     LeaveAction[]
+  aiConversations  AiConversation[]
 
   @@index([role])
   @@index([accountId])
@@ -161,12 +172,13 @@ model Employee {
   leaves         Leave[]
   payrolls       Payroll[]
   salarySlips    SalarySlip[]
-  generatedDocs  GeneratedDocument[]
+  generatedDocs  GeneratedDocument[] @relation("GeneratedDocEmployee")
   projectAssignments ProjectMember[]
   leaveBalance   LeaveBalance?
   onboardingTasks OnboardingTask[]
   offboardingTasks OffboardingTask[]
   siteAssignments SiteAssignment[]
+  timesheetLines  TimesheetLine[]
   invoiceLineItems InvoiceLineItem[]
 
   reviewedBy     String?
@@ -192,20 +204,25 @@ model Employee {
 
 model EmployeeDocument {
   id           String   @id @default(cuid())
+  accountId    String?
   employeeId   String
   documentType String // aadhaar | pan | photo | signature | passbook | resume | certificate ...
   fileName     String
   filePath     String
   mimeType     String?
+  expiryDate   DateTime?
+  clientVisible Boolean @default(false)
   uploadedAt   DateTime @default(now())
   verified     Boolean  @default(false)
   verifiedBy   String?
   verifiedAt   DateTime?
   verifyNote   String?
 
+  account      Account?  @relation(fields: [accountId], references: [id], onDelete: Cascade)
   employee     Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 
   @@index([employeeId, documentType])
+  @@index([expiryDate])
 }
 
 // ============================================================
@@ -379,21 +396,6 @@ model SalarySlip {
   account     Account? @relation(fields: [accountId], references: [id], onDelete: Cascade)
 }
 
-model GeneratedDocument {
-  id          String   @id @default(cuid())
-  employeeId  String
-  docType     String // offer_letter | appointment_letter | id_card | joining_letter | nda | experience_letter | relieving_letter | confirmation_letter | promotion_letter | transfer_letter | warning_letter | no_due_certificate | full_final_settlement
-  title       String
-  filePath    String?
-  metaJson    String?
-  generatedAt DateTime @default(now())
-  generatedBy String?
-
-  employee    Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-
-  @@index([employeeId, docType])
-}
-
 // ============================================================
 // CLIENTS & PROJECTS (Legacy + Enhanced)
 // ============================================================
@@ -523,19 +525,34 @@ model InvoiceLineItem {
 // NOTIFICATIONS & AUDIT
 // ============================================================
 
-model Notification {
-  id        String   @id @default(cuid())
-  userId    String
-  title     String
-  message   String
-  type      String   @default("INFO") // INFO | SUCCESS | WARNING | LEAVE | PAYROLL | DOCUMENT | ANNOUNCEMENT
-  read      Boolean  @default(false)
-  link      String?
-  createdAt DateTime @default(now())
+// ============================================================
+// NOTIFICATIONS
+// ============================================================
 
-  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+model Notification {
+  id            String    @id @default(cuid())
+  accountId     String?
+  userId        String?
+  insightId     String?   @map("insight_id")
+  channel       String    @default("in_app")
+  status        String    @default("queued")
+  title         String    @db.Text
+  body          String    @db.Text
+  type          String    @default("INFO")
+  actionUrl     String?   @map("action_url")
+  severity      String    @default("info")
+  read          Boolean   @default(false)
+  scheduledFor  DateTime? @map("scheduled_for")
+  sentAt        DateTime? @map("sent_at")
+  readAt        DateTime? @map("read_at")
+  createdAt     DateTime  @default(now())
+
+  account      Account? @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  user         User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, read])
+  @@index([userId, status, createdAt(sort: Desc)])
+  @@index([accountId, createdAt(sort: Desc)])
 }
 
 model AuditLog {
@@ -1002,4 +1019,209 @@ model PaymentGateway {
   status      String   @default("ACTIVE")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+// ============================================================
+// AI CORE — Phase 1
+// ============================================================
+
+model AiConversation {
+  id            String   @id @default(cuid())
+  accountId     String
+  userId        String
+  agent         String   @default("hr_assistant")
+  title         String?
+  pinned        Boolean  @default(false)
+  archived      Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  account       Account  @relation(fields: [accountId], references: [id])
+  user          User     @relation(fields: [userId], references: [id])
+  messages      AiMessage[]
+
+  @@index([accountId])
+  @@index([userId, updatedAt(sort: Desc)])
+}
+
+model AiMessage {
+  id             String   @id @default(cuid())
+  conversationId String
+  accountId      String
+  role           String   // user | assistant | tool | system
+  content        String?  @db.Text
+  toolName       String?  @map("tool_name")
+  toolInput      Json?    @map("tool_input")
+  toolOutput     Json?    @map("tool_output")
+  sqlExecuted    String?  @map("sql_executed") @db.Text
+  rowsReturned   Int?     @map("rows_returned")
+  model          String?
+  inputTokens    Int?     @map("input_tokens")
+  outputTokens   Int?     @map("output_tokens")
+  latencyMs      Int?     @map("latency_ms")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  conversation   AiConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  account        Account        @relation(fields: [accountId], references: [id])
+
+  @@index([conversationId, createdAt(sort: Asc)])
+  @@index([accountId, createdAt(sort: Desc)])
+}
+
+model AiInsight {
+  id                String    @id @default(cuid())
+  accountId         String
+  insightType       String    // attendance_anomaly | absenteeism_spike | overtime_breach | contract_expiring | document_expiring | staffing_shortage | payroll_variance | compliance_due | invoice_overdue | leave_imbalance
+  severity          String    @default("info") // info | low | medium | high | critical
+  title             String    @db.Text
+  summary           String    @db.Text
+  recommendedAction String?   @db.Text @map("recommended_action")
+  entityTable       String?   @map("entity_table")
+  entityId          String?   @map("entity_id")
+  siteAssignmentId  String?   @map("site_assignment_id")
+  employeeId        String?   @map("employee_id")
+  evidence          Json?
+  confidence        Float?
+  acknowledgedBy    String?   @map("acknowledged_by")
+  acknowledgedAt    DateTime? @map("acknowledged_at")
+  resolvedAt        DateTime? @map("resolved_at")
+  generatedBy       String    @default("ai") @map("generated_by")
+  validUntil        DateTime? @map("valid_until")
+  createdAt         DateTime  @default(now()) @map("created_at")
+
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId, severity, createdAt(sort: Desc)])
+}
+
+model AiUsageLedger {
+  id              String   @id @default(cuid())
+  accountId       String
+  userId          String?
+  agent           String
+  usageDate       DateTime @default(now()) @map("usage_date")
+  requestCount    Int      @default(1) @map("request_count")
+  inputTokens     Int      @default(0) @map("input_tokens")
+  outputTokens    Int      @default(0) @map("output_tokens")
+  estimatedCostInr Float?   @map("estimated_cost_inr")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId, usageDate(sort: Asc)])
+}
+
+// ============================================================
+// CLIENT PORTAL — Phase 2
+// ============================================================
+
+model ClientBranding {
+  id                  String   @id @default(cuid())
+  accountId           String   @unique @map("account_id")
+  displayName         String?  @map("display_name")
+  logoUrl             String?  @map("logo_url")
+  faviconUrl          String?  @map("favicon_url")
+  primaryColor        String   @default("#16213E") @map("primary_color")
+  accentColor         String   @default("#E8A33D") @map("accent_color")
+  sidebarStyle        String   @default("dark") @map("sidebar_style")
+  loginBackgroundUrl  String?  @map("login_background_url")
+  supportEmail        String?  @map("support_email")
+  supportPhone        String?  @map("support_phone")
+  customDomain        String?  @map("custom_domain")
+  customDomainVerified Boolean @default(false) @map("custom_domain_verified")
+  hideHphrmsBranding  Boolean  @default(false) @map("hide_hphrms_branding")
+  invoiceFooterNote   String?  @map("invoice_footer_note")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+}
+
+model ClientSite {
+  id               String   @id @default(cuid())
+  accountId        String
+  siteCode         String
+  siteName         String
+  address          String?  @db.Text
+  city             String?
+  state            String?
+  geoLat           Float?
+  geoLng           Float?
+  geofenceRadiusM  Int      @default(200) @map("geofence_radius_m")
+  siteInchargeName String?  @map("site_incharge_name")
+  siteInchargePhone String? @map("site_incharge_phone")
+  active           Boolean  @default(true)
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  timesheets Timesheet[]
+
+  @@unique([accountId, siteCode])
+  @@index([accountId])
+}
+
+model Timesheet {
+  id               String    @id @default(cuid())
+  accountId        String
+  clientSiteId     String?   @map("client_site_id")
+  periodStart      DateTime
+  periodEnd        DateTime
+  status           String    @default("draft") // draft | submitted | client_review | approved | disputed | invoiced
+  totalMandays     Float     @default(0) @map("total_mandays")
+  totalOvertimeHrs Float     @default(0) @map("total_overtime_hours")
+  grossBillable    Float     @default(0) @map("gross_billable")
+  submittedAt      DateTime? @map("submitted_at")
+  submittedBy      String?   @map("submitted_by")
+  clientApprovedAt DateTime? @map("client_approved_at")
+  clientApprovedBy String?   @map("client_approved_by")
+  clientRemarks    String?   @db.Text @map("client_remarks")
+  invoiceId        String?   @map("invoice_id")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  account     Account           @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  clientSite  ClientSite?       @relation(fields: [clientSiteId], references: [id])
+  lines       TimesheetLine[]
+
+  @@unique([accountId, clientSiteId, periodStart, periodEnd])
+  @@index([accountId, status])
+}
+
+model TimesheetLine {
+  id             String  @id @default(cuid())
+  timesheetId    String  @map("timesheet_id")
+  employeeId     String  @map("employee_id")
+  siteAssignmentId String? @map("site_assignment_id")
+  daysPresent    Float   @default(0) @map("days_present")
+  daysAbsent     Float   @default(0) @map("days_absent")
+  overtimeHours  Float   @default(0) @map("overtime_hours")
+  billableRate   Float   @map("billable_rate")
+  overtimeRate   Float   @default(0) @map("overtime_rate")
+  lineTotal      Float   @map("line_total")
+  clientDisputed Boolean @default(false) @map("client_disputed")
+  disputeNote    String? @db.Text @map("dispute_note")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  timesheet     Timesheet @relation(fields: [timesheetId], references: [id], onDelete: Cascade)
+  employee      Employee? @relation(fields: [employeeId], references: [id])
+
+  @@index([timesheetId])
+}
+
+  model GeneratedDocument {
+  id               String   @id @default(cuid())
+  accountId        String
+  employeeId       String?
+  documentType     String
+  title            String
+  storagePath      String?  @map("storage_path")
+  fileFormat       String   @default("pdf") @map("file_format")
+  templateId       String?
+  generatedByUserId String? @map("generated_by_user_id")
+  aiGenerated      Boolean  @default(true) @map("ai_generated")
+  clientVisible    Boolean  @default(false) @map("client_visible")
+  createdAt        DateTime  @default(now()) @map("created_at")
+
+  account Account @relation("GeneratedDocAccount", fields: [accountId], references: [id], onDelete: Cascade)
+  employee Employee? @relation("GeneratedDocEmployee", fields: [employeeId], references: [id])
 }
