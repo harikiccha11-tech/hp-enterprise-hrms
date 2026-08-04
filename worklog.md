@@ -609,3 +609,45 @@ Stage Summary:
 - No model names, field names, or relation names changed
 - No business logic or UI components modified
 - Schema validated and Prisma client generated successfully
+---
+Task ID: 10
+Agent: Main Orchestrator
+Task: Integrate dual-mode architecture (HRMS SaaS / Manpower Supply / Hybrid)
+
+Work Log:
+- Read 5 uploaded architecture documents (DUAL_MODE_SUMMARY.md, frontend_account_context.tsx.txt, HPHRMS_DualMode_Architecture.md, DEPLOYMENT_CHECKLIST.md, migration_dual_mode_schema.sql)
+- Converted Prisma schema from SQLite to PostgreSQL (Neon)
+- Added Account model (multi-tenant organizations with accountType)
+- Added accountId, clientRole to User model
+- Added employeeType ('internal' | 'hp_deployed') to Employee model
+- Created SiteAssignment model for manpower supply deployments
+- Created InvoiceLineItem model for manpower billing
+- Updated auth.ts: SessionPayload includes accountId, accountType, clientRole
+- Updated login/me routes to return account context
+- Created /api/auth/account and /api/auth/user endpoints
+- Created AccountProvider (React context) in account-context.tsx
+- Created module-definitions.ts with dual-mode navigation filtering
+- Created AccountTypeBadge and ModuleGuard components
+- Created Providers.tsx wrapper (AccountProvider + ThemeInit)
+- Updated layout.tsx to wrap app with Providers
+- Updated AdminLayout with AccountTypeBadge in header
+- Created /api/onboarding/create-account endpoint
+- Created /api/admin/site-assignments endpoint
+- Updated seed.ts with 4 accounts, 5 admins, 10 employees, 4 site assignments
+- Pushed Prisma schema to Neon PostgreSQL (30+ tables created)
+- Seeded production database with dual-mode test data
+- Set DATABASE_URL on Vercel (production + preview)
+- Pushed to GitHub (harikiccha11-tech/hp-enterprise-hrms)
+- Deployed to Vercel production (www.hphrms.com)
+- Verified: health endpoint OK, login works for all 3 account types, dashboard renders with 30+ modules, zero console errors
+
+Stage Summary:
+- Dual-mode platform deployed to production at hphrms.com
+- Database: Neon PostgreSQL with 30+ tables, 4 accounts, 5 admin users, 10 sample employees
+- Login credentials:
+  - HP Enterprise (hybrid): admin / Admin@123
+  - Acme Technologies (hrms_saas): acmeadmin / AcmeTech@2026
+  - BuildRight Construction (manpower_supply): buildadmin / BuildRight@2026
+  - Metro Retail (hybrid): metroadmin / MetroRetail@2026
+- All existing modules (30+) preserved and working
+- New APIs: /api/auth/account, /api/auth/user, /api/onboarding/create-account, /api/admin/site-assignments
