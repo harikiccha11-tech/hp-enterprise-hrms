@@ -34,8 +34,8 @@ Company info:
 - UDYAM: UDYAM-KR-10-0014648
 - Managing Director: Hariprasad N P
 - EHS Director: Rajesh S
-- Head Office: JeevaGurunadan Building, Kalkere Market Road, Ramamurthy Nagar, Bengaluru – 560016, Karnataka, India
-- Branch Office: Venkateshwara Nilaya Building, Behind Hanuman Mandir, Nagenahalli, Hosadurga Taluk, Chitradurga – 577515, Karnataka, India
+- Head Office: Venkateshwara Nilaya Building, Behind Hanuman Mandir, Nagenahalli, Hosadurga Taluk, Chitradurga – 577515, Karnataka, India
+- Branch Office: JeevaGurunadan Building, Kalkere Market Road, Ramamurthy Nagar, Bengaluru – 560016, Karnataka, India
 
 Services: HR Management, Recruitment & Talent Acquisition, Manpower Supply, EHS Consultancy, Engineering & Project Support, Construction Labour Supply, Land Survey, Vendor Coordination, Payroll Management, Website Design & Development, Safety Training & Compliance.
 

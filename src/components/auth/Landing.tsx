@@ -6,6 +6,7 @@ import { BrandLogo } from '@/components/brand/BrandLogo'
 import { RegistrationForm } from '@/components/auth/RegistrationForm'
 import { ForgotPasswordDialog } from '@/components/auth/ForgotPasswordDialog'
 import { HpAiChat } from '@/components/shared/HpAiChat'
+import { SocialLinks } from '@/components/shared/SocialLinks'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -20,8 +21,7 @@ import {
   Sparkles, Check, Bot, Menu, X, Phone, Mail, MapPin, ChevronRight,
   Send, Loader2, Eye, EyeOff, User as UserIcon, Zap, BarChart3,
   ClipboardList, Brain, FileSearch, Bell, Settings, Briefcase,
-  Linkedin, Instagram, Facebook, Twitter, Youtube, Globe, MessageCircle,
-  LayoutDashboard, UserCheck, ExternalLink, AtSign,
+  LayoutDashboard, UserCheck, ExternalLink,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -153,20 +153,6 @@ const PORTALS = [
       'Executive daily briefings',
     ],
   },
-]
-
-/* ═══════════════════════════════════════════════════════
-   DATA: Social Links
-   ═══════════════════════════════════════════════════════ */
-const SOCIAL_LINKS = [
-  { label: 'LinkedIn', href: SOCIAL.linkedin, icon: Linkedin },
-  { label: 'Instagram', href: SOCIAL.instagram, icon: Instagram },
-  { label: 'Facebook', href: SOCIAL.facebook, icon: Facebook },
-  { label: 'Twitter / X', href: SOCIAL.twitter, icon: Twitter },
-  { label: 'YouTube', href: SOCIAL.youtube, icon: Youtube },
-  { label: 'Threads', href: SOCIAL.threads, icon: AtSign },
-  { label: 'WhatsApp', href: SOCIAL.whatsapp, icon: MessageCircle },
-  { label: 'Reddit', href: SOCIAL.reddit, icon: Globe },
 ]
 
 /* ═══════════════════════════════════════════════════════
@@ -1174,19 +1160,7 @@ export function Landing() {
           {/* Connect With Us — Social Media Links */}
           <div className="mt-9 pt-5 border-t" style={{ borderColor: 'rgba(255,255,255,.11)' }}>
             <h5 className="text-[10.5px] font-semibold tracking-[0.13em] uppercase mb-4" style={{ ...fontMono, color: 'rgba(255,255,255,.42)' }}>Connect With Us</h5>
-            <div className="flex flex-wrap gap-x-6 gap-y-2">
-              {SOCIAL_LINKS.map((social) => {
-                const SocialIcon = social.icon
-                return (
-                  <a key={social.label} href={social.href} target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-2 py-1.5 text-[13px] transition-colors hover:text-white"
-                    style={{ color: 'rgba(255,255,255,.62)' }}>
-                    <SocialIcon className="h-3.5 w-3.5 shrink-0" />
-                    <span>{social.label}</span>
-                  </a>
-                )
-              })}
-            </div>
+            <SocialLinks variant="footer" />
           </div>
 
           {/* Bottom Bar */}

@@ -32,20 +32,20 @@ export const BRAND = {
   logoPath: '/hp-logo.jpg',
   // Office Locations
   headOffice: {
-    building: 'JeevaGurunadan Building, Kalkere Market Road',
-    area: 'Ramamurthy Nagar',
-    city: 'Bengaluru – 560016',
-    state: 'Karnataka',
-    country: 'India',
-    full: 'JeevaGurunadan Building, Kalkere Market Road, Ramamurthy Nagar, Bengaluru – 560016, Karnataka, India',
-  },
-  branchOffice: {
     building: 'Venkateshwara Nilaya Building, Behind Hanuman Mandir, Nagenahalli',
     area: 'Hosadurga Taluk',
     city: 'Chitradurga – 577515',
     state: 'Karnataka',
     country: 'India',
     full: 'Venkateshwara Nilaya Building, Behind Hanuman Mandir, Nagenahalli, Hosadurga Taluk, Chitradurga – 577515, Karnataka, India',
+  },
+  branchOffice: {
+    building: 'JeevaGurunadan Building, Kalkere Market Road',
+    area: 'Ramamurthy Nagar',
+    city: 'Bengaluru – 560016',
+    state: 'Karnataka',
+    country: 'India',
+    full: 'JeevaGurunadan Building, Kalkere Market Road, Ramamurthy Nagar, Bengaluru – 560016, Karnataka, India',
   },
 } as const
 

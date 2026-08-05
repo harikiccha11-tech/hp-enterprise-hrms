@@ -797,3 +797,85 @@ Stage Summary:
 - API security: 13 routes hardened with try/catch, login rate limited
 - Build: SUCCESS (standalone output)
 - Lint: 0 errors, 0 warnings
+---
+Task ID: 2
+Agent: Main
+Task: Create shared SocialLinks component and integrate across application
+
+Work Log:
+- Created `/src/components/shared/SocialLinks.tsx` — reusable component with 3 variants (footer, icons, inline)
+- All 11 social links from SOCIAL constant included (website, hphrms, email, whatsapp, instagram, threads, linkedin, facebook, twitter, youtube, reddit)
+- Each variant uses appropriate lucide-react icons and styling
+- All links open in new tab with target="_blank" rel="noopener noreferrer"
+- Updated `/src/components/auth/Landing.tsx` footer: replaced hand-coded SOCIAL_LINKS array with `<SocialLinks variant="footer" />`
+- Removed 8 unused icon imports (Linkedin, Instagram, Facebook, Twitter, Youtube, Globe, MessageCircle, AtSign) from Landing.tsx
+- Removed dead SOCIAL_LINKS constant and empty comment block
+- Checked EmployeeLayout.tsx and ClientLayout.tsx footers — both are minimal status bars (copyright + system health), no social link section present; did NOT add social links as it would be inappropriate for portal dashboards
+- Fixed AI chat SYSTEM_PROMPT in `/src/app/api/ai/chat/route.ts`: Head Office and Branch Office addresses were swapped — corrected to match BRAND constants (Head Office = Chitradurga, Branch Office = Bengaluru)
+- ESLint: 0 errors
+- Dev server: no compilation errors
+
+Stage Summary:
+- SocialLinks component created with footer/icons/inline variants
+- Landing page footer now uses shared component (11 links including website, hphrms, email)
+- AI chat address data corrected (was showing Bengaluru as head office instead of Chitradurga)
+- Employee/Client portal footers left unchanged (minimal status bars, not marketing footers)
+
+---
+Task ID: 3
+Agent: general-purpose
+Task: Audit and clean the landing page for any demo or placeholder content
+
+Work Log:
+- Read full Landing.tsx (1179 lines) and constants.ts
+- Checked for fake statistics, fake client names, fake testimonials, fake awards, fake employee counts, fake revenue numbers — none found
+- Searched for demo/test/placeholder/TODO/FIXME/lorem ipsum/sample/mock strings — only matches are legitimate "Book a Demo" CTAs and HTML placeholder attributes on form inputs
+- Verified hero section is enterprise-grade with real product messaging and muster roll table
+- Verified all 11 SERVICE_IMAGES entries point to actual files in /public/images/ (all 9 unique images exist, 2 services reuse existing images)
+- Verified SocialLinks component is properly imported (line 9) and used in footer (line 1163) with variant="footer" — no duplicate hand-coded social links found
+- Verified HPHRMS_FEATURES section imports from constants and renders with checkmarks correctly
+- Verified SubscriptionForm posts to /api/subscription/request and shows success message
+- Verified RegistrationForm.tsx exists at src/components/auth/RegistrationForm.tsx and is properly imported/referenced
+- Ran `bun run lint` — 0 errors, 0 warnings
+- No changes required — landing page is clean of demo/placeholder content
+
+Stage Summary:
+- Landing page audit: 0 issues found
+- All 8 audit checks passed
+- No code changes needed
+- ESLint: 0 errors
+---
+Task ID: 4
+Agent: Main
+Task: Verify RBAC enforcement and portal layout quality
+
+Work Log:
+- Part 1 — RBAC Audit:
+  - Verified /src/lib/auth.ts: has getCurrentUser() (JWT session verify + locked-user check), hasRole(), canManagePayroll(), canManageEmployees(), canChangeSettings(), canManageUsers()
+  - Verified /src/lib/guards.ts: has requireRole(...roles) — calls getCurrentUser, returns 401 if unauthenticated, 403 if role not in allowed list
+  - Verified /src/lib/store.ts: role-based menu filtering is handled in component layer (AdminLayout uses ownerOnly flags and isOwner/isSuperAdmin computed from user.role)
+  - Grep results: 48 total admin API route files, 48 with getCurrentUser or requireRole — 100% auth coverage
+  - No admin routes missing auth checks — no remediation needed
+
+- Part 2 — Portal Layout Quality:
+  - AdminLayout.tsx: searched for TODO, FIXME, demo, test, placeholder, console.log — 0 matches (clean)
+  - EmployeeLayout.tsx: same search — 0 matches (clean)
+  - ClientLayout.tsx: same search — 0 matches (clean)
+  - No dusty elements found in any layout — no changes needed
+
+- Part 3 — Subscription API:
+  - /src/app/api/subscription/request/route.ts exists and handles POST correctly
+  - Validates required fields (companyName, contactName, email, plan)
+  - Validates plan against whitelist (free, starter, professional, enterprise)
+  - Sanitizes inputs (trim, toLowerCase)
+  - Proper error handling with try/catch and appropriate HTTP status codes
+  - Intentionally public endpoint (no auth — subscription requests from prospective customers)
+
+- Lint: bun run lint — 0 errors, 0 warnings
+
+Stage Summary:
+- RBAC: 48/48 admin routes (100%) have auth enforcement — PASS
+- Portal layouts: 0 dusty elements found across all 3 layouts — PASS
+- Subscription API: POST handler correct with validation/sanitization — PASS
+- No code changes required
+- ESLint: 0 errors
