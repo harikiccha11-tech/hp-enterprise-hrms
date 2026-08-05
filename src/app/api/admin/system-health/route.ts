@@ -8,9 +8,11 @@ export const dynamic = 'force-dynamic'
 const startTime = Date.now()
 
 export async function GET() {
-  const { error } = await requireRole('OWNER', 'SUPER_ADMIN')
+  const { error, cu } = await requireRole('OWNER', 'SUPER_ADMIN')
   if (error) return error
   try {
+    const accountId = cu.user.accountId
+
     // DB connection check
     let dbStatus = true
     let dbLatency = 0
@@ -26,25 +28,32 @@ export async function GET() {
     const hours = Math.floor(uptime / 3600)
     const minutes = Math.floor((uptime % 3600) / 60)
 
-    // Entity counts
+    // Entity counts — scoped to tenant where model supports accountId
     const [users, employees, notifications, candidates, projects, clients, vendors, assets] = await Promise.all([
-      db.user.count(),
-      db.employee.count(),
-      db.notification.count(),
+      db.user.count({ where: { accountId } }),
+      db.employee.count({ where: { accountId } }),
+      db.notification.count({ where: { accountId } }),
+      // NOTE: Candidate model has no accountId field — cannot scope to tenant.
+      // Kept unscoped until schema is updated with tenant isolation.
       db.candidate.count(),
-      db.project.count(),
-      db.client.count(),
+      db.project.count({ where: { accountId } }),
+      db.client.count({ where: { accountId } }),
+      // NOTE: Vendor model has no accountId field — cannot scope to tenant.
+      // Kept unscoped until schema is updated with tenant isolation.
       db.vendor.count(),
+      // NOTE: Asset model has no accountId field — cannot scope to tenant.
+      // Kept unscoped until schema is updated with tenant isolation.
       db.asset.count(),
     ])
 
     const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
 
     const [employeesThisWeek, employeesUpdatedWeek, candidatesThisWeek, projectsThisWeek] = await Promise.all([
-      db.employee.count({ where: { createdAt: { gte: oneWeekAgo } } }),
-      db.employee.count({ where: { updatedAt: { gte: oneWeekAgo } } }),
+      db.employee.count({ where: { createdAt: { gte: oneWeekAgo }, accountId } }),
+      db.employee.count({ where: { updatedAt: { gte: oneWeekAgo }, accountId } }),
+      // NOTE: Candidate model has no accountId — unscoped.
       db.candidate.count({ where: { appliedAt: { gte: oneWeekAgo } } }),
-      db.project.count({ where: { createdAt: { gte: oneWeekAgo } } }),
+      db.project.count({ where: { createdAt: { gte: oneWeekAgo }, accountId } }),
     ])
 
     // Memory usage (Node.js)

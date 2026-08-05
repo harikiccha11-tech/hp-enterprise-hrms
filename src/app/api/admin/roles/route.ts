@@ -6,7 +6,10 @@ import { hashPassword } from '@/lib/auth'
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-const VALID_ROLES = ['OWNER', 'SUPER_ADMIN', 'HR_MANAGER', 'EMPLOYEE', 'CLIENT']
+// OWNER role can only be assigned via direct DB migration or by another OWNER.
+// SUPER_ADMIN cannot create or assign OWNER accounts.
+const VALID_ROLES_POST = ['SUPER_ADMIN', 'HR_MANAGER', 'EMPLOYEE', 'CLIENT']
+const VALID_ROLES_PATCH = ['OWNER', 'SUPER_ADMIN', 'HR_MANAGER', 'EMPLOYEE', 'CLIENT']
 
 export async function GET() {
   const { error } = await requireRole('OWNER', 'SUPER_ADMIN')
@@ -46,7 +49,12 @@ export async function POST(req: NextRequest) {
     if (!username?.trim()) return NextResponse.json({ error: 'Username is required' }, { status: 400 })
     if (!email?.trim()) return NextResponse.json({ error: 'Email is required' }, { status: 400 })
     if (!password?.trim()) return NextResponse.json({ error: 'Password is required' }, { status: 400 })
-    if (!role || !VALID_ROLES.includes(role)) return NextResponse.json({ error: 'Invalid role' }, { status: 400 })
+    if (!role || !VALID_ROLES_POST.includes(role)) return NextResponse.json({ error: 'Invalid role' }, { status: 400 })
+
+    // Only OWNER can create users (via separate user management route)
+    if (cu!.user.role !== 'OWNER') {
+      return NextResponse.json({ error: 'Only the account owner can create new users' }, { status: 403 })
+    }
 
     const existingUser = await db.user.findFirst({ where: { OR: [{ username: username.trim().toLowerCase() }, { email: email.trim().toLowerCase() }] } })
     if (existingUser) return NextResponse.json({ error: 'User with this username or email already exists' }, { status: 409 })
@@ -74,7 +82,7 @@ export async function PATCH(req: NextRequest) {
   try {
     const { id, role } = await req.json()
     if (!id) return NextResponse.json({ error: 'ID is required' }, { status: 400 })
-    if (!role || !VALID_ROLES.includes(role)) return NextResponse.json({ error: 'Invalid role' }, { status: 400 })
+    if (!role || !VALID_ROLES_PATCH.includes(role)) return NextResponse.json({ error: 'Invalid role' }, { status: 400 })
 
     // Don't allow changing own role
     if (id === cu!.user.id) return NextResponse.json({ error: 'Cannot change your own role' }, { status: 400 })

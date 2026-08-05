@@ -202,12 +202,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Too many chat requests. Please try again later.' }, { status: 429 })
   }
 
-  let userId = 'anonymous-visitor'
+  // Require authentication for AI chat
+  let userId: string
   try {
     const cu = await getCurrentUser()
-    if (cu?.user?.id) userId = cu.user.id
+    if (!cu?.user?.id) {
+      return NextResponse.json({ error: 'Authentication required for AI chat' }, { status: 401 })
+    }
+    userId = cu.user.id
   } catch {
-    // Not logged in — use anonymous ID, HPAI still works
+    return NextResponse.json({ error: 'Authentication required for AI chat' }, { status: 401 })
   }
 
   try {

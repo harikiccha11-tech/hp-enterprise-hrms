@@ -67,20 +67,26 @@ export async function POST(req: NextRequest) {
   }
 }
 
+const ALLOWED_PATCH_FIELDS = ['title', 'department', 'designation', 'location', 'type', 'experience', 'salaryMin', 'salaryMax', 'description', 'requirements', 'status', 'postedBy']
+
 // PATCH — update job posting (status or fields)
 export async function PATCH(req: NextRequest) {
   const { error } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER')
   if (error) return error
   try {
-    const { id, ...data } = await req.json()
+    const body = await req.json()
+    const { id } = body
     if (!id) return NextResponse.json({ error: 'ID required' }, { status: 400 })
 
-    const update: Record<string, unknown> = { ...data }
-    if (data.salaryMin !== undefined) update.salaryMin = data.salaryMin ? Number(data.salaryMin) : null
-    if (data.salaryMax !== undefined) update.salaryMax = data.salaryMax ? Number(data.salaryMax) : null
-    if (data.status === 'CLOSED') update.closedAt = new Date()
+    const updateData: Record<string, unknown> = {}
+    for (const key of ALLOWED_PATCH_FIELDS) {
+      if (key in body) updateData[key] = body[key]
+    }
+    if ('salaryMin' in updateData) updateData.salaryMin = updateData.salaryMin ? Number(updateData.salaryMin) : null
+    if ('salaryMax' in updateData) updateData.salaryMax = updateData.salaryMax ? Number(updateData.salaryMax) : null
+    if (updateData.status === 'CLOSED') updateData.closedAt = new Date()
 
-    const job = await db.jobPosting.update({ where: { id }, data: update })
+    const job = await db.jobPosting.update({ where: { id }, data: updateData })
     return NextResponse.json({ ok: true, job })
   } catch (e) {
     console.error('[recruitment] PATCH failed:', e)

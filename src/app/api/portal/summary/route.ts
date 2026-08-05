@@ -75,7 +75,7 @@ export async function GET() {
           ? db.employee.count({ where: { accountId, employeeType: 'internal', status: { in: ['APPROVED', 'ACTIVE'] } } })
           : Promise.resolve(0),
         isHrms
-          ? db.leave.count({ where: { status: 'PENDING' } })
+          ? db.leave.count({ where: { status: 'PENDING', accountId } })
           : Promise.resolve(0),
         db.notification.count({
           where: {

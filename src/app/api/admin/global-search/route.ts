@@ -6,7 +6,7 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 export async function GET(req: NextRequest) {
-  const { error } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER')
+  const { error, cu } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER')
   if (error) return error
   try {
     const q = req.nextUrl.searchParams.get('q') || ''
@@ -14,10 +14,12 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ results: {} })
     }
     const term = q.trim()
+    const accountId = cu.user.accountId
 
     const [employees, clients, projects, vendors, candidates, assets] = await Promise.all([
       db.employee.findMany({
         where: {
+          accountId,
           OR: [
             { fullName: { contains: term } },
             { email: { contains: term } },
@@ -29,6 +31,7 @@ export async function GET(req: NextRequest) {
       }),
       db.client.findMany({
         where: {
+          accountId,
           OR: [
             { clientName: { contains: term } },
             { companyName: { contains: term } },
@@ -40,6 +43,7 @@ export async function GET(req: NextRequest) {
       }),
       db.project.findMany({
         where: {
+          accountId,
           OR: [
             { projectName: { contains: term } },
             { description: { contains: term } },
@@ -48,6 +52,8 @@ export async function GET(req: NextRequest) {
         take: 10,
         select: { id: true, projectName: true, status: true, site: true },
       }),
+      // NOTE: Vendor model has no accountId field — cannot scope to tenant.
+      // Kept unscoped until schema is updated with tenant isolation.
       db.vendor.findMany({
         where: {
           OR: [
@@ -59,6 +65,8 @@ export async function GET(req: NextRequest) {
         take: 10,
         select: { id: true, vendorName: true, companyName: true, category: true, status: true },
       }),
+      // NOTE: Candidate model has no accountId field — cannot scope to tenant.
+      // Kept unscoped until schema is updated with tenant isolation.
       db.candidate.findMany({
         where: {
           OR: [
@@ -70,6 +78,8 @@ export async function GET(req: NextRequest) {
         take: 10,
         select: { id: true, fullName: true, email: true, status: true, currentCompany: true },
       }),
+      // NOTE: Asset model has no accountId field — cannot scope to tenant.
+      // Kept unscoped until schema is updated with tenant isolation.
       db.asset.findMany({
         where: {
           OR: [

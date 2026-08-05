@@ -74,21 +74,27 @@ export async function POST(req: NextRequest) {
   }
 }
 
+const ALLOWED_PATCH_FIELDS = ['task', 'category', 'dueDate', 'status', 'notes']
+
 // PATCH — update task (status, notes, etc.)
 export async function PATCH(req: NextRequest) {
   const { error } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER')
   if (error) return error
   try {
-    const { id, ...data } = await req.json()
+    const body = await req.json()
+    const { id } = body
     if (!id) return NextResponse.json({ error: 'ID required' }, { status: 400 })
 
-    const update: Record<string, unknown> = { ...data }
-    if (data.dueDate) update.dueDate = new Date(data.dueDate)
-    if (data.status === 'COMPLETED') {
-      update.completedAt = new Date()
+    const updateData: Record<string, unknown> = {}
+    for (const key of ALLOWED_PATCH_FIELDS) {
+      if (key in body) updateData[key] = body[key]
+    }
+    if ('dueDate' in updateData && updateData.dueDate) updateData.dueDate = new Date(updateData.dueDate as string)
+    if (updateData.status === 'COMPLETED') {
+      updateData.completedAt = new Date()
     }
 
-    const task = await db.offboardingTask.update({ where: { id }, data: update })
+    const task = await db.offboardingTask.update({ where: { id }, data: updateData })
     return NextResponse.json({ ok: true, task })
   } catch (e) {
     console.error('[offboarding] PATCH failed:', e)

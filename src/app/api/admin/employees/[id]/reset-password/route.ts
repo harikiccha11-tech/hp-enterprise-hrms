@@ -1,17 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { hashPassword, audit } from '@/lib/auth'
+import { hashPassword, generateSecureTempPassword, audit } from '@/lib/auth'
 import { requireRole } from '@/lib/guards'
 import { notify } from '@/lib/notify'
 
 export const runtime = 'nodejs'
 
-function genTempPassword(): string {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789@#$'
-  let p = ''
-  for (let i = 0; i < 12; i++) p += chars[Math.floor(Math.random() * chars.length)]
-  return p
-}
+
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { error, cu } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER')
@@ -20,7 +15,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const { id } = await params
     const emp = await db.employee.findUnique({ where: { id }, include: { user: true } })
     if (!emp || !emp.user) return NextResponse.json({ error: 'No login account for this employee' }, { status: 400 })
-    const tempPassword = genTempPassword()
+    const tempPassword = generateSecureTempPassword()
     await db.user.update({
       where: { id: emp.user.id },
       data: { passwordHash: await hashPassword(tempPassword), mustResetPassword: true, locked: false },

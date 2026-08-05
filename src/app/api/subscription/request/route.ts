@@ -1,9 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
 
 export const runtime = 'nodejs'
 
+// Rate limit: 5 submissions per hour per IP
+const MAX_SUBMISSIONS = 5
+const WINDOW_MS = 60 * 60 * 1000
+
 export async function POST(req: NextRequest) {
+  // Rate limiting
+  const ip = getClientIp(req)
+  if (!checkRateLimit(`subscription:${ip}`, MAX_SUBMISSIONS, WINDOW_MS)) {
+    return NextResponse.json(
+      { error: 'Too many requests. Please try again later.' },
+      { status: 429 }
+    )
+  }
+
   try {
     const body = await req.json()
     const { type, companyName, contactName, email, phone, address, plan, employeeCount, message } = body

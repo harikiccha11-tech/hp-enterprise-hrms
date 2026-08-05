@@ -77,13 +77,23 @@ export async function POST(req: NextRequest) {
   } catch (e) { return NextResponse.json({ error: 'Failed' }, { status: 500 }) }
 }
 
+const ALLOWED_PATCH_FIELDS = ['clientName', 'companyName', 'gst', 'email', 'phone', 'address', 'contacts']
+
 export async function PATCH(req: NextRequest) {
   const { error, cu } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER')
   if (error) return error
   try {
-    const { id, ...data } = await req.json()
-    if (data.contacts) data.contactsJson = JSON.stringify(data.contacts); delete data.contacts
-    const client = await db.client.update({ where: { id }, data })
+    const body = await req.json()
+    const { id } = body
+    const updateData: Record<string, unknown> = {}
+    for (const key of ALLOWED_PATCH_FIELDS) {
+      if (key in body) updateData[key] = body[key]
+    }
+    if ('contacts' in updateData) {
+      updateData.contactsJson = JSON.stringify(updateData.contacts)
+      delete updateData.contacts
+    }
+    const client = await db.client.update({ where: { id }, data: updateData })
     await audit(cu!.user.id, 'UPDATE_CLIENT', 'Client', id)
     return NextResponse.json({ ok: true, client })
   } catch (e) { return NextResponse.json({ error: 'Failed' }, { status: 500 }) }

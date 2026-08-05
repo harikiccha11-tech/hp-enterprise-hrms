@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url)
     const status = searchParams.get('status')
 
-    const where: Record<string, unknown> = {}
+    const where: Record<string, unknown> = { accountId: cu.user.accountId }
     if (status && status !== 'ALL') where.status = status
     if (cu.user.role === 'EMPLOYEE') where.employeeId = cu.user.employee?.id
 
@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
         },
       })
       // notify admins
-      const admins = await db.user.findMany({ where: { role: { in: ['OWNER', 'SUPER_ADMIN', 'HR_MANAGER'] } } })
+      const admins = await db.user.findMany({ where: { role: { in: ['OWNER', 'SUPER_ADMIN', 'HR_MANAGER'] }, accountId: cu.user.accountId } })
       for (const a of admins) {
         await notify(
           a.id,

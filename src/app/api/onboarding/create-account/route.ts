@@ -1,10 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { hashPassword, createSessionToken, setSessionCookie, audit } from '@/lib/auth'
+import { hashPassword, audit, getSession } from '@/lib/auth'
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
 
 export const runtime = 'nodejs'
 
+// Rate limit: 3 account creation attempts per hour per IP
+const MAX_ACCOUNT_CREATIONS = 3
+const WINDOW_MS = 60 * 60 * 1000
+
 export async function POST(req: NextRequest) {
+  // Rate limiting first — before any auth check
+  const ip = getClientIp(req)
+  if (!checkRateLimit(`onboarding:${ip}`, MAX_ACCOUNT_CREATIONS, WINDOW_MS)) {
+    return NextResponse.json(
+      { error: 'Too many account creation attempts. Please try again later.' },
+      { status: 429 }
+    )
+  }
+
+  // Auth check — only authenticated OWNER or SUPER_ADMIN can create new tenant accounts
+  const session = await getSession()
+  if (!session || (session.role !== 'OWNER' && session.role !== 'SUPER_ADMIN')) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   try {
     const body = await req.json()
     const {
@@ -63,7 +83,7 @@ export async function POST(req: NextRequest) {
         role: 'SUPER_ADMIN',
         accountId: account.id,
         clientRole: 'admin',
-        mustResetPassword: false,
+        mustResetPassword: true,
       },
     })
 
@@ -81,29 +101,12 @@ export async function POST(req: NextRequest) {
       },
     })
 
-    const token = await createSessionToken({
-      userId: user.id,
-      username: user.username,
-      role: user.role as 'OWNER' | 'SUPER_ADMIN' | 'HR_MANAGER' | 'EMPLOYEE' | 'CLIENT',
-      accountId: account.id,
-      accountType: account.accountType,
-      clientRole: user.clientRole,
-    })
-    await setSessionCookie(token)
-
-    try { await audit(user.id, 'ACCOUNT_CREATED', 'Account', account.id) } catch {}
+    // Do NOT auto-login — new admin must authenticate separately
+    try { await audit(session.userId, 'ACCOUNT_CREATED', 'Account', account.id) } catch {}
 
     return NextResponse.json({
       success: true,
-      user: {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        role: user.role,
-        accountId: account.id,
-        accountType: account.accountType,
-        clientRole: user.clientRole,
-      },
+      message: 'Account created successfully. The new administrator will receive login credentials.',
       account: {
         id: account.id,
         organizationName: account.organizationName,

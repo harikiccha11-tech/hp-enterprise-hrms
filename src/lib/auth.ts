@@ -8,8 +8,15 @@ import * as bcrypt from 'bcryptjs'
 export { audit } from './audit'
 
 const SESSION_COOKIE = 'hpe_session'
+
+if (!process.env.JWT_SECRET) {
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('JWT_SECRET environment variable is required in production')
+  }
+  console.warn('[SECURITY] JWT_SECRET not set — using development fallback. NEVER use this in production.')
+}
 const SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'hpe-hrms-dev-secret-change-in-production-0123456789'
+  process.env.JWT_SECRET || 'hphrms-dev-fallback-NEVER-USE-IN-PRODUCTION'
 )
 
 export const SESSION_MAX_AGE = 60 * 60 * 24 * 7 // 7 days
@@ -97,7 +104,7 @@ export async function setSessionCookie(token: string) {
   const c = await cookies()
   c.set(SESSION_COOKIE, token, {
     httpOnly: true,
-    secure: false,
+    secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
     path: '/',
     maxAge: SESSION_MAX_AGE,
@@ -162,4 +169,29 @@ export function canChangeSettings(role: string) {
 }
 export function canManageUsers(role: string) {
   return role === 'OWNER'
+}
+
+/** Generate a cryptographically secure temporary password */
+export function generateSecureTempPassword(length = 12): string {
+  const upper = 'ABCDEFGHJKMNPQRSTUVWXYZ'  // no I, O, L
+  const lower = 'abcdefghjkmnpqrstuvwxyz'  // no i, o, l
+  const digits = '23456789'                 // no 0, 1
+  const special = '!@#$%&*'
+  const all = upper + lower + digits + special
+  const arr = new Uint8Array(length)
+  crypto.getRandomValues(arr)
+  // Ensure at least one of each category
+  const chars: string[] = [
+    upper[arr[0] % upper.length],
+    lower[arr[1] % lower.length],
+    digits[arr[2] % digits.length],
+    special[arr[3] % special.length],
+  ]
+  for (let i = 4; i < length; i++) chars.push(all[arr[i] % all.length])
+  // Shuffle
+  for (let i = chars.length - 1; i > 0; i--) {
+    const j = arr[i % length] % (i + 1)
+    ;[chars[i], chars[j]] = [chars[j], chars[i]]
+  }
+  return chars.join('')
 }

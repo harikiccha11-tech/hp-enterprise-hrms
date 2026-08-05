@@ -6,9 +6,10 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
-  const { error } = await requireRole('OWNER', 'SUPER_ADMIN')
+  const { error, cu } = await requireRole('OWNER', 'SUPER_ADMIN')
   if (error) return error
   try {
+    const accountId = cu.user.accountId
     const now = new Date()
     const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000)
 
@@ -17,6 +18,7 @@ export async function GET() {
       where: {
         action: 'FAILED_LOGIN',
         at: { gte: twentyFourHoursAgo },
+        accountId,
       },
     })
 
@@ -25,6 +27,7 @@ export async function GET() {
       where: {
         action: 'LOGIN',
         at: { gte: twentyFourHoursAgo },
+        accountId,
       },
     })
 
@@ -32,12 +35,13 @@ export async function GET() {
     const activeSessions = await db.user.count({
       where: {
         lastLoginAt: { gte: twentyFourHoursAgo },
+        accountId,
       },
     })
 
     // Locked accounts
     const lockedAccounts = await db.user.count({
-      where: { locked: true },
+      where: { locked: true, accountId },
     })
 
     // Total security events in last 24h
@@ -45,6 +49,7 @@ export async function GET() {
       where: {
         action: { in: ['LOGIN', 'FAILED_LOGIN', 'LOGOUT', 'SECURITY'] },
         at: { gte: twentyFourHoursAgo },
+        accountId,
       },
     })
 
@@ -52,6 +57,7 @@ export async function GET() {
     const recentLogs = await db.auditLog.findMany({
       where: {
         action: { in: ['LOGIN', 'FAILED_LOGIN', 'LOGOUT', 'SECURITY'] },
+        accountId,
       },
       take: 50,
       orderBy: { at: 'desc' },

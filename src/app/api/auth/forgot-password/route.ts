@@ -1,10 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { hashPassword, audit } from '@/lib/auth'
+import { hashPassword, generateSecureTempPassword, audit } from '@/lib/auth'
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
 
 export const runtime = 'nodejs'
 
+// Rate limit: 5 resets per hour per IP
+const MAX_RESETS = 5
+const WINDOW_MS = 60 * 60 * 1000
+
 export async function POST(req: NextRequest) {
+  // Rate limiting
+  const ip = getClientIp(req)
+  if (!checkRateLimit(`forgot-pw:${ip}`, MAX_RESETS, WINDOW_MS)) {
+    return NextResponse.json(
+      { error: 'Too many password reset attempts. Please try again later.' },
+      { status: 429 }
+    )
+  }
+
   try {
     const { username } = await req.json()
     if (!username) {
@@ -16,8 +30,7 @@ export async function POST(req: NextRequest) {
     if (!user) {
       return NextResponse.json({ ok: true, message: 'If an account exists with that username, the password has been reset. Please contact admin for the new password.' })
     }
-    const chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#'
-    const tempPassword = 'Temp@' + Array.from({ length: 8 }, () => chars[Math.floor(Math.random() * chars.length)]).join('')
+    const tempPassword = generateSecureTempPassword()
     const hash = await hashPassword(tempPassword)
     await db.user.update({
       where: { id: user.id },
