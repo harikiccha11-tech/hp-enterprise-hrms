@@ -118,8 +118,8 @@ function Header({ docTitle, refNo, date }: { docTitle: string; refNo: string; da
 function Footer() {
   return (
     <View style={brandStyles.footer} fixed>
-      <Text>HP ENTERPRISE • JeevaGurunadan Building, Kalkere Market Road, Ramamurthy Nagar, Bengaluru – 560016, Karnataka, India</Text>
-      <Text>hr@hpenterprise.co.in • www.hpenterprise.co.in • GSTIN: 29ANZPH4067Q1ZS • UDYAM: UDYAM-KR-10-0014648</Text>
+      <Text>HP ENTERPRISE • Venkateshwara Nilaya Building, Behind Hanuman Mandir, Nagenahalli, Hosadurga Taluk, Chitradurga – 577515, Karnataka, India</Text>
+      <Text>hpenterpriseofficial11@gmail.com • hpserve.site • GSTIN: 29ANZPH4067Q1ZS • UDYAM: UDYAM-KR-10-0014648</Text>
     </View>
   )
 }
@@ -238,7 +238,7 @@ export function IdCardDoc(m: DocMeta) {
             </View>
           </View>
           <View style={{ backgroundColor: NAVY_LIGHT, paddingVertical: 8, paddingHorizontal: 18, borderTopWidth: 1, borderTopColor: GOLD }}>
-            <Text style={{ color: GOLD_LIGHT, fontSize: 7, textAlign: 'center', letterSpacing: 1 }}>IF FOUND, PLEASE RETURN TO HP ENTERPRISE • PLOT 14, TECH PARK PHASE II, WHITEFIELD, BENGALURU 560066</Text>
+            <Text style={{ color: GOLD_LIGHT, fontSize: 7, textAlign: 'center', letterSpacing: 1 }}>IF FOUND, PLEASE RETURN TO HP ENTERPRISE • VENKATESHWARA NILAYA BUILDING, BEHIND HANUMAN MANDIR, NAGENAHALLI, HOSADURGA TALUK, CHITRADURGA 577515</Text>
           </View>
         </View>
         <Text style={{ fontSize: 8, color: MUTED, textAlign: 'center', marginTop: 16, marginHorizontal: 80 }}>
@@ -368,8 +368,8 @@ export function InvoiceDoc(m: {
           <View style={{ flex: 1 }}>
             <Text style={{ ...brandStyles.sectionTitle, marginTop: 0, marginBottom: 6 }}>From</Text>
             <Text style={{ ...brandStyles.body, marginBottom: 2, fontSize: 9.5 }}>HP ENTERPRISE</Text>
-            <Text style={{ ...brandStyles.body, marginBottom: 2, fontSize: 9 }}>Plot 14, Tech Park Phase II, Whitefield</Text>
-            <Text style={{ ...brandStyles.body, marginBottom: 2, fontSize: 9 }}>Bengaluru, Karnataka 560066</Text>
+            <Text style={{ ...brandStyles.body, marginBottom: 2, fontSize: 9 }}>Venkateshwara Nilaya Building, Behind Hanuman Mandir</Text>
+            <Text style={{ ...brandStyles.body, marginBottom: 2, fontSize: 9 }}>Nagenahalli, Hosadurga Taluk, Chitradurga, Karnataka 577515</Text>
             <Text style={{ ...brandStyles.body, fontSize: 9 }}>GST: 29ANZPH4067Q1ZS</Text>
           </View>
           <View style={{ flex: 1 }}>

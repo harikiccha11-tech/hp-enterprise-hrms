@@ -941,3 +941,36 @@ Stage Summary:
 - 5 unpushed commits were the root cause of 'not updated'
 - All fixes now live on hphrms.com
 - Vercel deployment successful via git push
+---
+Task ID: 11
+Agent: Main
+Task: Add 8 new sections to Landing.tsx (About, How It Works, Industries, Tech & Security, Pricing, FAQ, Contact, Newsletter)
+
+Work Log:
+- Read full Landing.tsx (1179 lines) to understand existing structure and design system
+- Read constants.ts for BRAND, SOCIAL, TRUST_BADGES data
+- Added 11 new icon imports: CalendarDays, UserPlus, CheckCircle2, HardHat, Factory, Landmark, Hammer, Stethoscope, Monitor, Cloud, Database, Activity, Code2, ChevronDown, MessageSquare
+- Added 5 new data constants: STEPS_DATA (4 steps), INDUSTRIES_DATA (8 industries), TECH_DATA (6 tech cards), PRICING_TIERS (4 plans), FAQ_DATA (8 Q&As)
+- Added 3 helper components: FaqAccordion (expandable accordion with AnimatePresence), ContactForm (validated form posting to /api/subscription/request), NewsletterForm (email subscribe posting to /api/subscription/request with type=newsletter)
+- Inserted 8 new sections between Data Access Separation and Trust sections:
+  1. About The Company (id=about) — company info with legal IDs (GSTIN, UDYAM, PAN)
+  2. How It Works (no id, reachable via modes) — 4-step horizontal timeline with connecting line
+  3. Industries We Serve (id=industries) — 8 industry cards in 4-col grid
+  4. Technology & Security (no id) — 6 tech/security cards in 3-col grid
+  5. Pricing Teaser (id=pricing) — 4 plan badges + CTA + note
+  6. FAQ (id=faq) — 8-item expandable accordion with ChevronDown rotation
+  7. Contact (id=contact) — 3-column layout (details, form, quick links)
+  8. Newsletter — dark navy bar with email input + subscribe button
+- Added 'faq' and 'contact' to NAV_LINKS array (desktop + mobile nav)
+- Footer nav automatically picks up new links via NAV_LINKS
+- All sections use existing design system (C colors, fontDisplay, fontBody, fontMono, Reveal, motion)
+- Sections alternate between C.paper and C.ledgerW backgrounds
+- ESLint: 0 errors, 0 warnings
+- File grew from 1179 to 1654 lines
+
+Stage Summary:
+- 8 new landing page sections added without breaking existing code
+- 3 new inline components (FaqAccordion, ContactForm, NewsletterForm)
+- 2 new nav items (FAQ, Contact) in both desktop and mobile navigation
+- All sections use real BRAND data, no fake testimonials/stats/awards
+- Clean lint pass with zero errors

@@ -22,10 +22,10 @@ async function main() {
       billingPhone: '+91 80737 48271',
       gstNumber: '29ANZPH4067Q1ZS',
       panNumber: 'ANZPH4067Q',
-      billingAddress: 'JeevaGurunadan Building, Kalkere Market Road, Ramamurthy Nagar, Bengaluru – 560016',
-      city: 'Bengaluru',
+      billingAddress: 'Venkateshwara Nilaya Building, Behind Hanuman Mandir, Nagenahalli, Hosadurga Taluk, Chitradurga – 577515',
+      city: 'Chitradurga',
       state: 'Karnataka',
-      pincode: '560016',
+      pincode: '577515',
       notes: 'HP Enterprise — Flagship account. Hybrid mode: HRMS SaaS + Manpower Supply.',
     },
   })
@@ -172,8 +172,8 @@ async function main() {
 
   // ─── Branch Offices ────────────────────────────────
   const branches = [
-    { name: 'Head Office — Bengaluru', code: 'HO-BLR', address: 'JeevaGurunadan Building, Kalkere Market Road, Ramamurthy Nagar', city: 'Bengaluru', state: 'Karnataka', pincode: '560016', phone: '+91 80737 48271', isHead: true },
-    { name: 'Branch Office — Chitradurga', code: 'BR-CDG', address: 'Venkateshwara Nilaya Building, Behind Hanuman Mandir, Nagenahalli, Hosadurga Taluk', city: 'Chitradurga', state: 'Karnataka', pincode: '577515', isHead: false },
+    { name: 'Head Office — Chitradurga', code: 'HO-CDG', address: 'Venkateshwara Nilaya Building, Behind Hanuman Mandir, Nagenahalli, Hosadurga Taluk', city: 'Chitradurga', state: 'Karnataka', pincode: '577515', phone: '+91 80737 48271', isHead: true },
+    { name: 'Branch Office — Bengaluru', code: 'BR-BLR', address: 'Kalkere Market Road, Ramamurthy Nagar', city: 'Bengaluru', state: 'Karnataka', pincode: '560016', isHead: false },
   ]
   for (const branch of branches) {
     await prisma.branch.upsert({

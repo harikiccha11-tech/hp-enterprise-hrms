@@ -21,7 +21,10 @@ import {
   Sparkles, Check, Bot, Menu, X, Phone, Mail, MapPin, ChevronRight,
   Send, Loader2, Eye, EyeOff, User as UserIcon, Zap, BarChart3,
   ClipboardList, Brain, FileSearch, Bell, Settings, Briefcase,
-  LayoutDashboard, UserCheck, ExternalLink,
+  LayoutDashboard, UserCheck, ExternalLink, MessageSquare,
+  CalendarDays, UserPlus, CheckCircle2, HardHat, Factory,
+  Landmark, Hammer, Stethoscope, Monitor, Cloud, Database,
+  Activity, Code2, ChevronDown,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -173,7 +176,7 @@ const MUSTER_DATA: MusterRow[] = [
 const THREE_MODES = [
   { tag: 'Mode 1', label: 'HRMS SAAS', title: 'You employ them', desc: 'Your permanent staff, your payroll, your data. HPHRMS is the software you run it on.',
     items: ['Full employee lifecycle', 'Payroll with PF, ESI and TDS', 'Attendance, leave, performance', 'Recruitment and onboarding', 'You own every record'] },
-  { tag: 'Mode 2', label: 'MANPOWER SUPPLY', title: 'HP Enterprise employs them', desc: 'We supply the workforce and carry the statutory liability. You see the work, not our cost sheet.',
+  { tag: 'Mode 2', label: 'MANPOWER SUPPLY', title: 'HP ENTERPRISE employs them', desc: 'We supply the workforce and carry the statutory liability. You see the work, not our cost sheet.',
     items: ['Who is deployed, at which site', 'Site-wise daily attendance', 'Timesheets you approve', 'Invoices and payment status', 'No access to worker salaries'] },
   { tag: 'Mode 3', label: 'HYBRID', title: 'Both, kept separate', desc: '80 of your own people and 20 of ours, in one portal, with two sets of permissions.',
     items: ['Internal staff on full HRMS', 'Contract workers on deployment view', 'Payroll runs only on your staff', 'Invoices raised only on ours', 'No accidental crossover'] },
@@ -251,6 +254,66 @@ const CLIENT_SEES = [
   { text: 'Invoices and payment history', visible: true },
   { text: 'Worker salaries', visible: false },
   { text: 'Your cost or margin', visible: false },
+]
+
+/* ═══════════════════════════════════════════════════════
+   DATA: How It Works Steps
+   ═══════════════════════════════════════════════════════ */
+const STEPS_DATA = [
+  { num: '01', title: 'Book a Demo', icon: CalendarDays, desc: 'A 30-minute walkthrough on your own site data.' },
+  { num: '02', title: 'Workspace Setup', icon: Settings, desc: 'Your company workspace is created with your branding.' },
+  { num: '03', title: 'Onboard & Configure', icon: UserPlus, desc: 'Add employees, import data, configure modules.' },
+  { num: '04', title: 'Go Live', icon: CheckCircle2, desc: 'Start operations with full AI-powered support.' },
+]
+
+/* ═══════════════════════════════════════════════════════
+   DATA: Industries
+   ═══════════════════════════════════════════════════════ */
+const INDUSTRIES_DATA = [
+  { name: 'Construction & Infrastructure', icon: HardHat, desc: 'Site attendance, muster rolls, contract labour compliance and safety training.' },
+  { name: 'Manufacturing', icon: Factory, desc: 'Shift rosters, production-linked attendance, statutory payroll and OT tracking.' },
+  { name: 'Oil & Gas / Energy', icon: Zap, desc: 'High-safety environments, permit-to-work tracking and multi-site workforce management.' },
+  { name: 'Facilities Management', icon: Building2, desc: 'Deployed workforce tracking, SLA monitoring and vendor coordination.' },
+  { name: 'Government & PSUs', icon: Landmark, desc: 'Compliance-heavy environments, audit-ready documentation and multi-branch operations.' },
+  { name: 'Mining & Minerals', icon: Hammer, desc: 'Remote site attendance, safety compliance and contractor workforce management.' },
+  { name: 'Healthcare & Pharma', icon: Stethoscope, desc: 'Shift scheduling for clinical staff, training compliance and document management.' },
+  { name: 'IT & ITES', icon: Monitor, desc: 'Employee self-service, leave management, payroll and performance analytics.' },
+]
+
+/* ═══════════════════════════════════════════════════════
+   DATA: Technology & Security
+   ═══════════════════════════════════════════════════════ */
+const TECH_DATA = [
+  { title: 'Data hosted in India', icon: Cloud, desc: 'Mumbai region. Your data never leaves Indian shores.' },
+  { title: 'AI-Powered', icon: Sparkles, desc: 'HPAI reads your records, not the internet. Scoped per company.' },
+  { title: 'Bank-grade Security', icon: Lock, desc: 'Encrypted at rest and in transit. JWT authentication.' },
+  { title: 'Multi-Tenant Isolation', icon: Database, desc: "Every company's data is walled off. Zero crossover." },
+  { title: 'Real-time Processing', icon: Activity, desc: 'Live attendance, instant notifications, real-time dashboards.' },
+  { title: 'API-First Architecture', icon: Code2, desc: 'RESTful APIs for integrations with your existing tools.' },
+]
+
+/* ═══════════════════════════════════════════════════════
+   DATA: Pricing Tiers
+   ═══════════════════════════════════════════════════════ */
+const PRICING_TIERS = [
+  { name: 'Starter', desc: 'Core HRMS for small teams getting started with digital workforce management.' },
+  { name: 'Standard', desc: 'Full payroll, attendance and compliance for growing organisations.' },
+  { name: 'Professional', desc: 'AI-powered analytics, multi-branch and manpower supply mode.' },
+  { name: 'Enterprise', desc: 'Custom integrations, dedicated support and full platform access.' },
+]
+
+/* ═══════════════════════════════════════════════════════
+   DATA: FAQ
+   ═══════════════════════════════════════════════════════ */
+const FAQ_DATA = [
+  { q: 'What is HPHRMS?', a: 'HPHRMS is an AI-powered Enterprise SaaS platform by HP ENTERPRISE that manages the complete employee lifecycle — from recruitment and onboarding to payroll, compliance and analytics. It handles both permanent staff and contract workers on a single platform.' },
+  { q: 'Who is HPHRMS for?', a: 'Any organisation that manages a workforce: manufacturing, construction, IT, healthcare, government, facilities management, and more. Available PAN India.' },
+  { q: "Is my company's data secure?", a: "Every company's data is isolated in a separate tenant. Data is encrypted at rest and in transit, hosted in India (Mumbai region), and accessible only through role-based access controls." },
+  { q: 'What compliance does HPHRMS handle?', a: 'PF, ESI, Gratuity, Professional Tax, CLRA, BOCW, Factories Act, and Maternity Benefit Act — all built into the payroll engine, not bolted on.' },
+  { q: 'How long does onboarding take?', a: 'Most organisations go live within 1-2 weeks. Our team handles data migration, configuration and training.' },
+  { q: 'Can I use HPHRMS for contract workers only?', a: 'Yes. HPHRMS has a dedicated Manpower Supply mode that manages deployed workers, site attendance, timesheets and invoicing — without exposing your cost structure.' },
+  { q: 'What is HPAI Chat?', a: "HPAI is our built-in AI assistant that reads your own company data and answers questions in plain language. It can explain payroll, spot attendance patterns, draft documents and generate reports — scoped to each user's permissions." },
+  { q: 'Where is my data hosted?', a: 'All data is hosted in India on a Mumbai-region cloud infrastructure. Your data never leaves Indian jurisdiction.' },
 ]
 
 /* ═══════════════════════════════════════════════════════
@@ -540,6 +603,144 @@ function SubscriptionForm({ onBack }: { onBack: () => void }) {
 }
 
 /* ═══════════════════════════════════════════════════════
+   FAQ ACCORDION
+   ═══════════════════════════════════════════════════════ */
+function FaqAccordion() {
+  const [openIndex, setOpenIndex] = useState<number | null>(null)
+  return (
+    <div className="mt-8 sm:mt-10 max-w-3xl mx-auto">
+      {FAQ_DATA.map((item, i) => {
+        const isOpen = openIndex === i
+        return (
+          <Reveal key={i} delay={0.1 + i * 0.03}>
+            <div className="border-b last:border-b-0" style={{ borderColor: C.ruleSoft }}>
+              <button
+                onClick={() => setOpenIndex(isOpen ? null : i)}
+                className="w-full flex items-start justify-between gap-4 py-4 sm:py-5 text-left group"
+                aria-expanded={isOpen}
+              >
+                <span className="text-[14.5px] sm:text-[15px] font-semibold leading-[1.45]" style={{ color: C.ink, ...fontDisplay }}>{item.q}</span>
+                <motion.span
+                  animate={{ rotate: isOpen ? 180 : 0 }}
+                  transition={{ duration: 0.25 }}
+                  className="shrink-0 mt-1"
+                >
+                  <ChevronDown className="h-4 w-4" style={{ color: C.inkSoft }} />
+                </motion.span>
+              </button>
+              <AnimatePresence initial={false}>
+                {isOpen && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                    className="overflow-hidden"
+                  >
+                    <p className="pb-5 text-[13.5px] sm:text-[14px] leading-[1.65] max-w-[62ch]" style={{ color: C.inkSoft }}>{item.a}</p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </Reveal>
+        )
+      })}
+    </div>
+  )
+}
+
+/* ═══════════════════════════════════════════════════════
+   CONTACT FORM (inline)
+   ═══════════════════════════════════════════════════════ */
+function ContactForm() {
+  const [form, setForm] = useState({ name: '', email: '', phone: '', message: '' })
+  const [loading, setLoading] = useState(false)
+  const update = (k: string, v: string) => setForm((p) => ({ ...p, [k]: v }))
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!form.name.trim() || !form.email.trim() || !form.message.trim()) { toast.error('Please fill required fields'); return }
+    setLoading(true)
+    try {
+      const res = await fetch('/api/subscription/request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contactName: form.name, email: form.email, phone: form.phone, message: form.message, type: 'contact' }),
+      })
+      const data = await res.json()
+      if (res.ok) { toast.success('Message sent! We will get back to you soon.'); setForm({ name: '', email: '', phone: '', message: '' }) }
+      else { toast.error(data.error || 'Failed to send message') }
+    } catch { toast.error('Network error. Please try again.') } finally { setLoading(false) }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-3.5">
+      <div className="space-y-1.5">
+        <Label className="text-[11px] font-semibold" style={{ ...fontMono, color: C.inkSoft }}>Name *</Label>
+        <Input placeholder="Your name" value={form.name} onChange={(e) => update('name', e.target.value)} className="h-9 text-sm rounded-md" />
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+        <div className="space-y-1.5">
+          <Label className="text-[11px] font-semibold" style={{ ...fontMono, color: C.inkSoft }}>Email *</Label>
+          <Input type="email" placeholder="email@company.com" value={form.email} onChange={(e) => update('email', e.target.value)} className="h-9 text-sm rounded-md" />
+        </div>
+        <div className="space-y-1.5">
+          <Label className="text-[11px] font-semibold" style={{ ...fontMono, color: C.inkSoft }}>Phone</Label>
+          <Input placeholder="+91 XXXXX XXXXX" value={form.phone} onChange={(e) => update('phone', e.target.value)} className="h-9 text-sm rounded-md" />
+        </div>
+      </div>
+      <div className="space-y-1.5">
+        <Label className="text-[11px] font-semibold" style={{ ...fontMono, color: C.inkSoft }}>Message *</Label>
+        <Textarea placeholder="How can we help?" rows={3} value={form.message} onChange={(e) => update('message', e.target.value)} className="text-sm rounded-md" />
+      </div>
+      <Button type="submit" className="w-full h-9 text-sm font-semibold rounded-md text-white" style={{ background: C.ink }} disabled={loading}>
+        {loading ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <Send className="mr-2 h-3.5 w-3.5" />}Send Message
+      </Button>
+    </form>
+  )
+}
+
+/* ═══════════════════════════════════════════════════════
+   NEWSLETTER FORM
+   ═══════════════════════════════════════════════════════ */
+function NewsletterForm() {
+  const [email, setEmail] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!email.trim()) { toast.error('Please enter your email'); return }
+    setLoading(true)
+    try {
+      const res = await fetch('/api/subscription/request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, type: 'newsletter' }),
+      })
+      const data = await res.json()
+      if (res.ok) { toast.success('Subscribed!'); setEmail('') }
+      else { toast.error(data.error || 'Failed to subscribe') }
+    } catch { toast.error('Network error. Please try again.') } finally { setLoading(false) }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="flex gap-2 w-full max-w-sm">
+      <Input
+        type="email"
+        placeholder="Enter your email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        className="h-9 text-sm rounded-md bg-transparent border-white/20 text-white placeholder:text-white/40 focus-visible:ring-white/30"
+        required
+      />
+      <Button type="submit" className="h-9 px-4 text-sm font-semibold rounded-md shrink-0" style={{ background: C.amber, color: C.inkDeep }} disabled={loading}>
+        {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Subscribe'}
+      </Button>
+    </form>
+  )
+}
+
+/* ═══════════════════════════════════════════════════════
    LAYER TAG COLORS
    ═══════════════════════════════════════════════════════ */
 function layerTagStyle(layer: string) {
@@ -585,6 +786,8 @@ export function Landing() {
     { id: 'modules', label: 'Modules' },
     { id: 'compliance', label: 'Compliance' },
     { id: 'separation', label: 'Data access' },
+    { id: 'faq', label: 'FAQ' },
+    { id: 'contact', label: 'Contact' },
     { id: 'cta', label: 'Apply' },
   ]
 
@@ -749,7 +952,7 @@ export function Landing() {
                     )}
                     <div className="p-5 flex-1 flex flex-col">
                       <h3 className="text-[15.5px] font-bold tracking-[-0.01em] mb-1.5" style={fontDisplay}>{service}</h3>
-                      <p className="text-[13px] leading-[1.55] flex-1" style={{ color: C.inkSoft }}>{SERVICE_DESC[service] || 'Comprehensive service delivery by HP Enterprise.'}</p>
+                      <p className="text-[13px] leading-[1.55] flex-1" style={{ color: C.inkSoft }}>{SERVICE_DESC[service] || 'Comprehensive service delivery by HP ENTERPRISE.'}</p>
                       <div className="mt-3 flex items-center gap-1.5 text-[12px] font-semibold" style={{ color: C.verify }}>
                         <span style={{ ...fontMono }}>✓</span>
                         <span style={{ ...fontMono }}>Available</span>
@@ -1003,7 +1206,7 @@ export function Landing() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-10 sm:mt-11">
             <Reveal delay={0.15} direction="left">
               <div className="rounded-lg border overflow-hidden" style={{ borderColor: C.rule }}>
-                <div className="px-5 py-3 border-b" style={{ ...fontMono, fontSize: '11px', fontWeight: 600, letterSpacing: '0.09em', textTransform: 'uppercase', background: C.ink, color: '#fff' }}>HP Enterprise sees</div>
+                <div className="px-5 py-3 border-b" style={{ ...fontMono, fontSize: '11px', fontWeight: 600, letterSpacing: '0.09em', textTransform: 'uppercase', background: C.ink, color: '#fff' }}>HP ENTERPRISE sees</div>
                 <ul className="list-none py-2" style={{ background: C.paper }}>
                   {HP_SEES.map((item) => (
                     <li key={item} className="px-5 py-2.5 text-[14px] flex items-center gap-2.5 border-b last:border-b-0" style={{ borderColor: C.ruleSoft }}>
@@ -1029,6 +1232,279 @@ export function Landing() {
                   ))}
                 </ul>
               </div>
+            </Reveal>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── ABOUT THE COMPANY ─── */}
+      <section id="about" className="py-16 sm:py-20 lg:py-[84px] border-b" style={{ borderColor: C.rule, background: C.ledgerW }}>
+        <div className="max-w-[1160px] mx-auto px-5 sm:px-6">
+          <Reveal>
+            <Eyebrow className="mb-3.5">The Company</Eyebrow>
+          </Reveal>
+          <Reveal delay={0.05}>
+            <SectionHeading>Registered. Verified. Accountable.</SectionHeading>
+          </Reveal>
+          <Reveal delay={0.1}>
+            <div className="mt-4 max-w-[60ch]">
+              <p className="leading-[1.72]" style={{ fontSize: '16.5px', color: C.inkSoft }}>
+                HP ENTERPRISE is a registered company in {BRAND.headOffice.state}, providing workforce management software,
+                EHS consultancy, engineering services and manpower supply across India.
+                Headquartered at {BRAND.headOffice.full}, the company operates through
+                a combination of on-site services and its cloud-based SaaS platform, HPHRMS.
+              </p>
+            </div>
+          </Reveal>
+          <Reveal delay={0.15}>
+            <div className="mt-6 flex flex-wrap gap-4 sm:gap-6">
+              {[{ label: 'GSTIN', value: BRAND.gstin }, { label: 'UDYAM', value: BRAND.udyam }, { label: 'PAN', value: BRAND.pan }].map((item) => (
+                <div key={item.label} className="flex items-center gap-2 px-4 py-2 rounded-md border" style={{ borderColor: C.rule, background: C.paper }}>
+                  <span className="text-[10px] font-semibold tracking-[0.1em] uppercase" style={{ ...fontMono, color: C.inkSoft }}>{item.label}</span>
+                  <span className="text-[12px] font-medium" style={{ ...fontMono, color: C.ink }}>{item.value}</span>
+                </div>
+              ))}
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ─── HOW IT WORKS ─── */}
+      <section className="py-16 sm:py-20 lg:py-[84px] border-b" style={{ borderColor: C.rule }}>
+        <div className="max-w-[1160px] mx-auto px-5 sm:px-6">
+          <Reveal>
+            <Eyebrow className="mb-3.5">Getting started</Eyebrow>
+          </Reveal>
+          <Reveal delay={0.05}>
+            <SectionHeading>From demo to go-live in four steps</SectionHeading>
+          </Reveal>
+          <div className="mt-10 sm:mt-11 relative">
+            {/* Connecting line */}
+            <div className="hidden md:block absolute top-[52px] left-[12.5%] right-[12.5%] h-[2px]" style={{ background: C.rule }} />
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 md:gap-4 relative">
+              {STEPS_DATA.map((step, i) => {
+                const Icon = step.icon
+                return (
+                  <Reveal key={step.num} delay={0.12 + i * 0.06}>
+                    <div className="flex flex-col items-center text-center">
+                      <div className="relative z-10 flex h-[64px] w-[64px] items-center justify-center rounded-full border-2 mb-4" style={{ borderColor: C.ink, background: C.paper }}>
+                        <Icon className="h-6 w-6" style={{ color: C.ink }} />
+                      </div>
+                      <span className="text-[11px] font-semibold tracking-[0.1em] mb-2" style={{ ...fontMono, color: C.amber }}>{step.num}</span>
+                      <h3 className="text-[15px] font-bold tracking-[-0.01em] mb-1.5" style={fontDisplay}>{step.title}</h3>
+                      <p className="text-[13px] leading-[1.55] max-w-[22ch]" style={{ color: C.inkSoft }}>{step.desc}</p>
+                    </div>
+                  </Reveal>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── INDUSTRIES WE SERVE ─── */}
+      <section id="industries" className="py-16 sm:py-20 lg:py-[84px] border-b" style={{ borderColor: C.rule, background: C.ledgerW }}>
+        <div className="max-w-[1160px] mx-auto px-5 sm:px-6">
+          <Reveal>
+            <Eyebrow className="mb-3.5">Industries</Eyebrow>
+          </Reveal>
+          <Reveal delay={0.05}>
+            <SectionHeading>Built for the sectors that power India</SectionHeading>
+          </Reveal>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-10 sm:mt-11">
+            {INDUSTRIES_DATA.map((ind, i) => {
+              const Icon = ind.icon
+              return (
+                <Reveal key={ind.name} delay={0.1 + i * 0.04}>
+                  <motion.div className="p-5 rounded-lg border transition-all duration-200 hover:-translate-y-[2px] hover:shadow-[0_8px_24px_-16px_rgba(10,15,30,.2)]"
+                    style={{ background: C.paper, borderColor: C.rule }}
+                    whileHover={{ boxShadow: '0 16px 38px -24px rgba(10,15,30,.4)' }}>
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg mb-3" style={{ background: 'rgba(22,33,62,.08)' }}>
+                      <Icon className="h-[18px] w-[18px]" style={{ color: C.ink }} />
+                    </div>
+                    <h4 className="text-[14.5px] font-semibold mb-1.5" style={fontDisplay}>{ind.name}</h4>
+                    <p className="text-[13px] leading-[1.5]" style={{ color: C.inkSoft }}>{ind.desc}</p>
+                  </motion.div>
+                </Reveal>
+              )
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── TECHNOLOGY & SECURITY ─── */}
+      <section className="py-16 sm:py-20 lg:py-[84px] border-b" style={{ borderColor: C.rule }}>
+        <div className="max-w-[1160px] mx-auto px-5 sm:px-6">
+          <Reveal>
+            <Eyebrow className="mb-3.5">Platform</Eyebrow>
+          </Reveal>
+          <Reveal delay={0.05}>
+            <SectionHeading>Enterprise-grade infrastructure you can trust</SectionHeading>
+          </Reveal>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-10 sm:mt-11">
+            {TECH_DATA.map((item, i) => {
+              const Icon = item.icon
+              return (
+                <Reveal key={item.title} delay={0.1 + i * 0.04}>
+                  <motion.div className="flex items-start gap-4 p-5 rounded-lg border transition-all duration-200 hover:-translate-y-[2px]"
+                    style={{ background: C.paper, borderColor: C.rule }}
+                    whileHover={{ boxShadow: '0 12px 30px -18px rgba(10,15,30,.25)' }}>
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg" style={{ background: 'rgba(22,33,62,.08)' }}>
+                      <Icon className="h-5 w-5" style={{ color: C.ink }} />
+                    </div>
+                    <div>
+                      <h4 className="text-[15px] font-semibold mb-1" style={fontDisplay}>{item.title}</h4>
+                      <p className="text-[13px] leading-[1.5]" style={{ color: C.inkSoft }}>{item.desc}</p>
+                    </div>
+                  </motion.div>
+                </Reveal>
+              )
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── PRICING TEASER ─── */}
+      <section id="pricing" className="py-16 sm:py-20 lg:py-[84px] border-b" style={{ borderColor: C.rule, background: C.ledgerW }}>
+        <div className="max-w-[1160px] mx-auto px-5 sm:px-6">
+          <Reveal>
+            <Eyebrow className="mb-3.5">Pricing</Eyebrow>
+          </Reveal>
+          <Reveal delay={0.05}>
+            <SectionHeading>Custom enterprise plans, not one-size-fits-all</SectionHeading>
+          </Reveal>
+          <Reveal delay={0.1}>
+            <p className="mt-4 max-w-[60ch]" style={{ fontSize: '16.5px', color: C.inkSoft }}>
+              Pricing is based on your headcount, modules and deployment needs. Every organisation is different — your HRMS should be too.
+            </p>
+          </Reveal>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-10 sm:mt-11">
+            {PRICING_TIERS.map((tier, i) => (
+              <Reveal key={tier.name} delay={0.12 + i * 0.05}>
+                <motion.div className="p-5 rounded-lg border transition-all duration-200 hover:-translate-y-[2px]"
+                  style={{ background: C.paper, borderColor: C.rule }}
+                  whileHover={{ boxShadow: '0 12px 30px -18px rgba(10,15,30,.25)' }}>
+                  <span className="text-[11px] font-semibold tracking-[0.1em] uppercase px-2.5 py-1 rounded-[3px] inline-block mb-3" style={{ ...fontMono, background: `rgba(22,33,62,.08)`, color: C.ink }}>{tier.name}</span>
+                  <p className="text-[13px] leading-[1.55]" style={{ color: C.inkSoft }}>{tier.desc}</p>
+                </motion.div>
+              </Reveal>
+            ))}
+          </div>
+          <Reveal delay={0.3}>
+            <div className="mt-8 text-center">
+              <button onClick={() => scrollTo('cta')} className="px-5 py-2.5 rounded-md text-sm font-semibold text-white transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_6px_18px_rgba(22,33,62,.24)]" style={{ background: C.ink }}>
+                Book a Demo <ArrowRight className="inline ml-1.5 h-3.5 w-3.5" />
+              </button>
+              <p className="mt-4" style={{ ...fontMono, fontSize: '11.5px', color: C.inkSoft }}>
+                All plans include HPAI Chat, compliance updates and priority support.
+              </p>
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ─── FAQ ─── */}
+      <section id="faq" className="py-16 sm:py-20 lg:py-[84px] border-b" style={{ borderColor: C.rule }}>
+        <div className="max-w-[1160px] mx-auto px-5 sm:px-6">
+          <Reveal>
+            <Eyebrow className="mb-3.5">Frequently asked questions</Eyebrow>
+          </Reveal>
+          <Reveal delay={0.05}>
+            <SectionHeading>Common questions about HPHRMS</SectionHeading>
+          </Reveal>
+          <FaqAccordion />
+        </div>
+      </section>
+
+      {/* ─── CONTACT ─── */}
+      <section id="contact" className="py-16 sm:py-20 lg:py-[84px] border-b" style={{ borderColor: C.rule, background: C.ledgerW }}>
+        <div className="max-w-[1160px] mx-auto px-5 sm:px-6">
+          <Reveal>
+            <Eyebrow className="mb-3.5">Contact</Eyebrow>
+          </Reveal>
+          <Reveal delay={0.05}>
+            <SectionHeading>Get in touch with our team</SectionHeading>
+          </Reveal>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-10 sm:mt-11">
+            {/* Column 1: Contact details */}
+            <Reveal delay={0.1}>
+              <div className="p-5 rounded-lg border h-fit" style={{ background: C.paper, borderColor: C.rule }}>
+                <h4 className="text-[10.5px] font-semibold tracking-[0.13em] uppercase mb-4" style={{ ...fontMono, color: C.inkSoft }}>Contact Details</h4>
+                <div className="space-y-4">
+                  <a href={`tel:${BRAND.phone}`} className="flex items-start gap-3 group">
+                    <Phone className="h-4 w-4 mt-0.5 shrink-0" style={{ color: C.inkSoft }} />
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase" style={{ ...fontMono, color: C.inkSoft }}>Phone</p>
+                      <p className="text-[14px] font-medium mt-0.5 group-hover:underline" style={{ color: C.ink }}>{BRAND.phone}</p>
+                    </div>
+                  </a>
+                  <a href={`mailto:${BRAND.email}`} className="flex items-start gap-3 group">
+                    <Mail className="h-4 w-4 mt-0.5 shrink-0" style={{ color: C.inkSoft }} />
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase" style={{ ...fontMono, color: C.inkSoft }}>Email</p>
+                      <p className="text-[14px] font-medium mt-0.5 group-hover:underline break-all" style={{ color: C.ink }}>{BRAND.email}</p>
+                    </div>
+                  </a>
+                  <a href={SOCIAL.whatsapp} target="_blank" rel="noopener noreferrer" className="flex items-start gap-3 group">
+                    <MessageSquare className="h-4 w-4 mt-0.5 shrink-0" style={{ color: C.inkSoft }} />
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase" style={{ ...fontMono, color: C.inkSoft }}>WhatsApp</p>
+                      <p className="text-[14px] font-medium mt-0.5 group-hover:underline" style={{ color: C.ink }}>{BRAND.phone}</p>
+                    </div>
+                  </a>
+                  <div className="flex items-start gap-3">
+                    <MapPin className="h-4 w-4 mt-0.5 shrink-0" style={{ color: C.inkSoft }} />
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase" style={{ ...fontMono, color: C.inkSoft }}>Head Office</p>
+                      <p className="text-[13px] mt-0.5" style={{ color: C.inkSoft }}>{BRAND.headOffice.full}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Reveal>
+            {/* Column 2: Contact form */}
+            <Reveal delay={0.15}>
+              <div className="p-5 rounded-lg border" style={{ background: C.paper, borderColor: C.rule }}>
+                <h4 className="text-[10.5px] font-semibold tracking-[0.13em] uppercase mb-4" style={{ ...fontMono, color: C.inkSoft }}>Send a Message</h4>
+                <ContactForm />
+              </div>
+            </Reveal>
+            {/* Column 3: Quick links */}
+            <Reveal delay={0.2}>
+              <div className="p-5 rounded-lg border h-fit" style={{ background: C.paper, borderColor: C.rule }}>
+                <h4 className="text-[10.5px] font-semibold tracking-[0.13em] uppercase mb-4" style={{ ...fontMono, color: C.inkSoft }}>Quick Links</h4>
+                <div className="space-y-3">
+                  <button onClick={() => scrollTo('cta')} className="w-full flex items-center justify-between px-4 py-3 rounded-lg border transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_8px_20px_-14px_rgba(10,15,30,.2)]" style={{ borderColor: C.rule }}>
+                    <span className="text-[14px] font-medium" style={{ color: C.ink }}>Book a Demo</span>
+                    <ArrowRight className="h-4 w-4" style={{ color: C.inkSoft }} />
+                  </button>
+                  <a href={SOCIAL.recruitment} target="_blank" rel="noopener noreferrer" className="w-full flex items-center justify-between px-4 py-3 rounded-lg border transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_8px_20px_-14px_rgba(10,15,30,.2)] block" style={{ borderColor: C.rule }}>
+                    <span className="text-[14px] font-medium" style={{ color: C.ink }}>Apply Now</span>
+                    <ExternalLink className="h-4 w-4" style={{ color: C.inkSoft }} />
+                  </a>
+                  <a href={SOCIAL.whatsapp} target="_blank" rel="noopener noreferrer" className="w-full flex items-center justify-between px-4 py-3 rounded-lg border transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_8px_20px_-14px_rgba(10,15,30,.2)] block" style={{ borderColor: C.rule }}>
+                    <span className="text-[14px] font-medium" style={{ color: C.ink }}>WhatsApp Chat</span>
+                    <ExternalLink className="h-4 w-4" style={{ color: C.inkSoft }} />
+                  </a>
+                </div>
+              </div>
+            </Reveal>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── NEWSLETTER ─── */}
+      <section className="py-10 sm:py-12 border-b" style={{ background: C.ink }}>
+        <div className="max-w-[1160px] mx-auto px-5 sm:px-6">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            <Reveal>
+              <div className="text-center md:text-left">
+                <p className="text-[14.5px] font-semibold mb-1" style={{ color: '#fff', ...fontDisplay }}>Stay updated</p>
+                <p className="text-[13px]" style={{ color: 'rgba(255,255,255,.65)' }}>Workforce compliance, platform updates and industry insights.</p>
+              </div>
+            </Reveal>
+            <Reveal delay={0.1}>
+              <NewsletterForm />
             </Reveal>
           </div>
         </div>
@@ -1118,7 +1594,7 @@ export function Landing() {
                 client workforce management — in one secure, multi-tenant platform.
               </p>
               <div className="mt-4 leading-[1.7]" style={{ ...fontMono, fontSize: '11.5px' }}>
-                <p>HP Enterprise</p>
+                <p>HP ENTERPRISE</p>
                 <p>{BRAND.headOffice.full}</p>
               </div>
             </div>
@@ -1165,7 +1641,7 @@ export function Landing() {
 
           {/* Bottom Bar */}
           <div className="mt-5 pt-5 border-t flex flex-col sm:flex-row items-center justify-between gap-3 flex-wrap" style={{ borderColor: 'rgba(255,255,255,.11)', ...fontMono, fontSize: '11px', color: 'rgba(255,255,255,.42)' }}>
-            <span>© {new Date().getFullYear()} HP Enterprise · hphrms.com</span>
+            <span>© {new Date().getFullYear()} HP ENTERPRISE · hphrms.com</span>
             <span>{BRAND.gstin} · {BRAND.udyam}</span>
           </div>
         </div>

@@ -382,7 +382,7 @@ function CreateUserDialog({ onClose, onSuccess }: { onClose: () => void; onSucce
           </div>
           <div className="space-y-1.5">
             <Label>Email *</Label>
-            <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="user@hpenterprise.co.in" />
+            <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="user@company.com" />
           </div>
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">

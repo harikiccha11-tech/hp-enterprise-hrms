@@ -91,14 +91,14 @@ const jsonLd = {
       taxID: "29ANZPH4067Q1ZS",
       foundingLocation: {
         "@type": "Place",
-        name: "Bengaluru, Karnataka, India",
+        name: "Chitradurga, Karnataka, India",
       },
       address: {
         "@type": "PostalAddress",
-        streetAddress: "JeevaGurunadan Building, Kalkere Market Road, Ramamurthy Nagar",
-        addressLocality: "Bengaluru",
+        streetAddress: "Venkateshwara Nilaya Building, Behind Hanuman Mandir, Nagenahalli, Hosadurga Taluk",
+        addressLocality: "Chitradurga",
         addressRegion: "Karnataka",
-        postalCode: "560016",
+        postalCode: "577515",
         addressCountry: "IN",
       },
       sameAs: [
@@ -136,10 +136,10 @@ const jsonLd = {
       priceRange: "$$",
       address: {
         "@type": "PostalAddress",
-        streetAddress: "JeevaGurunadan Building, Kalkere Market Road, Ramamurthy Nagar",
-        addressLocality: "Bengaluru",
+        streetAddress: "Venkateshwara Nilaya Building, Behind Hanuman Mandir, Nagenahalli, Hosadurga Taluk",
+        addressLocality: "Chitradurga",
         addressRegion: "Karnataka",
-        postalCode: "560016",
+        postalCode: "577515",
         addressCountry: "IN",
       },
       openingHoursSpecification: {

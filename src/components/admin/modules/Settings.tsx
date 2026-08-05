@@ -425,7 +425,7 @@ export function SettingsModule({ isSuperAdmin, isOwner }: { isSuperAdmin: boolea
                     type="email"
                     value={settings['company.adminEmail'] ?? ''}
                     onChange={(e) => set('company.adminEmail', e.target.value)}
-                    placeholder="hr@hpenterprise.co.in"
+                    placeholder="hr@company.com"
                   />
                   <p className="text-[10px] text-muted-foreground">Receives system alerts and notifications</p>
                 </div>
