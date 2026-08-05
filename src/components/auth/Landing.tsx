@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useAppStore } from '@/lib/store'
-import { BRAND, HPHRMS_FEATURES, TRUST_BADGES, SOCIAL } from '@/lib/constants'
+import { BRAND, HPHRMS_FEATURES, SERVICES, TRUST_BADGES, SOCIAL } from '@/lib/constants'
 import { BrandLogo } from '@/components/brand/BrandLogo'
 import { RegistrationForm } from '@/components/auth/RegistrationForm'
 import { ForgotPasswordDialog } from '@/components/auth/ForgotPasswordDialog'
@@ -20,6 +20,8 @@ import {
   Sparkles, Check, Bot, Menu, X, Phone, Mail, MapPin, ChevronRight,
   Send, Loader2, Eye, EyeOff, User as UserIcon, Zap, BarChart3,
   ClipboardList, Brain, FileSearch, Bell, Settings, Briefcase,
+  Linkedin, Instagram, Facebook, Twitter, Youtube, Globe, MessageCircle,
+  LayoutDashboard, UserCheck, ExternalLink, AtSign,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -63,6 +65,109 @@ function useLedgerFonts() {
 const fontDisplay = { fontFamily: "'Bricolage Grotesque', sans-serif" }
 const fontBody    = { fontFamily: "'Public Sans', sans-serif" }
 const fontMono    = { fontFamily: "'IBM Plex Mono', monospace" }
+
+/* ═══════════════════════════════════════════════════════
+   DATA: Service images mapping
+   ═══════════════════════════════════════════════════════ */
+const SERVICE_IMAGES: Record<string, string> = {
+  'Human Resource Management': '/images/hr-management.jpg',
+  'Recruitment & Talent Acquisition': '/images/recruitment.jpg',
+  'Skilled & Unskilled Manpower Supply': '/images/employee-management.jpg',
+  'Safety (EHS) Consultancy': '/images/ehs-safety.jpg',
+  'Engineering & Project Support': '/images/engineering.jpg',
+  'Construction Labour Supply': '/images/construction.jpg',
+  'Land Survey & Engineering Services': '/images/corporate-meeting.jpg',
+  'Vendor Coordination': '/images/ai-workforce.jpg',
+  'Payroll Management': '/images/payroll.jpg',
+  'Website Design & Development': '/images/corporate-meeting.jpg',
+  'Safety Training & Compliance Support': '/images/ehs-safety.jpg',
+}
+
+const SERVICE_DESC: Record<string, string> = {
+  'Human Resource Management': 'End-to-end HR lifecycle management from hire to retire with AI-powered insights.',
+  'Recruitment & Talent Acquisition': 'AI-powered recruitment, ATS, and talent pipeline management for faster hiring.',
+  'Skilled & Unskilled Manpower Supply': 'Trained workforce deployment across sites — skilled, semi-skilled and unskilled.',
+  'Safety (EHS) Consultancy': 'EHS auditing, safety training and regulatory compliance for zero-incident workplaces.',
+  'Engineering & Project Support': 'Multi-discipline engineering professionals — MEP, civil, structural and more.',
+  'Construction Labour Supply': 'Trained construction workforce for residential, commercial and industrial projects.',
+  'Land Survey & Engineering Services': 'Total station survey, topography, contour mapping and engineering drawings.',
+  'Vendor Coordination': 'Vendor management, procurement support and multi-vendor coordination services.',
+  'Payroll Management': 'Statutory payroll with PF, ESI, TDS, gratuity and compliance filings.',
+  'Website Design & Development': 'Professional web design, development and digital transformation services.',
+  'Safety Training & Compliance Support': 'OSHA-aligned safety programs, certifications and ongoing compliance support.',
+}
+
+/* ═══════════════════════════════════════════════════════
+   DATA: Portals
+   ═══════════════════════════════════════════════════════ */
+const PORTALS = [
+  {
+    title: 'Admin Portal',
+    icon: LayoutDashboard,
+    desc: 'Full operational control for HR managers, finance teams and administrators.',
+    items: [
+      'Employee lifecycle management',
+      'Payroll processing & statutory compliance',
+      'Recruitment pipeline & onboarding',
+      'Real-time reports & analytics dashboard',
+      'Multi-branch & multi-company admin',
+      'Document generation & management',
+    ],
+  },
+  {
+    title: 'Employee Portal',
+    icon: UserCheck,
+    desc: 'Self-service access for every team member — anytime, anywhere.',
+    items: [
+      'View payslips & tax documents',
+      'Apply for leave & track attendance',
+      'Update personal information',
+      'Download letters & certificates',
+      'Raise help desk tickets',
+      'Access company announcements',
+    ],
+  },
+  {
+    title: 'Client Portal',
+    icon: Users,
+    desc: 'Workforce visibility for client organisations — without exposing your costs.',
+    items: [
+      'View deployed workforce at sites',
+      'Daily attendance & timesheets',
+      'Invoice & payment tracking',
+      'Site-wise performance metrics',
+      'Leave and shift status overview',
+      'Approval workflows for timesheets',
+    ],
+  },
+  {
+    title: 'HPAI Chat',
+    icon: Bot,
+    desc: 'Your AI-powered workforce assistant — available 24/7, scoped to your data.',
+    items: [
+      'Ask questions in plain language',
+      'Get answers from real company data',
+      'Generate documents instantly',
+      'Workforce planning & gap analysis',
+      'Compliance status & alerts',
+      'Executive daily briefings',
+    ],
+  },
+]
+
+/* ═══════════════════════════════════════════════════════
+   DATA: Social Links
+   ═══════════════════════════════════════════════════════ */
+const SOCIAL_LINKS = [
+  { label: 'LinkedIn', href: SOCIAL.linkedin, icon: Linkedin },
+  { label: 'Instagram', href: SOCIAL.instagram, icon: Instagram },
+  { label: 'Facebook', href: SOCIAL.facebook, icon: Facebook },
+  { label: 'Twitter / X', href: SOCIAL.twitter, icon: Twitter },
+  { label: 'YouTube', href: SOCIAL.youtube, icon: Youtube },
+  { label: 'Threads', href: SOCIAL.threads, icon: AtSign },
+  { label: 'WhatsApp', href: SOCIAL.whatsapp, icon: MessageCircle },
+  { label: 'Reddit', href: SOCIAL.reddit, icon: Globe },
+]
 
 /* ═══════════════════════════════════════════════════════
    DATA: Muster Roll (signature table)
@@ -486,11 +591,15 @@ export function Landing() {
   if (view === 'subscribe') return <SubscriptionForm onBack={goHome} />
 
   const NAV_LINKS = [
+    { id: 'services', label: 'Services' },
+    { id: 'features', label: 'Features' },
     { id: 'modes', label: 'How it works' },
+    { id: 'portals', label: 'Portals' },
     { id: 'ai', label: 'AI' },
     { id: 'modules', label: 'Modules' },
     { id: 'compliance', label: 'Compliance' },
     { id: 'separation', label: 'Data access' },
+    { id: 'cta', label: 'Apply' },
   ]
 
   return (
@@ -531,7 +640,9 @@ export function Landing() {
           {/* Desktop Nav */}
           <div className="hidden lg:flex items-center gap-6" style={{ fontSize: '14px', fontWeight: 500 }}>
             {NAV_LINKS.map((link) => (
-              <button key={link.id} onClick={() => scrollTo(link.id)} className="transition-colors hover:text-[var(--ink,#16213E)]" style={{ color: C.inkSoft }}>{link.label}</button>
+              link.id === 'cta'
+                ? <a key={link.id} href={SOCIAL.recruitment} target="_blank" rel="noopener noreferrer" className="transition-colors hover:text-[var(--ink,#16213E)]" style={{ color: C.amber, fontWeight: 600 }}>{link.label}</a>
+                : <button key={link.id} onClick={() => scrollTo(link.id)} className="transition-colors hover:text-[var(--ink,#16213E)]" style={{ color: C.inkSoft }}>{link.label}</button>
             ))}
             <button onClick={() => setLoginOpen(true)} className="px-4 py-2 rounded-md text-sm font-semibold transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_6px_18px_rgba(22,33,62,.24)]" style={{ background: C.ink, color: '#fff' }}>
               Login
@@ -553,7 +664,9 @@ export function Landing() {
             <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.3 }} className="lg:hidden overflow-hidden border-t" style={{ background: 'rgba(238,241,240,.97)', borderColor: C.rule }}>
               <div className="px-5 py-4 space-y-1">
                 {NAV_LINKS.map((link) => (
-                  <button key={link.id} onClick={() => scrollTo(link.id)} className="block w-full text-left px-4 py-3 rounded-md text-sm font-medium capitalize transition-colors" style={{ color: C.inkSoft }}>{link.label}</button>
+                  link.id === 'cta'
+                    ? <a key={link.id} href={SOCIAL.recruitment} target="_blank" rel="noopener noreferrer" className="block w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors" style={{ color: C.amber, fontWeight: 600 }}>{link.label}</a>
+                    : <button key={link.id} onClick={() => scrollTo(link.id)} className="block w-full text-left px-4 py-3 rounded-md text-sm font-medium capitalize transition-colors" style={{ color: C.inkSoft }}>{link.label}</button>
                 ))}
                 <div className="flex gap-2 pt-3">
                   <button onClick={() => { setMobileMenu(false); setLoginOpen(true) }} className="flex-1 py-2.5 rounded-md text-sm font-semibold text-white text-center" style={{ background: C.ink }}>Login</button>
@@ -589,6 +702,17 @@ export function Landing() {
               Built for Indian statutory payroll, not adapted to it.
             </p>
           </Reveal>
+          {/* Brand Tagline */}
+          <Reveal delay={0.12}>
+            <p className="mt-3 max-w-[60ch] leading-[1.5]" style={{ fontSize: 'clamp(15px,1.8vw,17px)', color: C.amber, fontWeight: 600, fontStyle: 'italic' }}>
+              {BRAND.tagline}
+            </p>
+          </Reveal>
+          <Reveal delay={0.14}>
+            <p className="mt-1.5 max-w-[66ch] leading-[1.45]" style={{ fontSize: 'clamp(12.5px,1.4vw,14px)', color: C.inkSoft }}>
+              {BRAND.taglineFull}
+            </p>
+          </Reveal>
           <Reveal delay={0.15}>
             <div className="flex flex-wrap gap-3 sm:gap-3.5 mt-7 sm:mt-[34px]">
               <button onClick={() => setView('subscribe')} className="px-5 py-2.5 rounded-md text-sm font-semibold text-white transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_6px_18px_rgba(22,33,62,.24)]" style={{ background: C.ink }}>
@@ -604,6 +728,82 @@ export function Landing() {
           <MusterRoll />
         </div>
       </header>
+
+      {/* ─── SERVICES SHOWCASE ─── */}
+      <section id="services" className="py-16 sm:py-20 lg:py-[84px] border-b" style={{ borderColor: C.rule, background: C.paper }}>
+        <div className="max-w-[1160px] mx-auto px-5 sm:px-6">
+          <Reveal>
+            <Eyebrow className="mb-3.5">What we deliver</Eyebrow>
+          </Reveal>
+          <Reveal delay={0.05}>
+            <SectionHeading>End-to-end workforce and project services</SectionHeading>
+          </Reveal>
+          <Reveal delay={0.1}>
+            <p className="mt-4 max-w-[60ch]" style={{ fontSize: '16.5px', color: C.inkSoft }}>
+              From HR management and payroll to EHS consultancy and engineering — every service you need
+              to run compliant, efficient operations across India.
+            </p>
+          </Reveal>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-10 sm:mt-11">
+            {SERVICES.map((service, i) => {
+              const imgSrc = SERVICE_IMAGES[service]
+              return (
+                <Reveal key={service} delay={0.12 + i * 0.04}>
+                  <motion.div className="relative rounded-lg border overflow-hidden transition-all duration-200 hover:-translate-y-[3px] cursor-default flex flex-col"
+                    style={{ borderColor: C.rule, background: C.paper }}
+                    whileHover={{ boxShadow: '0 16px 38px -24px rgba(10,15,30,.4)' }}>
+                    {imgSrc && (
+                      <div className="relative w-full h-40 overflow-hidden">
+                        <img src={imgSrc} alt={service} className="w-full h-full object-cover transition-transform duration-500" loading="lazy" />
+                        <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(10,15,30,.52) 0%, transparent 60%)' }} />
+                        <span className="absolute bottom-3 left-4 text-[10px] font-semibold tracking-[0.1em] uppercase px-2 py-1 rounded-[3px]" style={{ ...fontMono, background: C.amber, color: C.inkDeep }}>
+                          {String(i + 1).padStart(2, '0')}
+                        </span>
+                      </div>
+                    )}
+                    <div className="p-5 flex-1 flex flex-col">
+                      <h3 className="text-[15.5px] font-bold tracking-[-0.01em] mb-1.5" style={fontDisplay}>{service}</h3>
+                      <p className="text-[13px] leading-[1.55] flex-1" style={{ color: C.inkSoft }}>{SERVICE_DESC[service] || 'Comprehensive service delivery by HP Enterprise.'}</p>
+                      <div className="mt-3 flex items-center gap-1.5 text-[12px] font-semibold" style={{ color: C.verify }}>
+                        <span style={{ ...fontMono }}>✓</span>
+                        <span style={{ ...fontMono }}>Available</span>
+                      </div>
+                    </div>
+                  </motion.div>
+                </Reveal>
+              )
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── HPHRMS FEATURES ─── */}
+      <section id="features" className="py-16 sm:py-20 lg:py-[84px] border-b" style={{ borderColor: C.rule, background: C.ledgerW }}>
+        <div className="max-w-[1160px] mx-auto px-5 sm:px-6">
+          <Reveal>
+            <Eyebrow className="mb-3.5">Platform capabilities</Eyebrow>
+          </Reveal>
+          <Reveal delay={0.05}>
+            <SectionHeading>Twelve core features, one unified platform</SectionHeading>
+          </Reveal>
+          <Reveal delay={0.1}>
+            <p className="mt-4 max-w-[60ch]" style={{ fontSize: '16.5px', color: C.inkSoft }}>
+              HPHRMS packs enterprise-grade capabilities into a single, multi-tenant platform
+              — designed for Indian workforce management from the ground up.
+            </p>
+          </Reveal>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-10 sm:mt-11">
+            {HPHRMS_FEATURES.map((feature, i) => (
+              <Reveal key={feature} delay={0.12 + i * 0.03}>
+                <div className="flex items-center gap-3 px-5 py-3.5 rounded-lg border transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_8px_24px_-16px_rgba(10,15,30,.18)]" style={{ background: C.paper, borderColor: C.rule }}>
+                  <span className="text-[13px] font-bold shrink-0" style={{ ...fontMono, color: C.verify }}>✓</span>
+                  <span className="text-[14px] font-medium" style={{ color: C.ink }}>{feature}</span>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* ─── THREE THINGS WE DO ─── */}
       <section id="modes" className="py-16 sm:py-20 lg:py-[84px] border-b" style={{ borderColor: C.rule }}>
@@ -641,6 +841,54 @@ export function Landing() {
                 </motion.div>
               </Reveal>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── PORTALS SHOWCASE ─── */}
+      <section id="portals" className="py-16 sm:py-20 lg:py-[84px] border-b" style={{ borderColor: C.rule, background: C.ledgerW }}>
+        <div className="max-w-[1160px] mx-auto px-5 sm:px-6">
+          <Reveal>
+            <Eyebrow className="mb-3.5">Role-based access</Eyebrow>
+          </Reveal>
+          <Reveal delay={0.05}>
+            <SectionHeading>Four portals. One platform. Zero overlap.</SectionHeading>
+          </Reveal>
+          <Reveal delay={0.1}>
+            <p className="mt-4 max-w-[60ch]" style={{ fontSize: '16.5px', color: C.inkSoft }}>
+              Every user sees only what their role permits. Admins manage, employees self-serve,
+              clients monitor — and HPAI Chat assists all of them with context-aware intelligence.
+            </p>
+          </Reveal>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mt-10 sm:mt-11">
+            {PORTALS.map((portal, i) => {
+              const Icon = portal.icon
+              return (
+                <Reveal key={portal.title} delay={0.12 + i * 0.06}>
+                  <motion.div className="relative p-6 sm:p-[26px_24px] rounded-lg border transition-all duration-200 hover:-translate-y-[3px] cursor-default"
+                    style={{ background: C.paper, borderColor: C.rule }}
+                    whileHover={{ boxShadow: '0 16px 38px -24px rgba(10,15,30,.4)' }}>
+                    <div className="flex items-start gap-4 mb-4">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg" style={{ background: 'rgba(22,33,62,.08)' }}>
+                        <Icon className="h-5 w-5" style={{ color: C.ink }} />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-extrabold tracking-[-0.02em]" style={fontDisplay}>{portal.title}</h3>
+                        <p className="text-[13.5px] mt-0.5" style={{ color: C.inkSoft }}>{portal.desc}</p>
+                      </div>
+                    </div>
+                    <ul className="list-none text-[13.5px]">
+                      {portal.items.map((item) => (
+                        <li key={item} className="py-1.5 border-t flex gap-2.5 items-baseline" style={{ borderColor: C.ruleSoft }}>
+                          <span className="w-[5px] h-[5px] rounded-full shrink-0 mt-[7px]" style={{ background: C.amber }} />
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </motion.div>
+                </Reveal>
+              )
+            })}
           </div>
         </div>
       </section>
@@ -837,7 +1085,7 @@ export function Landing() {
       </section>
 
       {/* ─── CTA ─── */}
-      <section className="py-16 sm:py-20 lg:py-[84px] text-center" style={{ background: C.ledgerW, borderBottom: 'none' }}>
+      <section id="cta" className="py-16 sm:py-20 lg:py-[84px] text-center" style={{ background: C.ledgerW, borderBottom: 'none' }}>
         <div className="max-w-[1160px] mx-auto px-5 sm:px-6">
           <Reveal>
             <Eyebrow className="mb-3.5 justify-center">Get started</Eyebrow>
@@ -858,6 +1106,9 @@ export function Landing() {
               </button>
               <a href={SOCIAL.whatsapp} target="_blank" rel="noopener noreferrer" className="px-5 py-2.5 rounded-md text-sm font-semibold border-[1.5px] transition-all duration-200 hover:bg-[var(--ink,#16213E)] hover:text-white" style={{ borderColor: C.ink, color: C.ink }}>
                 Message on WhatsApp
+              </a>
+              <a href={SOCIAL.recruitment} target="_blank" rel="noopener noreferrer" className="px-5 py-2.5 rounded-md text-sm font-semibold transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_6px_18px_rgba(232,163,61,.3)]" style={{ background: C.amber, color: C.inkDeep }}>
+                Apply Now <ExternalLink className="inline ml-1.5 h-3.5 w-3.5" />
               </a>
             </div>
           </Reveal>
@@ -889,11 +1140,15 @@ export function Landing() {
             <div>
               <h5 className="text-[10.5px] font-semibold tracking-[0.13em] uppercase mb-3" style={{ ...fontMono, color: 'rgba(255,255,255,.42)' }}>Platform</h5>
               <div className="space-y-1">
-                {NAV_LINKS.map((link) => (
+                {NAV_LINKS.filter(l => l.id !== 'cta').map((link) => (
                   <button key={link.id} onClick={() => scrollTo(link.id)} className="block py-1 transition-colors hover:text-white">{link.label}</button>
                 ))}
                 <button onClick={() => setView('subscribe')} className="block py-1 transition-colors hover:text-white">Book a Demo</button>
               </div>
+              <h5 className="text-[10.5px] font-semibold tracking-[0.13em] uppercase mt-6 mb-3" style={{ ...fontMono, color: 'rgba(255,255,255,.42)' }}>Careers</h5>
+              <a href={SOCIAL.recruitment} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2.5 py-1 transition-colors hover:text-white">
+                <ExternalLink className="h-3.5 w-3.5 shrink-0" />Apply Now
+              </a>
             </div>
             {/* Company / Contact */}
             <div>
@@ -915,8 +1170,27 @@ export function Landing() {
               </a>
             </div>
           </div>
+
+          {/* Connect With Us — Social Media Links */}
+          <div className="mt-9 pt-5 border-t" style={{ borderColor: 'rgba(255,255,255,.11)' }}>
+            <h5 className="text-[10.5px] font-semibold tracking-[0.13em] uppercase mb-4" style={{ ...fontMono, color: 'rgba(255,255,255,.42)' }}>Connect With Us</h5>
+            <div className="flex flex-wrap gap-x-6 gap-y-2">
+              {SOCIAL_LINKS.map((social) => {
+                const SocialIcon = social.icon
+                return (
+                  <a key={social.label} href={social.href} target="_blank" rel="noopener noreferrer"
+                    className="flex items-center gap-2 py-1.5 text-[13px] transition-colors hover:text-white"
+                    style={{ color: 'rgba(255,255,255,.62)' }}>
+                    <SocialIcon className="h-3.5 w-3.5 shrink-0" />
+                    <span>{social.label}</span>
+                  </a>
+                )
+              })}
+            </div>
+          </div>
+
           {/* Bottom Bar */}
-          <div className="mt-9 pt-5 border-t flex flex-col sm:flex-row items-center justify-between gap-3 flex-wrap" style={{ borderColor: 'rgba(255,255,255,.11)', ...fontMono, fontSize: '11px', color: 'rgba(255,255,255,.42)' }}>
+          <div className="mt-5 pt-5 border-t flex flex-col sm:flex-row items-center justify-between gap-3 flex-wrap" style={{ borderColor: 'rgba(255,255,255,.11)', ...fontMono, fontSize: '11px', color: 'rgba(255,255,255,.42)' }}>
             <span>© {new Date().getFullYear()} HP Enterprise · hphrms.com</span>
             <span>{BRAND.gstin} · {BRAND.udyam}</span>
           </div>

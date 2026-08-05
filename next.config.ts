@@ -3,8 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   // "standalone" output produces a self-contained .next/standalone/ directory
   // with minimal node_modules — required for Docker/PM2 production deployments.
-  output: "standalone",
-
+  
   // Allow dev server access from the sandbox network interface.
   // This has no effect in production.
   allowedDevOrigins: ["21.0.11.162"],
