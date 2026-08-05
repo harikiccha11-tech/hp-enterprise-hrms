@@ -2,6 +2,7 @@
 import { SignJWT, jwtVerify } from 'jose'
 import { cookies } from 'next/headers'
 import { db } from './db'
+import * as bcrypt from 'bcryptjs'
 
 // Re-export for backwards compatibility — many routes import { audit } from '@/lib/auth'
 export { audit } from './audit'
@@ -47,6 +48,10 @@ export async function hashPassword(password: string): Promise<string> {
 }
 
 export async function verifyPassword(password: string, stored: string): Promise<boolean> {
+  // Support both bcrypt ($2b$/$2a$) and pbkdf2 formats
+  if (stored.startsWith('$2b$') || stored.startsWith('$2a$')) {
+    return bcrypt.compare(password, stored)
+  }
   const parts = stored.split('$')
   if (parts.length !== 4 || parts[0] !== 'pbkdf2') return false
   const iterations = parseInt(parts[1])

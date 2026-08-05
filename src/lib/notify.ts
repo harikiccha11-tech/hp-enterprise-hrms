@@ -3,7 +3,7 @@ import { publish } from './sse-bus'
 
 export async function notify(userId: string, title: string, message: string, type: string = 'INFO', link?: string) {
   const n = await db.notification.create({
-    data: { userId, title, message, type, link },
+    data: { userId, title, body: message, type, actionUrl: link, status: 'sent', sentAt: new Date(), read: false },
   })
   // publish to SSE subscribers via the global bus (survives HMR)
   try {

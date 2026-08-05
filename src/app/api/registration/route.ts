@@ -93,47 +93,54 @@ export async function POST(req: NextRequest) {
       },
     })
 
-    // Save uploaded files
-    const folder = path.join(UPLOAD_ROOT, 'employees', employee.id)
-    await mkdir(folder, { recursive: true })
+    // Save uploaded files (skip gracefully on read-only filesystems like Vercel)
+    let filesSaved = 0
+    try {
+      const folder = path.join(UPLOAD_ROOT, 'employees', employee.id)
+      await mkdir(folder, { recursive: true })
 
-    const fileFields = [
-      'aadhaarFile', 'panFile', 'photoFile', 'signatureFile', 'passbookFile',
-      'resumeFile', 'experienceFile', 'educationFile', 'salarySlipFile', 'relievingFile',
-      'medicalFile', 'addressProofFile',
-    ]
-    const docTypeMap: Record<string, string> = {
-      aadhaarFile: 'aadhaar', panFile: 'pan', photoFile: 'photo', signatureFile: 'signature',
-      passbookFile: 'passbook', resumeFile: 'resume', experienceFile: 'experience_certificate',
-      educationFile: 'education_certificate', salarySlipFile: 'salary_slip', relievingFile: 'relieving_letter',
-      medicalFile: 'medical_certificate', addressProofFile: 'address_proof',
-    }
-
-    for (const field of fileFields) {
-      const file = form.get(field) as File | null
-      if (file && file.size > 0) {
-        if (file.size > MAX_FILE_SIZE) {
-          return NextResponse.json({ error: `File ${field} exceeds 5MB limit` }, { status: 400 })
-        }
-        if (!ALLOWED_MIME.has(file.type)) {
-          return NextResponse.json({ error: `File ${field} has unsupported type: ${file.type}` }, { status: 400 })
-        }
-        const ext = path.extname(file.name) || '.bin'
-        const docType = docTypeMap[field]
-        const fileName = `${docType}${ext}`
-        const filePath = path.join(folder, fileName)
-        const buf = Buffer.from(await file.arrayBuffer())
-        await writeFile(filePath, buf)
-        await db.employeeDocument.create({
-          data: {
-            employeeId: employee.id,
-            documentType: docType,
-            fileName: file.name,
-            filePath: `employees/${employee.id}/${fileName}`,
-            mimeType: file.type,
-          },
-        })
+      const fileFields = [
+        'aadhaarFile', 'panFile', 'photoFile', 'signatureFile', 'passbookFile',
+        'resumeFile', 'experienceFile', 'educationFile', 'salarySlipFile', 'relievingFile',
+        'medicalFile', 'addressProofFile',
+      ]
+      const docTypeMap: Record<string, string> = {
+        aadhaarFile: 'aadhaar', panFile: 'pan', photoFile: 'photo', signatureFile: 'signature',
+        passbookFile: 'passbook', resumeFile: 'resume', experienceFile: 'experience_certificate',
+        educationFile: 'education_certificate', salarySlipFile: 'salary_slip', relievingFile: 'relieving_letter',
+        medicalFile: 'medical_certificate', addressProofFile: 'address_proof',
       }
+
+      for (const field of fileFields) {
+        const file = form.get(field) as File | null
+        if (file && file.size > 0) {
+          if (file.size > MAX_FILE_SIZE) {
+            return NextResponse.json({ error: `File ${field} exceeds 5MB limit` }, { status: 400 })
+          }
+          if (!ALLOWED_MIME.has(file.type)) {
+            return NextResponse.json({ error: `File ${field} has unsupported type: ${file.type}` }, { status: 400 })
+          }
+          const ext = path.extname(file.name) || '.bin'
+          const docType = docTypeMap[field]
+          const fileName = `${docType}${ext}`
+          const filePath = path.join(folder, fileName)
+          const buf = Buffer.from(await file.arrayBuffer())
+          await writeFile(filePath, buf)
+          await db.employeeDocument.create({
+            data: {
+              employeeId: employee.id,
+              documentType: docType,
+              fileName: file.name,
+              filePath: `employees/${employee.id}/${fileName}`,
+              mimeType: file.type,
+            },
+          })
+          filesSaved++
+        }
+      }
+    } catch (fsErr) {
+      // File system not writable (e.g. Vercel) — continue without files
+      console.warn('File upload skipped (read-only filesystem):', (fsErr as Error)?.message)
     }
 
     // Notify all admins + HR

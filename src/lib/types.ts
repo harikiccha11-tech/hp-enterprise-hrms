@@ -15,6 +15,9 @@ export interface AppUser {
   mustResetPassword: boolean
   employeeId?: string | null
   clientId?: string | null
+  accountId?: string | null
+  accountType?: string | null
+  clientRole?: string | null
   client?: {
     id: string
     clientName: string
@@ -28,5 +31,11 @@ export interface AppUser {
     fullName: string
     designation: string | null
     department: string | null
+  } | null
+  account?: {
+    id: string
+    organizationName: string
+    accountType: string
+    status: string
   } | null
 }
