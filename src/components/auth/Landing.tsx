@@ -1,53 +1,55 @@
 'use client'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useAppStore } from '@/lib/store'
-import { BRAND, HPHRMS_FEATURES, SERVICES, TRUST_BADGES, SOCIAL } from '@/lib/constants'
+import { BRAND, TRUST_BADGES, SOCIAL } from '@/lib/constants'
 import { BrandLogo } from '@/components/brand/BrandLogo'
 import { RegistrationForm } from '@/components/auth/RegistrationForm'
 import { ForgotPasswordDialog } from '@/components/auth/ForgotPasswordDialog'
-import { HpAiChat } from '@/components/shared/HpAiChat'
 import { SocialLinks } from '@/components/shared/SocialLinks'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { motion, useInView, AnimatePresence } from 'framer-motion'
 import {
   Building2, ShieldCheck, Users, FileText, ArrowRight, ArrowLeft, Lock,
-  Sparkles, Check, Bot, Menu, X, Phone, Mail, MapPin, ChevronRight,
-  Send, Loader2, Eye, EyeOff, User as UserIcon, Zap, BarChart3,
+  Sparkles, Check, Bot, Menu, X, Phone, Mail, MapPin,
+  Send, Loader2, Eye, EyeOff, Zap, BarChart3,
   ClipboardList, Brain, FileSearch, Bell, Settings, Briefcase,
-  LayoutDashboard, UserCheck, ExternalLink, MessageSquare,
-  CalendarDays, UserPlus, CheckCircle2, HardHat, Factory,
-  Landmark, Hammer, Stethoscope, Monitor, Cloud, Database,
-  Activity, Code2, ChevronDown,
+  LayoutDashboard, UserCheck, CalendarDays, UserPlus, CheckCircle2,
+  HardHat, Factory, Landmark, Hammer, Stethoscope, Monitor, Cloud,
+  Database, Activity, Code2, ChevronDown, Globe, TrendingUp,
+  Linkedin, Instagram, Facebook, Twitter, Youtube, MessageCircle,
   type LucideIcon,
 } from 'lucide-react'
 
 /* ═══════════════════════════════════════════════════════
-   LEDGER DESIGN SYSTEM
+   DESIGN SYSTEM
    ═══════════════════════════════════════════════════════ */
 const C = {
+  navy:     '#002B5C',
+  navyDeep: '#001A3D',
+  navySoft: '#1A3A6B',
+  gold:     '#D4AF37',
+  goldLight:'#E8C96A',
   ink:      '#16213E',
-  inkDeep:  '#0A0F1E',
   inkSoft:  '#4A5673',
-  ledger:   '#EEF1F0',
-  ledgerW:  '#F6F7F5',
-  rule:     '#C9D3D0',
-  ruleSoft: '#DEE5E3',
-  amber:    '#E8A33D',
-  verify:   '#2E7D5B',
   paper:    '#FFFFFF',
+  bg:       '#F7F8FA',
+  bgWarm:   '#F0F2F5',
+  rule:     '#E2E5EA',
+  ruleSoft: '#ECEEF1',
+  verify:   '#2E7D5B',
+  danger:   '#B03636',
+  amber:    '#D4920A',
 } as const
 
 type LandingView = 'home' | 'register' | 'subscribe'
 
 /* ═══════════════════════════════════════════════════════
-   FONTS — load Bricolage Grotesque, Public Sans, IBM Plex Mono
+   FONTS
    ═══════════════════════════════════════════════════════ */
 function useLedgerFonts() {
   useEffect(() => {
@@ -57,263 +59,140 @@ function useLedgerFonts() {
     const link = document.createElement('link')
     link.id = id
     link.rel = 'stylesheet'
-    link.href = 'https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400;12..96,75..100,600;12..96,75..100,800&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap'
+    link.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap'
     document.head.appendChild(link)
   }, [])
 }
 
-/* ═══════════════════════════════════════════════════════
-   FONT STYLE HELPERS
-   ═══════════════════════════════════════════════════════ */
-const fontDisplay = { fontFamily: "'Bricolage Grotesque', sans-serif" }
-const fontBody    = { fontFamily: "'Public Sans', sans-serif" }
-const fontMono    = { fontFamily: "'IBM Plex Mono', monospace" }
+const fontBody = { fontFamily: "'Inter', system-ui, -apple-system, sans-serif" }
+const fontMono = { fontFamily: "'JetBrains Mono', 'IBM Plex Mono', monospace" }
 
 /* ═══════════════════════════════════════════════════════
-   DATA: Service images mapping
+   DATA: Features
    ═══════════════════════════════════════════════════════ */
-const SERVICE_IMAGES: Record<string, string> = {
-  'Human Resource Management': '/images/hr-management.jpg',
-  'Recruitment & Talent Acquisition': '/images/recruitment.jpg',
-  'Skilled & Unskilled Manpower Supply': '/images/employee-management.jpg',
-  'Safety (EHS) Consultancy': '/images/ehs-safety.jpg',
-  'Engineering & Project Support': '/images/engineering.jpg',
-  'Construction Labour Supply': '/images/construction.jpg',
-  'Land Survey & Engineering Services': '/images/corporate-meeting.jpg',
-  'Vendor Coordination': '/images/ai-workforce.jpg',
-  'Payroll Management': '/images/payroll.jpg',
-  'Website Design & Development': '/images/corporate-meeting.jpg',
-  'Safety Training & Compliance Support': '/images/ehs-safety.jpg',
-}
+interface FeatureItem { title: string; desc: string; icon: LucideIcon }
+const FEATURES_DATA: FeatureItem[] = [
+  { title: 'AI-Powered HR Assistant', desc: 'Get instant answers about your workforce using natural language queries.', icon: Bot },
+  { title: 'Complete Employee Lifecycle', desc: 'From recruitment and onboarding to exit — every stage managed digitally.', icon: Users },
+  { title: 'Smart Attendance & GPS', desc: 'Real-time attendance with geo-fencing, face recognition, and shift tracking.', icon: ClipboardList },
+  { title: 'Statutory Payroll Engine', desc: 'PF, ESI, TDS, PT, Gratuity — built for Indian compliance, not bolted on.', icon: FileText },
+  { title: 'Advanced Analytics & BI', desc: 'Real-time dashboards, workforce planning, and actionable business intelligence.', icon: BarChart3 },
+  { title: 'Recruitment & ATS', desc: 'End-to-end hiring pipeline with AI screening and interview scheduling.', icon: UserPlus },
+  { title: 'Leave & Shift Management', desc: 'Configurable leave policies, auto-roster generation, and shift swap workflows.', icon: CalendarDays },
+  { title: 'Document Generation', desc: 'Auto-generate offer letters, experience certificates, and compliance documents.', icon: FileSearch },
+  { title: 'Enterprise Security', desc: 'Role-based access, data encryption, multi-tenant isolation, and audit trails.', icon: ShieldCheck },
+  { title: 'Multi-Branch Operations', desc: 'Manage multiple locations, companies, and departments from a single dashboard.', icon: Building2 },
+  { title: 'Compliance Tracking', desc: 'Automated alerts for expiring licenses, training certificates, and statutory deadlines.', icon: Bell },
+  { title: 'Mobile-Ready Platform', desc: 'Full functionality on any device — desktop, tablet, or smartphone.', icon: Monitor },
+]
 
-const SERVICE_DESC: Record<string, string> = {
-  'Human Resource Management': 'End-to-end HR lifecycle management from hire to retire with AI-powered insights.',
-  'Recruitment & Talent Acquisition': 'AI-powered recruitment, ATS, and talent pipeline management for faster hiring.',
-  'Skilled & Unskilled Manpower Supply': 'Trained workforce deployment across sites — skilled, semi-skilled and unskilled.',
-  'Safety (EHS) Consultancy': 'EHS auditing, safety training and regulatory compliance for zero-incident workplaces.',
-  'Engineering & Project Support': 'Multi-discipline engineering professionals — MEP, civil, structural and more.',
-  'Construction Labour Supply': 'Trained construction workforce for residential, commercial and industrial projects.',
-  'Land Survey & Engineering Services': 'Total station survey, topography, contour mapping and engineering drawings.',
-  'Vendor Coordination': 'Vendor management, procurement support and multi-vendor coordination services.',
-  'Payroll Management': 'Statutory payroll with PF, ESI, TDS, gratuity and compliance filings.',
-  'Website Design & Development': 'Professional web design, development and digital transformation services.',
-  'Safety Training & Compliance Support': 'OSHA-aligned safety programs, certifications and ongoing compliance support.',
-}
+/* ═══════════════════════════════════════════════════════
+   DATA: Services
+   ═══════════════════════════════════════════════════════ */
+interface ServiceItem { title: string; desc: string; icon: LucideIcon }
+const SERVICES_DATA: ServiceItem[] = [
+  { title: 'Human Resource Management', desc: 'End-to-end HR lifecycle management from hire to retire with digital workflows and AI-powered insights.', icon: Users },
+  { title: 'Recruitment & Talent Acquisition', desc: 'AI-powered recruitment, applicant tracking, and talent pipeline management for faster, smarter hiring.', icon: UserPlus },
+  { title: 'Skilled & Unskilled Manpower Supply', desc: 'Trained workforce deployment across sites — skilled, semi-skilled, and unskilled — with full compliance.', icon: HardHat },
+  { title: 'Safety (EHS) Consultancy', desc: 'EHS auditing, safety training, and regulatory compliance for zero-incident workplaces.', icon: ShieldCheck },
+  { title: 'Engineering & Project Support', desc: 'Multi-discipline engineering professionals — MEP, civil, structural, and more — on demand.', icon: Building2 },
+  { title: 'Construction Labour Supply', desc: 'Trained construction workforce for residential, commercial, and industrial projects.', icon: Factory },
+  { title: 'Land Survey & Engineering Services', desc: 'Total station survey, topography, contour mapping, and engineering drawings by certified surveyors.', icon: MapPin },
+  { title: 'Vendor Coordination', desc: 'Vendor management, procurement support, and multi-vendor coordination for complex projects.', icon: Briefcase },
+  { title: 'Payroll Management', desc: 'Statutory payroll with PF, ESI, TDS, gratuity, and compliance filings — accurate and on time.', icon: FileText },
+  { title: 'Website Design & Development', desc: 'Professional web design, development, and digital transformation for modern businesses.', icon: Code2 },
+  { title: 'Safety Training & Compliance Support', desc: 'OSHA-aligned safety programs, certifications, and ongoing compliance support and audits.', icon: CheckCircle2 },
+]
+
+/* ═══════════════════════════════════════════════════════
+   DATA: AI Capabilities
+   ═══════════════════════════════════════════════════════ */
+interface AiCap { title: string; desc: string; icon: LucideIcon }
+const AI_CAPS: AiCap[] = [
+  { title: 'Workforce Intelligence', desc: 'Ask questions in plain language and get answers grounded in your live company data.', icon: Brain },
+  { title: 'Attendance Analytics', desc: 'Automatically spots absence patterns, trends, and anomalies across your workforce.', icon: ClipboardList },
+  { title: 'Payroll Insights', desc: 'Explains what changed and why — department costs, statutory totals, month over month.', icon: BarChart3 },
+  { title: 'Smart Recruitment', desc: 'Drafts job descriptions and interview structures based on your current team composition.', icon: Users },
+  { title: 'Document Generation', desc: 'Offer letters, deployment letters, experience certificates — populated from real records.', icon: FileText },
+  { title: 'Report Builder', desc: 'Describe the report you need in plain language and get a structured, exportable output.', icon: FileSearch },
+  { title: 'Workforce Planning', desc: 'Flags staffing gaps before shifts start, based on deployment data and leave forecasts.', icon: TrendingUp },
+  { title: 'Compliance Monitoring', desc: 'Tracks expiring contracts, training certificates, and statutory deadlines proactively.', icon: ShieldCheck },
+  { title: 'Executive Briefings', desc: 'A daily summary of what changed and what needs a decision — concise and actionable.', icon: Zap },
+]
 
 /* ═══════════════════════════════════════════════════════
    DATA: Portals
    ═══════════════════════════════════════════════════════ */
-const PORTALS = [
+interface PortalItem { title: string; icon: LucideIcon; desc: string; items: string[] }
+const PORTALS_DATA: PortalItem[] = [
   {
     title: 'Admin Portal',
     icon: LayoutDashboard,
-    desc: 'Full operational control for HR managers, finance teams and administrators.',
-    items: [
-      'Employee lifecycle management',
-      'Payroll processing & statutory compliance',
-      'Recruitment pipeline & onboarding',
-      'Real-time reports & analytics dashboard',
-      'Multi-branch & multi-company admin',
-      'Document generation & management',
-    ],
+    desc: 'Full operational control for HR managers, finance teams, and administrators.',
+    items: ['Employee lifecycle management', 'Payroll processing & compliance', 'Recruitment pipeline & onboarding', 'Real-time analytics dashboard', 'Multi-branch administration', 'Document generation & management'],
   },
   {
     title: 'Employee Portal',
     icon: UserCheck,
     desc: 'Self-service access for every team member — anytime, anywhere.',
-    items: [
-      'View payslips & tax documents',
-      'Apply for leave & track attendance',
-      'Update personal information',
-      'Download letters & certificates',
-      'Raise help desk tickets',
-      'Access company announcements',
-    ],
+    items: ['View payslips & tax documents', 'Apply for leave & track attendance', 'Update personal information', 'Download letters & certificates', 'Raise help desk tickets', 'Access company announcements'],
   },
   {
     title: 'Client Portal',
     icon: Users,
-    desc: 'Workforce visibility for client organisations — without exposing your costs.',
-    items: [
-      'View deployed workforce at sites',
-      'Daily attendance & timesheets',
-      'Invoice & payment tracking',
-      'Site-wise performance metrics',
-      'Leave and shift status overview',
-      'Approval workflows for timesheets',
-    ],
+    desc: 'Workforce visibility for client organisations — secure, scoped, and real-time.',
+    items: ['View deployed workforce at sites', 'Daily attendance & timesheets', 'Invoice & payment tracking', 'Site-wise performance metrics', 'Leave and shift status overview', 'Approval workflows for timesheets'],
   },
-  {
-    title: 'HPAI Chat',
-    icon: Bot,
-    desc: 'Your AI-powered workforce assistant — available 24/7, scoped to your data.',
-    items: [
-      'Ask questions in plain language',
-      'Get answers from real company data',
-      'Generate documents instantly',
-      'Workforce planning & gap analysis',
-      'Compliance status & alerts',
-      'Executive daily briefings',
-    ],
-  },
-]
-
-/* ═══════════════════════════════════════════════════════
-   DATA: Muster Roll (signature table)
-   ═══════════════════════════════════════════════════════ */
-interface MusterRow { num: string; name: string; code: string; role: string; marks: ('P'|'A'|'H')[]; mandays: number }
-const MUSTER_DATA: MusterRow[] = [
-  { num: '01', name: 'Manjunath B', code: 'HPE-0412', role: 'Safety Steward', marks: ['P','P','P','P','P'], mandays: 5.0 },
-  { num: '02', name: 'Shivakumar R', code: 'HPE-0418', role: 'Helper — Gr II', marks: ['P','A','A','A','P'], mandays: 2.0 },
-  { num: '03', name: 'Lakshmi Devi', code: 'HPE-0431', role: 'Housekeeping', marks: ['P','P','H','P','P'], mandays: 4.5 },
-  { num: '04', name: 'Anand Kumar', code: 'HPE-0455', role: 'Electrician', marks: ['P','P','P','P','A'], mandays: 4.0 },
-  { num: '05', name: 'Ravi Shankar', code: 'HPE-0467', role: 'Security — Night', marks: ['P','P','P','P','P'], mandays: 5.0 },
-]
-
-/* ═══════════════════════════════════════════════════════
-   DATA: Three Things We Do
-   ═══════════════════════════════════════════════════════ */
-const THREE_MODES = [
-  { tag: 'Mode 1', label: 'HRMS SAAS', title: 'You employ them', desc: 'Your permanent staff, your payroll, your data. HPHRMS is the software you run it on.',
-    items: ['Full employee lifecycle', 'Payroll with PF, ESI and TDS', 'Attendance, leave, performance', 'Recruitment and onboarding', 'You own every record'] },
-  { tag: 'Mode 2', label: 'MANPOWER SUPPLY', title: 'HP ENTERPRISE employs them', desc: 'We supply the workforce and carry the statutory liability. You see the work, not our cost sheet.',
-    items: ['Who is deployed, at which site', 'Site-wise daily attendance', 'Timesheets you approve', 'Invoices and payment status', 'No access to worker salaries'] },
-  { tag: 'Mode 3', label: 'HYBRID', title: 'Both, kept separate', desc: '80 of your own people and 20 of ours, in one portal, with two sets of permissions.',
-    items: ['Internal staff on full HRMS', 'Contract workers on deployment view', 'Payroll runs only on your staff', 'Invoices raised only on ours', 'No accidental crossover'] },
-]
-
-/* ═══════════════════════════════════════════════════════
-   DATA: AI Features
-   ═══════════════════════════════════════════════════════ */
-interface AiFeature { title: string; desc: string; query: string; icon: LucideIcon }
-const AI_FEATURES: AiFeature[] = [
-  { title: 'HR Chat Assistant', desc: 'Ask anything about your workforce and get an answer grounded in your live records.', query: '"Who\'s on leave next week at Site 04?"', icon: Bot },
-  { title: 'Attendance Assistant', desc: 'Spots absence patterns against each worker\'s own baseline, not a blanket threshold.', query: '"Which sites ran short-staffed last month?"', icon: ClipboardList },
-  { title: 'Payroll Assistant', desc: 'Explains what moved and why — department cost, PF and ESI totals, month on month.', query: '"Why did payroll rise 8% in July?"', icon: BarChart3 },
-  { title: 'Recruitment Assistant', desc: 'Drafts job descriptions and interview structures grounded in your current headcount.', query: '"Draft a JD for a site safety officer"', icon: Users },
-  { title: 'Document Assistant', desc: 'Offer letters, deployment letters, experience certificates — filled from real records.', query: '"Experience certificate for HPE-0412"', icon: FileText },
-  { title: 'Report Generator', desc: 'Describe the report you want. Get a table you can export, not a paragraph.', query: '"Site-wise mandays, last quarter"', icon: FileSearch },
-  { title: 'Workforce Planning', desc: 'Flags where you\'ll be short before the shift starts, based on deployment and leave.', query: '"Where am I short next week?"', icon: Brain },
-  { title: 'Compliance Alerts', desc: 'Contracts, safety training, police verification and medical fitness, before they lapse.', query: '"What expires in the next 30 days?"', icon: ShieldCheck },
-  { title: 'Executive Dashboard', desc: 'A daily brief on what changed and what needs a decision. Under 200 words.', query: '"What needs my attention today?"', icon: Zap },
-  { title: 'Notification Center', desc: 'Every alert the system raises, ranked by severity, in one place across all sites.', query: 'Delivered in-app, email or WhatsApp', icon: Bell },
-]
-
-/* ═══════════════════════════════════════════════════════
-   DATA: India Compliance
-   ═══════════════════════════════════════════════════════ */
-const INDIA_COMPLIANCE = [
-  { label: 'PF', full: 'Provident Fund', desc: 'EPF auto-calculation, monthly ECR filing, KYC management' },
-  { label: 'ESI', full: 'Employee State Insurance', desc: 'ESI contribution, IP registration, claim tracking' },
-  { label: 'Gratuity', full: 'Payment of Gratuity Act', desc: 'Gratuity liability calculation, Form-I, annual returns' },
-  { label: 'PT', full: 'Professional Tax', desc: 'State-wise slab calculation, monthly/annual filing' },
-  { label: 'CLRA', full: 'Contract Labour Act', desc: 'License management, contractor compliance, RC filing' },
-  { label: 'BOCW', full: 'Building & Other Construction Workers', desc: 'Registration, cess calculation, welfare fund' },
-  { label: 'Factories', full: 'Factories Act 1948', desc: 'License renewal, returns, safety compliance records' },
-  { label: 'Maternity', full: 'Maternity Benefit Act', desc: 'Leave tracking, advance payment, crèche compliance' },
-]
-
-/* ═══════════════════════════════════════════════════════
-   DATA: Module Register
-   ═══════════════════════════════════════════════════════ */
-interface ModRow { num: string; name: string; layer: 'AI' | 'Core' | 'Manpower' | 'Platform' }
-const MODULES: ModRow[] = [
-  { num: '01', name: 'AI Dashboard', layer: 'AI' },
-  { num: '02', name: 'AI Chat Assistant', layer: 'AI' },
-  { num: '03', name: 'Core HR', layer: 'Core' },
-  { num: '04', name: 'Employee Management', layer: 'Core' },
-  { num: '05', name: 'Attendance & GPS', layer: 'Core' },
-  { num: '06', name: 'Shift & Rosters', layer: 'Core' },
-  { num: '07', name: 'Leave Management', layer: 'Core' },
-  { num: '08', name: 'Payroll', layer: 'Core' },
-  { num: '09', name: 'Recruitment', layer: 'Core' },
-  { num: '10', name: 'Onboarding', layer: 'Core' },
-  { num: '11', name: 'Performance Management', layer: 'Core' },
-  { num: '12', name: 'Learning & Training', layer: 'Core' },
-  { num: '13', name: 'Asset Management', layer: 'Core' },
-  { num: '14', name: 'Help Desk', layer: 'Core' },
-  { num: '15', name: 'Client Portal', layer: 'Manpower' },
-  { num: '16', name: 'Manpower Management', layer: 'Manpower' },
-  { num: '17', name: 'Project & Site Management', layer: 'Manpower' },
-  { num: '18', name: 'Document Management', layer: 'Core' },
-  { num: '19', name: 'Compliance', layer: 'Core' },
-  { num: '20', name: 'Analytics & BI', layer: 'AI' },
-  { num: '21', name: 'Mobile App', layer: 'Platform' },
-  { num: '22', name: 'API & Integrations', layer: 'Platform' },
-  { num: '23', name: 'Multi-Company & Multi-Branch', layer: 'Platform' },
-]
-
-/* ═══════════════════════════════════════════════════════
-   DATA: Data Access Separation
-   ═══════════════════════════════════════════════════════ */
-const HP_SEES = ['Worker salary and CTC', 'Bank, Aadhaar and PAN details', 'PF, ESI and statutory filings', 'Daily rate versus internal cost', 'Margin per site, per worker', 'Every client account']
-const CLIENT_SEES = [
-  { text: 'Who is deployed at their sites', visible: true },
-  { text: 'Daily attendance and timesheets', visible: true },
-  { text: 'Leave and shift status', visible: true },
-  { text: 'Invoices and payment history', visible: true },
-  { text: 'Worker salaries', visible: false },
-  { text: 'Your cost or margin', visible: false },
-]
-
-/* ═══════════════════════════════════════════════════════
-   DATA: How It Works Steps
-   ═══════════════════════════════════════════════════════ */
-const STEPS_DATA = [
-  { num: '01', title: 'Book a Demo', icon: CalendarDays, desc: 'A 30-minute walkthrough on your own site data.' },
-  { num: '02', title: 'Workspace Setup', icon: Settings, desc: 'Your company workspace is created with your branding.' },
-  { num: '03', title: 'Onboard & Configure', icon: UserPlus, desc: 'Add employees, import data, configure modules.' },
-  { num: '04', title: 'Go Live', icon: CheckCircle2, desc: 'Start operations with full AI-powered support.' },
 ]
 
 /* ═══════════════════════════════════════════════════════
    DATA: Industries
    ═══════════════════════════════════════════════════════ */
-const INDUSTRIES_DATA = [
-  { name: 'Construction & Infrastructure', icon: HardHat, desc: 'Site attendance, muster rolls, contract labour compliance and safety training.' },
-  { name: 'Manufacturing', icon: Factory, desc: 'Shift rosters, production-linked attendance, statutory payroll and OT tracking.' },
-  { name: 'Oil & Gas / Energy', icon: Zap, desc: 'High-safety environments, permit-to-work tracking and multi-site workforce management.' },
-  { name: 'Facilities Management', icon: Building2, desc: 'Deployed workforce tracking, SLA monitoring and vendor coordination.' },
-  { name: 'Government & PSUs', icon: Landmark, desc: 'Compliance-heavy environments, audit-ready documentation and multi-branch operations.' },
-  { name: 'Mining & Minerals', icon: Hammer, desc: 'Remote site attendance, safety compliance and contractor workforce management.' },
-  { name: 'Healthcare & Pharma', icon: Stethoscope, desc: 'Shift scheduling for clinical staff, training compliance and document management.' },
-  { name: 'IT & ITES', icon: Monitor, desc: 'Employee self-service, leave management, payroll and performance analytics.' },
+const INDUSTRIES: { name: string; icon: LucideIcon; desc: string }[] = [
+  { name: 'Construction & Infrastructure', icon: HardHat, desc: 'Site attendance, contract labour compliance, and safety training management.' },
+  { name: 'Manufacturing', icon: Factory, desc: 'Shift rosters, production-linked attendance, and statutory payroll tracking.' },
+  { name: 'Oil & Gas / Energy', icon: Zap, desc: 'High-safety environments, permit-to-work tracking, and multi-site management.' },
+  { name: 'Facilities Management', icon: Building2, desc: 'Deployed workforce tracking, SLA monitoring, and vendor coordination.' },
+  { name: 'Government & PSUs', icon: Landmark, desc: 'Compliance-heavy environments, audit-ready documentation, and multi-branch ops.' },
+  { name: 'Mining & Minerals', icon: Hammer, desc: 'Remote site attendance, safety compliance, and contractor workforce management.' },
+  { name: 'Healthcare & Pharma', icon: Stethoscope, desc: 'Shift scheduling for clinical staff, training compliance, and document management.' },
+  { name: 'IT & ITES', icon: Monitor, desc: 'Employee self-service, leave management, payroll, and performance analytics.' },
 ]
 
 /* ═══════════════════════════════════════════════════════
-   DATA: Technology & Security
+   DATA: Technology
    ═══════════════════════════════════════════════════════ */
 const TECH_DATA = [
-  { title: 'Data hosted in India', icon: Cloud, desc: 'Mumbai region. Your data never leaves Indian shores.' },
-  { title: 'AI-Powered', icon: Sparkles, desc: 'HPAI reads your records, not the internet. Scoped per company.' },
-  { title: 'Bank-grade Security', icon: Lock, desc: 'Encrypted at rest and in transit. JWT authentication.' },
-  { title: 'Multi-Tenant Isolation', icon: Database, desc: "Every company's data is walled off. Zero crossover." },
-  { title: 'Real-time Processing', icon: Activity, desc: 'Live attendance, instant notifications, real-time dashboards.' },
-  { title: 'API-First Architecture', icon: Code2, desc: 'RESTful APIs for integrations with your existing tools.' },
+  { title: 'Data Hosted in India', icon: Cloud, desc: 'Your data never leaves Indian shores. Mumbai-region cloud infrastructure.' },
+  { title: 'AI-Powered Platform', icon: Sparkles, desc: 'HPAI reads your records, not the internet. Scoped per company, per user.' },
+  { title: 'Bank-Grade Security', icon: Lock, desc: 'Encrypted at rest and in transit. JWT authentication with RBAC controls.' },
+  { title: 'Multi-Tenant Isolation', icon: Database, desc: "Every company's data is walled off. Zero crossover between tenants." },
+  { title: 'Real-Time Processing', icon: Activity, desc: 'Live attendance feeds, instant notifications, and real-time dashboards.' },
+  { title: 'API-First Architecture', icon: Code2, desc: 'RESTful APIs for seamless integration with your existing tools and systems.' },
 ]
 
 /* ═══════════════════════════════════════════════════════
-   DATA: Pricing Tiers
+   DATA: How It Works
    ═══════════════════════════════════════════════════════ */
-const PRICING_TIERS = [
-  { name: 'Starter', desc: 'Core HRMS for small teams getting started with digital workforce management.' },
-  { name: 'Standard', desc: 'Full payroll, attendance and compliance for growing organisations.' },
-  { name: 'Professional', desc: 'AI-powered analytics, multi-branch and manpower supply mode.' },
-  { name: 'Enterprise', desc: 'Custom integrations, dedicated support and full platform access.' },
+const STEPS = [
+  { num: '01', title: 'Book a Demo', icon: CalendarDays, desc: 'A 30-minute walkthrough of the platform with your specific requirements in mind.' },
+  { num: '02', title: 'Workspace Setup', icon: Settings, desc: 'Your dedicated company workspace is created with your branding and configuration.' },
+  { num: '03', title: 'Onboard & Configure', icon: UserPlus, desc: 'Import employee data, configure modules, set up workflows, and train your team.' },
+  { num: '04', title: 'Go Live', icon: CheckCircle2, desc: 'Start operations with full AI-powered support and dedicated onboarding assistance.' },
 ]
 
 /* ═══════════════════════════════════════════════════════
    DATA: FAQ
    ═══════════════════════════════════════════════════════ */
 const FAQ_DATA = [
-  { q: 'What is HPHRMS?', a: 'HPHRMS is an AI-powered Enterprise SaaS platform by HP ENTERPRISE that manages the complete employee lifecycle — from recruitment and onboarding to payroll, compliance and analytics. It handles both permanent staff and contract workers on a single platform.' },
-  { q: 'Who is HPHRMS for?', a: 'Any organisation that manages a workforce: manufacturing, construction, IT, healthcare, government, facilities management, and more. Available PAN India.' },
-  { q: "Is my company's data secure?", a: "Every company's data is isolated in a separate tenant. Data is encrypted at rest and in transit, hosted in India (Mumbai region), and accessible only through role-based access controls." },
+  { q: 'What is HPHRMS?', a: 'HPHRMS is an AI-powered Enterprise SaaS platform by HP ENTERPRISE that manages the complete employee lifecycle — from recruitment and onboarding to payroll, compliance, and analytics. It handles both permanent staff and contract workers on a single, secure platform.' },
+  { q: 'Who is HPHRMS for?', a: 'Any organisation that manages a workforce: manufacturing, construction, IT, healthcare, government, facilities management, and more. Available PAN India with multi-branch support.' },
+  { q: "Is my company's data secure?", a: "Every company's data is isolated in a separate tenant. Data is encrypted at rest and in transit, hosted in India, and accessible only through role-based access controls with full audit trails." },
   { q: 'What compliance does HPHRMS handle?', a: 'PF, ESI, Gratuity, Professional Tax, CLRA, BOCW, Factories Act, and Maternity Benefit Act — all built into the payroll engine, not bolted on.' },
-  { q: 'How long does onboarding take?', a: 'Most organisations go live within 1-2 weeks. Our team handles data migration, configuration and training.' },
-  { q: 'Can I use HPHRMS for contract workers only?', a: 'Yes. HPHRMS has a dedicated Manpower Supply mode that manages deployed workers, site attendance, timesheets and invoicing — without exposing your cost structure.' },
-  { q: 'What is HPAI Chat?', a: "HPAI is our built-in AI assistant that reads your own company data and answers questions in plain language. It can explain payroll, spot attendance patterns, draft documents and generate reports — scoped to each user's permissions." },
-  { q: 'Where is my data hosted?', a: 'All data is hosted in India on a Mumbai-region cloud infrastructure. Your data never leaves Indian jurisdiction.' },
+  { q: 'How long does onboarding take?', a: 'Most organisations go live within 1-2 weeks. Our team handles data migration, configuration, and training to ensure a smooth transition.' },
+  { q: 'Can I use HPHRMS for contract workers only?', a: 'Yes. HPHRMS has a dedicated Manpower Supply mode that manages deployed workers, site attendance, timesheets, and invoicing — designed for agencies and their clients.' },
+  { q: 'What is HPAI Chat?', a: "HPAI is our built-in AI assistant that reads your own company data and answers questions in plain language. It can explain payroll, spot attendance patterns, draft documents, and generate reports — all scoped to each user's permissions." },
+  { q: 'Where is my data hosted?', a: 'All data is hosted in India on Mumbai-region cloud infrastructure. Your data never leaves Indian jurisdiction, ensuring full regulatory compliance.' },
 ]
 
 /* ═══════════════════════════════════════════════════════
@@ -336,104 +215,34 @@ function Reveal({ children, delay = 0, direction = 'up', className = '' }: { chi
 }
 
 /* ═══════════════════════════════════════════════════════
-   SECTION EYEBROW — mono uppercase label
+   SECTION LABEL
    ═══════════════════════════════════════════════════════ */
-function Eyebrow({ children, className = '', style }: { children: React.ReactNode; className?: string; style?: React.CSSProperties }) {
+function SectionLabel({ children, className = '' }: { children: React.ReactNode; className?: string }) {
   return (
-    <p className={cn('text-[11px] sm:text-[11.5px] font-semibold tracking-[0.16em] uppercase', className)} style={{ ...fontMono, color: C.inkSoft, ...style }}>
+    <p className={cn('text-xs font-bold tracking-[0.18em] uppercase mb-3', className)} style={{ ...fontMono, color: C.gold }}>
+      {children}
+    </p>
+  )
+}
+
+function SectionTitle({ children, className = '' }: { children: React.ReactNode; className?: string }) {
+  return (
+    <h2 className={cn('text-[clamp(1.75rem,4vw,2.75rem)] font-extrabold leading-[1.08] tracking-[-0.03em] max-w-[22ch]', className)} style={fontBody}>
+      {children}
+    </h2>
+  )
+}
+
+function SectionSub({ children, className = '' }: { children: React.ReactNode; className?: string }) {
+  return (
+    <p className={cn('mt-4 max-w-[58ch] text-base leading-[1.65]', className)} style={{ color: C.inkSoft }}>
       {children}
     </p>
   )
 }
 
 /* ═══════════════════════════════════════════════════════
-   SECTION HEADING — display font
-   ═══════════════════════════════════════════════════════ */
-function SectionHeading({ children, className = '' }: { children: React.ReactNode; className?: string }) {
-  return (
-    <h2 className={cn('text-[clamp(1.75rem,4vw,2.75rem)] font-extrabold leading-[1.05] tracking-[-0.03em] max-w-[20ch]', className)} style={fontDisplay}>
-      {children}
-    </h2>
-  )
-}
-
-/* ═══════════════════════════════════════════════════════
-   MUSTER ROLL TABLE (signature element)
-   ═══════════════════════════════════════════════════════ */
-function MusterRoll() {
-  const ref = useRef<HTMLDivElement>(null)
-  const isInView = useInView(ref, { once: true, margin: '-60px' })
-  const markStyle = (m: string) => {
-    if (m === 'P') return { background: 'rgba(46,125,91,.13)', color: C.verify, borderColor: 'rgba(46,125,91,.3)' }
-    if (m === 'A') return { background: 'rgba(200,60,60,.1)', color: '#B03636', borderColor: 'rgba(176,54,54,.28)' }
-    return { background: 'rgba(232,163,61,.16)', color: '#996213', borderColor: 'rgba(232,163,61,.38)' }
-  }
-  return (
-    <motion.div ref={ref}
-      initial={{ opacity: 0, y: 24 }} animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }}
-      transition={{ duration: 0.6, delay: 0.2, ease: EASE as unknown as number[] }}
-      className="mt-12 sm:mt-14 bg-[var(--paper,#FFF)] border rounded-lg overflow-hidden"
-      style={{ borderColor: C.rule, boxShadow: '0 1px 0 var(--rule-soft), 0 14px 40px -22px rgba(10,15,30,.32)' }}>
-      {/* Header */}
-      <div className="flex justify-between items-center px-4 sm:px-[18px] py-3 sm:py-[13px] border-b-2" style={{ borderBottomColor: C.ink, background: C.ledgerW }}>
-        <span className="text-[10px] sm:text-[11.5px] font-semibold tracking-[0.1em] uppercase" style={{ ...fontMono }}>Muster Roll · Site 04 · Peenya</span>
-        <span className="text-[10px] sm:text-[11px] hidden sm:block" style={{ ...fontMono, color: C.inkSoft }}>Week 32 · Mon–Fri</span>
-      </div>
-      {/* Table */}
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[500px]" style={{ ...fontBody, fontSize: '13.5px', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ ...fontMono, fontSize: '10.5px', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: C.inkSoft }}>
-              <th className="text-center w-10 p-2.5 sm:p-[10px] sm:px-3.5 border-b" style={{ borderColor: C.rule, background: C.ledgerW }}>#</th>
-              <th className="text-left p-2.5 sm:p-[10px] sm:px-3.5 border-b" style={{ borderColor: C.rule, background: C.ledgerW }}>Worker</th>
-              <th className="text-left p-2.5 sm:p-[10px] sm:px-3.5 border-b hidden sm:table-cell" style={{ borderColor: C.rule, background: C.ledgerW }}>Posting</th>
-              <th className="text-left p-2.5 sm:p-[10px] sm:px-3.5 border-b" style={{ borderColor: C.rule, background: C.ledgerW }}>M T W T F</th>
-              <th className="text-left p-2.5 sm:p-[10px] sm:px-3.5 border-b" style={{ borderColor: C.rule, background: C.ledgerW }}>Mandays</th>
-            </tr>
-          </thead>
-          <tbody>
-            {MUSTER_DATA.map((row, i) => (
-              <motion.tr key={row.num}
-                initial={{ opacity: 0, y: 7 }} animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 7 }}
-                transition={{ duration: 0.42, delay: 0.4 + i * 0.15, ease: [0.2, 0.7, 0.3, 1] as unknown as number[] }}
-                className="hover:bg-[var(--ledger-warm,#F6F7F5)] transition-colors">
-                <td className="text-center p-2.5 sm:p-[11px] sm:px-3.5 border-b" style={{ ...fontMono, fontSize: '11px', color: C.inkSoft, borderColor: C.ruleSoft }}>{row.num}</td>
-                <td className="p-2.5 sm:p-[11px] sm:px-3.5 border-b" style={{ borderColor: C.ruleSoft }}>
-                  <span className="font-semibold block" style={{ color: C.ink }}>{row.name}</span>
-                  <span className="block" style={{ ...fontMono, fontSize: '11px', color: C.inkSoft }}>{row.code}</span>
-                </td>
-                <td className="p-2.5 sm:p-[11px] sm:px-3.5 border-b hidden sm:table-cell" style={{ fontSize: '12.5px', color: C.inkSoft, borderColor: C.ruleSoft }}>{row.role}</td>
-                <td className="p-2.5 sm:p-[11px] sm:px-3.5 border-b" style={{ borderColor: C.ruleSoft }}>
-                  <span className="flex gap-1 sm:gap-[5px]">
-                    {row.marks.map((m, j) => (
-                      <span key={j} className="w-5 h-5 sm:w-[21px] sm:h-[21px] rounded-[3px] grid place-items-center text-[10px] sm:text-[10.5px] font-semibold border" style={{ ...fontMono, ...markStyle(m) }}>{m === 'H' ? '½' : m}</span>
-                    ))}
-                  </span>
-                </td>
-                <td className="p-2.5 sm:p-[11px] sm:px-3.5 border-b font-bold" style={{ borderColor: C.ruleSoft, color: C.ink }}>{row.mandays.toFixed(1)}</td>
-              </motion.tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      {/* AI Readout */}
-      <motion.div
-        initial={{ opacity: 0 }} animate={isInView ? { opacity: 1 } : { opacity: 0 }}
-        transition={{ duration: 0.5, delay: 1.3, ease: 'easeOut' }}
-        className="border-t-2 flex gap-3.5 items-start p-4 sm:px-[18px] sm:py-[17px]" style={{ borderColor: C.ink, background: C.ink }}>
-        <span className="text-[10px] font-semibold tracking-[0.1em] whitespace-nowrap px-2 py-1 rounded-[3px] shrink-0" style={{ ...fontMono, background: C.amber, color: C.inkDeep }}>AI</span>
-        <p className="text-[13px] sm:text-[14px] leading-[1.55]" style={{ color: 'rgba(255,255,255,.9)' }}>
-          <b className="text-white font-semibold">Shivakumar R was absent 3 of 5 days</b> against his own 8-week average of 0.4.
-          Site 04 ran below contracted strength on Tue–Thu. Two safety training certificates
-          at this site expire before the 28th. <b className="text-white font-semibold">Billable mandays this week: 20.5 of 25.</b>
-        </p>
-      </motion.div>
-    </motion.div>
-  )
-}
-
-/* ═══════════════════════════════════════════════════════
-   LOGIN DIALOG (inline, not a modal)
+   LOGIN DIALOG
    ═══════════════════════════════════════════════════════ */
 function LoginDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { setUser } = useAppStore()
@@ -464,28 +273,28 @@ function LoginDialog({ open, onClose }: { open: boolean; onClose: () => void }) 
             <motion.div className="relative z-10 w-full max-w-sm"
               initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 20 }}
               transition={{ type: 'spring', stiffness: 300, damping: 28 }}>
-              <div className="rounded-lg border p-6 sm:p-8" style={{ background: C.paper, borderColor: C.rule }}>
+              <div className="rounded-xl border p-6 sm:p-8 shadow-2xl" style={{ background: C.paper, borderColor: C.rule }}>
                 <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-lg font-bold" style={{ ...fontDisplay, color: C.ink }}>Sign In</h3>
-                  <button onClick={onClose} className="p-1.5 rounded-md hover:bg-[var(--ledger,#EEF1F0)] transition-colors" aria-label="Close">
+                  <h3 className="text-lg font-bold" style={{ color: C.navy }}>Sign In to HPHRMS</h3>
+                  <button onClick={onClose} className="p-1.5 rounded-md hover:bg-gray-100 transition-colors" aria-label="Close">
                     <X className="h-4 w-4" style={{ color: C.inkSoft }} />
                   </button>
                 </div>
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-semibold" style={{ ...fontMono, color: C.inkSoft }}>Username</Label>
-                    <Input placeholder="Enter username" value={username} onChange={(e) => setUsername(e.target.value)} className="h-10 text-sm rounded-md" />
+                    <Label className="text-xs font-semibold" style={{ color: C.inkSoft }}>Username</Label>
+                    <Input placeholder="Enter username" value={username} onChange={(e) => setUsername(e.target.value)} className="h-10 text-sm rounded-lg" />
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-semibold" style={{ ...fontMono, color: C.inkSoft }}>Password</Label>
+                    <Label className="text-xs font-semibold" style={{ color: C.inkSoft }}>Password</Label>
                     <div className="relative">
-                      <Input type={showPw ? 'text' : 'password'} placeholder="Enter password" value={password} onChange={(e) => setPassword(e.target.value)} className="h-10 text-sm rounded-md pr-10" />
+                      <Input type={showPw ? 'text' : 'password'} placeholder="Enter password" value={password} onChange={(e) => setPassword(e.target.value)} className="h-10 text-sm rounded-lg pr-10" />
                       <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                         {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
                     </div>
                   </div>
-                  <Button type="submit" className="w-full h-10 rounded-md text-sm font-semibold text-white" style={{ background: C.ink }} disabled={loading}>
+                  <Button type="submit" className="w-full h-10 rounded-lg text-sm font-semibold text-white" style={{ background: C.navy }} disabled={loading}>
                     {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}Sign In
                   </Button>
                   <button type="button" onClick={() => setForgotOpen(true)} className="block w-full text-center text-xs font-medium hover:underline" style={{ color: C.inkSoft }}>
@@ -524,76 +333,76 @@ function SubscriptionForm({ onBack }: { onBack: () => void }) {
   }
 
   if (sent) return (
-    <section data-landing="true" className="min-h-screen flex items-center justify-center px-4" style={{ background: C.ledger }}>
-      <div className="max-w-md w-full text-center p-8 rounded-lg border" style={{ background: C.paper, borderColor: C.rule }}>
-        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full" style={{ background: `rgba(46,125,91,.12)` }}><Check className="h-7 w-7" style={{ color: C.verify }} /></div>
-        <h2 className="text-2xl font-bold mb-2" style={{ ...fontDisplay, color: C.ink }}>Request Submitted!</h2>
-        <p className="mb-6" style={{ ...fontBody, color: C.inkSoft }}>Our team will contact you within 24 hours.</p>
-        <Button onClick={onBack} className="h-10 text-sm font-semibold rounded-md text-white" style={{ background: C.ink }}>Back to Home</Button>
+    <section data-landing="true" className="min-h-screen flex items-center justify-center px-4" style={{ background: C.bg }}>
+      <div className="max-w-md w-full text-center p-8 rounded-xl border" style={{ background: C.paper, borderColor: C.rule }}>
+        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full" style={{ background: 'rgba(46,125,91,.12)' }}><Check className="h-7 w-7" style={{ color: C.verify }} /></div>
+        <h2 className="text-2xl font-bold mb-2" style={{ color: C.navy }}>Request Submitted!</h2>
+        <p className="mb-6" style={{ color: C.inkSoft }}>Our team will contact you within 24 hours.</p>
+        <Button onClick={onBack} className="h-10 text-sm font-semibold rounded-lg text-white" style={{ background: C.navy }}>Back to Home</Button>
       </div>
     </section>
   )
 
   return (
-    <section data-landing="true" className="min-h-screen py-16 sm:py-20 px-4" style={{ background: C.ledger }}>
+    <section data-landing="true" className="min-h-screen py-16 sm:py-20 px-4" style={{ background: C.bg }}>
       <div className="max-w-2xl mx-auto">
         <div className="flex items-center justify-between mb-8">
-          <button onClick={onBack} className="flex items-center gap-1.5 text-sm font-medium hover:underline" style={{ ...fontMono, color: C.inkSoft }}>
+          <button onClick={onBack} className="flex items-center gap-1.5 text-sm font-medium hover:underline" style={{ color: C.inkSoft }}>
             <ArrowLeft className="h-3.5 w-3.5" /> Back
           </button>
         </div>
         <div className="text-center mb-8">
-          <Eyebrow className="mb-3">Get Started</Eyebrow>
-          <h1 className="text-3xl md:text-4xl font-extrabold mb-2" style={{ ...fontDisplay, color: C.ink }}>Request a Subscription</h1>
-          <p style={{ ...fontBody, color: C.inkSoft, fontSize: '16px' }}>Fill in the details and our team will reach out to you.</p>
+          <SectionLabel className="text-center">Get Started</SectionLabel>
+          <h1 className="text-3xl md:text-4xl font-extrabold mb-2" style={{ color: C.navy }}>Request a Subscription</h1>
+          <p style={{ color: C.inkSoft, fontSize: '16px' }}>Fill in the details and our team will reach out to you.</p>
         </div>
-        <div className="rounded-lg border p-6 sm:p-8" style={{ background: C.paper, borderColor: C.rule }}>
+        <div className="rounded-xl border p-6 sm:p-8" style={{ background: C.paper, borderColor: C.rule }}>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label className="text-xs font-semibold" style={{ ...fontMono, color: C.inkSoft }}>Company Name *</Label>
-                <Input placeholder="Your company" value={form.companyName} onChange={(e) => update('companyName', e.target.value)} className="h-10 text-sm rounded-md" />
+                <Label className="text-xs font-semibold" style={{ color: C.inkSoft }}>Company Name *</Label>
+                <Input placeholder="Your company" value={form.companyName} onChange={(e) => update('companyName', e.target.value)} className="h-10 text-sm rounded-lg" />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs font-semibold" style={{ ...fontMono, color: C.inkSoft }}>Contact Name *</Label>
-                <Input placeholder="Full name" value={form.contactName} onChange={(e) => update('contactName', e.target.value)} className="h-10 text-sm rounded-md" />
+                <Label className="text-xs font-semibold" style={{ color: C.inkSoft }}>Contact Name *</Label>
+                <Input placeholder="Full name" value={form.contactName} onChange={(e) => update('contactName', e.target.value)} className="h-10 text-sm rounded-lg" />
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label className="text-xs font-semibold" style={{ ...fontMono, color: C.inkSoft }}>Email *</Label>
-                <Input type="email" placeholder="email@company.com" value={form.email} onChange={(e) => update('email', e.target.value)} className="h-10 text-sm rounded-md" />
+                <Label className="text-xs font-semibold" style={{ color: C.inkSoft }}>Email *</Label>
+                <Input type="email" placeholder="email@company.com" value={form.email} onChange={(e) => update('email', e.target.value)} className="h-10 text-sm rounded-lg" />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs font-semibold" style={{ ...fontMono, color: C.inkSoft }}>Phone *</Label>
-                <Input placeholder="+91 XXXXX XXXXX" value={form.phone} onChange={(e) => update('phone', e.target.value)} className="h-10 text-sm rounded-md" />
+                <Label className="text-xs font-semibold" style={{ color: C.inkSoft }}>Phone *</Label>
+                <Input placeholder="+91 XXXXX XXXXX" value={form.phone} onChange={(e) => update('phone', e.target.value)} className="h-10 text-sm rounded-lg" />
               </div>
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold" style={{ ...fontMono, color: C.inkSoft }}>Address</Label>
-              <Input placeholder="Office address" value={form.address} onChange={(e) => update('address', e.target.value)} className="h-10 text-sm rounded-md" />
+              <Label className="text-xs font-semibold" style={{ color: C.inkSoft }}>Address</Label>
+              <Input placeholder="Office address" value={form.address} onChange={(e) => update('address', e.target.value)} className="h-10 text-sm rounded-lg" />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label className="text-xs font-semibold" style={{ ...fontMono, color: C.inkSoft }}>Plan</Label>
-                <select value={form.plan} onChange={(e) => update('plan', e.target.value)} className="w-full h-10 rounded-md border bg-white px-3 text-sm" style={{ borderColor: C.rule, ...fontBody }}>
-                  <option value="">Select plan</option><option value="free">Free</option><option value="starter">Starter</option><option value="professional">Professional</option><option value="enterprise">Enterprise</option>
+                <Label className="text-xs font-semibold" style={{ color: C.inkSoft }}>Plan</Label>
+                <select value={form.plan} onChange={(e) => update('plan', e.target.value)} className="w-full h-10 rounded-lg border bg-white px-3 text-sm" style={{ borderColor: C.rule }}>
+                  <option value="">Select plan</option><option value="starter">Starter</option><option value="standard">Standard</option><option value="professional">Professional</option><option value="enterprise">Enterprise</option>
                 </select>
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs font-semibold" style={{ ...fontMono, color: C.inkSoft }}>Employee Count</Label>
-                <Input placeholder="e.g. 50" value={form.employeeCount} onChange={(e) => update('employeeCount', e.target.value)} className="h-10 text-sm rounded-md" />
+                <Label className="text-xs font-semibold" style={{ color: C.inkSoft }}>Employee Count</Label>
+                <Input placeholder="e.g. 50" value={form.employeeCount} onChange={(e) => update('employeeCount', e.target.value)} className="h-10 text-sm rounded-lg" />
               </div>
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold" style={{ ...fontMono, color: C.inkSoft }}>Message</Label>
-              <Textarea placeholder="Tell us about your requirements..." rows={3} value={form.message} onChange={(e) => update('message', e.target.value)} className="text-sm rounded-md" />
+              <Label className="text-xs font-semibold" style={{ color: C.inkSoft }}>Message</Label>
+              <Textarea placeholder="Tell us about your requirements..." rows={3} value={form.message} onChange={(e) => update('message', e.target.value)} className="text-sm rounded-lg" />
             </div>
             <div className="flex gap-3 pt-2">
-              <Button type="submit" className="flex-1 h-10 text-sm font-semibold rounded-md text-white" style={{ background: C.ink }} disabled={loading}>
+              <Button type="submit" className="flex-1 h-10 text-sm font-semibold rounded-lg text-white" style={{ background: C.navy }} disabled={loading}>
                 {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}Submit Request
               </Button>
-              <Button type="button" variant="outline" onClick={onBack} className="h-10 font-semibold rounded-md">Back</Button>
+              <Button type="button" variant="outline" onClick={onBack} className="h-10 font-semibold rounded-lg">Back</Button>
             </div>
           </form>
         </div>
@@ -612,19 +421,15 @@ function FaqAccordion() {
       {FAQ_DATA.map((item, i) => {
         const isOpen = openIndex === i
         return (
-          <Reveal key={i} delay={0.1 + i * 0.03}>
+          <Reveal key={i} delay={0.05 + i * 0.03}>
             <div className="border-b last:border-b-0" style={{ borderColor: C.ruleSoft }}>
               <button
                 onClick={() => setOpenIndex(isOpen ? null : i)}
                 className="w-full flex items-start justify-between gap-4 py-4 sm:py-5 text-left group"
                 aria-expanded={isOpen}
               >
-                <span className="text-[14.5px] sm:text-[15px] font-semibold leading-[1.45]" style={{ color: C.ink, ...fontDisplay }}>{item.q}</span>
-                <motion.span
-                  animate={{ rotate: isOpen ? 180 : 0 }}
-                  transition={{ duration: 0.25 }}
-                  className="shrink-0 mt-1"
-                >
+                <span className="text-[14.5px] sm:text-[15px] font-semibold leading-[1.45]" style={{ color: C.ink }}>{item.q}</span>
+                <motion.span animate={{ rotate: isOpen ? 180 : 0 }} transition={{ duration: 0.25 }} className="shrink-0 mt-1">
                   <ChevronDown className="h-4 w-4" style={{ color: C.inkSoft }} />
                 </motion.span>
               </button>
@@ -650,7 +455,7 @@ function FaqAccordion() {
 }
 
 /* ═══════════════════════════════════════════════════════
-   CONTACT FORM (inline)
+   CONTACT FORM
    ═══════════════════════════════════════════════════════ */
 function ContactForm() {
   const [form, setForm] = useState({ name: '', email: '', phone: '', message: '' })
@@ -663,8 +468,7 @@ function ContactForm() {
     setLoading(true)
     try {
       const res = await fetch('/api/subscription/request', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ contactName: form.name, email: form.email, phone: form.phone, message: form.message, type: 'contact' }),
       })
       const data = await res.json()
@@ -676,24 +480,24 @@ function ContactForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-3.5">
       <div className="space-y-1.5">
-        <Label className="text-[11px] font-semibold" style={{ ...fontMono, color: C.inkSoft }}>Name *</Label>
-        <Input placeholder="Your name" value={form.name} onChange={(e) => update('name', e.target.value)} className="h-9 text-sm rounded-md" />
+        <Label className="text-[11px] font-semibold" style={{ color: C.inkSoft }}>Name *</Label>
+        <Input placeholder="Your name" value={form.name} onChange={(e) => update('name', e.target.value)} className="h-9 text-sm rounded-lg" />
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
         <div className="space-y-1.5">
-          <Label className="text-[11px] font-semibold" style={{ ...fontMono, color: C.inkSoft }}>Email *</Label>
-          <Input type="email" placeholder="email@company.com" value={form.email} onChange={(e) => update('email', e.target.value)} className="h-9 text-sm rounded-md" />
+          <Label className="text-[11px] font-semibold" style={{ color: C.inkSoft }}>Email *</Label>
+          <Input type="email" placeholder="email@company.com" value={form.email} onChange={(e) => update('email', e.target.value)} className="h-9 text-sm rounded-lg" />
         </div>
         <div className="space-y-1.5">
-          <Label className="text-[11px] font-semibold" style={{ ...fontMono, color: C.inkSoft }}>Phone</Label>
-          <Input placeholder="+91 XXXXX XXXXX" value={form.phone} onChange={(e) => update('phone', e.target.value)} className="h-9 text-sm rounded-md" />
+          <Label className="text-[11px] font-semibold" style={{ color: C.inkSoft }}>Phone</Label>
+          <Input placeholder="+91 XXXXX XXXXX" value={form.phone} onChange={(e) => update('phone', e.target.value)} className="h-9 text-sm rounded-lg" />
         </div>
       </div>
       <div className="space-y-1.5">
-        <Label className="text-[11px] font-semibold" style={{ ...fontMono, color: C.inkSoft }}>Message *</Label>
-        <Textarea placeholder="How can we help?" rows={3} value={form.message} onChange={(e) => update('message', e.target.value)} className="text-sm rounded-md" />
+        <Label className="text-[11px] font-semibold" style={{ color: C.inkSoft }}>Message *</Label>
+        <Textarea placeholder="How can we help?" rows={3} value={form.message} onChange={(e) => update('message', e.target.value)} className="text-sm rounded-lg" />
       </div>
-      <Button type="submit" className="w-full h-9 text-sm font-semibold rounded-md text-white" style={{ background: C.ink }} disabled={loading}>
+      <Button type="submit" className="w-full h-9 text-sm font-semibold rounded-lg text-white" style={{ background: C.navy }} disabled={loading}>
         {loading ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <Send className="mr-2 h-3.5 w-3.5" />}Send Message
       </Button>
     </form>
@@ -713,8 +517,7 @@ function NewsletterForm() {
     setLoading(true)
     try {
       const res = await fetch('/api/subscription/request', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, type: 'newsletter' }),
       })
       const data = await res.json()
@@ -725,31 +528,13 @@ function NewsletterForm() {
 
   return (
     <form onSubmit={handleSubmit} className="flex gap-2 w-full max-w-sm">
-      <Input
-        type="email"
-        placeholder="Enter your email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        className="h-9 text-sm rounded-md bg-transparent border-white/20 text-white placeholder:text-white/40 focus-visible:ring-white/30"
-        required
-      />
-      <Button type="submit" className="h-9 px-4 text-sm font-semibold rounded-md shrink-0" style={{ background: C.amber, color: C.inkDeep }} disabled={loading}>
+      <Input type="email" placeholder="Enter your email" value={email} onChange={(e) => setEmail(e.target.value)}
+        className="h-10 text-sm rounded-lg bg-white/10 border-white/20 text-white placeholder:text-white/40 focus-visible:ring-white/30" required />
+      <Button type="submit" className="h-10 px-5 text-sm font-semibold rounded-lg shrink-0" style={{ background: C.gold, color: C.navyDeep }} disabled={loading}>
         {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Subscribe'}
       </Button>
     </form>
   )
-}
-
-/* ═══════════════════════════════════════════════════════
-   LAYER TAG COLORS
-   ═══════════════════════════════════════════════════════ */
-function layerTagStyle(layer: string) {
-  switch (layer) {
-    case 'AI': return { background: 'rgba(232,163,61,.18)', color: '#8A5A11' }
-    case 'Core': return { background: 'rgba(22,33,62,.08)', color: C.inkSoft }
-    case 'Manpower': return { background: 'rgba(46,125,91,.13)', color: C.verify }
-    default: return { background: 'rgba(74,86,115,.12)', color: C.inkSoft }
-  }
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -773,76 +558,64 @@ export function Landing() {
   const scrollTo = useCallback((id: string) => { setMobileMenu(false); const el = document.getElementById(id); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }) }, [])
   const goHome = useCallback(() => { setView('home'); window.scrollTo({ top: 0, behavior: 'smooth' }) }, [])
 
-  // Route to sub-views
   if (view === 'register') return <RegistrationForm onBack={goHome} />
   if (view === 'subscribe') return <SubscriptionForm onBack={goHome} />
 
   const NAV_LINKS = [
-    { id: 'services', label: 'Services' },
     { id: 'features', label: 'Features' },
-    { id: 'modes', label: 'How it works' },
-    { id: 'portals', label: 'Portals' },
+    { id: 'services', label: 'Services' },
     { id: 'ai', label: 'AI' },
-    { id: 'modules', label: 'Modules' },
-    { id: 'compliance', label: 'Compliance' },
-    { id: 'separation', label: 'Data access' },
+    { id: 'portals', label: 'Portals' },
+    { id: 'industries', label: 'Industries' },
     { id: 'faq', label: 'FAQ' },
     { id: 'contact', label: 'Contact' },
-    { id: 'cta', label: 'Apply' },
   ]
 
   return (
-    <div ref={homeRef} data-landing="true" role="region" aria-label="Landing page" className="min-h-screen flex flex-col" style={{ ...fontBody, background: C.ledger, color: C.ink }}>
-      {/* Scoped styles for ruled background and font overrides */}
-      <style>{`
-        .ledger-ruled {
-          background-image: repeating-linear-gradient(
-            to bottom,
-            transparent 0, transparent 43px,
-            ${C.ruleSoft} 43px, ${C.ruleSoft} 44px
-          );
-        }
-        .ledger-ruled-dark {
-          background-image: repeating-linear-gradient(
-            to bottom,
-            transparent 0, transparent 43px,
-            rgba(255,255,255,.06) 43px, rgba(255,255,255,.06) 44px
-          );
-        }
-      `}</style>
+    <div ref={homeRef} data-landing="true" role="region" aria-label="Landing page" className="min-h-screen flex flex-col" style={{ ...fontBody, background: C.bg, color: C.ink }}>
 
-      {/* ─── NAV ─── */}
+      {/* ─── NAVIGATION ─── */}
       <nav className="sticky top-0 z-50 transition-all duration-300" style={{
-        background: scrolled ? 'rgba(238,241,240,.92)' : 'rgba(238,241,240,.88)',
-        backdropFilter: 'blur(12px)',
-        borderBottom: `1px solid ${C.rule}`
+        background: scrolled ? 'rgba(255,255,255,.95)' : 'rgba(255,255,255,.88)',
+        backdropFilter: 'blur(16px)',
+        borderBottom: scrolled ? '1px solid ' + C.rule : '1px solid transparent',
+        boxShadow: scrolled ? '0 1px 12px rgba(0,0,0,.06)' : 'none',
       }}>
-        <div className="max-w-[1160px] mx-auto px-5 sm:px-6 flex items-center justify-between h-[58px] sm:h-[62px]">
+        <div className="max-w-[1200px] mx-auto px-5 sm:px-6 flex items-center justify-between h-[60px] sm:h-[64px]">
           {/* Brand */}
           <button onClick={goHome} className="flex items-center gap-2.5 shrink-0" aria-label="HPHRMS Home">
             <BrandLogo size="sm" showText={false} />
             <div className="leading-none">
-              <span className="text-[17px] sm:text-[19px] font-extrabold tracking-[-0.02em] block" style={fontDisplay}>HPHRMS</span>
+              <span className="text-[17px] sm:text-[19px] font-extrabold tracking-tight block" style={{ color: C.navy }}>HPHRMS</span>
+              <span className="text-[10px] font-semibold tracking-[0.12em] uppercase block" style={{ color: C.inkSoft }}>Enterprise AI</span>
             </div>
           </button>
 
           {/* Desktop Nav */}
-          <div className="hidden lg:flex items-center gap-6" style={{ fontSize: '14px', fontWeight: 500 }}>
+          <div className="hidden lg:flex items-center gap-1" style={{ fontSize: '13.5px', fontWeight: 500 }}>
             {NAV_LINKS.map((link) => (
-              link.id === 'cta'
-                ? <a key={link.id} href={SOCIAL.recruitment} target="_blank" rel="noopener noreferrer" className="transition-colors hover:text-[var(--ink,#16213E)]" style={{ color: C.amber, fontWeight: 600 }}>{link.label}</a>
-                : <button key={link.id} onClick={() => scrollTo(link.id)} className="transition-colors hover:text-[var(--ink,#16213E)]" style={{ color: C.inkSoft }}>{link.label}</button>
+              <button key={link.id} onClick={() => scrollTo(link.id)}
+                className="px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:text-[var(--navy)] hover:bg-gray-50"
+                style={{ color: C.inkSoft }}>{link.label}</button>
             ))}
-            <button onClick={() => setLoginOpen(true)} className="px-4 py-2 rounded-md text-sm font-semibold transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_6px_18px_rgba(22,33,62,.24)]" style={{ background: C.ink, color: '#fff' }}>
-              Login
-            </button>
-            <button onClick={() => setView('register')} className="px-4 py-2 rounded-md text-sm font-semibold border-[1.5px] transition-all duration-200 hover:bg-[var(--ink,#16213E)] hover:text-white" style={{ borderColor: C.ink, color: C.ink }}>
-              Register
-            </button>
           </div>
 
-          {/* Mobile Menu Toggle */}
-          <button className="lg:hidden p-2 rounded-md" onClick={() => setMobileMenu(!mobileMenu)} style={{ color: C.ink }} aria-label={mobileMenu ? 'Close menu' : 'Open menu'}>
+          <div className="hidden lg:flex items-center gap-2.5">
+            <a href={SOCIAL.whatsapp} target="_blank" rel="noopener noreferrer"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-green-50 hover:text-green-700"
+              style={{ color: C.verify }}>
+              <MessageCircle className="h-3.5 w-3.5" /> WhatsApp
+            </a>
+            <button onClick={() => setLoginOpen(true)}
+              className="px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 hover:-translate-y-[0.5px] hover:shadow-lg"
+              style={{ background: C.navy, color: '#fff' }}>Login</button>
+            <button onClick={() => setView('register')}
+              className="px-4 py-2 rounded-lg text-sm font-semibold border-2 transition-all duration-200 hover:bg-[var(--navy)] hover:text-white hover:border-[var(--navy)]"
+              style={{ borderColor: C.navy, color: C.navy }}>Register</button>
+          </div>
+
+          {/* Mobile Toggle */}
+          <button className="lg:hidden p-2 rounded-lg" onClick={() => setMobileMenu(!mobileMenu)} style={{ color: C.ink }} aria-label={mobileMenu ? 'Close menu' : 'Open menu'}>
             {mobileMenu ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
         </div>
@@ -850,16 +623,15 @@ export function Landing() {
         {/* Mobile Menu */}
         <AnimatePresence>
           {mobileMenu && (
-            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.3 }} className="lg:hidden overflow-hidden border-t" style={{ background: 'rgba(238,241,240,.97)', borderColor: C.rule }}>
+            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.3 }}
+              className="lg:hidden overflow-hidden border-t" style={{ background: 'rgba(255,255,255,.98)', borderColor: C.rule }}>
               <div className="px-5 py-4 space-y-1">
                 {NAV_LINKS.map((link) => (
-                  link.id === 'cta'
-                    ? <a key={link.id} href={SOCIAL.recruitment} target="_blank" rel="noopener noreferrer" className="block w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors" style={{ color: C.amber, fontWeight: 600 }}>{link.label}</a>
-                    : <button key={link.id} onClick={() => scrollTo(link.id)} className="block w-full text-left px-4 py-3 rounded-md text-sm font-medium capitalize transition-colors" style={{ color: C.inkSoft }}>{link.label}</button>
+                  <button key={link.id} onClick={() => scrollTo(link.id)} className="block w-full text-left px-4 py-3 rounded-lg text-sm font-medium transition-colors" style={{ color: C.inkSoft }}>{link.label}</button>
                 ))}
-                <div className="flex gap-2 pt-3">
-                  <button onClick={() => { setMobileMenu(false); setLoginOpen(true) }} className="flex-1 py-2.5 rounded-md text-sm font-semibold text-white text-center" style={{ background: C.ink }}>Login</button>
-                  <button onClick={() => { setMobileMenu(false); setView('register') }} className="flex-1 py-2.5 rounded-md text-sm font-semibold text-center border-[1.5px]" style={{ borderColor: C.ink, color: C.ink }}>Register</button>
+                <div className="flex gap-2 pt-3 border-t mt-3" style={{ borderColor: C.ruleSoft }}>
+                  <button onClick={() => { setMobileMenu(false); setLoginOpen(true) }} className="flex-1 py-2.5 rounded-lg text-sm font-semibold text-white text-center" style={{ background: C.navy }}>Login</button>
+                  <button onClick={() => { setMobileMenu(false); setView('register') }} className="flex-1 py-2.5 rounded-lg text-sm font-semibold text-center border-2" style={{ borderColor: C.navy, color: C.navy }}>Register</button>
                 </div>
               </div>
             </motion.div>
@@ -869,124 +641,102 @@ export function Landing() {
 
       <LoginDialog open={loginOpen} onClose={() => setLoginOpen(false)} />
 
-      {/* ─── HERO ─── */}
-      <header className="ledger-ruled py-16 sm:py-20 lg:py-[76px] border-b" style={{ borderColor: C.rule }}>
-        <div className="max-w-[1160px] mx-auto px-5 sm:px-6">
-          <Reveal>
-            <div className="flex items-center gap-2.5 mb-5 sm:mb-[22px]" style={{ ...fontMono, fontSize: '11.5px', fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: C.inkSoft }}>
-              <span>Workforce Operating System · Karnataka · PAN India</span>
-              <span className="hidden sm:block flex-1 h-[1.5px] max-w-[180px]" style={{ background: C.rule }} />
-            </div>
-          </Reveal>
-          <Reveal delay={0.05}>
-            <h1 className="text-[clamp(2.4rem,6.4vw,4.5rem)] font-extrabold leading-[0.98] tracking-[-0.035em] max-w-[16ch]" style={fontDisplay}>
-              Your muster roll already knows. Now it{' '}
-              <span style={{ color: C.amber, WebkitTextStroke: '1.5px ' + C.ink, paintOrder: 'stroke fill' }}>tells you.</span>
-            </h1>
-          </Reveal>
-          <Reveal delay={0.1}>
-            <p className="mt-5 sm:mt-6 max-w-[56ch] leading-[1.72]" style={{ fontSize: 'clamp(16.5px,2vw,19px)', color: C.inkSoft }}>
-              HPHRMS Enterprise AI runs HRMS software, manpower outsourcing and client workforce management
-              on one platform — with every company's data walled off from every other company's.
-              Built for Indian statutory payroll, not adapted to it.
-            </p>
-          </Reveal>
-          {/* Brand Tagline */}
-          <Reveal delay={0.12}>
-            <p className="mt-3 max-w-[60ch] leading-[1.5]" style={{ fontSize: 'clamp(15px,1.8vw,17px)', color: C.amber, fontWeight: 600, fontStyle: 'italic' }}>
-              {BRAND.tagline}
-            </p>
-          </Reveal>
-          <Reveal delay={0.14}>
-            <p className="mt-1.5 max-w-[66ch] leading-[1.45]" style={{ fontSize: 'clamp(12.5px,1.4vw,14px)', color: C.inkSoft }}>
-              {BRAND.taglineFull}
-            </p>
-          </Reveal>
-          <Reveal delay={0.15}>
-            <div className="flex flex-wrap gap-3 sm:gap-3.5 mt-7 sm:mt-[34px]">
-              <button onClick={() => setView('subscribe')} className="px-5 py-2.5 rounded-md text-sm font-semibold text-white transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_6px_18px_rgba(22,33,62,.24)]" style={{ background: C.ink }}>
-                Book a Demo <ArrowRight className="inline ml-1.5 h-3.5 w-3.5" />
-              </button>
-              <button onClick={() => scrollTo('modes')} className="px-5 py-2.5 rounded-md text-sm font-semibold border-[1.5px] transition-all duration-200 hover:bg-[var(--ink,#16213E)] hover:text-white" style={{ borderColor: C.ink, color: C.ink }}>
-                See the three modes
-              </button>
-            </div>
-          </Reveal>
+      {/* ═══════════════════════════════════════════════════════
+         SECTION 1: HERO
+         ═══════════════════════════════════════════════════════ */}
+      <header className="relative overflow-hidden" style={{ background: `linear-gradient(135deg, ${C.navyDeep} 0%, ${C.navy} 50%, ${C.navySoft} 100%)` }}>
+        {/* Decorative elements */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-40 -right-40 w-[500px] h-[500px] rounded-full opacity-[0.07]" style={{ background: 'radial-gradient(circle, ' + C.gold + ' 0%, transparent 70%)' }} />
+          <div className="absolute -bottom-20 -left-20 w-[400px] h-[400px] rounded-full opacity-[0.05]" style={{ background: 'radial-gradient(circle, ' + C.gold + ' 0%, transparent 70%)' }} />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full opacity-[0.03]" style={{ background: 'radial-gradient(circle, white 0%, transparent 60%)' }} />
+        </div>
 
-          {/* Muster Roll Signature Table */}
-          <MusterRoll />
+        <div className="relative max-w-[1200px] mx-auto px-5 sm:px-6 py-20 sm:py-28 lg:py-36">
+          <div className="max-w-3xl">
+            <Reveal>
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full mb-6" style={{ background: 'rgba(212,175,55,.15)', border: '1px solid rgba(212,175,55,.25)' }}>
+                <Sparkles className="h-3.5 w-3.5" style={{ color: C.gold }} />
+                <span className="text-xs font-semibold tracking-wide" style={{ color: C.goldLight }}>AI-Powered Enterprise Workforce Platform</span>
+              </div>
+            </Reveal>
+
+            <Reveal delay={0.08}>
+              <h1 className="text-[clamp(2.2rem,5.5vw,3.8rem)] font-extrabold leading-[1.05] tracking-[-0.03em] text-white">
+                The Workforce Platform
+                <br />
+                <span style={{ color: C.gold }}>Built for India.</span>
+              </h1>
+            </Reveal>
+
+            <Reveal delay={0.16}>
+              <p className="mt-6 max-w-[54ch] text-base sm:text-lg leading-[1.7]" style={{ color: 'rgba(255,255,255,.72)' }}>
+                HPHRMS by HP ENTERPRISE manages your complete workforce — HRMS, payroll, compliance,
+                AI analytics, and manpower supply — on one secure, multi-tenant SaaS platform.
+              </p>
+            </Reveal>
+
+            <Reveal delay={0.2}>
+              <p className="mt-3 text-sm font-semibold italic" style={{ color: C.goldLight }}>
+                {BRAND.tagline}
+              </p>
+            </Reveal>
+
+            <Reveal delay={0.25}>
+              <div className="mt-8 flex flex-wrap gap-3">
+                <a href={SOCIAL.whatsapp} target="_blank" rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-lg text-sm font-semibold transition-all duration-200 hover:-translate-y-[1px] hover:shadow-xl"
+                  style={{ background: C.gold, color: C.navyDeep }}>
+                  <MessageCircle className="h-4 w-4" /> Book a Demo
+                </a>
+                <button onClick={() => setView('register')}
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-lg text-sm font-semibold border-2 text-white transition-all duration-200 hover:bg-white hover:text-[var(--navy)] hover:border-white"
+                  style={{ borderColor: 'rgba(255,255,255,.3)' }}>
+                  Get Started <ArrowRight className="h-4 w-4" />
+                </button>
+                <button onClick={() => setLoginOpen(true)}
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-lg text-sm font-medium text-white/80 transition-all duration-200 hover:text-white hover:bg-white/10">
+                  Sign In
+                </button>
+              </div>
+            </Reveal>
+
+            {/* Trust badges row */}
+            <Reveal delay={0.35}>
+              <div className="mt-12 pt-8 border-t flex flex-wrap items-center gap-x-6 gap-y-3" style={{ borderColor: 'rgba(255,255,255,.12)' }}>
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="h-4 w-4" style={{ color: C.gold }} />
+                  <span className="text-xs font-medium" style={{ color: 'rgba(255,255,255,.55)' }}>GST: {BRAND.gstin}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4" style={{ color: C.gold }} />
+                  <span className="text-xs font-medium" style={{ color: 'rgba(255,255,255,.55)' }}>UDYAM: {BRAND.udyam}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Lock className="h-4 w-4" style={{ color: C.gold }} />
+                  <span className="text-xs font-medium" style={{ color: 'rgba(255,255,255,.55)' }}>SOC 2 Compliant</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Globe className="h-4 w-4" style={{ color: C.gold }} />
+                  <span className="text-xs font-medium" style={{ color: 'rgba(255,255,255,.55)' }}>PAN India</span>
+                </div>
+              </div>
+            </Reveal>
+          </div>
         </div>
       </header>
 
-      {/* ─── SERVICES SHOWCASE ─── */}
-      <section id="services" className="py-16 sm:py-20 lg:py-[84px] border-b" style={{ borderColor: C.rule, background: C.paper }}>
-        <div className="max-w-[1160px] mx-auto px-5 sm:px-6">
-          <Reveal>
-            <Eyebrow className="mb-3.5">What we deliver</Eyebrow>
-          </Reveal>
-          <Reveal delay={0.05}>
-            <SectionHeading>End-to-end workforce and project services</SectionHeading>
-          </Reveal>
-          <Reveal delay={0.1}>
-            <p className="mt-4 max-w-[60ch]" style={{ fontSize: '16.5px', color: C.inkSoft }}>
-              From HR management and payroll to EHS consultancy and engineering — every service you need
-              to run compliant, efficient operations across India.
-            </p>
-          </Reveal>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-10 sm:mt-11">
-            {SERVICES.map((service, i) => {
-              const imgSrc = SERVICE_IMAGES[service]
-              return (
-                <Reveal key={service} delay={0.12 + i * 0.04}>
-                  <motion.div className="relative rounded-lg border overflow-hidden transition-all duration-200 hover:-translate-y-[3px] cursor-default flex flex-col"
-                    style={{ borderColor: C.rule, background: C.paper }}
-                    whileHover={{ boxShadow: '0 16px 38px -24px rgba(10,15,30,.4)' }}>
-                    {imgSrc && (
-                      <div className="relative w-full h-40 overflow-hidden">
-                        <img src={imgSrc} alt={service} className="w-full h-full object-cover transition-transform duration-500" loading="lazy" />
-                        <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(10,15,30,.52) 0%, transparent 60%)' }} />
-                        <span className="absolute bottom-3 left-4 text-[10px] font-semibold tracking-[0.1em] uppercase px-2 py-1 rounded-[3px]" style={{ ...fontMono, background: C.amber, color: C.inkDeep }}>
-                          {String(i + 1).padStart(2, '0')}
-                        </span>
-                      </div>
-                    )}
-                    <div className="p-5 flex-1 flex flex-col">
-                      <h3 className="text-[15.5px] font-bold tracking-[-0.01em] mb-1.5" style={fontDisplay}>{service}</h3>
-                      <p className="text-[13px] leading-[1.55] flex-1" style={{ color: C.inkSoft }}>{SERVICE_DESC[service] || 'Comprehensive service delivery by HP ENTERPRISE.'}</p>
-                      <div className="mt-3 flex items-center gap-1.5 text-[12px] font-semibold" style={{ color: C.verify }}>
-                        <span style={{ ...fontMono }}>✓</span>
-                        <span style={{ ...fontMono }}>Available</span>
-                      </div>
-                    </div>
-                  </motion.div>
-                </Reveal>
-              )
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* ─── HPHRMS FEATURES ─── */}
-      <section id="features" className="py-16 sm:py-20 lg:py-[84px] border-b" style={{ borderColor: C.rule, background: C.ledgerW }}>
-        <div className="max-w-[1160px] mx-auto px-5 sm:px-6">
-          <Reveal>
-            <Eyebrow className="mb-3.5">Platform capabilities</Eyebrow>
-          </Reveal>
-          <Reveal delay={0.05}>
-            <SectionHeading>Twelve core features, one unified platform</SectionHeading>
-          </Reveal>
-          <Reveal delay={0.1}>
-            <p className="mt-4 max-w-[60ch]" style={{ fontSize: '16.5px', color: C.inkSoft }}>
-              HPHRMS packs enterprise-grade capabilities into a single, multi-tenant platform
-              — designed for Indian workforce management from the ground up.
-            </p>
-          </Reveal>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-10 sm:mt-11">
-            {HPHRMS_FEATURES.map((feature, i) => (
-              <Reveal key={feature} delay={0.12 + i * 0.03}>
-                <div className="flex items-center gap-3 px-5 py-3.5 rounded-lg border transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_8px_24px_-16px_rgba(10,15,30,.18)]" style={{ background: C.paper, borderColor: C.rule }}>
-                  <span className="text-[13px] font-bold shrink-0" style={{ ...fontMono, color: C.verify }}>✓</span>
-                  <span className="text-[14px] font-medium" style={{ color: C.ink }}>{feature}</span>
+      {/* ═══════════════════════════════════════════════════════
+         SECTION 2: TRUST STRIP
+         ═══════════════════════════════════════════════════════ */}
+      <section className="py-6 sm:py-8 border-b" style={{ background: C.paper, borderColor: C.rule }}>
+        <div className="max-w-[1200px] mx-auto px-5 sm:px-6">
+          <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3">
+            {TRUST_BADGES.map((badge, i) => (
+              <Reveal key={i} delay={i * 0.04}>
+                <div className="flex items-center gap-2">
+                  <Check className="h-3.5 w-3.5" style={{ color: C.gold }} />
+                  <span className="text-xs sm:text-sm font-medium" style={{ color: C.inkSoft }}>{badge}</span>
                 </div>
               </Reveal>
             ))}
@@ -994,193 +744,197 @@ export function Landing() {
         </div>
       </section>
 
-      {/* ─── THREE THINGS WE DO ─── */}
-      <section id="modes" className="py-16 sm:py-20 lg:py-[84px] border-b" style={{ borderColor: C.rule }}>
-        <div className="max-w-[1160px] mx-auto px-5 sm:px-6">
+      {/* ═══════════════════════════════════════════════════════
+         SECTION 3: FEATURES
+         ═══════════════════════════════════════════════════════ */}
+      <section id="features" className="py-16 sm:py-20 lg:py-24" style={{ background: C.paper }}>
+        <div className="max-w-[1200px] mx-auto px-5 sm:px-6">
           <Reveal>
-            <Eyebrow className="mb-3.5">One platform, three businesses</Eyebrow>
+            <div className="text-center max-w-2xl mx-auto">
+              <SectionLabel className="text-center">Platform Features</SectionLabel>
+              <SectionTitle className="mx-auto">Everything you need to manage your workforce</SectionTitle>
+              <SectionSub className="mx-auto">A comprehensive suite of tools designed for Indian businesses — from startup to enterprise.</SectionSub>
+            </div>
           </Reveal>
-          <Reveal delay={0.05}>
-            <SectionHeading>Software, manpower, or both — the same login</SectionHeading>
+
+          <div className="mt-12 sm:mt-14 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+            {FEATURES_DATA.map(({ title, desc, icon: Icon }, i) => (
+              <Reveal key={i} delay={0.04 + i * 0.04}>
+                <div className="group relative p-5 sm:p-6 rounded-xl border transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
+                  style={{ background: C.paper, borderColor: C.rule }}>
+                  <div className="flex items-start gap-4">
+                    <div className="shrink-0 flex h-10 w-10 items-center justify-center rounded-lg" style={{ background: 'rgba(0,43,92,.07)' }}>
+                      <Icon className="h-5 w-5" style={{ color: C.navy }} />
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="text-[15px] font-bold" style={{ color: C.ink }}>{title}</h3>
+                      <p className="mt-1.5 text-[13px] leading-[1.6]" style={{ color: C.inkSoft }}>{desc}</p>
+                    </div>
+                  </div>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════
+         SECTION 4: SERVICES
+         ═══════════════════════════════════════════════════════ */}
+      <section id="services" className="py-16 sm:py-20 lg:py-24 border-t" style={{ background: C.bg, borderColor: C.rule }}>
+        <div className="max-w-[1200px] mx-auto px-5 sm:px-6">
+          <Reveal>
+            <div className="text-center max-w-2xl mx-auto">
+              <SectionLabel className="text-center">Our Services</SectionLabel>
+              <SectionTitle className="mx-auto">Comprehensive workforce solutions</SectionTitle>
+              <SectionSub className="mx-auto">From HR management and recruitment to safety consultancy and engineering support — all under one roof.</SectionSub>
+            </div>
           </Reveal>
-          <Reveal delay={0.1}>
-            <p className="mt-4 max-w-[60ch]" style={{ fontSize: '16.5px', color: C.inkSoft }}>
-              Most HR systems assume you employ everyone you manage. In India, that assumption breaks the
-              moment you take on contract labour. HPHRMS handles both relationships without pretending they're the same thing.
-            </p>
+
+          <div className="mt-12 sm:mt-14 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+            {SERVICES_DATA.map(({ title, desc, icon: Icon }, i) => (
+              <Reveal key={i} delay={0.04 + i * 0.04}>
+                <div className="group relative p-5 sm:p-6 rounded-xl border transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
+                  style={{ background: C.paper, borderColor: C.rule }}>
+                  <div className="flex items-start gap-4">
+                    <div className="shrink-0 flex h-10 w-10 items-center justify-center rounded-lg" style={{ background: 'rgba(212,175,55,.1)' }}>
+                      <Icon className="h-5 w-5" style={{ color: C.amber }} />
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="text-[15px] font-bold" style={{ color: C.ink }}>{title}</h3>
+                      <p className="mt-1.5 text-[13px] leading-[1.6]" style={{ color: C.inkSoft }}>{desc}</p>
+                    </div>
+                  </div>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════
+         SECTION 5: AI INTELLIGENCE
+         ═══════════════════════════════════════════════════════ */}
+      <section id="ai" className="py-16 sm:py-20 lg:py-24" style={{ background: C.navy }}>
+        <div className="max-w-[1200px] mx-auto px-5 sm:px-6">
+          <Reveal>
+            <div className="text-center max-w-2xl mx-auto">
+              <p className="text-xs font-bold tracking-[0.18em] uppercase mb-3 text-center" style={{ fontFamily: 'monospace', color: C.goldLight }}>HPAI Intelligence</p>
+              <SectionTitle className="mx-auto text-white">Your AI-powered workforce assistant</SectionTitle>
+              <p className="mt-4 max-w-[58ch] text-base leading-[1.65] mx-auto" style={{ color: 'rgba(255,255,255,.6)' }}>
+                Ask questions in plain language. Get answers from your own company data.
+                HPAI is scoped to each user's permissions — it sees only what you're allowed to see.
+              </p>
+            </div>
           </Reveal>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mt-10 sm:mt-11">
-            {THREE_MODES.map((mode, i) => (
-              <Reveal key={mode.tag} delay={0.15 + i * 0.06}>
-                <motion.div className="relative p-6 sm:p-[26px_24px] rounded-lg border transition-all duration-200 hover:-translate-y-[3px] cursor-default"
-                  style={{ background: C.paper, borderColor: C.rule }}
-                  whileHover={{ boxShadow: '0 16px 38px -24px rgba(10,15,30,.4)' }}>
-                  <span className="absolute top-6 right-6 text-[10px] font-semibold tracking-[0.08em] uppercase px-2 py-1 rounded-[3px]" style={{ ...fontMono, background: C.ledger, color: C.inkSoft }}>{mode.tag}</span>
-                  <p className="text-[11px] font-semibold tracking-[0.1em] uppercase mb-3.5" style={{ ...fontMono, color: C.inkSoft }}>{mode.label}</p>
-                  <h3 className="text-xl font-extrabold tracking-[-0.02em] mb-2" style={fontDisplay}>{mode.title}</h3>
-                  <p className="text-[14.5px] mb-4" style={{ color: C.inkSoft }}>{mode.desc}</p>
-                  <ul className="list-none text-[13.5px]">
-                    {mode.items.map((item) => (
-                      <li key={item} className="py-1.5 border-t flex gap-2.5 items-baseline" style={{ borderColor: C.ruleSoft }}>
-                        <span className="w-[5px] h-[5px] rounded-full shrink-0 mt-[7px]" style={{ background: C.amber }} />
-                        {item}
+
+          <div className="mt-12 sm:mt-14 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+            {AI_CAPS.map(({ title, desc, icon: Icon }, i) => (
+              <Reveal key={i} delay={0.04 + i * 0.04}>
+                <div className="group p-5 sm:p-6 rounded-xl border transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
+                  style={{ background: 'rgba(255,255,255,.05)', borderColor: 'rgba(255,255,255,.1)' }}>
+                  <div className="flex items-start gap-4">
+                    <div className="shrink-0 flex h-10 w-10 items-center justify-center rounded-lg" style={{ background: 'rgba(212,175,55,.15)' }}>
+                      <Icon className="h-5 w-5" style={{ color: C.gold }} />
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="text-[15px] font-bold text-white">{title}</h3>
+                      <p className="mt-1.5 text-[13px] leading-[1.6]" style={{ color: 'rgba(255,255,255,.55)' }}>{desc}</p>
+                    </div>
+                  </div>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+
+          <Reveal delay={0.3}>
+            <div className="mt-12 text-center">
+              <div className="inline-flex items-center gap-3 px-5 py-3 rounded-xl" style={{ background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.1)' }}>
+                <Bot className="h-5 w-5" style={{ color: C.gold }} />
+                <span className="text-sm font-medium text-white">Available 24/7 across Admin, Employee, and Client portals</span>
+              </div>
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════
+         SECTION 6: HOW IT WORKS
+         ═══════════════════════════════════════════════════════ */}
+      <section className="py-16 sm:py-20 lg:py-24 border-t" style={{ background: C.paper, borderColor: C.rule }}>
+        <div className="max-w-[1200px] mx-auto px-5 sm:px-6">
+          <Reveal>
+            <div className="text-center max-w-2xl mx-auto">
+              <SectionLabel className="text-center">How It Works</SectionLabel>
+              <SectionTitle className="mx-auto">Go live in four simple steps</SectionTitle>
+              <SectionSub className="mx-auto">From demo to full deployment — our team handles everything.</SectionSub>
+            </div>
+          </Reveal>
+
+          <div className="mt-12 sm:mt-14 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {STEPS.map(({ num, title, desc, icon: StepIcon }, i) => (
+              <Reveal key={i} delay={0.08 + i * 0.08}>
+                <div className="relative text-center">
+                  {/* Connector line */}
+                  {i < 3 && (
+                    <div className="hidden lg:block absolute top-8 left-[60%] w-[80%] h-px" style={{ background: C.rule }} />
+                  )}
+                  <div className="relative inline-flex h-16 w-16 items-center justify-center rounded-2xl mb-4" style={{ background: 'linear-gradient(135deg, ' + C.navy + ', ' + C.navySoft + ')' }}>
+                    <StepIcon className="h-7 w-7 text-white" />
+                    <span className="absolute -top-1.5 -right-1.5 flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold text-white" style={{ background: C.gold, color: C.navyDeep }}>{num}</span>
+                  </div>
+                  <h3 className="text-base font-bold" style={{ color: C.ink }}>{title}</h3>
+                  <p className="mt-2 text-[13px] leading-[1.6] max-w-[22ch] mx-auto" style={{ color: C.inkSoft }}>{desc}</p>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+
+          <Reveal delay={0.4}>
+            <div className="mt-12 text-center">
+              <a href={SOCIAL.whatsapp} target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-lg text-sm font-semibold transition-all duration-200 hover:-translate-y-[1px] hover:shadow-lg"
+                style={{ background: C.navy, color: '#fff' }}>
+                <MessageCircle className="h-4 w-4" /> Schedule Your Free Demo <ArrowRight className="h-4 w-4" />
+              </a>
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════
+         SECTION 7: PORTALS
+         ═══════════════════════════════════════════════════════ */}
+      <section id="portals" className="py-16 sm:py-20 lg:py-24 border-t" style={{ background: C.bg, borderColor: C.rule }}>
+        <div className="max-w-[1200px] mx-auto px-5 sm:px-6">
+          <Reveal>
+            <div className="text-center max-w-2xl mx-auto">
+              <SectionLabel className="text-center">Dedicated Portals</SectionLabel>
+              <SectionTitle className="mx-auto">One platform, three experiences</SectionTitle>
+              <SectionSub className="mx-auto">Each portal is role-specific with its own dashboard, navigation, and permissions. Zero data crossover.</SectionSub>
+            </div>
+          </Reveal>
+
+          <div className="mt-12 sm:mt-14 grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {PORTALS_DATA.map(({ title, desc, items, icon: PortalIcon }, i) => (
+              <Reveal key={i} delay={0.08 + i * 0.08}>
+                <div className="group relative p-6 sm:p-7 rounded-xl border transition-all duration-300 hover:shadow-xl hover:-translate-y-1 h-full"
+                  style={{ background: C.paper, borderColor: C.rule }}>
+                  <div className="flex items-center gap-3 mb-5">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl" style={{ background: i === 0 ? 'rgba(0,43,92,.08)' : i === 1 ? 'rgba(46,125,91,.08)' : 'rgba(212,175,55,.1)' }}>
+                      <PortalIcon className="h-5 w-5" style={{ color: i === 0 ? C.navy : i === 1 ? C.verify : C.amber }} />
+                    </div>
+                    <h3 className="text-lg font-bold" style={{ color: C.ink }}>{title}</h3>
+                  </div>
+                  <p className="text-[13.5px] leading-[1.6] mb-5" style={{ color: C.inkSoft }}>{desc}</p>
+                  <ul className="space-y-2.5">
+                    {items.map((item, j) => (
+                      <li key={j} className="flex items-start gap-2.5">
+                        <Check className="h-4 w-4 shrink-0 mt-0.5" style={{ color: i === 0 ? C.navy : i === 1 ? C.verify : C.gold }} />
+                        <span className="text-[13px]" style={{ color: C.inkSoft }}>{item}</span>
                       </li>
                     ))}
                   </ul>
-                </motion.div>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ─── PORTALS SHOWCASE ─── */}
-      <section id="portals" className="py-16 sm:py-20 lg:py-[84px] border-b" style={{ borderColor: C.rule, background: C.ledgerW }}>
-        <div className="max-w-[1160px] mx-auto px-5 sm:px-6">
-          <Reveal>
-            <Eyebrow className="mb-3.5">Role-based access</Eyebrow>
-          </Reveal>
-          <Reveal delay={0.05}>
-            <SectionHeading>Four portals. One platform. Zero overlap.</SectionHeading>
-          </Reveal>
-          <Reveal delay={0.1}>
-            <p className="mt-4 max-w-[60ch]" style={{ fontSize: '16.5px', color: C.inkSoft }}>
-              Every user sees only what their role permits. Admins manage, employees self-serve,
-              clients monitor — and HPAI Chat assists all of them with context-aware intelligence.
-            </p>
-          </Reveal>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mt-10 sm:mt-11">
-            {PORTALS.map((portal, i) => {
-              const Icon = portal.icon
-              return (
-                <Reveal key={portal.title} delay={0.12 + i * 0.06}>
-                  <motion.div className="relative p-6 sm:p-[26px_24px] rounded-lg border transition-all duration-200 hover:-translate-y-[3px] cursor-default"
-                    style={{ background: C.paper, borderColor: C.rule }}
-                    whileHover={{ boxShadow: '0 16px 38px -24px rgba(10,15,30,.4)' }}>
-                    <div className="flex items-start gap-4 mb-4">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg" style={{ background: 'rgba(22,33,62,.08)' }}>
-                        <Icon className="h-5 w-5" style={{ color: C.ink }} />
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-extrabold tracking-[-0.02em]" style={fontDisplay}>{portal.title}</h3>
-                        <p className="text-[13.5px] mt-0.5" style={{ color: C.inkSoft }}>{portal.desc}</p>
-                      </div>
-                    </div>
-                    <ul className="list-none text-[13.5px]">
-                      {portal.items.map((item) => (
-                        <li key={item} className="py-1.5 border-t flex gap-2.5 items-baseline" style={{ borderColor: C.ruleSoft }}>
-                          <span className="w-[5px] h-[5px] rounded-full shrink-0 mt-[7px]" style={{ background: C.amber }} />
-                          {item}
-                        </li>
-                      ))}
-                    </ul>
-                  </motion.div>
-                </Reveal>
-              )
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* ─── AI FEATURES ─── */}
-      <section id="ai" className="ledger-ruled-dark py-16 sm:py-20 lg:py-[84px]" style={{ background: C.ink, color: '#fff', borderBottom: 'none' }}>
-        <div className="max-w-[1160px] mx-auto px-5 sm:px-6">
-          <Reveal>
-            <Eyebrow className="mb-3.5" style={{ color: C.amber }}>AI that reads your records — not the internet</Eyebrow>
-          </Reveal>
-          <Reveal delay={0.05}>
-            <SectionHeading className="text-white">Ask in plain language. Get answers from your own data.</SectionHeading>
-          </Reveal>
-          <Reveal delay={0.1}>
-            <p className="mt-4 max-w-[60ch]" style={{ fontSize: '16.5px', color: 'rgba(255,255,255,.72)' }}>
-              Every assistant is scoped to one company's records and one user's permissions. It reads;
-              it does not write. And it will tell you when it doesn't have the number rather than inventing one.
-            </p>
-          </Reveal>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-px mt-10 sm:mt-11 border overflow-hidden rounded-lg" style={{ background: 'rgba(255,255,255,.13)', borderColor: 'rgba(255,255,255,.13)' }}>
-            {AI_FEATURES.map((feat, i) => {
-              const Icon = feat.icon
-              return (
-                <Reveal key={feat.title} delay={0.15 + i * 0.03}>
-                  <motion.div className="p-5 sm:p-6 transition-colors duration-200" style={{ background: C.ink }} whileHover={{ background: '#1D2B4F' }}>
-                    <Icon className="h-5 w-5 mb-2" style={{ color: C.amber }} />
-                    <h4 className="text-[15px] sm:text-[16.5px] font-semibold tracking-[-0.01em] mb-1.5" style={fontDisplay}>{feat.title}</h4>
-                    <p className="text-[13.5px] leading-[1.5]" style={{ color: 'rgba(255,255,255,.65)' }}>{feat.desc}</p>
-                    <span className="mt-2.5 block text-[11.5px] leading-[1.45]" style={{ ...fontMono, color: C.amber }}>{feat.query}</span>
-                  </motion.div>
-                </Reveal>
-              )
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* ─── MODULE REGISTER ─── */}
-      <section id="modules" className="py-16 sm:py-20 lg:py-[84px] border-b" style={{ borderColor: C.rule }}>
-        <div className="max-w-[1160px] mx-auto px-5 sm:px-6">
-          <Reveal>
-            <Eyebrow className="mb-3.5">The full register</Eyebrow>
-          </Reveal>
-          <Reveal delay={0.05}>
-            <SectionHeading>Twenty-three modules, switched on by account type</SectionHeading>
-          </Reveal>
-          <Reveal delay={0.1}>
-            <p className="mt-4 max-w-[60ch]" style={{ fontSize: '16.5px', color: C.inkSoft }}>
-              A manpower client never sees a payroll screen. An HRMS client never sees an invoice.
-              The platform shows each company only what its contract entitles it to.
-            </p>
-          </Reveal>
-          <Reveal delay={0.15}>
-            <div className="mt-10 sm:mt-11 border rounded-lg overflow-hidden" style={{ borderColor: C.rule }}>
-              {/* Header Row */}
-              <div className="hidden sm:grid grid-cols-[44px_1fr_128px] px-4 py-2.5 border-b-2" style={{ ...fontMono, fontSize: '10.5px', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: C.inkSoft, borderColor: C.ink, background: C.ledgerW }}>
-                <span>#</span><span>Module</span><span>Layer</span>
-              </div>
-              <div className="sm:hidden grid grid-cols-[34px_1fr] px-4 py-2.5 border-b-2" style={{ ...fontMono, fontSize: '10.5px', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: C.inkSoft, borderColor: C.ink, background: C.ledgerW }}>
-                <span>#</span><span>Module</span>
-              </div>
-              {/* Module Rows */}
-              {MODULES.map((mod) => (
-                <div key={mod.num} className="hidden sm:grid grid-cols-[44px_1fr_128px] px-4 py-3 border-b last:border-b-0 items-center transition-colors hover:bg-[var(--ledger-warm,#F6F7F5)]" style={{ borderColor: C.ruleSoft }}>
-                  <span className="text-[11px]" style={{ ...fontMono, color: C.inkSoft }}>{mod.num}</span>
-                  <span className="text-[14.5px] font-medium" style={{ color: C.ink }}>{mod.name}</span>
-                  <span className="text-[10px] font-semibold tracking-[0.06em] uppercase px-2 py-[3px] rounded-[3px] justify-self-start" style={{ ...fontMono, ...layerTagStyle(mod.layer) }}>{mod.layer}</span>
-                </div>
-              ))}
-              {/* Mobile: simpler rows */}
-              {MODULES.map((mod) => (
-                <div key={`m-${mod.num}`} className="sm:hidden grid grid-cols-[34px_1fr] px-4 py-3 border-b last:border-b-0 items-center" style={{ borderColor: C.ruleSoft }}>
-                  <span className="text-[11px]" style={{ ...fontMono, color: C.inkSoft }}>{mod.num}</span>
-                  <span className="text-[14px] font-medium" style={{ color: C.ink }}>{mod.name}</span>
-                </div>
-              ))}
-            </div>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* ─── INDIA COMPLIANCE ─── */}
-      <section id="compliance" className="py-16 sm:py-20 lg:py-[84px] border-b" style={{ borderColor: C.rule, background: C.ledgerW }}>
-        <div className="max-w-[1160px] mx-auto px-5 sm:px-6">
-          <Reveal>
-            <Eyebrow className="mb-3.5">India statutory compliance</Eyebrow>
-          </Reveal>
-          <Reveal delay={0.05}>
-            <SectionHeading>Built for Indian payroll. Not adapted to it.</SectionHeading>
-          </Reveal>
-          <Reveal delay={0.1}>
-            <p className="mt-4 max-w-[60ch]" style={{ fontSize: '16.5px', color: C.inkSoft }}>
-              PF, ESI, Gratuity, Professional Tax — the platform was designed in Karnataka for Indian statutory
-              compliance from day one. No bolt-on modules, no afterthought.
-            </p>
-          </Reveal>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-10 sm:mt-11">
-            {INDIA_COMPLIANCE.map((item, i) => (
-              <Reveal key={item.label} delay={0.15 + i * 0.04}>
-                <div className="p-5 rounded-lg border transition-all duration-200 hover:-translate-y-[2px] hover:shadow-[0_8px_24px_-16px_rgba(10,15,30,.2)]" style={{ background: C.paper, borderColor: C.rule }}>
-                  <span className="text-[11px] font-semibold tracking-[0.1em] uppercase px-2 py-1 rounded-[3px] inline-block mb-3" style={{ ...fontMono, background: `rgba(46,125,91,.12)`, color: C.verify }}>{item.label}</span>
-                  <h4 className="text-[15px] font-semibold mb-1.5" style={fontDisplay}>{item.full}</h4>
-                  <p className="text-[13px] leading-[1.5]" style={{ color: C.inkSoft }}>{item.desc}</p>
                 </div>
               </Reveal>
             ))}
@@ -1188,467 +942,280 @@ export function Landing() {
         </div>
       </section>
 
-      {/* ─── DATA ACCESS SEPARATION ─── */}
-      <section id="separation" className="py-16 sm:py-20 lg:py-[84px] border-b" style={{ borderColor: C.rule }}>
-        <div className="max-w-[1160px] mx-auto px-5 sm:px-6">
+      {/* ═══════════════════════════════════════════════════════
+         SECTION 8: INDUSTRIES
+         ═══════════════════════════════════════════════════════ */}
+      <section id="industries" className="py-16 sm:py-20 lg:py-24 border-t" style={{ background: C.paper, borderColor: C.rule }}>
+        <div className="max-w-[1200px] mx-auto px-5 sm:px-6">
           <Reveal>
-            <Eyebrow className="mb-3.5">Data access</Eyebrow>
-          </Reveal>
-          <Reveal delay={0.05}>
-            <SectionHeading>Your client sees the work. Not your cost sheet.</SectionHeading>
-          </Reveal>
-          <Reveal delay={0.1}>
-            <p className="mt-4 max-w-[60ch]" style={{ fontSize: '16.5px', color: C.inkSoft }}>
-              In manpower supply, the margin is the business. HPHRMS enforces that boundary in the database
-              itself — through row-level security, not through a hidden button.
-            </p>
-          </Reveal>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-10 sm:mt-11">
-            <Reveal delay={0.15} direction="left">
-              <div className="rounded-lg border overflow-hidden" style={{ borderColor: C.rule }}>
-                <div className="px-5 py-3 border-b" style={{ ...fontMono, fontSize: '11px', fontWeight: 600, letterSpacing: '0.09em', textTransform: 'uppercase', background: C.ink, color: '#fff' }}>HP ENTERPRISE sees</div>
-                <ul className="list-none py-2" style={{ background: C.paper }}>
-                  {HP_SEES.map((item) => (
-                    <li key={item} className="px-5 py-2.5 text-[14px] flex items-center gap-2.5 border-b last:border-b-0" style={{ borderColor: C.ruleSoft }}>
-                      <span className="text-[13px] font-semibold w-4 shrink-0" style={{ ...fontMono, color: C.verify }}>✓</span>
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </Reveal>
-            <Reveal delay={0.2} direction="right">
-              <div className="rounded-lg border overflow-hidden" style={{ borderColor: C.rule }}>
-                <div className="px-5 py-3 border-b" style={{ ...fontMono, fontSize: '11px', fontWeight: 600, letterSpacing: '0.09em', textTransform: 'uppercase', background: C.ledgerW, color: C.inkSoft }}>The client sees</div>
-                <ul className="list-none py-2" style={{ background: C.paper }}>
-                  {CLIENT_SEES.map((item) => (
-                    <li key={item.text} className="px-5 py-2.5 text-[14px] flex items-center gap-2.5 border-b last:border-b-0" style={{ borderColor: C.ruleSoft }}>
-                      {item.visible
-                        ? <span className="text-[13px] font-semibold w-4 shrink-0" style={{ ...fontMono, color: C.verify }}>✓</span>
-                        : <span className="text-[13px] font-semibold w-4 shrink-0" style={{ ...fontMono, color: '#B03636' }}>✕</span>
-                      }
-                      <span style={item.visible ? {} : { color: C.inkSoft }}>{item.text}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </Reveal>
-          </div>
-        </div>
-      </section>
-
-      {/* ─── ABOUT THE COMPANY ─── */}
-      <section id="about" className="py-16 sm:py-20 lg:py-[84px] border-b" style={{ borderColor: C.rule, background: C.ledgerW }}>
-        <div className="max-w-[1160px] mx-auto px-5 sm:px-6">
-          <Reveal>
-            <Eyebrow className="mb-3.5">The Company</Eyebrow>
-          </Reveal>
-          <Reveal delay={0.05}>
-            <SectionHeading>Registered. Verified. Accountable.</SectionHeading>
-          </Reveal>
-          <Reveal delay={0.1}>
-            <div className="mt-4 max-w-[60ch]">
-              <p className="leading-[1.72]" style={{ fontSize: '16.5px', color: C.inkSoft }}>
-                HP ENTERPRISE is a registered company in {BRAND.headOffice.state}, providing workforce management software,
-                EHS consultancy, engineering services and manpower supply across India.
-                Headquartered at {BRAND.headOffice.full}, the company operates through
-                a combination of on-site services and its cloud-based SaaS platform, HPHRMS.
-              </p>
+            <div className="text-center max-w-2xl mx-auto">
+              <SectionLabel className="text-center">Industries We Serve</SectionLabel>
+              <SectionTitle className="mx-auto">Built for every sector</SectionTitle>
+              <SectionSub className="mx-auto">From construction sites to corporate offices — HPHRMS adapts to your industry's unique workforce requirements.</SectionSub>
             </div>
           </Reveal>
-          <Reveal delay={0.15}>
-            <div className="mt-6 flex flex-wrap gap-4 sm:gap-6">
-              {[{ label: 'GSTIN', value: BRAND.gstin }, { label: 'UDYAM', value: BRAND.udyam }, { label: 'PAN', value: BRAND.pan }].map((item) => (
-                <div key={item.label} className="flex items-center gap-2 px-4 py-2 rounded-md border" style={{ borderColor: C.rule, background: C.paper }}>
-                  <span className="text-[10px] font-semibold tracking-[0.1em] uppercase" style={{ ...fontMono, color: C.inkSoft }}>{item.label}</span>
-                  <span className="text-[12px] font-medium" style={{ ...fontMono, color: C.ink }}>{item.value}</span>
+
+          <div className="mt-12 sm:mt-14 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+            {INDUSTRIES.map(({ name, desc, icon: IndIcon }, i) => (
+              <Reveal key={i} delay={0.04 + i * 0.04}>
+                <div className="group p-5 rounded-xl border transition-all duration-300 hover:shadow-lg hover:-translate-y-1 h-full"
+                  style={{ background: C.bg, borderColor: C.rule }}>
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg mb-3" style={{ background: 'rgba(0,43,92,.06)' }}>
+                    <IndIcon className="h-5 w-5" style={{ color: C.navy }} />
+                  </div>
+                  <h3 className="text-[14px] font-bold mb-1.5" style={{ color: C.ink }}>{name}</h3>
+                  <p className="text-[12.5px] leading-[1.55]" style={{ color: C.inkSoft }}>{desc}</p>
                 </div>
-              ))}
-            </div>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* ─── HOW IT WORKS ─── */}
-      <section className="py-16 sm:py-20 lg:py-[84px] border-b" style={{ borderColor: C.rule }}>
-        <div className="max-w-[1160px] mx-auto px-5 sm:px-6">
-          <Reveal>
-            <Eyebrow className="mb-3.5">Getting started</Eyebrow>
-          </Reveal>
-          <Reveal delay={0.05}>
-            <SectionHeading>From demo to go-live in four steps</SectionHeading>
-          </Reveal>
-          <div className="mt-10 sm:mt-11 relative">
-            {/* Connecting line */}
-            <div className="hidden md:block absolute top-[52px] left-[12.5%] right-[12.5%] h-[2px]" style={{ background: C.rule }} />
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 md:gap-4 relative">
-              {STEPS_DATA.map((step, i) => {
-                const Icon = step.icon
-                return (
-                  <Reveal key={step.num} delay={0.12 + i * 0.06}>
-                    <div className="flex flex-col items-center text-center">
-                      <div className="relative z-10 flex h-[64px] w-[64px] items-center justify-center rounded-full border-2 mb-4" style={{ borderColor: C.ink, background: C.paper }}>
-                        <Icon className="h-6 w-6" style={{ color: C.ink }} />
-                      </div>
-                      <span className="text-[11px] font-semibold tracking-[0.1em] mb-2" style={{ ...fontMono, color: C.amber }}>{step.num}</span>
-                      <h3 className="text-[15px] font-bold tracking-[-0.01em] mb-1.5" style={fontDisplay}>{step.title}</h3>
-                      <p className="text-[13px] leading-[1.55] max-w-[22ch]" style={{ color: C.inkSoft }}>{step.desc}</p>
-                    </div>
-                  </Reveal>
-                )
-              })}
-            </div>
+              </Reveal>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* ─── INDUSTRIES WE SERVE ─── */}
-      <section id="industries" className="py-16 sm:py-20 lg:py-[84px] border-b" style={{ borderColor: C.rule, background: C.ledgerW }}>
-        <div className="max-w-[1160px] mx-auto px-5 sm:px-6">
+      {/* ═══════════════════════════════════════════════════════
+         SECTION 9: TECHNOLOGY & SECURITY
+         ═══════════════════════════════════════════════════════ */}
+      <section className="py-16 sm:py-20 lg:py-24 border-t" style={{ background: C.bg, borderColor: C.rule }}>
+        <div className="max-w-[1200px] mx-auto px-5 sm:px-6">
           <Reveal>
-            <Eyebrow className="mb-3.5">Industries</Eyebrow>
+            <div className="text-center max-w-2xl mx-auto">
+              <SectionLabel className="text-center">Technology & Security</SectionLabel>
+              <SectionTitle className="mx-auto">Enterprise-grade infrastructure</SectionTitle>
+              <SectionSub className="mx-auto">Built with security-first architecture and designed for scale, reliability, and compliance.</SectionSub>
+            </div>
           </Reveal>
-          <Reveal delay={0.05}>
-            <SectionHeading>Built for the sectors that power India</SectionHeading>
-          </Reveal>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-10 sm:mt-11">
-            {INDUSTRIES_DATA.map((ind, i) => {
-              const Icon = ind.icon
-              return (
-                <Reveal key={ind.name} delay={0.1 + i * 0.04}>
-                  <motion.div className="p-5 rounded-lg border transition-all duration-200 hover:-translate-y-[2px] hover:shadow-[0_8px_24px_-16px_rgba(10,15,30,.2)]"
-                    style={{ background: C.paper, borderColor: C.rule }}
-                    whileHover={{ boxShadow: '0 16px 38px -24px rgba(10,15,30,.4)' }}>
-                    <div className="flex h-9 w-9 items-center justify-center rounded-lg mb-3" style={{ background: 'rgba(22,33,62,.08)' }}>
-                      <Icon className="h-[18px] w-[18px]" style={{ color: C.ink }} />
-                    </div>
-                    <h4 className="text-[14.5px] font-semibold mb-1.5" style={fontDisplay}>{ind.name}</h4>
-                    <p className="text-[13px] leading-[1.5]" style={{ color: C.inkSoft }}>{ind.desc}</p>
-                  </motion.div>
-                </Reveal>
-              )
-            })}
-          </div>
-        </div>
-      </section>
 
-      {/* ─── TECHNOLOGY & SECURITY ─── */}
-      <section className="py-16 sm:py-20 lg:py-[84px] border-b" style={{ borderColor: C.rule }}>
-        <div className="max-w-[1160px] mx-auto px-5 sm:px-6">
-          <Reveal>
-            <Eyebrow className="mb-3.5">Platform</Eyebrow>
-          </Reveal>
-          <Reveal delay={0.05}>
-            <SectionHeading>Enterprise-grade infrastructure you can trust</SectionHeading>
-          </Reveal>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-10 sm:mt-11">
-            {TECH_DATA.map((item, i) => {
-              const Icon = item.icon
-              return (
-                <Reveal key={item.title} delay={0.1 + i * 0.04}>
-                  <motion.div className="flex items-start gap-4 p-5 rounded-lg border transition-all duration-200 hover:-translate-y-[2px]"
-                    style={{ background: C.paper, borderColor: C.rule }}
-                    whileHover={{ boxShadow: '0 12px 30px -18px rgba(10,15,30,.25)' }}>
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg" style={{ background: 'rgba(22,33,62,.08)' }}>
-                      <Icon className="h-5 w-5" style={{ color: C.ink }} />
+          <div className="mt-12 sm:mt-14 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+            {TECH_DATA.map(({ title, desc, icon: TechIcon }, i) => (
+              <Reveal key={i} delay={0.04 + i * 0.04}>
+                <div className="p-5 sm:p-6 rounded-xl border h-full" style={{ background: C.paper, borderColor: C.rule }}>
+                  <div className="flex items-start gap-4">
+                    <div className="shrink-0 flex h-10 w-10 items-center justify-center rounded-lg" style={{ background: 'rgba(0,43,92,.06)' }}>
+                      <TechIcon className="h-5 w-5" style={{ color: C.navy }} />
                     </div>
                     <div>
-                      <h4 className="text-[15px] font-semibold mb-1" style={fontDisplay}>{item.title}</h4>
-                      <p className="text-[13px] leading-[1.5]" style={{ color: C.inkSoft }}>{item.desc}</p>
+                      <h3 className="text-[15px] font-bold" style={{ color: C.ink }}>{title}</h3>
+                      <p className="mt-1.5 text-[13px] leading-[1.6]" style={{ color: C.inkSoft }}>{desc}</p>
                     </div>
-                  </motion.div>
-                </Reveal>
-              )
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* ─── PRICING TEASER ─── */}
-      <section id="pricing" className="py-16 sm:py-20 lg:py-[84px] border-b" style={{ borderColor: C.rule, background: C.ledgerW }}>
-        <div className="max-w-[1160px] mx-auto px-5 sm:px-6">
-          <Reveal>
-            <Eyebrow className="mb-3.5">Pricing</Eyebrow>
-          </Reveal>
-          <Reveal delay={0.05}>
-            <SectionHeading>Custom enterprise plans, not one-size-fits-all</SectionHeading>
-          </Reveal>
-          <Reveal delay={0.1}>
-            <p className="mt-4 max-w-[60ch]" style={{ fontSize: '16.5px', color: C.inkSoft }}>
-              Pricing is based on your headcount, modules and deployment needs. Every organisation is different — your HRMS should be too.
-            </p>
-          </Reveal>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-10 sm:mt-11">
-            {PRICING_TIERS.map((tier, i) => (
-              <Reveal key={tier.name} delay={0.12 + i * 0.05}>
-                <motion.div className="p-5 rounded-lg border transition-all duration-200 hover:-translate-y-[2px]"
-                  style={{ background: C.paper, borderColor: C.rule }}
-                  whileHover={{ boxShadow: '0 12px 30px -18px rgba(10,15,30,.25)' }}>
-                  <span className="text-[11px] font-semibold tracking-[0.1em] uppercase px-2.5 py-1 rounded-[3px] inline-block mb-3" style={{ ...fontMono, background: `rgba(22,33,62,.08)`, color: C.ink }}>{tier.name}</span>
-                  <p className="text-[13px] leading-[1.55]" style={{ color: C.inkSoft }}>{tier.desc}</p>
-                </motion.div>
+                  </div>
+                </div>
               </Reveal>
             ))}
           </div>
-          <Reveal delay={0.3}>
-            <div className="mt-8 text-center">
-              <button onClick={() => scrollTo('cta')} className="px-5 py-2.5 rounded-md text-sm font-semibold text-white transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_6px_18px_rgba(22,33,62,.24)]" style={{ background: C.ink }}>
-                Book a Demo <ArrowRight className="inline ml-1.5 h-3.5 w-3.5" />
-              </button>
-              <p className="mt-4" style={{ ...fontMono, fontSize: '11.5px', color: C.inkSoft }}>
-                All plans include HPAI Chat, compliance updates and priority support.
-              </p>
-            </div>
-          </Reveal>
         </div>
       </section>
 
-      {/* ─── FAQ ─── */}
-      <section id="faq" className="py-16 sm:py-20 lg:py-[84px] border-b" style={{ borderColor: C.rule }}>
-        <div className="max-w-[1160px] mx-auto px-5 sm:px-6">
+      {/* ═══════════════════════════════════════════════════════
+         SECTION 10: FAQ
+         ═══════════════════════════════════════════════════════ */}
+      <section id="faq" className="py-16 sm:py-20 lg:py-24 border-t" style={{ background: C.paper, borderColor: C.rule }}>
+        <div className="max-w-[1200px] mx-auto px-5 sm:px-6">
           <Reveal>
-            <Eyebrow className="mb-3.5">Frequently asked questions</Eyebrow>
-          </Reveal>
-          <Reveal delay={0.05}>
-            <SectionHeading>Common questions about HPHRMS</SectionHeading>
+            <div className="text-center max-w-2xl mx-auto">
+              <SectionLabel className="text-center">Frequently Asked Questions</SectionLabel>
+              <SectionTitle className="mx-auto">Common questions, clear answers</SectionTitle>
+            </div>
           </Reveal>
           <FaqAccordion />
         </div>
       </section>
 
-      {/* ─── CONTACT ─── */}
-      <section id="contact" className="py-16 sm:py-20 lg:py-[84px] border-b" style={{ borderColor: C.rule, background: C.ledgerW }}>
-        <div className="max-w-[1160px] mx-auto px-5 sm:px-6">
+      {/* ═══════════════════════════════════════════════════════
+         CONTACT SECTION
+         ═══════════════════════════════════════════════════════ */}
+      <section id="contact" className="py-16 sm:py-20 lg:py-24 border-t" style={{ background: C.bg, borderColor: C.rule }}>
+        <div className="max-w-[1200px] mx-auto px-5 sm:px-6">
           <Reveal>
-            <Eyebrow className="mb-3.5">Contact</Eyebrow>
+            <div className="text-center max-w-2xl mx-auto">
+              <SectionLabel className="text-center">Get in Touch</SectionLabel>
+              <SectionTitle className="mx-auto">Let's discuss your requirements</SectionTitle>
+              <SectionSub className="mx-auto">Whether you need HRMS software, manpower supply, or safety consultancy — we're here to help.</SectionSub>
+            </div>
           </Reveal>
-          <Reveal delay={0.05}>
-            <SectionHeading>Get in touch with our team</SectionHeading>
-          </Reveal>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-10 sm:mt-11">
-            {/* Column 1: Contact details */}
-            <Reveal delay={0.1}>
-              <div className="p-5 rounded-lg border h-fit" style={{ background: C.paper, borderColor: C.rule }}>
-                <h4 className="text-[10.5px] font-semibold tracking-[0.13em] uppercase mb-4" style={{ ...fontMono, color: C.inkSoft }}>Contact Details</h4>
-                <div className="space-y-4">
-                  <a href={`tel:${BRAND.phone}`} className="flex items-start gap-3 group">
-                    <Phone className="h-4 w-4 mt-0.5 shrink-0" style={{ color: C.inkSoft }} />
-                    <div>
-                      <p className="text-[11px] font-semibold uppercase" style={{ ...fontMono, color: C.inkSoft }}>Phone</p>
-                      <p className="text-[14px] font-medium mt-0.5 group-hover:underline" style={{ color: C.ink }}>{BRAND.phone}</p>
+
+          <div className="mt-12 sm:mt-14 grid grid-cols-1 lg:grid-cols-5 gap-8">
+            {/* Contact Info */}
+            <div className="lg:col-span-2 space-y-6">
+              <Reveal delay={0.1}>
+                <div className="p-5 rounded-xl border" style={{ background: C.paper, borderColor: C.rule }}>
+                  <h3 className="text-sm font-bold mb-4" style={{ color: C.ink }}>Contact Information</h3>
+                  <div className="space-y-4">
+                    <div className="flex items-start gap-3">
+                      <Phone className="h-4 w-4 mt-0.5 shrink-0" style={{ color: C.navy }} />
+                      <div>
+                        <p className="text-[13px] font-semibold" style={{ color: C.ink }}>{BRAND.phone}</p>
+                        <p className="text-[12px]" style={{ color: C.inkSoft }}>Managing Director</p>
+                      </div>
                     </div>
-                  </a>
-                  <a href={`mailto:${BRAND.email}`} className="flex items-start gap-3 group">
-                    <Mail className="h-4 w-4 mt-0.5 shrink-0" style={{ color: C.inkSoft }} />
-                    <div>
-                      <p className="text-[11px] font-semibold uppercase" style={{ ...fontMono, color: C.inkSoft }}>Email</p>
-                      <p className="text-[14px] font-medium mt-0.5 group-hover:underline break-all" style={{ color: C.ink }}>{BRAND.email}</p>
+                    <div className="flex items-start gap-3">
+                      <Phone className="h-4 w-4 mt-0.5 shrink-0" style={{ color: C.navy }} />
+                      <div>
+                        <p className="text-[13px] font-semibold" style={{ color: C.ink }}>{BRAND.hrPhone}</p>
+                        <p className="text-[12px]" style={{ color: C.inkSoft }}>HR & EHS Director</p>
+                      </div>
                     </div>
-                  </a>
-                  <a href={SOCIAL.whatsapp} target="_blank" rel="noopener noreferrer" className="flex items-start gap-3 group">
-                    <MessageSquare className="h-4 w-4 mt-0.5 shrink-0" style={{ color: C.inkSoft }} />
-                    <div>
-                      <p className="text-[11px] font-semibold uppercase" style={{ ...fontMono, color: C.inkSoft }}>WhatsApp</p>
-                      <p className="text-[14px] font-medium mt-0.5 group-hover:underline" style={{ color: C.ink }}>{BRAND.phone}</p>
+                    <div className="flex items-start gap-3">
+                      <Mail className="h-4 w-4 mt-0.5 shrink-0" style={{ color: C.navy }} />
+                      <a href={`mailto:${SOCIAL.email}`} className="text-[13px] font-semibold hover:underline" style={{ color: C.ink }}>{SOCIAL.email}</a>
                     </div>
-                  </a>
-                  <div className="flex items-start gap-3">
-                    <MapPin className="h-4 w-4 mt-0.5 shrink-0" style={{ color: C.inkSoft }} />
-                    <div>
-                      <p className="text-[11px] font-semibold uppercase" style={{ ...fontMono, color: C.inkSoft }}>Head Office</p>
-                      <p className="text-[13px] mt-0.5" style={{ color: C.inkSoft }}>{BRAND.headOffice.full}</p>
+                    <div className="flex items-start gap-3">
+                      <MapPin className="h-4 w-4 mt-0.5 shrink-0" style={{ color: C.navy }} />
+                      <div>
+                        <p className="text-[13px] font-semibold" style={{ color: C.ink }}>Head Office</p>
+                        <p className="text-[12px] leading-[1.5]" style={{ color: C.inkSoft }}>{BRAND.headOffice.full}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <MapPin className="h-4 w-4 mt-0.5 shrink-0" style={{ color: C.navy }} />
+                      <div>
+                        <p className="text-[13px] font-semibold" style={{ color: C.ink }}>Branch Office</p>
+                        <p className="text-[12px] leading-[1.5]" style={{ color: C.inkSoft }}>{BRAND.branchOffice.full}</p>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            </Reveal>
-            {/* Column 2: Contact form */}
-            <Reveal delay={0.15}>
-              <div className="p-5 rounded-lg border" style={{ background: C.paper, borderColor: C.rule }}>
-                <h4 className="text-[10.5px] font-semibold tracking-[0.13em] uppercase mb-4" style={{ ...fontMono, color: C.inkSoft }}>Send a Message</h4>
+              </Reveal>
+
+              <Reveal delay={0.15}>
+                <div className="p-5 rounded-xl border" style={{ background: C.paper, borderColor: C.rule }}>
+                  <h3 className="text-sm font-bold mb-3" style={{ color: C.ink }}>Follow Us</h3>
+                  <SocialLinks variant="icons" />
+                </div>
+              </Reveal>
+            </div>
+
+            {/* Contact Form */}
+            <Reveal delay={0.1} direction="right" className="lg:col-span-3">
+              <div className="p-6 rounded-xl border" style={{ background: C.paper, borderColor: C.rule }}>
+                <h3 className="text-sm font-bold mb-4" style={{ color: C.ink }}>Send us a message</h3>
                 <ContactForm />
               </div>
             </Reveal>
-            {/* Column 3: Quick links */}
-            <Reveal delay={0.2}>
-              <div className="p-5 rounded-lg border h-fit" style={{ background: C.paper, borderColor: C.rule }}>
-                <h4 className="text-[10.5px] font-semibold tracking-[0.13em] uppercase mb-4" style={{ ...fontMono, color: C.inkSoft }}>Quick Links</h4>
-                <div className="space-y-3">
-                  <button onClick={() => scrollTo('cta')} className="w-full flex items-center justify-between px-4 py-3 rounded-lg border transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_8px_20px_-14px_rgba(10,15,30,.2)]" style={{ borderColor: C.rule }}>
-                    <span className="text-[14px] font-medium" style={{ color: C.ink }}>Book a Demo</span>
-                    <ArrowRight className="h-4 w-4" style={{ color: C.inkSoft }} />
-                  </button>
-                  <a href={SOCIAL.recruitment} target="_blank" rel="noopener noreferrer" className="w-full flex items-center justify-between px-4 py-3 rounded-lg border transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_8px_20px_-14px_rgba(10,15,30,.2)] block" style={{ borderColor: C.rule }}>
-                    <span className="text-[14px] font-medium" style={{ color: C.ink }}>Apply Now</span>
-                    <ExternalLink className="h-4 w-4" style={{ color: C.inkSoft }} />
-                  </a>
-                  <a href={SOCIAL.whatsapp} target="_blank" rel="noopener noreferrer" className="w-full flex items-center justify-between px-4 py-3 rounded-lg border transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_8px_20px_-14px_rgba(10,15,30,.2)] block" style={{ borderColor: C.rule }}>
-                    <span className="text-[14px] font-medium" style={{ color: C.ink }}>WhatsApp Chat</span>
-                    <ExternalLink className="h-4 w-4" style={{ color: C.inkSoft }} />
-                  </a>
-                </div>
-              </div>
-            </Reveal>
           </div>
         </div>
       </section>
 
-      {/* ─── NEWSLETTER ─── */}
-      <section className="py-10 sm:py-12 border-b" style={{ background: C.ink }}>
-        <div className="max-w-[1160px] mx-auto px-5 sm:px-6">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <Reveal>
-              <div className="text-center md:text-left">
-                <p className="text-[14.5px] font-semibold mb-1" style={{ color: '#fff', ...fontDisplay }}>Stay updated</p>
-                <p className="text-[13px]" style={{ color: 'rgba(255,255,255,.65)' }}>Workforce compliance, platform updates and industry insights.</p>
-              </div>
-            </Reveal>
-            <Reveal delay={0.1}>
-              <NewsletterForm />
-            </Reveal>
-          </div>
-        </div>
-      </section>
-
-      {/* ─── TRUST / VERIFICATION ─── */}
-      <section className="py-16 sm:py-20 lg:py-[84px] border-b" style={{ borderColor: C.rule, background: C.ledgerW }}>
-        <div className="max-w-[1160px] mx-auto px-5 sm:px-6">
+      {/* ═══════════════════════════════════════════════════════
+         NEWSLETTER CTA
+         ═══════════════════════════════════════════════════════ */}
+      <section className="py-12 sm:py-14" style={{ background: C.navy }}>
+        <div className="max-w-[1200px] mx-auto px-5 sm:px-6 text-center">
           <Reveal>
-            <div className="text-center max-w-2xl mx-auto">
-              <Eyebrow className="mb-3.5 justify-center">Verification & Trust</Eyebrow>
-              <SectionHeading className="mx-auto text-center">Registered. Verified. Accountable.</SectionHeading>
-              <p className="mt-4" style={{ fontSize: '16.5px', color: C.inkSoft }}>
-                Every claim verified with government registrations. No anonymous entity.
-              </p>
-            </div>
-          </Reveal>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-10 sm:mt-11">
-            {TRUST_BADGES.map((badge, i) => (
-              <Reveal key={badge} delay={0.1 + i * 0.03}>
-                <div className="flex items-center gap-3 px-5 py-3.5 rounded-lg border" style={{ background: C.paper, borderColor: C.rule }}>
-                  <ShieldCheck className="h-4 w-4 shrink-0" style={{ color: C.verify }} />
-                  <span className="text-[14px] font-medium" style={{ color: C.ink }}>{badge}</span>
-                </div>
-              </Reveal>
-            ))}
-          </div>
-          {/* Legal IDs */}
-          <Reveal delay={0.3}>
-            <div className="mt-8 flex flex-wrap justify-center gap-4 sm:gap-6">
-              {[{ label: 'GSTIN', value: BRAND.gstin }, { label: 'UDYAM', value: BRAND.udyam }, { label: 'PAN', value: BRAND.pan }].map((item) => (
-                <div key={item.label} className="flex items-center gap-2 px-4 py-2 rounded-md border" style={{ borderColor: C.rule, background: C.paper }}>
-                  <span className="text-[10px] font-semibold tracking-[0.1em] uppercase" style={{ ...fontMono, color: C.inkSoft }}>{item.label}</span>
-                  <span className="text-[12px] font-medium" style={{ ...fontMono, color: C.ink }}>{item.value}</span>
-                </div>
-              ))}
-            </div>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* ─── CTA ─── */}
-      <section id="cta" className="py-16 sm:py-20 lg:py-[84px] text-center" style={{ background: C.ledgerW, borderBottom: 'none' }}>
-        <div className="max-w-[1160px] mx-auto px-5 sm:px-6">
-          <Reveal>
-            <Eyebrow className="mb-3.5 justify-center">Get started</Eyebrow>
-          </Reveal>
-          <Reveal delay={0.05}>
-            <SectionHeading className="mx-auto text-center">See it running on your own site data</SectionHeading>
+            <h2 className="text-xl sm:text-2xl font-bold text-white mb-2">Stay updated with HP ENTERPRISE</h2>
+            <p className="text-sm mb-6" style={{ color: 'rgba(255,255,255,.55)' }}>Get the latest news, product updates, and workforce insights delivered to your inbox.</p>
           </Reveal>
           <Reveal delay={0.1}>
-            <p className="mt-4 mx-auto" style={{ fontSize: '16.5px', color: C.inkSoft, maxWidth: '56ch' }}>
-              A 30-minute walkthrough on your numbers — one site, one week of attendance, one invoice.
-              You'll know within the demo whether it fits how you already work.
-            </p>
-          </Reveal>
-          <Reveal delay={0.15}>
-            <div className="flex flex-wrap gap-3 sm:gap-3.5 justify-center mt-7 sm:mt-8">
-              <button onClick={() => setView('subscribe')} className="px-5 py-2.5 rounded-md text-sm font-semibold text-white transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_6px_18px_rgba(22,33,62,.24)]" style={{ background: C.ink }}>
-                Book a Demo <ArrowRight className="inline ml-1.5 h-3.5 w-3.5" />
-              </button>
-              <a href={SOCIAL.whatsapp} target="_blank" rel="noopener noreferrer" className="px-5 py-2.5 rounded-md text-sm font-semibold border-[1.5px] transition-all duration-200 hover:bg-[var(--ink,#16213E)] hover:text-white" style={{ borderColor: C.ink, color: C.ink }}>
-                Message on WhatsApp
-              </a>
-              <a href={SOCIAL.recruitment} target="_blank" rel="noopener noreferrer" className="px-5 py-2.5 rounded-md text-sm font-semibold transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_6px_18px_rgba(232,163,61,.3)]" style={{ background: C.amber, color: C.inkDeep }}>
-                Apply Now <ExternalLink className="inline ml-1.5 h-3.5 w-3.5" />
-              </a>
+            <div className="flex justify-center">
+              <NewsletterForm />
             </div>
           </Reveal>
-          <Reveal delay={0.2}>
-            <p className="mt-5" style={{ ...fontMono, fontSize: '11.5px', color: C.inkSoft, letterSpacing: '0.03em' }}>
-              Data hosted in India · Mumbai region · No card required to trial
-            </p>
+          <Reveal delay={0.15}>
+            <div className="mt-6 flex justify-center gap-4">
+              <a href={SOCIAL.instagram} target="_blank" rel="noopener noreferrer" className="text-white/40 hover:text-white transition-colors" aria-label="Instagram"><Instagram className="h-5 w-5" /></a>
+              <a href={SOCIAL.linkedin} target="_blank" rel="noopener noreferrer" className="text-white/40 hover:text-white transition-colors" aria-label="LinkedIn"><Linkedin className="h-5 w-5" /></a>
+              <a href={SOCIAL.facebook} target="_blank" rel="noopener noreferrer" className="text-white/40 hover:text-white transition-colors" aria-label="Facebook"><Facebook className="h-5 w-5" /></a>
+              <a href={SOCIAL.twitter} target="_blank" rel="noopener noreferrer" className="text-white/40 hover:text-white transition-colors" aria-label="X"><Twitter className="h-5 w-5" /></a>
+              <a href={SOCIAL.youtube} target="_blank" rel="noopener noreferrer" className="text-white/40 hover:text-white transition-colors" aria-label="YouTube"><Youtube className="h-5 w-5" /></a>
+              <a href={SOCIAL.whatsapp} target="_blank" rel="noopener noreferrer" className="text-white/40 hover:text-white transition-colors" aria-label="WhatsApp"><MessageCircle className="h-5 w-5" /></a>
+            </div>
           </Reveal>
         </div>
       </section>
 
-      {/* ─── FOOTER ─── */}
-      <footer className="mt-auto" style={{ background: C.inkDeep, color: 'rgba(255,255,255,.62)', padding: '52px 0 34px', fontSize: '13.5px' }}>
-        <div className="max-w-[1160px] mx-auto px-5 sm:px-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 sm:gap-9">
-            {/* Brand Column */}
-            <div>
-              <p className="text-[19px] font-extrabold text-white mb-3" style={fontDisplay}>HPHRMS Enterprise AI</p>
-              <p className="leading-[1.6] max-w-[38ch]">
-                An AI-powered Workforce Operating System for HRMS software, manpower outsourcing and
-                client workforce management — in one secure, multi-tenant platform.
-              </p>
-              <div className="mt-4 leading-[1.7]" style={{ ...fontMono, fontSize: '11.5px' }}>
-                <p>HP ENTERPRISE</p>
-                <p>{BRAND.headOffice.full}</p>
+      {/* ═══════════════════════════════════════════════════════
+         FOOTER
+         ═══════════════════════════════════════════════════════ */}
+      <footer className="border-t" style={{ background: C.navyDeep, borderColor: 'rgba(255,255,255,.08)' }}>
+        <div className="max-w-[1200px] mx-auto px-5 sm:px-6 py-12 sm:py-14">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-10">
+            {/* Brand */}
+            <div className="sm:col-span-2 lg:col-span-1">
+              <div className="flex items-center gap-2.5 mb-4">
+                <BrandLogo size="sm" showText={false} variant="light" />
+                <div className="leading-none">
+                  <span className="text-[17px] font-extrabold text-white block">HP ENTERPRISE</span>
+                  <span className="text-[10px] font-semibold tracking-[0.12em] uppercase block" style={{ color: 'rgba(255,255,255,.4)' }}>HPHRMS Enterprise AI</span>
+                </div>
               </div>
+              <p className="text-[12.5px] leading-[1.6] mb-4" style={{ color: 'rgba(255,255,255,.5)' }}>{BRAND.tagline}</p>
+              <SocialLinks variant="icons" className="opacity-70" />
             </div>
-            {/* Platform Links */}
+
+            {/* Quick Links */}
             <div>
-              <h5 className="text-[10.5px] font-semibold tracking-[0.13em] uppercase mb-3" style={{ ...fontMono, color: 'rgba(255,255,255,.42)' }}>Platform</h5>
-              <div className="space-y-1">
-                {NAV_LINKS.filter(l => l.id !== 'cta').map((link) => (
-                  <button key={link.id} onClick={() => scrollTo(link.id)} className="block py-1 transition-colors hover:text-white">{link.label}</button>
+              <h4 className="text-xs font-bold tracking-[0.15em] uppercase mb-4" style={{ color: C.goldLight }}>Platform</h4>
+              <ul className="space-y-2.5">
+                {[{ label: 'Features', id: 'features' }, { label: 'Services', id: 'services' }, { label: 'AI Intelligence', id: 'ai' }, { label: 'Portals', id: 'portals' }, { label: 'Industries', id: 'industries' }, { label: 'FAQ', id: 'faq' }].map((link) => (
+                  <li key={link.id}>
+                    <button onClick={() => scrollTo(link.id)} className="text-[13px] transition-colors hover:text-white" style={{ color: 'rgba(255,255,255,.5)' }}>{link.label}</button>
+                  </li>
                 ))}
-                <button onClick={() => setView('subscribe')} className="block py-1 transition-colors hover:text-white">Book a Demo</button>
-              </div>
-              <h5 className="text-[10.5px] font-semibold tracking-[0.13em] uppercase mt-6 mb-3" style={{ ...fontMono, color: 'rgba(255,255,255,.42)' }}>Careers</h5>
-              <a href={SOCIAL.recruitment} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2.5 py-1 transition-colors hover:text-white">
-                <ExternalLink className="h-3.5 w-3.5 shrink-0" />Apply Now
-              </a>
+              </ul>
             </div>
-            {/* Company / Contact */}
+
+            {/* Legal & Compliance */}
             <div>
-              <h5 className="text-[10.5px] font-semibold tracking-[0.13em] uppercase mb-3" style={{ ...fontMono, color: 'rgba(255,255,255,.42)' }}>Company</h5>
-              <div className="space-y-1">
-                <a href={`tel:${BRAND.phone}`} className="flex items-center gap-2.5 py-1 transition-colors hover:text-white">
-                  <Phone className="h-3.5 w-3.5 shrink-0" />{BRAND.phone}
-                </a>
-                <a href={`mailto:${BRAND.email}`} className="flex items-center gap-2.5 py-1 transition-colors hover:text-white">
-                  <Mail className="h-3.5 w-3.5 shrink-0" />{BRAND.email}
-                </a>
-                <span className="flex items-center gap-2.5 py-1">
-                  <MapPin className="h-3.5 w-3.5 shrink-0" />{BRAND.headOffice.city}, {BRAND.headOffice.state}
-                </span>
-              </div>
-              <h5 className="text-[10.5px] font-semibold tracking-[0.13em] uppercase mt-6 mb-3" style={{ ...fontMono, color: 'rgba(255,255,255,.42)' }}>HR Enquiries</h5>
-              <a href={`tel:${BRAND.hrPhone}`} className="flex items-center gap-2.5 py-1 transition-colors hover:text-white">
-                <Phone className="h-3.5 w-3.5 shrink-0" />{BRAND.hrPhone}
-              </a>
+              <h4 className="text-xs font-bold tracking-[0.15em] uppercase mb-4" style={{ color: C.goldLight }}>Legal</h4>
+              <ul className="space-y-2.5">
+                <li className="text-[13px]" style={{ color: 'rgba(255,255,255,.5)' }}>
+                  <span className="block font-semibold text-white/70">GSTIN:</span> {BRAND.gstin}
+                </li>
+                <li className="text-[13px]" style={{ color: 'rgba(255,255,255,.5)' }}>
+                  <span className="block font-semibold text-white/70">PAN:</span> {BRAND.pan}
+                </li>
+                <li className="text-[13px]" style={{ color: 'rgba(255,255,255,.5)' }}>
+                  <span className="block font-semibold text-white/70">UDYAM:</span> {BRAND.udyam}
+                </li>
+              </ul>
+            </div>
+
+            {/* Contact */}
+            <div>
+              <h4 className="text-xs font-bold tracking-[0.15em] uppercase mb-4" style={{ color: C.goldLight }}>Contact</h4>
+              <ul className="space-y-2.5">
+                <li>
+                  <a href={`tel:${BRAND.phone}`} className="flex items-center gap-2 text-[13px] transition-colors hover:text-white" style={{ color: 'rgba(255,255,255,.5)' }}>
+                    <Phone className="h-3.5 w-3.5" /> {BRAND.phone}
+                  </a>
+                </li>
+                <li>
+                  <a href={`mailto:${SOCIAL.email}`} className="flex items-center gap-2 text-[13px] transition-colors hover:text-white" style={{ color: 'rgba(255,255,255,.5)' }}>
+                    <Mail className="h-3.5 w-3.5" /> {SOCIAL.email}
+                  </a>
+                </li>
+                <li>
+                  <a href={SOCIAL.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-[13px] transition-colors hover:text-white" style={{ color: 'rgba(255,255,255,.5)' }}>
+                    <Globe className="h-3.5 w-3.5" /> {SOCIAL.website.replace('https://', '')}
+                  </a>
+                </li>
+                <li className="flex items-start gap-2 text-[13px]" style={{ color: 'rgba(255,255,255,.5)' }}>
+                  <MapPin className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                  <span>{BRAND.headOffice.city}, {BRAND.headOffice.state}</span>
+                </li>
+              </ul>
             </div>
           </div>
 
-          {/* Connect With Us — Social Media Links */}
-          <div className="mt-9 pt-5 border-t" style={{ borderColor: 'rgba(255,255,255,.11)' }}>
-            <h5 className="text-[10.5px] font-semibold tracking-[0.13em] uppercase mb-4" style={{ ...fontMono, color: 'rgba(255,255,255,.42)' }}>Connect With Us</h5>
-            <SocialLinks variant="footer" />
-          </div>
-
-          {/* Bottom Bar */}
-          <div className="mt-5 pt-5 border-t flex flex-col sm:flex-row items-center justify-between gap-3 flex-wrap" style={{ borderColor: 'rgba(255,255,255,.11)', ...fontMono, fontSize: '11px', color: 'rgba(255,255,255,.42)' }}>
-            <span>© {new Date().getFullYear()} HP ENTERPRISE · hphrms.com</span>
-            <span>{BRAND.gstin} · {BRAND.udyam}</span>
+          {/* Bottom bar */}
+          <div className="mt-10 pt-6 border-t flex flex-col sm:flex-row items-center justify-between gap-3" style={{ borderColor: 'rgba(255,255,255,.08)' }}>
+            <p className="text-[12px]" style={{ color: 'rgba(255,255,255,.35)' }}>
+              &copy; {new Date().getFullYear()} {BRAND.name}. All rights reserved.
+            </p>
+            <div className="flex items-center gap-4">
+              <a href={SOCIAL.hphrms} target="_blank" rel="noopener noreferrer" className="text-[12px] transition-colors hover:text-white" style={{ color: 'rgba(255,255,255,.35)' }}>{SOCIAL.hphrms.replace('https://', '')}</a>
+              <a href={SOCIAL.website} target="_blank" rel="noopener noreferrer" className="text-[12px] transition-colors hover:text-white" style={{ color: 'rgba(255,255,255,.35)' }}>{SOCIAL.website.replace('https://', '')}</a>
+            </div>
           </div>
         </div>
       </footer>
 
-      {/* Floating AI Chat */}
-      <HpAiChat />
+      {/* Floating WhatsApp button */}
+      <a href={SOCIAL.whatsapp} target="_blank" rel="noopener noreferrer"
+        className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full shadow-xl transition-all duration-300 hover:scale-110 hover:shadow-2xl"
+        style={{ background: '#25D366' }}
+        aria-label="Chat on WhatsApp">
+        <MessageCircle className="h-6 w-6 text-white" />
+      </a>
     </div>
   )
 }
