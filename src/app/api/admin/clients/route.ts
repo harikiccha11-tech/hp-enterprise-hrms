@@ -14,10 +14,15 @@ function genTempPassword(): string {
 }
 
 export async function GET() {
-  const { error } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER')
-  if (error) return error
-  const clients = await db.client.findMany({ include: { _count: { select: { projects: true, invoices: true } } }, orderBy: { createdAt: 'desc' } })
-  return NextResponse.json({ clients })
+  try {
+    const { error } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER')
+    if (error) return error
+    const clients = await db.client.findMany({ include: { _count: { select: { projects: true, invoices: true } } }, orderBy: { createdAt: 'desc' } })
+    return NextResponse.json({ clients })
+  } catch (e) {
+    console.error('clients GET error', e)
+    return NextResponse.json({ error: 'Request failed' }, { status: 500 })
+  }
 }
 
 export async function POST(req: NextRequest) {

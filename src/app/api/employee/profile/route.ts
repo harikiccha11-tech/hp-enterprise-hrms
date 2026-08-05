@@ -6,12 +6,17 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
-  const cu = await getCurrentUser()
-  if (!cu) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const employeeId = cu.user.employee?.id
-  if (!employeeId) return NextResponse.json({ error: 'No employee profile' }, { status: 400 })
-  const emp = await db.employee.findUnique({ where: { id: employeeId }, include: { documents: true, leaveBalance: true, projectAssignments: { include: { project: { include: { client: true } } } } } })
-  return NextResponse.json({ employee: emp })
+  try {
+    const cu = await getCurrentUser()
+    if (!cu) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const employeeId = cu.user.employee?.id
+    if (!employeeId) return NextResponse.json({ error: 'No employee profile' }, { status: 400 })
+    const emp = await db.employee.findUnique({ where: { id: employeeId }, include: { documents: true, leaveBalance: true, projectAssignments: { include: { project: { include: { client: true } } } } } })
+    return NextResponse.json({ employee: emp })
+  } catch (e) {
+    console.error('employee profile GET error', e)
+    return NextResponse.json({ error: 'Request failed' }, { status: 500 })
+  }
 }
 
 export async function PATCH(req: NextRequest) {
@@ -22,7 +27,7 @@ export async function PATCH(req: NextRequest) {
   try {
     const body = await req.json()
     // employees can only edit permitted fields
-    const allowed: any = {}
+    const allowed: Record<string, unknown> = {}
     for (const k of ['mobile','alternateMobile','address','emergencyContact','bloodGroup','bankHolder','bankName','bankBranch','bankAccount','bankIfsc']) {
       if (k in body) allowed[k] = body[k]
     }

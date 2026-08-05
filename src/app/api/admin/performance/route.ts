@@ -64,8 +64,8 @@ export async function POST(req: NextRequest) {
       },
     })
     return NextResponse.json({ ok: true, review })
-  } catch (e: any) {
-    if (e?.code === 'P2002') {
+  } catch (e) {
+    if (e instanceof Error && 'code' in e && (e as { code: string }).code === 'P2002') {
       return NextResponse.json({ error: 'A review for this employee, period, and year already exists' }, { status: 409 })
     }
     return NextResponse.json({ error: 'Failed to create performance review' }, { status: 500 })

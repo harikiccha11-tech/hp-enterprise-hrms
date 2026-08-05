@@ -8,13 +8,18 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
-  const cu = await getCurrentUser()
-  if (!cu) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  if (!['OWNER', 'SUPER_ADMIN', 'HR_MANAGER', 'EMPLOYEE'].includes(cu.user.role))
-    return NextResponse.json({ error: 'Forbidden — insufficient permissions' }, { status: 403 })
-  const where = cu.user.role === 'EMPLOYEE' ? { audience: { in: ['ALL', 'EMPLOYEE'] } } : {}
-  const announcements = await db.announcement.findMany({ where, orderBy: { postedAt: 'desc' } })
-  return NextResponse.json({ announcements })
+  try {
+    const cu = await getCurrentUser()
+    if (!cu) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (!['OWNER', 'SUPER_ADMIN', 'HR_MANAGER', 'EMPLOYEE'].includes(cu.user.role))
+      return NextResponse.json({ error: 'Forbidden — insufficient permissions' }, { status: 403 })
+    const where = cu.user.role === 'EMPLOYEE' ? { audience: { in: ['ALL', 'EMPLOYEE'] } } : {}
+    const announcements = await db.announcement.findMany({ where, orderBy: { postedAt: 'desc' } })
+    return NextResponse.json({ announcements })
+  } catch (e) {
+    console.error('announcements GET error', e)
+    return NextResponse.json({ error: 'Request failed' }, { status: 500 })
+  }
 }
 
 export async function POST(req: NextRequest) {

@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
       id: record.id,
       message: 'Thank you! Your subscription request has been submitted. Our team will contact you within 24 hours.',
     })
-  } catch (e: any) {
+  } catch (e) {
     console.error('Subscription request error:', e)
     return NextResponse.json({ error: 'Failed to submit request' }, { status: 500 })
   }

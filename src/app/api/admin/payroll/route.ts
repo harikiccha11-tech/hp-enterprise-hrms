@@ -126,19 +126,24 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET(req: NextRequest) {
-  const { error } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER')
-  if (error) return error
-  const { searchParams } = new URL(req.url)
-  const month = searchParams.get('month')
-  const year = searchParams.get('year')
-  const where: any = {}
-  if (month) where.month = Number(month)
-  if (year) where.year = Number(year)
-  const payrolls = await db.payroll.findMany({
-    where,
-    include: { employee: { select: { id: true, fullName: true, employeeCode: true, designation: true, department: true } } },
-    orderBy: [{ year: 'desc' }, { month: 'desc' }],
-    take: 500,
-  })
-  return NextResponse.json({ payrolls })
+  try {
+    const { error } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER')
+    if (error) return error
+    const { searchParams } = new URL(req.url)
+    const month = searchParams.get('month')
+    const year = searchParams.get('year')
+    const where: Record<string, unknown> = {}
+    if (month) where.month = Number(month)
+    if (year) where.year = Number(year)
+    const payrolls = await db.payroll.findMany({
+      where,
+      include: { employee: { select: { id: true, fullName: true, employeeCode: true, designation: true, department: true } } },
+      orderBy: [{ year: 'desc' }, { month: 'desc' }],
+      take: 500,
+    })
+    return NextResponse.json({ payrolls })
+  } catch (e) {
+    console.error('payroll GET error', e)
+    return NextResponse.json({ error: 'Request failed' }, { status: 500 })
+  }
 }

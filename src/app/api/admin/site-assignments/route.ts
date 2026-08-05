@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getCurrentUser, getAccountType } from '@/lib/auth'
+import { requireRole } from '@/lib/guards'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -37,8 +38,8 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
-    const cu = await getCurrentUser()
-    if (!cu) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const { error, cu } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER')
+    if (error) return error
     const { user } = cu
 
     const body = await req.json()

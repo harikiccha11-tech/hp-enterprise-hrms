@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { verifyPassword, createSessionToken, setSessionCookie, audit } from '@/lib/auth'
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
 
 export const runtime = 'nodejs'
 
 export async function POST(req: NextRequest) {
   try {
+    const ip = getClientIp(req)
+    if (!checkRateLimit(`login:${ip}`, 10, 15 * 60 * 1000)) {
+      return NextResponse.json({ error: 'Too many login attempts. Please try again later.' }, { status: 429 })
+    }
     const { username, password } = await req.json()
     if (!username || !password) {
       return NextResponse.json({ error: 'Username and password are required' }, { status: 400 })

@@ -7,22 +7,27 @@ export const dynamic = 'force-dynamic'
 
 // GET — list offboarding tasks for an employee, optional status filter
 export async function GET(req: NextRequest) {
-  const { error } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER')
-  if (error) return error
+  try {
+    const { error } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER')
+    if (error) return error
 
-  const { searchParams } = new URL(req.url)
-  const employeeId = searchParams.get('employeeId') || undefined
-  const status = searchParams.get('status') || undefined
+    const { searchParams } = new URL(req.url)
+    const employeeId = searchParams.get('employeeId') || undefined
+    const status = searchParams.get('status') || undefined
 
-  const where: Record<string, any> = {}
-  if (employeeId) where.employeeId = employeeId
-  if (status) where.status = status
+    const where: Record<string, unknown> = {}
+    if (employeeId) where.employeeId = employeeId
+    if (status) where.status = status
 
-  const tasks = await db.offboardingTask.findMany({
-    where,
-    orderBy: [{ status: 'asc' }, { dueDate: 'asc' }, { createdAt: 'desc' }],
-  })
-  return NextResponse.json({ tasks })
+    const tasks = await db.offboardingTask.findMany({
+      where,
+      orderBy: [{ status: 'asc' }, { dueDate: 'asc' }, { createdAt: 'desc' }],
+    })
+    return NextResponse.json({ tasks })
+  } catch (e) {
+    console.error('[offboarding] GET failed:', e)
+    return NextResponse.json({ error: 'Request failed' }, { status: 500 })
+  }
 }
 
 // POST — create task or bulk create (array of tasks)
@@ -63,7 +68,7 @@ export async function POST(req: NextRequest) {
       },
     })
     return NextResponse.json({ ok: true, task })
-  } catch (e: any) {
+  } catch (e) {
     console.error('[offboarding] POST failed:', e)
     return NextResponse.json({ error: 'Failed to create task' }, { status: 500 })
   }
@@ -77,7 +82,7 @@ export async function PATCH(req: NextRequest) {
     const { id, ...data } = await req.json()
     if (!id) return NextResponse.json({ error: 'ID required' }, { status: 400 })
 
-    const update: Record<string, any> = { ...data }
+    const update: Record<string, unknown> = { ...data }
     if (data.dueDate) update.dueDate = new Date(data.dueDate)
     if (data.status === 'COMPLETED') {
       update.completedAt = new Date()
@@ -85,7 +90,7 @@ export async function PATCH(req: NextRequest) {
 
     const task = await db.offboardingTask.update({ where: { id }, data: update })
     return NextResponse.json({ ok: true, task })
-  } catch (e: any) {
+  } catch (e) {
     console.error('[offboarding] PATCH failed:', e)
     return NextResponse.json({ error: 'Failed to update task' }, { status: 500 })
   }
@@ -99,7 +104,7 @@ export async function DELETE(req: NextRequest) {
     const { id } = await req.json()
     await db.offboardingTask.delete({ where: { id } })
     return NextResponse.json({ ok: true })
-  } catch (e: any) {
+  } catch (e) {
     console.error('[offboarding] DELETE failed:', e)
     return NextResponse.json({ error: 'Failed to delete' }, { status: 500 })
   }

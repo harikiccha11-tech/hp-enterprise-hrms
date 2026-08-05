@@ -6,10 +6,15 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
-  const { error } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER')
-  if (error) return error
-  const invoices = await db.invoice.findMany({ include: { client: true, workOrder: true }, orderBy: { issueDate: 'desc' } })
-  return NextResponse.json({ invoices })
+  try {
+    const { error } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER')
+    if (error) return error
+    const invoices = await db.invoice.findMany({ include: { client: true, workOrder: true }, orderBy: { issueDate: 'desc' } })
+    return NextResponse.json({ invoices })
+  } catch (e) {
+    console.error('invoices GET error', e)
+    return NextResponse.json({ error: 'Request failed' }, { status: 500 })
+  }
 }
 
 export async function POST(req: NextRequest) {

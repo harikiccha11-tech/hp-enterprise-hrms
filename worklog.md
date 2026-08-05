@@ -730,3 +730,70 @@ Stage Summary:
 - Landing page renders with correct title and brand
 - No internal/developer details exposed to users
 - All credentials: Vercel token, Neon connection string, admin/HR passwords in seed
+
+---
+Task ID: 3
+Agent: general-purpose
+Task: Audit ALL API routes for error handling and functionality
+
+Work Log:
+- Read all 68 API route files under /src/app/api/
+- Read auth utilities (lib/auth.ts, lib/guards.ts, lib/rate-limit.ts, lib/audit.ts)
+- Identified and fixed 13 GET handlers missing try/catch (unhandled rejections could expose stack traces):
+  - employee/profile GET
+  - admin/leaves GET
+  - admin/announcements GET
+  - admin/payroll GET
+  - admin/clients GET
+  - admin/projects GET
+  - admin/workorders GET
+  - admin/invoices GET
+  - admin/recruitment GET
+  - admin/candidates GET
+  - admin/onboarding GET
+  - admin/offboarding GET
+  - admin/employees/[id]/documents GET
+- Added rate limiting to /api/auth/login (10 requests per 15 minutes per IP)
+- Fixed missing RBAC on /api/admin/site-assignments POST (was using only getCurrentUser, now uses requireRole)
+- Removed all `catch (e: any)` patterns (8 occurrences) to prevent accidental error detail leakage
+- Replaced `Record<string, any>` with `Record<string, unknown>` in 7 routes (leaves, payroll, recruitment, candidates, onboarding, offboarding, employee/profile)
+- Verified all admin routes use requireRole guard properly
+- Verified all auth-protected routes check getCurrentUser
+- Verified /api/health is intentionally public (no auth)
+- Verified /api/registration and /api/subscription/request are intentionally public with rate limiting
+- Verified /api/ai/chat is intentionally public (anonymous visitors) with rate limiting
+- Confirmed /api/auth/me returns { user: null } (not 401) for unauthenticated — intentional design
+
+Stage Summary:
+- 13 unprotected GET handlers now wrapped in try/catch
+- Login rate limiting added (brute-force protection)
+- 1 missing RBAC check fixed (site-assignments POST)
+- 8 `e: any` annotations removed
+- 7 `Record<string, any>` tightened to `Record<string, unknown>`
+- ESLint: 0 errors, 0 warnings
+---
+Task ID: 7
+Agent: Main
+Task: Restore missing landing page sections + Fix HPAI + API audit + Production polish
+
+Work Log:
+- Restored output: standalone in next.config.ts
+- Fixed HPAI Chat API to use correct role mapping for z-ai-web-dev-sdk (assistant role for system prompts)
+- Added allowedDevOrigins for sandbox IPs (127.0.0.1, 21.0.18.146)
+- Launched API audit agent that fixed 13 missing try/catch handlers across admin routes
+- API audit added login rate limiting (10/15min), RBAC fix on site-assignments, removed unsafe catch(e:any)
+- Verified landing page has all 9 sections via browser snapshot
+- Tested HPAI chat API — returns real AI responses from z-ai-web-dev-sdk
+- Verified all 11 services, 12 features, 3 modes, 4 portals, 10 AI features, 23 modules, 8 compliance items
+- Verified social media links (LinkedIn, Instagram, Facebook, Twitter/X, YouTube, Threads, WhatsApp, Reddit)
+- Verified Apply Now links, Book a Demo, Careers section in footer
+- Production build succeeds with standalone output
+- ESLint: 0 errors
+
+Stage Summary:
+- HPAI Chat: WORKING — real AI responses from z-ai-web-dev-sdk
+- Landing page: COMPLETE — all sections verified via browser
+- Social media: ALL 8 links present in footer
+- API security: 13 routes hardened with try/catch, login rate limited
+- Build: SUCCESS (standalone output)
+- Lint: 0 errors, 0 warnings

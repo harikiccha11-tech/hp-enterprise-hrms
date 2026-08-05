@@ -7,32 +7,37 @@ export const dynamic = 'force-dynamic'
 
 // GET — list candidates with jobPosting relation, filter by status/source/search
 export async function GET(req: NextRequest) {
-  const { error } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER')
-  if (error) return error
+  try {
+    const { error } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER')
+    if (error) return error
 
-  const { searchParams } = new URL(req.url)
-  const status = searchParams.get('status') || undefined
-  const source = searchParams.get('source') || undefined
-  const search = searchParams.get('search') || undefined
+    const { searchParams } = new URL(req.url)
+    const status = searchParams.get('status') || undefined
+    const source = searchParams.get('source') || undefined
+    const search = searchParams.get('search') || undefined
 
-  const where: Record<string, any> = {}
-  if (status) where.status = status
-  if (source) where.source = source
-  if (search) {
-    where.OR = [
-      { fullName: { contains: search } },
-      { email: { contains: search } },
-      { skills: { contains: search } },
-      { currentCompany: { contains: search } },
-    ]
+    const where: Record<string, unknown> = {}
+    if (status) where.status = status
+    if (source) where.source = source
+    if (search) {
+      (where as Record<string, Record<string, unknown>>).OR = [
+        { fullName: { contains: search } },
+        { email: { contains: search } },
+        { skills: { contains: search } },
+        { currentCompany: { contains: search } },
+      ]
+    }
+
+    const candidates = await db.candidate.findMany({
+      where,
+      include: { jobPosting: { select: { id: true, title: true } } },
+      orderBy: { appliedAt: 'desc' },
+    })
+    return NextResponse.json({ candidates })
+  } catch (e) {
+    console.error('[candidates] GET failed:', e)
+    return NextResponse.json({ error: 'Request failed' }, { status: 500 })
   }
-
-  const candidates = await db.candidate.findMany({
-    where,
-    include: { jobPosting: { select: { id: true, title: true } } },
-    orderBy: { appliedAt: 'desc' },
-  })
-  return NextResponse.json({ candidates })
 }
 
 // POST — create candidate, optionally linked to a job posting
@@ -60,7 +65,7 @@ export async function POST(req: NextRequest) {
       },
     })
     return NextResponse.json({ ok: true, candidate })
-  } catch (e: any) {
+  } catch (e) {
     console.error('[candidates] POST failed:', e)
     return NextResponse.json({ error: 'Failed to create candidate' }, { status: 500 })
   }
@@ -74,13 +79,13 @@ export async function PATCH(req: NextRequest) {
     const { id, ...data } = await req.json()
     if (!id) return NextResponse.json({ error: 'ID required' }, { status: 400 })
 
-    const update: Record<string, any> = { ...data }
+    const update: Record<string, unknown> = { ...data }
     if (data.currentCtc !== undefined) update.currentCtc = data.currentCtc ? Number(data.currentCtc) : null
     if (data.expectedCtc !== undefined) update.expectedCtc = data.expectedCtc ? Number(data.expectedCtc) : null
 
     const candidate = await db.candidate.update({ where: { id }, data: update })
     return NextResponse.json({ ok: true, candidate })
-  } catch (e: any) {
+  } catch (e) {
     console.error('[candidates] PATCH failed:', e)
     return NextResponse.json({ error: 'Failed to update candidate' }, { status: 500 })
   }
@@ -94,7 +99,7 @@ export async function DELETE(req: NextRequest) {
     const { id } = await req.json()
     await db.candidate.delete({ where: { id } })
     return NextResponse.json({ ok: true })
-  } catch (e: any) {
+  } catch (e) {
     console.error('[candidates] DELETE failed:', e)
     return NextResponse.json({ error: 'Failed to delete' }, { status: 500 })
   }

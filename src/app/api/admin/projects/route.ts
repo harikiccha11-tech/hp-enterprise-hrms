@@ -6,13 +6,18 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
-  const { error } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER')
-  if (error) return error
-  const projects = await db.project.findMany({
-    include: { client: true, _count: { select: { members: true, workOrders: true } }, members: { include: { employee: { select: { id: true, fullName: true, employeeCode: true, designation: true } } } } },
-    orderBy: { createdAt: 'desc' },
-  })
-  return NextResponse.json({ projects })
+  try {
+    const { error } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER')
+    if (error) return error
+    const projects = await db.project.findMany({
+      include: { client: true, _count: { select: { members: true, workOrders: true } }, members: { include: { employee: { select: { id: true, fullName: true, employeeCode: true, designation: true } } } } },
+      orderBy: { createdAt: 'desc' },
+    })
+    return NextResponse.json({ projects })
+  } catch (e) {
+    console.error('projects GET error', e)
+    return NextResponse.json({ error: 'Request failed' }, { status: 500 })
+  }
 }
 
 export async function POST(req: NextRequest) {

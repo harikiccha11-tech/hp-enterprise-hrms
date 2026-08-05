@@ -219,19 +219,25 @@ export async function POST(req: NextRequest) {
     }
 
     let history = conversations.get(userId) || [
-      { role: 'system', content: SYSTEM_PROMPT },
+      { role: 'assistant', content: SYSTEM_PROMPT },
     ]
     history.push({ role: 'user', content: message.trim() })
     if (history.length > 21) {
       history = [history[0], ...history.slice(-20)]
     }
 
+    // Convert system→assistant format for z-ai-web-dev-sdk compatibility
+    const sdkMessages = history.map((m) => ({
+      role: m.role === 'system' ? 'assistant' : m.role,
+      content: m.content,
+    }))
+
     let aiResponse: string | undefined
     let usedFallback = false
 
     // Strategy 1: Z.ai SDK (primary)
     try {
-      aiResponse = await callZai(history)
+      aiResponse = await callZai(sdkMessages)
     } catch (e) {
       logError('Z.ai primary failed', e)
     }
@@ -239,7 +245,7 @@ export async function POST(req: NextRequest) {
     // Strategy 2: Gemini direct (fallback — only if API key is configured)
     if (!aiResponse && process.env.GEMINI_API_KEY) {
       try {
-        aiResponse = await callGemini(history)
+        aiResponse = await callGemini(sdkMessages)
       } catch (e) {
         logError('Gemini fallback failed', e)
       }
