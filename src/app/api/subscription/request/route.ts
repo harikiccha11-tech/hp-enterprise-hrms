@@ -16,11 +16,25 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Name and email are required' }, { status: 400 })
       }
 
+      const normalizedEmail = String(email).trim().toLowerCase()
+
+      // Duplicate prevention: check for existing newsletter subscription
+      const recent = await db.subscriptionRequest.findFirst({
+        where: { email: normalizedEmail, plan: 'newsletter' },
+        orderBy: { createdAt: 'desc' },
+      })
+      if (recent) {
+        return NextResponse.json({
+          ok: true,
+          message: 'You are already subscribed! Thank you for your interest.',
+        })
+      }
+
       const record = await db.subscriptionRequest.create({
         data: {
           companyName: companyName ? String(companyName).trim() : String(contactName).trim(),
           contactName: String(contactName).trim(),
-          email: String(email).trim().toLowerCase(),
+          email: normalizedEmail,
           plan: 'newsletter',
           message: 'Newsletter subscription',
         },

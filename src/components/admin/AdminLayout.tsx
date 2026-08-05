@@ -74,6 +74,7 @@ import { KnowledgeBase } from './modules/KnowledgeBase'
 import { EmailTemplates } from './modules/EmailTemplates'
 import { NotificationTemplates } from './modules/NotificationTemplates'
 import { SubscriptionPlans } from './modules/SubscriptionPlans'
+import { DemoRequests } from './modules/DemoRequests'
 import { FeatureFlags } from './modules/FeatureFlags'
 import { PaymentGateways } from './modules/PaymentGateways'
 import { SecurityCenter } from './modules/SecurityCenter'
@@ -102,7 +103,7 @@ export type ModuleKey =
   // Communications
   | 'announcements' | 'knowledge-base' | 'email-templates' | 'notification-templates'
   // System
-  | 'subscription-plans' | 'feature-flags' | 'payment-gateways'
+  | 'subscription-plans' | 'demo-requests' | 'feature-flags' | 'payment-gateways'
   | 'security' | 'system-health'
   | 'audit' | 'roles' | 'settings' | 'users'
 
@@ -192,6 +193,7 @@ function getNavGroups(lang: LangCode): { title: string; items: NavItem[] }[] {
       title: 'System',
       items: [
         { key: 'subscription-plans', label: 'Subscription Plans', icon: CreditCardIcon, desc: 'Pricing plans management' },
+        { key: 'demo-requests', label: 'Demo Requests', icon: CalendarDays, desc: 'Demo, subscription & contact requests' },
         { key: 'feature-flags', label: 'Feature Flags', icon: ToggleLeft, desc: 'Feature toggle management' },
         { key: 'payment-gateways', label: 'Payment Gateways', icon: Landmark, desc: 'Payment gateway configuration' },
         { key: 'security', label: 'Security Center', icon: Shield, desc: 'Security monitoring & logs', superAdminOnly: true },
@@ -487,6 +489,7 @@ export function AdminLayout() {
 
               {/* System */}
               {active === 'subscription-plans' && <SubscriptionPlans refreshKey={refreshKey} />}
+              {active === 'demo-requests' && <DemoRequests refreshKey={refreshKey} />}
               {active === 'feature-flags' && <FeatureFlags refreshKey={refreshKey} />}
               {active === 'payment-gateways' && <PaymentGateways refreshKey={refreshKey} />}
               {active === 'security' && <SecurityCenter isSuperAdmin={isSuperAdmin} />}

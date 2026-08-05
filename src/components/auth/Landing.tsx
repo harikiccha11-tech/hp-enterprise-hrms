@@ -25,6 +25,7 @@ import {
   HardHat, Factory, Landmark, Hammer, Stethoscope, Monitor, Cloud,
   Database, Activity, Code2, ChevronDown, Globe, TrendingUp,
   Linkedin, Instagram, Facebook, Twitter, Youtube, MessageCircle,
+  Star, Clock, IndianRupee,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -182,6 +183,38 @@ const STEPS = [
   { num: '02', title: 'Workspace Setup', icon: Settings, desc: 'Your dedicated company workspace is created with your branding and configuration.' },
   { num: '03', title: 'Onboard & Configure', icon: UserPlus, desc: 'Import employee data, configure modules, set up workflows, and train your team.' },
   { num: '04', title: 'Go Live', icon: CheckCircle2, desc: 'Start operations with full AI-powered support and dedicated onboarding assistance.' },
+]
+
+/* ═══════════════════════════════════════════════════════
+   DATA: Fallback Pricing Plans (shown when DB has none)
+   ═══════════════════════════════════════════════════════ */
+interface PricingPlan {
+  id: string; name: string; description: string | null
+  priceINR: number | null; priceUSD: number | null; interval: string | null
+  maxEmployees: number | null; features: string | null; trialDays: number; isPopular: boolean
+}
+
+const FALLBACK_PLANS: PricingPlan[] = [
+  {
+    id: 'fb-starter', name: 'Starter', description: 'For small teams getting started',
+    priceINR: 4999, priceUSD: 59, interval: 'MONTHLY', maxEmployees: 50, trialDays: 14, isPopular: false,
+    features: JSON.stringify(['Up to 50 employees', 'Core HR & Employee Management', 'Attendance with GPS', 'Leave Management', 'Basic Reports', 'Email Support', '1 Branch']),
+  },
+  {
+    id: 'fb-standard', name: 'Standard', description: 'For growing organizations',
+    priceINR: 14999, priceUSD: 179, interval: 'MONTHLY', maxEmployees: 250, trialDays: 14, isPopular: false,
+    features: JSON.stringify(['Up to 250 employees', 'Everything in Starter', 'Statutory Payroll (PF/ESI/TDS)', 'Recruitment & ATS', 'Document Generation', 'AI Assistant (limited)', '5 Branches', 'Priority Support']),
+  },
+  {
+    id: 'fb-professional', name: 'Professional', description: 'For enterprises with complex needs',
+    priceINR: 34999, priceUSD: 419, interval: 'MONTHLY', maxEmployees: 1000, trialDays: 21, isPopular: true,
+    features: JSON.stringify(['Up to 1,000 employees', 'Everything in Standard', 'Full AI Assistant (unlimited)', 'EHS & Compliance Module', 'Multi-Branch & Multi-Company', 'Advanced Analytics & BI', 'Custom Branding', 'API Access', 'Dedicated Account Manager']),
+  },
+  {
+    id: 'fb-enterprise', name: 'Enterprise', description: 'Unlimited scale, full customization',
+    priceINR: null, priceUSD: null, interval: 'MONTHLY', maxEmployees: null, trialDays: 30, isPopular: false,
+    features: JSON.stringify(['Unlimited employees', 'Everything in Professional', 'Custom Integrations & Workflows', 'On-Premise / Private Cloud Option', 'SLA-backed 24/7 Support', 'Dedicated DevOps Team', 'Custom Training & Onboarding', 'Audit-Ready Documentation', 'Multi-Tenant Agency Mode']),
+  },
 ]
 
 /* ═══════════════════════════════════════════════════════
@@ -415,6 +448,280 @@ function SubscriptionForm({ onBack }: { onBack: () => void }) {
 }
 
 /* ═══════════════════════════════════════════════════════
+   PRICING SECTION COMPONENT
+   ═══════════════════════════════════════════════════════ */
+function PricingSection({ onDemoClick }: { onDemoClick: () => void }) {
+  const [plans, setPlans] = useState<PricingPlan[]>(FALLBACK_PLANS)
+  const [loading, setLoading] = useState(true)
+  const [annual, setAnnual] = useState(false)
+
+  useEffect(() => {
+    fetch('/api/public/pricing')
+      .then((r) => r.json())
+      .then((d) => { if (d.plans && d.plans.length > 0) setPlans(d.plans) })
+      .catch(() => { /* use fallback */ })
+      .finally(() => setLoading(false))
+  }, [])
+
+  const fmtINR = (n: number) => '₹' + n.toLocaleString('en-IN')
+
+  return (
+    <>
+      <Reveal>
+        <div className="text-center max-w-2xl mx-auto">
+          <SectionLabel className="text-center">Pricing</SectionLabel>
+          <SectionTitle className="mx-auto">Simple, transparent pricing</SectionTitle>
+          <SectionSub className="mx-auto">Start free, scale as you grow. No hidden fees. Cancel anytime.</SectionSub>
+        </div>
+      </Reveal>
+
+      {/* Billing toggle */}
+      <Reveal delay={0.1}>
+        <div className="mt-8 flex items-center justify-center gap-3">
+          <span className="text-sm font-medium" style={{ color: annual ? C.inkSoft : C.ink }}>Monthly</span>
+          <button onClick={() => setAnnual(!annual)} className="relative h-6 w-11 rounded-full transition-colors" style={{ background: annual ? C.gold : C.rule }}>
+            <span className={"absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all " + (annual ? 'left-[22px]' : 'left-0.5')} />
+          </button>
+          <span className="text-sm font-medium" style={{ color: annual ? C.ink : C.inkSoft }}>Annual <span className="text-xs font-semibold" style={{ color: C.verify }}>Save 20%</span></span>
+        </div>
+      </Reveal>
+
+      <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        {plans.map((plan, i) => {
+          const features: string[] = plan.features ? JSON.parse(plan.features) : []
+          const priceMonthly = plan.priceINR
+          const priceAnnual = priceMonthly ? Math.round(priceMonthly * 0.8) : null
+          const displayPrice = annual ? priceAnnual : priceMonthly
+          const interval = plan.interval?.toLowerCase() || 'month'
+
+          return (
+            <Reveal key={plan.id} delay={0.06 + i * 0.06}>
+              <div className={"relative p-5 sm:p-6 rounded-xl border transition-all duration-300 h-full flex flex-col " + (plan.isPopular ? 'shadow-lg -translate-y-1' : 'hover:shadow-md')}
+                style={{ background: plan.isPopular ? C.navy : C.paper, borderColor: plan.isPopular ? C.gold : C.rule }}>
+                {plan.isPopular && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-bold" style={{ background: C.gold, color: C.navyDeep }}>
+                    <Star className="h-3 w-3" /> MOST POPULAR
+                  </div>
+                )}
+                <div className="text-center mb-5">
+                  <h3 className={"text-lg font-bold " + (plan.isPopular ? 'text-white' : '')} style={plan.isPopular ? {} : { color: C.ink }}>{plan.name}</h3>
+                  {plan.description && <p className={"text-[12px] mt-1 " + (plan.isPopular ? 'text-white/60' : '')} style={plan.isPopular ? {} : { color: C.inkSoft }}>{plan.description}</p>}
+                </div>
+                <div className="text-center mb-5">
+                  {displayPrice != null ? (
+                    <>
+                      <span className={"text-3xl font-extrabold " + (plan.isPopular ? 'text-white' : '')} style={plan.isPopular ? {} : { color: C.ink }}>{fmtINR(displayPrice)}</span>
+                      <span className={"text-sm " + (plan.isPopular ? 'text-white/50' : '')} style={plan.isPopular ? {} : { color: C.inkSoft }}>/{interval}</span>
+                    </>
+                  ) : (
+                    <span className={"text-3xl font-extrabold " + (plan.isPopular ? 'text-white' : '')} style={{ color: plan.isPopular ? C.gold : C.navy }}>Custom</span>
+                  )}
+                  {plan.priceUSD != null && (
+                    <p className={"text-xs mt-1 " + (plan.isPopular ? 'text-white/40' : '')} style={plan.isPopular ? {} : { color: C.inkSoft }}>
+                      ${annual ? Math.round(plan.priceUSD * 0.8) : plan.priceUSD}/{interval}
+                    </p>
+                  )}
+                  {plan.maxEmployees && <p className={"text-xs mt-1 " + (plan.isPopular ? 'text-white/50' : '')} style={plan.isPopular ? {} : { color: C.inkSoft }}>Up to {plan.maxEmployees} employees</p>}
+                  {plan.trialDays > 0 && <p className={"text-xs font-semibold mt-1 " + (plan.isPopular ? 'text-green-300' : '')} style={plan.isPopular ? {} : { color: C.verify }}>{plan.trialDays}-day free trial</p>}
+                </div>
+                <ul className="space-y-2 mb-6 flex-1">
+                  {features.map((f, j) => (
+                    <li key={j} className={"flex items-start gap-2 text-[13px] " + (plan.isPopular ? 'text-white/80' : '')} style={plan.isPopular ? {} : { color: C.inkSoft }}>
+                      <Check className={"h-3.5 w-3.5 shrink-0 mt-0.5 " + (plan.isPopular ? 'text-green-300' : '')} style={plan.isPopular ? {} : { color: C.verify }} />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <button onClick={() => onDemoClick()}
+                  className={"w-full py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 " + (plan.isPopular ? 'text-white hover:opacity-90' : 'border-2 hover:shadow-md')}
+                  style={plan.isPopular ? { background: C.gold, color: C.navyDeep } : { borderColor: C.navy, color: C.navy }}>
+                  {displayPrice != null ? 'Get Started' : 'Contact Sales'}
+                </button>
+              </div>
+            </Reveal>
+          )
+        })}
+      </div>
+
+      <Reveal delay={0.3}>
+        <p className="mt-8 text-center text-xs" style={{ color: C.inkSoft }}>
+          All prices exclude GST (18%). Custom plans available for agencies and large enterprises. <a href={SOCIAL.whatsapp} target="_blank" rel="noopener noreferrer" className="font-semibold underline" style={{ color: C.navy }}>Talk to us</a> for a tailored quote.
+        </p>
+      </Reveal>
+    </>
+  )
+}
+
+/* ═══════════════════════════════════════════════════════
+   CAREERS SECTION COMPONENT
+   ═══════════════════════════════════════════════════════ */
+interface CareerJob {
+  id: string; title: string; department: string | null; designation: string | null
+  location: string | null; type: string; experience: string | null
+  salaryMin: number | null; salaryMax: number | null; description: string | null
+  requirements: string | null; postedAt: string
+}
+
+function CareersSection() {
+  const [jobs, setJobs] = useState<CareerJob[]>([])
+  const [loading, setLoading] = useState(true)
+  const [applyJob, setApplyJob] = useState<CareerJob | null>(null)
+  const [deptFilter, setDeptFilter] = useState('ALL')
+
+  useEffect(() => {
+    fetch('/api/public/careers')
+      .then((r) => r.json())
+      .then((d) => { if (d.jobs) setJobs(d.jobs) })
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [])
+
+  const departments = ['ALL', ...Array.from(new Set(jobs.map((j) => j.department).filter(Boolean)))]
+  const filtered = deptFilter === 'ALL' ? jobs : jobs.filter((j) => j.department === deptFilter)
+
+  const fmtSalary = (min: number | null, max: number | null) => {
+    if (min == null && max == null) return null
+    const f = (n: number) => '₹' + (n >= 100000 ? (n / 100000).toFixed(1) + 'L' : (n / 1000).toFixed(0) + 'K')
+    if (min && max) return f(min) + ' – ' + f(max)
+    return min ? 'From ' + f(min) : 'Up to ' + f(max!)
+  }
+
+  return (
+    <>
+      <Reveal>
+        <div className="text-center max-w-2xl mx-auto">
+          <SectionLabel className="text-center">Careers at HP ENTERPRISE</SectionLabel>
+          <SectionTitle className="mx-auto">Join our growing team</SectionTitle>
+          <SectionSub className="mx-auto">We're building the future of workforce management in India. If you're passionate about HR tech, AI, and making a difference, we'd love to hear from you.</SectionSub>
+        </div>
+      </Reveal>
+
+      <Reveal delay={0.1}>
+        <div className="mt-8 flex flex-wrap gap-2 justify-center">
+          {departments.map((d) => (
+            <button key={d} onClick={() => setDeptFilter(d)}
+              className={"px-3.5 py-1.5 rounded-full text-xs font-semibold transition-colors " + (deptFilter === d ? 'text-white' : 'border')}
+              style={deptFilter === d ? { background: C.navy } : { borderColor: C.rule, color: C.inkSoft }}>
+              {d === 'ALL' ? 'All Departments' : d}
+            </button>
+          ))}
+        </div>
+      </Reveal>
+
+      {loading ? (
+        <div className="mt-8 grid gap-4 max-w-3xl mx-auto">
+          {Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-24 rounded-xl animate-pulse" style={{ background: C.bg }} />)}
+        </div>
+      ) : filtered.length === 0 ? (
+        <Reveal delay={0.15}>
+          <div className="mt-10 text-center p-8 rounded-xl border max-w-2xl mx-auto" style={{ borderColor: C.rule }}>
+            <Briefcase className="h-10 w-10 mx-auto mb-3" style={{ color: C.inkSoft, opacity: 0.4 }} />
+            <p className="text-sm font-semibold" style={{ color: C.ink }}>No open positions right now</p>
+            <p className="text-xs mt-1" style={{ color: C.inkSoft }}>We're always looking for talented people. Send your resume to <a href={SOCIAL.recruitment} target="_blank" rel="noopener noreferrer" className="font-semibold underline" style={{ color: C.navy }}>our recruitment form</a> or <a href={SOCIAL.whatsapp} target="_blank" rel="noopener noreferrer" className="font-semibold underline" style={{ color: C.navy }}>connect on WhatsApp</a>.</p>
+          </div>
+        </Reveal>
+      ) : (
+        <div className="mt-8 grid gap-4 max-w-3xl mx-auto">
+          {filtered.map((job, i) => (
+            <Reveal key={job.id} delay={0.04 + i * 0.04}>
+              <div className="p-5 rounded-xl border transition-all duration-200 hover:shadow-md" style={{ background: C.paper, borderColor: C.rule }}>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <h3 className="text-[15px] font-bold" style={{ color: C.ink }}>{job.title}</h3>
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1.5 text-xs" style={{ color: C.inkSoft }}>
+                      {job.department && <span className="flex items-center gap-1"><Building2 className="h-3 w-3" />{job.department}</span>}
+                      {job.location && <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{job.location}</span>}
+                      {job.experience && <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{job.experience}</span>}
+                      <span className="flex items-center gap-1"><Briefcase className="h-3 w-3" />{job.type.replace(/_/g, ' ')}</span>
+                      {fmtSalary(job.salaryMin, job.salaryMax) && <span className="flex items-center gap-1 font-semibold" style={{ color: C.verify }}>{fmtSalary(job.salaryMin, job.salaryMax)}</span>}
+                    </div>
+                  </div>
+                  <button onClick={() => setApplyJob(job)}
+                    className="shrink-0 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 hover:shadow-md"
+                    style={{ background: C.navy, color: '#fff' }}>
+                    Apply Now
+                  </button>
+                </div>
+              </div>
+            </Reveal>
+          ))}
+        </div>
+      )}
+
+      {/* Apply Dialog */}
+      {applyJob && <CareerApplyDialog job={applyJob} onClose={() => setApplyJob(null)} />}
+    </>
+  )
+}
+
+function CareerApplyDialog({ job, onClose }: { job: CareerJob; onClose: () => void }) {
+  const [form, setForm] = useState({ fullName: '', email: '', phone: '', experience: '', currentCompany: '', skills: '', noticePeriod: '', remarks: '' })
+  const [loading, setLoading] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
+  const set = (k: string, v: string) => setForm((p) => ({ ...p, [k]: v }))
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!form.fullName.trim() || !form.email.trim()) { toast.error('Name and email are required'); return }
+    setLoading(true)
+    try {
+      const res = await fetch('/api/public/careers/apply', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jobPostingId: job.id, ...form }),
+      })
+      const data = await res.json()
+      if (res.ok) { setSubmitted(true); toast.success(data.message) }
+      else { toast.error(data.error || 'Failed to apply') }
+    } catch { toast.error('Network error') } finally { setLoading(false) }
+  }
+
+  if (submitted) return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,.5)' }} onClick={onClose}>
+      <div className="bg-white rounded-2xl p-8 max-w-sm w-full text-center shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="mx-auto grid h-14 w-14 place-items-center rounded-full" style={{ background: 'rgba(46,125,91,.1)' }}><CheckCircle2 className="h-7 w-7" style={{ color: C.verify }} /></div>
+        <h3 className="mt-4 text-lg font-bold" style={{ color: C.ink }}>Application Submitted!</h3>
+        <p className="mt-2 text-sm" style={{ color: C.inkSoft }}>Thank you, {form.fullName}! Our HR team will review your application for <strong>{job.title}</strong>.</p>
+        <button onClick={onClose} className="mt-6 px-6 py-2.5 rounded-lg text-sm font-semibold" style={{ background: C.navy, color: '#fff' }}>Close</button>
+      </div>
+    </div>
+  )
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,.5)' }} onClick={onClose}>
+      <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-5">
+          <div>
+            <h3 className="text-lg font-bold" style={{ color: C.ink }}>Apply for {job.title}</h3>
+            <p className="text-xs" style={{ color: C.inkSoft }}>{job.department} {job.location ? '• ' + job.location : ''}</p>
+          </div>
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100"><X className="h-4 w-4" /></button>
+        </div>
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <div className="space-y-1"><Label className="text-[11px] font-semibold" style={{ color: C.inkSoft }}>Full Name *</Label><Input value={form.fullName} onChange={(e) => set('fullName', e.target.value)} className="h-9 text-sm rounded-lg" required /></div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1"><Label className="text-[11px] font-semibold" style={{ color: C.inkSoft }}>Email *</Label><Input type="email" value={form.email} onChange={(e) => set('email', e.target.value)} className="h-9 text-sm rounded-lg" required /></div>
+            <div className="space-y-1"><Label className="text-[11px] font-semibold" style={{ color: C.inkSoft }}>Phone *</Label><Input type="tel" value={form.phone} onChange={(e) => set('phone', e.target.value)} className="h-9 text-sm rounded-lg" required /></div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1"><Label className="text-[11px] font-semibold" style={{ color: C.inkSoft }}>Experience</Label><Input value={form.experience} onChange={(e) => set('experience', e.target.value)} placeholder="e.g. 3 years" className="h-9 text-sm rounded-lg" /></div>
+            <div className="space-y-1"><Label className="text-[11px] font-semibold" style={{ color: C.inkSoft }}>Notice Period</Label><Input value={form.noticePeriod} onChange={(e) => set('noticePeriod', e.target.value)} placeholder="e.g. 30 days" className="h-9 text-sm rounded-lg" /></div>
+          </div>
+          <div className="space-y-1"><Label className="text-[11px] font-semibold" style={{ color: C.inkSoft }}>Current Company</Label><Input value={form.currentCompany} onChange={(e) => set('currentCompany', e.target.value)} className="h-9 text-sm rounded-lg" /></div>
+          <div className="space-y-1"><Label className="text-[11px] font-semibold" style={{ color: C.inkSoft }}>Key Skills</Label><Input value={form.skills} onChange={(e) => set('skills', e.target.value)} placeholder="e.g. React, TypeScript, HR, Payroll" className="h-9 text-sm rounded-lg" /></div>
+          <div className="space-y-1"><Label className="text-[11px] font-semibold" style={{ color: C.inkSoft }}>Cover Note</Label><Textarea value={form.remarks} onChange={(e) => set('remarks', e.target.value)} rows={2} className="text-sm rounded-lg" placeholder="Why are you a good fit?" /></div>
+          <div className="flex gap-2 pt-2">
+            <Button type="submit" className="flex-1 h-9 text-sm font-semibold rounded-lg text-white" style={{ background: C.navy }} disabled={loading}>
+              {loading ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <Send className="mr-2 h-3.5 w-3.5" />}Submit Application
+            </Button>
+            <Button type="button" variant="outline" onClick={onClose} className="h-9 text-sm rounded-lg">Cancel</Button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+/* ═══════════════════════════════════════════════════════
    FAQ ACCORDION
    ═══════════════════════════════════════════════════════ */
 function FaqAccordion() {
@@ -569,8 +876,10 @@ export function Landing() {
     { id: 'features', label: 'Features' },
     { id: 'services', label: 'Services' },
     { id: 'ai', label: 'AI' },
+    { id: 'pricing', label: 'Pricing' },
     { id: 'portals', label: 'Portals' },
     { id: 'industries', label: 'Industries' },
+    { id: 'careers', label: 'Careers' },
     { id: 'faq', label: 'FAQ' },
     { id: 'contact', label: 'Contact' },
   ]
@@ -908,7 +1217,16 @@ export function Landing() {
       </section>
 
       {/* ═══════════════════════════════════════════════════════
-         SECTION 7: PORTALS
+         SECTION 7: PRICING
+         ═══════════════════════════════════════════════════════ */}
+      <section id="pricing" className="py-16 sm:py-20 lg:py-24 border-t" style={{ background: C.bg, borderColor: C.rule }}>
+        <div className="max-w-[1200px] mx-auto px-5 sm:px-6">
+          <PricingSection onDemoClick={() => setDemoOpen(true)} />
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════
+         SECTION 8: PORTALS
          ═══════════════════════════════════════════════════════ */}
       <section id="portals" className="py-16 sm:py-20 lg:py-24 border-t" style={{ background: C.bg, borderColor: C.rule }}>
         <div className="max-w-[1200px] mx-auto px-5 sm:px-6">
@@ -1022,6 +1340,15 @@ export function Landing() {
             </div>
           </Reveal>
           <FaqAccordion />
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════
+         SECTION 11: CAREERS
+         ═══════════════════════════════════════════════════════ */}
+      <section id="careers" className="py-16 sm:py-20 lg:py-24 border-t" style={{ background: C.paper, borderColor: C.rule }}>
+        <div className="max-w-[1200px] mx-auto px-5 sm:px-6">
+          <CareersSection />
         </div>
       </section>
 
@@ -1151,7 +1478,7 @@ export function Landing() {
             <div>
               <h4 className="text-xs font-bold tracking-[0.15em] uppercase mb-4" style={{ color: C.goldLight }}>Platform</h4>
               <ul className="space-y-2.5">
-                {[{ label: 'Features', id: 'features' }, { label: 'Services', id: 'services' }, { label: 'AI Intelligence', id: 'ai' }, { label: 'Portals', id: 'portals' }, { label: 'Industries', id: 'industries' }, { label: 'FAQ', id: 'faq' }].map((link) => (
+                {[{ label: 'Features', id: 'features' }, { label: 'Services', id: 'services' }, { label: 'AI Intelligence', id: 'ai' }, { label: 'Pricing', id: 'pricing' }, { label: 'Portals', id: 'portals' }, { label: 'Industries', id: 'industries' }, { label: 'Careers', id: 'careers' }, { label: 'FAQ', id: 'faq' }].map((link) => (
                   <li key={link.id}>
                     <button onClick={() => scrollTo(link.id)} className="text-[13px] transition-colors hover:text-white" style={{ color: 'rgba(255,255,255,.5)' }}>{link.label}</button>
                   </li>
