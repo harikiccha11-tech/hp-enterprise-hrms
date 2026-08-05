@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { useAuth, prefetch, cachedFetch, cacheInvalidate } from '@/lib/store'
+import { useAuth, useAppStore, prefetch, cachedFetch, cacheInvalidate } from '@/lib/store'
 import { BrandLogo } from '@/components/brand/BrandLogo'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -8,6 +8,9 @@ import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from '@/components/ui/sheet'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
 import {
   Table,
   TableBody,
@@ -56,6 +59,8 @@ import {
   Sparkles,
   Headphones,
   Settings,
+  Send,
+  Info,
 } from 'lucide-react'
 import { t, type LangCode } from '@/lib/i18n'
 import { HpAiChat } from '@/components/shared/HpAiChat'
@@ -92,7 +97,6 @@ interface NavItem {
   label: string
   icon: typeof LayoutDashboard
   desc: string
-  comingSoon?: boolean
 }
 
 interface ClientInfo {
@@ -215,43 +219,415 @@ function StatusBadge({ status }: { status: string }) {
 function getNav(lang: LangCode): NavItem[] {
   return [
     { key: 'dashboard', label: t('client.dashboard', lang), icon: LayoutDashboard, desc: t('client.desc.dashboard', lang) },
-    { key: 'company-profile', label: t('client.companyProfile', lang), icon: Building2, desc: t('client.desc.companyProfile', lang), comingSoon: true },
-    { key: 'employees', label: t('client.employees', lang), icon: Users, desc: t('client.desc.employees', lang), comingSoon: true },
-    { key: 'departments', label: t('client.departments', lang), icon: LayoutGrid, desc: t('client.desc.departments', lang), comingSoon: true },
-    { key: 'attendance', label: t('client.attendance', lang), icon: Clock, desc: t('client.desc.attendance', lang), comingSoon: true },
-    { key: 'leave', label: t('client.leave', lang), icon: CalendarOff, desc: t('client.desc.leave', lang), comingSoon: true },
-    { key: 'payroll', label: t('client.payroll', lang), icon: Banknote, desc: t('client.desc.payroll', lang), comingSoon: true },
+    { key: 'company-profile', label: t('client.companyProfile', lang), icon: Building2, desc: t('client.desc.companyProfile', lang) },
+    { key: 'employees', label: t('client.employees', lang), icon: Users, desc: t('client.desc.employees', lang) },
+    { key: 'departments', label: t('client.departments', lang), icon: LayoutGrid, desc: t('client.desc.departments', lang) },
+    { key: 'attendance', label: t('client.attendance', lang), icon: Clock, desc: t('client.desc.attendance', lang) },
+    { key: 'leave', label: t('client.leave', lang), icon: CalendarOff, desc: t('client.desc.leave', lang) },
+    { key: 'payroll', label: t('client.payroll', lang), icon: Banknote, desc: t('client.desc.payroll', lang) },
     { key: 'projects', label: t('client.projects', lang), icon: Briefcase, desc: t('client.desc.projects', lang) },
-    { key: 'documents', label: t('client.documents', lang), icon: FolderOpen, desc: t('client.desc.documents', lang), comingSoon: true },
+    { key: 'documents', label: t('client.documents', lang), icon: FolderOpen, desc: t('client.desc.documents', lang) },
     { key: 'invoices', label: t('client.invoices', lang), icon: FileText, desc: t('client.desc.invoices', lang) },
-    { key: 'subscription', label: t('client.subscription', lang), icon: CreditCard, desc: t('client.desc.subscription', lang), comingSoon: true },
-    { key: 'billing', label: t('client.billing', lang), icon: Receipt, desc: t('client.desc.billing', lang), comingSoon: true },
-    { key: 'reports', label: t('client.reports', lang), icon: BarChart3, desc: t('client.desc.reports', lang), comingSoon: true },
-    { key: 'downloads', label: t('client.downloads', lang), icon: Download, desc: t('client.desc.downloads', lang), comingSoon: true },
-    { key: 'ai-assistant', label: t('client.aiAssistant', lang), icon: Sparkles, desc: t('client.desc.aiAssistant', lang), comingSoon: true },
-    { key: 'notifications', label: t('client.notifications', lang), icon: Bell, desc: t('client.desc.notifications', lang), comingSoon: true },
-    { key: 'support', label: t('client.support', lang), icon: Headphones, desc: t('client.desc.support', lang), comingSoon: true },
-    { key: 'settings', label: t('client.settings', lang), icon: Settings, desc: t('client.desc.settings', lang), comingSoon: true },
+    { key: 'subscription', label: t('client.subscription', lang), icon: CreditCard, desc: t('client.desc.subscription', lang) },
+    { key: 'billing', label: t('client.billing', lang), icon: Receipt, desc: t('client.desc.billing', lang) },
+    { key: 'reports', label: t('client.reports', lang), icon: BarChart3, desc: t('client.desc.reports', lang) },
+    { key: 'downloads', label: t('client.downloads', lang), icon: Download, desc: t('client.desc.downloads', lang) },
+    { key: 'ai-assistant', label: t('client.aiAssistant', lang), icon: Sparkles, desc: t('client.desc.aiAssistant', lang) },
+    { key: 'notifications', label: t('client.notifications', lang), icon: Bell, desc: t('client.desc.notifications', lang) },
+    { key: 'support', label: t('client.support', lang), icon: Headphones, desc: t('client.desc.support', lang) },
+    { key: 'settings', label: t('client.settings', lang), icon: Settings, desc: t('client.desc.settings', lang) },
     { key: 'work-orders', label: t('client.workOrders', lang), icon: ClipboardList, desc: t('client.desc.workOrders', lang) },
   ]
 }
 
-// ── Coming Soon View ──────────────────────────────────────────────────────
+// ── Empty State Card (reusable) ──────────────────────────────────────────
 
-function ComingSoonView({ label }: { label: string }) {
+function EmptyStateView({ icon: Icon, title, message }: { icon: typeof LayoutDashboard; title: string; message: string }) {
   return (
     <Card className="mx-auto max-w-lg">
       <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-        <div className="mb-4 grid h-16 w-16 place-items-center rounded-2xl bg-[var(--gold)]/10">
-          <Sparkles className="h-8 w-8 text-[var(--gold)]" />
+        <div className="mb-4 grid h-16 w-16 place-items-center rounded-2xl bg-muted">
+          <Icon className="h-8 w-8 text-muted-foreground" />
         </div>
-        <h2 className="text-xl font-bold text-[var(--navy)] dark:text-white">{label}</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          This module is under development. Check back soon for updates.
-        </p>
-        <Badge variant="outline" className="mt-4 border-[var(--gold)]/40 text-[var(--gold)]">Coming Soon</Badge>
+        <h2 className="text-lg font-semibold text-[var(--navy)] dark:text-white">{title}</h2>
+        <p className="mt-2 max-w-sm text-sm text-muted-foreground leading-relaxed">{message}</p>
       </CardContent>
     </Card>
+  )
+}
+
+// ── Company Profile View ─────────────────────────────────────────────────
+
+function CompanyProfileView({ data, loading }: { data: DashboardData | null; loading: boolean }) {
+  const client = data?.client
+  return (
+    <div className="space-y-6">
+      <div className="rounded-xl bg-gradient-to-r from-[var(--navy)] to-[var(--navy)]/90 p-6 text-white shadow-lg">
+        <h2 className="text-xl font-bold">Company Profile</h2>
+        <p className="mt-1 text-sm text-blue-100/80">Your organisation details as registered with HP Enterprise.</p>
+      </div>
+      {loading ? (
+        <div className="space-y-4">
+          {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
+        </div>
+      ) : (
+        <Card>
+          <CardHeader><CardTitle className="text-base">Organisation Information</CardTitle></CardHeader>
+          <CardContent className="grid gap-4 sm:grid-cols-2">
+            <InfoRow label="Contact Name" value={client?.clientName} />
+            <InfoRow label="Company Name" value={client?.companyName} />
+            <InfoRow label="Email Address" value={client?.email} />
+            <InfoRow label="Phone Number" value={client?.phone} />
+            <InfoRow label="Address" value={client?.address} className="sm:col-span-2" />
+            <InfoRow label="GST Number" value={client?.gst} />
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  )
+}
+
+function InfoRow({ label, value, className }: { label: string; value: string | null | undefined; className?: string }) {
+  return (
+    <div className={cn('rounded-lg border p-3', className)}>
+      <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</p>
+      <p className="mt-1 text-sm font-medium text-[var(--navy)] dark:text-white">{value || '—'}</p>
+    </div>
+  )
+}
+
+// ── Notifications View ───────────────────────────────────────────────────
+
+function NotificationsView({ notifications, onMarkRead, onMarkAllRead, unread }: {
+  notifications: NotificationLite[]
+  onMarkRead: (id: string) => void
+  onMarkAllRead: () => void
+  unread: number
+}) {
+  return (
+    <div className="space-y-5">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-semibold text-[var(--navy)] dark:text-white">All Notifications</h2>
+          <p className="text-sm text-muted-foreground">{unread > 0 ? `You have ${unread} unread notification${unread !== 1 ? 's' : ''}` : 'You’re all caught up.'}</p>
+        </div>
+        {unread > 0 && (
+          <Button variant="outline" size="sm" onClick={onMarkAllRead}>Mark All Read</Button>
+        )}
+      </div>
+      <Card>
+        <CardContent className="p-0">
+          {notifications.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-center text-muted-foreground">
+              <Bell className="mb-2 h-10 w-10 opacity-30" />
+              <p className="text-sm font-medium">No notifications yet</p>
+              <p className="mt-0.5 text-xs">New notifications will appear here</p>
+            </div>
+          ) : (
+            <div className="max-h-[600px] divide-y overflow-y-auto scroll-thin">
+              {notifications.map((n) => (
+                <button
+                  key={n.id}
+                  onClick={() => { if (!n.read) onMarkRead(n.id) }}
+                  className={cn(
+                    'flex w-full items-start gap-3 px-5 py-4 text-left transition-colors hover:bg-muted/50',
+                    !n.read && 'bg-[var(--gold)]/5'
+                  )}
+                >
+                  {!n.read && <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-[var(--gold)]" />}
+                  {n.read && <span className="w-2 shrink-0" />}
+                  <div className="min-w-0 flex-1">
+                    <p className={cn('text-sm leading-snug', n.read ? 'text-muted-foreground' : 'font-semibold text-[var(--navy)] dark:text-white')}>{n.title}</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground line-clamp-2">{n.message}</p>
+                    <p className="mt-1 text-[10px] text-muted-foreground">{format(new Date(n.createdAt), 'dd MMM yyyy, h:mm a')}</p>
+                  </div>
+                  <Badge variant="outline" className={cn('shrink-0 text-[10px]', statusColor(n.type))}>{n.type.replace(/_/g, ' ')}</Badge>
+                </button>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
+// ── Settings View ─────────────────────────────────────────────────────────
+
+function SettingsView({ data, loading }: { data: DashboardData | null; loading: boolean }) {
+  const client = data?.client
+  const [form, setForm] = useState({ clientName: '', companyName: '', email: '', phone: '', address: '', gst: '' })
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+
+  useEffect(() => {
+    if (client) {
+      setForm({
+        clientName: client.clientName || '',
+        companyName: client.companyName || '',
+        email: client.email || '',
+        phone: client.phone || '',
+        address: client.address || '',
+        gst: client.gst || '',
+      })
+    }
+  }, [client])
+
+  const handleSave = async () => {
+    setSaving(true)
+    setSaved(false)
+    try {
+      const res = await fetch('/api/client/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      })
+      if (!res.ok) throw new Error()
+      toast.success('Profile updated successfully')
+      setSaved(true)
+      setTimeout(() => setSaved(false), 3000)
+    } catch {
+      toast.error('Failed to update profile')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="rounded-xl bg-gradient-to-r from-[var(--navy)] to-[var(--navy)]/90 p-6 text-white shadow-lg">
+        <h2 className="text-xl font-bold">Account Settings</h2>
+        <p className="mt-1 text-sm text-blue-100/80">Update your contact information and organisation details.</p>
+      </div>
+      {loading ? (
+        <Card><CardContent className="space-y-4 p-6">{Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}</CardContent></Card>
+      ) : (
+        <Card>
+          <CardHeader><CardTitle className="text-base">Profile Information</CardTitle></CardHeader>
+          <CardContent className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="clientName">Contact Name</Label>
+              <Input id="clientName" value={form.clientName} onChange={(e) => setForm((f) => ({ ...f, clientName: e.target.value }))} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="companyName">Company Name</Label>
+              <Input id="companyName" value={form.companyName} onChange={(e) => setForm((f) => ({ ...f, companyName: e.target.value }))} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="settingsEmail">Email Address</Label>
+              <Input id="settingsEmail" type="email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="settingsPhone">Phone Number</Label>
+              <Input id="settingsPhone" type="tel" value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} />
+            </div>
+            <div className="space-y-1.5 sm:col-span-2">
+              <Label htmlFor="settingsAddress">Address</Label>
+              <Input id="settingsAddress" value={form.address} onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="settingsGst">GST Number</Label>
+              <Input id="settingsGst" value={form.gst} onChange={(e) => setForm((f) => ({ ...f, gst: e.target.value }))} />
+            </div>
+            <div className="flex items-end">
+              <Button onClick={handleSave} disabled={saving} className="gap-2">
+                {saving ? 'Saving…' : 'Save Changes'}
+              </Button>
+              {saved && <span className="ml-3 text-sm text-emerald-600 font-medium">Saved</span>}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  )
+}
+
+// ── AI Assistant View ────────────────────────────────────────────────────
+
+function AiAssistantView() {
+  const setHpaiOpen = useAppStore((s) => s.setHpaiOpen)
+  return (
+    <div className="space-y-6">
+      <div className="rounded-xl bg-gradient-to-r from-[var(--navy)] to-[var(--navy)]/90 p-6 text-white shadow-lg">
+        <div className="flex items-center gap-3">
+          <div className="grid h-10 w-10 place-items-center rounded-lg bg-[var(--gold)]/20">
+            <Sparkles className="h-5 w-5 text-[var(--gold)]" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold">HPAI Assistant</h2>
+            <p className="mt-0.5 text-sm text-blue-100/80">Your intelligent HR & workforce management companion.</p>
+          </div>
+        </div>
+      </div>
+      <Card className="mx-auto max-w-2xl">
+        <CardContent className="flex flex-col items-center py-12 text-center">
+          <div className="mb-4 grid h-20 w-20 place-items-center rounded-2xl bg-gradient-to-br from-[var(--navy)] to-[var(--navy)]/80">
+            <Sparkles className="h-10 w-10 text-[var(--gold)]" />
+          </div>
+          <h3 className="text-lg font-bold text-[var(--navy)] dark:text-white">HPAI is Ready</h3>
+          <p className="mt-2 max-w-md text-sm text-muted-foreground leading-relaxed">
+            Ask questions about your projects, work orders, invoices, or any HR-related queries. HPAI provides instant, intelligent answers based on your account data.
+          </p>
+          <Button onClick={() => setHpaiOpen(true)} className="mt-6 gap-2">
+            <Send className="h-4 w-4" /> Open Chat
+          </Button>
+          <p className="mt-3 text-xs text-muted-foreground">You can also click the HPAI button in the bottom-right corner at any time.</p>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
+// ── Support View ──────────────────────────────────────────────────────────
+
+interface SupportTicket {
+  id: string
+  title: string
+  message: string
+  status: string
+  createdAt: string
+}
+
+function SupportView() {
+  const [tickets, setTickets] = useState<SupportTicket[]>([])
+  const [loading, setLoading] = useState(true)
+  const [subject, setSubject] = useState('')
+  const [description, setDescription] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+
+  const fetchTickets = async () => {
+    try {
+      const res = await fetch('/api/client/support')
+      if (res.ok) {
+        const json = await res.json()
+        setTickets(json.tickets || [])
+      }
+    } catch {}
+    setLoading(false)
+  }
+
+  useEffect(() => { fetchTickets() }, [])
+
+  const handleSubmit = async () => {
+    if (!subject.trim() || !description.trim()) return
+    setSubmitting(true)
+    try {
+      const res = await fetch('/api/client/support', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subject: subject.trim(), description: description.trim() }),
+      })
+      if (!res.ok) throw new Error()
+      toast.success('Support ticket submitted successfully')
+      setSubject('')
+      setDescription('')
+      fetchTickets()
+    } catch {
+      toast.error('Failed to submit ticket')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="rounded-xl bg-gradient-to-r from-[var(--navy)] to-[var(--navy)]/90 p-6 text-white shadow-lg">
+        <h2 className="text-xl font-bold">Support Centre</h2>
+        <p className="mt-1 text-sm text-blue-100/80">Submit and track support requests for your account.</p>
+      </div>
+
+      {/* Create Ticket Form */}
+      <Card>
+        <CardHeader><CardTitle className="text-base">Submit a Request</CardTitle></CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="supportSubject">Subject</Label>
+            <Input id="supportSubject" placeholder="Brief description of your issue" value={subject} onChange={(e) => setSubject(e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="supportDesc">Description</Label>
+            <Textarea id="supportDesc" placeholder="Provide details about your request or issue" rows={4} value={description} onChange={(e) => setDescription(e.target.value)} />
+          </div>
+          <Button onClick={handleSubmit} disabled={submitting || !subject.trim() || !description.trim()} className="gap-2">
+            <Send className="h-4 w-4" /> {submitting ? 'Submitting…' : 'Submit Ticket'}
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* Ticket List */}
+      <Card>
+        <CardHeader><CardTitle className="text-base">Your Tickets</CardTitle></CardHeader>
+        <CardContent className="p-0">
+          {loading ? (
+            <div className="space-y-3 p-6">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-14 w-full" />)}</div>
+          ) : tickets.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground">
+              <Headphones className="mb-2 h-8 w-8 opacity-30" />
+              <p className="text-sm font-medium">No support tickets yet</p>
+              <p className="mt-0.5 text-xs">Submit a ticket above to get started</p>
+            </div>
+          ) : (
+            <div className="max-h-96 divide-y overflow-y-auto scroll-thin">
+              {tickets.map((tk) => (
+                <div key={tk.id} className="flex items-start gap-3 px-5 py-3.5">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-[var(--navy)] dark:text-white">{tk.title}</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground line-clamp-1">{tk.message}</p>
+                    <p className="mt-1 text-[10px] text-muted-foreground">{format(new Date(tk.createdAt), 'dd MMM yyyy, h:mm a')}</p>
+                  </div>
+                  <Badge variant="outline" className={cn('shrink-0 text-[10px]', statusColor(tk.status))}>{tk.status}</Badge>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
+// ── Documents View ───────────────────────────────────────────────────────
+
+function DocumentsView() {
+  const [documents, setDocuments] = useState<{ id: string; name: string; type: string; ref: string; date: string }[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetch('/api/client/documents')
+      .then((r) => r.ok ? r.json() : null)
+      .then((json) => { if (json) setDocuments(json.documents || []) })
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [])
+
+  return (
+    <div className="space-y-6">
+      <div className="rounded-xl bg-gradient-to-r from-[var(--navy)] to-[var(--navy)]/90 p-6 text-white shadow-lg">
+        <h2 className="text-xl font-bold">Documents</h2>
+        <p className="mt-1 text-sm text-blue-100/80">Browse invoices, work orders, and announcements related to your account.</p>
+      </div>
+      <DataTable
+        title="All Documents"
+        data={documents}
+        loading={loading}
+        emptyMessage="No documents found"
+        emptyIcon={FolderOpen}
+        columns={[
+          { key: 'name', label: 'Document' },
+          { key: 'type', label: 'Type', className: 'w-28' },
+          { key: 'ref', label: 'Reference', className: 'w-28' },
+          { key: 'date', label: 'Date', className: 'w-32' },
+        ]}
+        renderRow={(doc) => (
+          <TableRow key={doc.id} className="hover:bg-muted/40">
+            <TableCell className="font-medium text-[var(--navy)] dark:text-white">{doc.name}</TableCell>
+            <TableCell><Badge variant="outline" className="text-[10px]">{doc.type}</Badge></TableCell>
+            <TableCell className="font-mono text-xs text-muted-foreground">{doc.ref || '—'}</TableCell>
+            <TableCell className="text-xs text-muted-foreground">{doc.date ? fmtDate(doc.date) : '—'}</TableCell>
+          </TableRow>
+        )}
+      />
+    </div>
   )
 }
 
@@ -820,9 +1196,6 @@ export function ClientLayout() {
                 )}
               />
               <span className="flex-1 truncate">{item.label}</span>
-              {item.comingSoon && !isActive && (
-                <span className="text-[9px] font-semibold uppercase tracking-wider text-[var(--gold-light)]/60">Soon</span>
-              )}
               {isActive && <ChevronRight className="h-4 w-4 text-[var(--navy)]" />}
             </button>
           )
@@ -1000,10 +1373,24 @@ export function ClientLayout() {
           <main className="flex-1 overflow-y-auto scroll-thin">
             <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
               {active === 'dashboard' && <DashboardView data={data} loading={loading} />}
+              {active === 'company-profile' && <CompanyProfileView data={data} loading={loading} />}
+              {active === 'employees' && <EmptyStateView icon={Users} title="Workforce" message="Your deployed workforce will appear here. Contact your account manager to set up workforce visibility." />}
+              {active === 'departments' && <EmptyStateView icon={LayoutGrid} title="Departments" message="Department structure is managed by your administrator." />}
+              {active === 'attendance' && <EmptyStateView icon={Clock} title="Attendance" message="Attendance records for your deployed workforce will appear here." />}
+              {active === 'leave' && <EmptyStateView icon={CalendarOff} title="Leave Management" message="Leave management for your deployed workforce is managed by HR." />}
+              {active === 'payroll' && <EmptyStateView icon={Banknote} title="Payroll" message="Payroll and billing information will be displayed here." />}
               {active === 'projects' && <ProjectsView data={data} loading={loading} />}
-              {active === 'work-orders' && <WorkOrdersView data={data} loading={loading} />}
+              {active === 'documents' && <DocumentsView />}
               {active === 'invoices' && <InvoicesView data={data} loading={loading} />}
-              {currentNav?.comingSoon && <ComingSoonView label={currentNav.label} />}
+              {active === 'subscription' && <EmptyStateView icon={CreditCard} title="Subscription" message="Subscription and plan details are managed by your administrator." />}
+              {active === 'billing' && <EmptyStateView icon={Receipt} title="Billing" message="Billing history and payment records will appear here." />}
+              {active === 'reports' && <EmptyStateView icon={BarChart3} title="Reports" message="Reports and analytics are being configured for your account." />}
+              {active === 'downloads' && <EmptyStateView icon={Download} title="Downloads" message="Documents available for download will appear here." />}
+              {active === 'ai-assistant' && <AiAssistantView />}
+              {active === 'notifications' && <NotificationsView notifications={notifications} onMarkRead={markOneRead} onMarkAllRead={markAllRead} unread={unread} />}
+              {active === 'support' && <SupportView />}
+              {active === 'settings' && <SettingsView data={data} loading={loading} />}
+              {active === 'work-orders' && <WorkOrdersView data={data} loading={loading} />}
             </div>
           </main>
         </div>

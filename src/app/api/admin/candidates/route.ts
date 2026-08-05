@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic'
 // GET — list candidates with jobPosting relation, filter by status/source/search
 export async function GET(req: NextRequest) {
   try {
-    const { error } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER')
+    const { error, cu } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER')
     if (error) return error
 
     const { searchParams } = new URL(req.url)
@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
     const source = searchParams.get('source') || undefined
     const search = searchParams.get('search') || undefined
 
-    const where: Record<string, unknown> = {}
+    const where: Record<string, unknown> = { accountId: cu.user.accountId }
     if (status) where.status = status
     if (source) where.source = source
     if (search) {
@@ -42,12 +42,13 @@ export async function GET(req: NextRequest) {
 
 // POST — create candidate, optionally linked to a job posting
 export async function POST(req: NextRequest) {
-  const { error } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER')
+  const { error, cu } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER')
   if (error) return error
   try {
     const body = await req.json()
     const candidate = await db.candidate.create({
       data: {
+        accountId: cu.user.accountId,
         fullName: body.fullName,
         email: body.email,
         phone: body.phone || null,
@@ -73,7 +74,7 @@ export async function POST(req: NextRequest) {
 
 // PATCH — update candidate (status, remarks, or other fields)
 export async function PATCH(req: NextRequest) {
-  const { error } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER')
+  const { error, cu } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER')
   if (error) return error
   try {
     const { id, ...data } = await req.json()
@@ -83,7 +84,7 @@ export async function PATCH(req: NextRequest) {
     if (data.currentCtc !== undefined) update.currentCtc = data.currentCtc ? Number(data.currentCtc) : null
     if (data.expectedCtc !== undefined) update.expectedCtc = data.expectedCtc ? Number(data.expectedCtc) : null
 
-    const candidate = await db.candidate.update({ where: { id }, data: update })
+    const candidate = await db.candidate.update({ where: { id, accountId: cu.user.accountId }, data: update })
     return NextResponse.json({ ok: true, candidate })
   } catch (e) {
     console.error('[candidates] PATCH failed:', e)
@@ -93,11 +94,11 @@ export async function PATCH(req: NextRequest) {
 
 // DELETE — delete candidate
 export async function DELETE(req: NextRequest) {
-  const { error } = await requireRole('OWNER', 'SUPER_ADMIN')
+  const { error, cu } = await requireRole('OWNER', 'SUPER_ADMIN')
   if (error) return error
   try {
     const { id } = await req.json()
-    await db.candidate.delete({ where: { id } })
+    await db.candidate.delete({ where: { id, accountId: cu.user.accountId } })
     return NextResponse.json({ ok: true })
   } catch (e) {
     console.error('[candidates] DELETE failed:', e)

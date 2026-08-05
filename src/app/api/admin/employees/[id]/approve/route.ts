@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { hashPassword, audit } from '@/lib/auth'
+import { hashPassword, generateSecureTempPassword, audit } from '@/lib/auth'
 import { requireRole } from '@/lib/guards'
 import { generateDocument } from '@/lib/docservice'
 import { formatEmployeeCode } from '@/lib/constants'
@@ -15,13 +15,6 @@ function genUsername(name: string, code: string): string {
   return `${first}${last ? '.' + last : ''}`.replace(/[^a-z.]/g, '').slice(0, 24) || `emp.${code.toLowerCase()}`
 }
 
-function genTempPassword(): string {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789@#$'
-  let p = ''
-  for (let i = 0; i < 12; i++) p += chars[Math.floor(Math.random() * chars.length)]
-  return p
-}
-
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { error, cu } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER')
   if (error) return error
@@ -32,10 +25,6 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     if (!emp) return NextResponse.json({ error: 'Employee not found' }, { status: 404 })
     if (emp.status === 'APPROVED') return NextResponse.json({ error: 'Already approved' }, { status: 400 })
 
-    // Generate employee code (HPE-XXXX) based on count of approved employees
-    const approvedCount = await db.employee.count({ where: { status: 'APPROVED' } })
-    const employeeCode = formatEmployeeCode(approvedCount + 1)
-
     // Designation/department/join defaults
     const designation = body.designation || emp.currentDesignation || 'Project Engineer'
     const department = body.department || 'Projects'
@@ -45,75 +34,79 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const allowances = Math.round(salary * 0.1)
     const specialAllowance = salary - basic - hra - allowances
 
-    const username = genUsername(emp.fullName, employeeCode)
-    const tempPassword = genTempPassword()
+    const username = genUsername(emp.fullName, '')
+    const tempPassword = generateSecureTempPassword()
     const passwordHash = await hashPassword(tempPassword)
-
-    // Create login user
-    const user = await db.user.create({
-      data: {
-        username,
-        email: emp.email,
-        passwordHash,
-        role: 'EMPLOYEE',
-        mustResetPassword: true,
-      },
-    })
-
     const joinDate = body.joinDate ? new Date(body.joinDate) : new Date()
 
-    const updated = await db.employee.update({
-      where: { id },
-      data: {
-        status: 'APPROVED',
-        employeeCode,
-        designation,
-        department,
-        salary,
-        basic,
-        hra,
-        allowances,
-        specialAllowance,
-        joinDate,
-        employmentType: body.employmentType || 'Full-time',
-        userId: user.id,
-        reviewedBy: cu!.user.id,
-        reviewedAt: new Date(),
-      },
+    // Atomic: use $transaction to prevent race conditions on employee code
+    const result = await db.$transaction(async (tx) => {
+      // Generate employee code inside transaction (serializable isolation)
+      const approvedCount = await tx.employee.count({ where: { status: 'APPROVED' } })
+      const employeeCode = formatEmployeeCode(approvedCount + 1)
+
+      // Create login user
+      const user = await tx.user.create({
+        data: {
+          username,
+          email: emp.email,
+          passwordHash,
+          role: 'EMPLOYEE',
+          accountId: emp.accountId,
+          mustResetPassword: true,
+        },
+      })
+
+      // Update employee
+      const updated = await tx.employee.update({
+        where: { id },
+        data: {
+          status: 'APPROVED',
+          employeeCode,
+          designation,
+          department,
+          salary,
+          basic,
+          hra,
+          allowances,
+          specialAllowance,
+          joinDate,
+          employmentType: body.employmentType || 'Full-time',
+          userId: user.id,
+          reviewedBy: cu!.user.id,
+          reviewedAt: new Date(),
+        },
+      })
+
+      // Leave balance
+      await tx.leaveBalance.upsert({
+        where: { employeeId: id },
+        update: {},
+        create: { employeeId: id, casual: 12, sick: 12, earned: 15 },
+      })
+
+      return { user, employeeCode, updated }
     })
 
-    // Leave balance
-    await db.leaveBalance.upsert({
-      where: { employeeId: id },
-      update: {},
-      create: { employeeId: id, casual: 12, sick: 12, earned: 15 },
-    })
+    // Generate documents outside transaction (non-critical, PDF rendering)
+    try { await generateDocument(id, 'offer_letter', cu!.user.id) } catch (e) { console.error('offer letter gen failed', e) }
+    try { await generateDocument(id, 'appointment_letter', cu!.user.id) } catch (e) { console.error('appointment letter gen failed', e) }
+    try { await generateDocument(id, 'id_card', cu!.user.id) } catch (e) { console.error('id card gen failed', e) }
 
-    // Generate offer letter, appointment letter, ID card automatically
-    try {
-      await generateDocument(id, 'offer_letter', cu!.user.id)
-    } catch (e) { console.error('offer letter gen failed', e) }
-    try {
-      await generateDocument(id, 'appointment_letter', cu!.user.id)
-    } catch (e) { console.error('appointment letter gen failed', e) }
-    try {
-      await generateDocument(id, 'id_card', cu!.user.id)
-    } catch (e) { console.error('id card gen failed', e) }
-
-    // Notify employee (via their new user account)
+    // Notify employee
     await notify(
-      user.id,
+      result.user.id,
       'Welcome to HP ENTERPRISE!',
       `Your application has been approved. Username: ${username}. Please login and reset your temporary password.`,
       'SUCCESS',
       '/employee',
     )
 
-    await audit(cu!.user.id, 'APPROVE_EMPLOYEE', 'Employee', id, `Approved ${emp.fullName} as ${employeeCode}`)
+    await audit(cu!.user.id, 'APPROVE_EMPLOYEE', 'Employee', id, `Approved ${emp.fullName} as ${result.employeeCode}`)
 
     return NextResponse.json({
       ok: true,
-      employee: updated,
+      employee: result.updated,
       message: 'Employee approved. Temporary credentials sent via notification.',
     })
   } catch (e) {

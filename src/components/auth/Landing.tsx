@@ -450,7 +450,7 @@ function SubscriptionForm({ onBack }: { onBack: () => void }) {
 /* ═══════════════════════════════════════════════════════
    PRICING SECTION COMPONENT
    ═══════════════════════════════════════════════════════ */
-function PricingSection({ onDemoClick }: { onDemoClick: () => void }) {
+function PricingSection({ onDemoClick, onLoginClick }: { onDemoClick: () => void; onLoginClick: () => void }) {
   const [plans, setPlans] = useState<PricingPlan[]>(FALLBACK_PLANS)
   const [loading, setLoading] = useState(true)
   const [annual, setAnnual] = useState(false)
@@ -532,10 +532,10 @@ function PricingSection({ onDemoClick }: { onDemoClick: () => void }) {
                     </li>
                   ))}
                 </ul>
-                <button onClick={() => onDemoClick()}
+                <button onClick={() => displayPrice != null ? onLoginClick() : onDemoClick()}
                   className={"w-full py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 " + (plan.isPopular ? 'text-white hover:opacity-90' : 'border-2 hover:shadow-md')}
                   style={plan.isPopular ? { background: C.gold, color: C.navyDeep } : { borderColor: C.navy, color: C.navy }}>
-                  {displayPrice != null ? 'Get Started' : 'Contact Sales'}
+                  {displayPrice != null ? 'Start Free Trial' : 'Contact Sales'}
                 </button>
               </div>
             </Reveal>
@@ -1221,7 +1221,7 @@ export function Landing() {
          ═══════════════════════════════════════════════════════ */}
       <section id="pricing" className="py-16 sm:py-20 lg:py-24 border-t" style={{ background: C.bg, borderColor: C.rule }}>
         <div className="max-w-[1200px] mx-auto px-5 sm:px-6">
-          <PricingSection onDemoClick={() => setDemoOpen(true)} />
+          <PricingSection onDemoClick={() => setDemoOpen(true)} onLoginClick={() => setLoginOpen(true)} />
         </div>
       </section>
 
@@ -1241,7 +1241,8 @@ export function Landing() {
           <div className="mt-12 sm:mt-14 grid grid-cols-1 lg:grid-cols-3 gap-6">
             {PORTALS_DATA.map(({ title, desc, items, icon: PortalIcon }, i) => (
               <Reveal key={i} delay={0.08 + i * 0.08}>
-                <div className="group relative p-6 sm:p-7 rounded-xl border transition-all duration-300 hover:shadow-xl hover:-translate-y-1 h-full"
+                <div onClick={() => setLoginOpen(true)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setLoginOpen(true) } }}
+                  className="group relative p-6 sm:p-7 rounded-xl border transition-all duration-300 hover:shadow-xl hover:-translate-y-1 h-full cursor-pointer"
                   style={{ background: C.paper, borderColor: C.rule }}>
                   <div className="flex items-center gap-3 mb-5">
                     <div className="flex h-11 w-11 items-center justify-center rounded-xl" style={{ background: i === 0 ? 'rgba(0,43,92,.08)' : i === 1 ? 'rgba(46,125,91,.08)' : 'rgba(212,175,55,.1)' }}>
@@ -1258,6 +1259,12 @@ export function Landing() {
                       </li>
                     ))}
                   </ul>
+                  <div className="mt-6 pt-4 border-t" style={{ borderColor: C.ruleSoft }}>
+                    <span className="inline-flex items-center gap-1.5 text-sm font-semibold transition-colors"
+                      style={{ color: i === 0 ? C.navy : i === 1 ? C.verify : C.amber }}>
+                      Sign In <ArrowRight className="h-3.5 w-3.5" />
+                    </span>
+                  </div>
                 </div>
               </Reveal>
             ))}

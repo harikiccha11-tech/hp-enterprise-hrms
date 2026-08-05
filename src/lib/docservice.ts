@@ -12,6 +12,10 @@ export async function generateDocument(employeeId: string, docType: string, gene
   const emp = await db.employee.findUnique({ where: { id: employeeId } })
   if (!emp) throw new Error('Employee not found')
 
+  // accountId is required for tenant isolation
+  const accountId = emp.accountId
+  if (!accountId) throw new Error('Employee has no account association')
+
   const meta = {
     employeeCode: emp.employeeCode,
     fullName: emp.fullName,
@@ -147,12 +151,12 @@ export async function generateDocument(employeeId: string, docType: string, gene
 
   const doc = await db.generatedDocument.create({
     data: {
+      accountId,
       employeeId,
-      docType,
+      documentType: docType,
       title,
-      filePath: `employees/${employeeId}/${fileName}`,
-      generatedBy,
-      metaJson: extra ? JSON.stringify(extra) : null,
+      storagePath: `employees/${employeeId}/${fileName}`,
+      generatedByUserId: generatedBy,
     },
   })
   return doc

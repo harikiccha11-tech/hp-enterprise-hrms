@@ -11,8 +11,12 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     const { id } = await params
     const emp = await db.employee.findUnique({ where: { id }, include: { user: true } })
     if (!emp) return NextResponse.json({ error: 'Not found' }, { status: 404 })
-    if (emp.user) await db.user.delete({ where: { id: emp.user.id } })
-    await db.employee.delete({ where: { id } })
+
+    await db.$transaction(async (tx) => {
+      if (emp.user) await tx.user.delete({ where: { id: emp.user.id } })
+      await tx.employee.delete({ where: { id } })
+    })
+
     await audit(cu!.user.id, 'DELETE_EMPLOYEE', 'Employee', id, `Deleted ${emp.fullName}`)
     return NextResponse.json({ ok: true })
   } catch (e) {

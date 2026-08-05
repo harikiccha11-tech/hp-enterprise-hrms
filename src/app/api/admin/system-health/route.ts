@@ -33,17 +33,11 @@ export async function GET() {
       db.user.count({ where: { accountId } }),
       db.employee.count({ where: { accountId } }),
       db.notification.count({ where: { accountId } }),
-      // NOTE: Candidate model has no accountId field — cannot scope to tenant.
-      // Kept unscoped until schema is updated with tenant isolation.
-      db.candidate.count(),
+      db.candidate.count({ where: { accountId } }),
       db.project.count({ where: { accountId } }),
       db.client.count({ where: { accountId } }),
-      // NOTE: Vendor model has no accountId field — cannot scope to tenant.
-      // Kept unscoped until schema is updated with tenant isolation.
-      db.vendor.count(),
-      // NOTE: Asset model has no accountId field — cannot scope to tenant.
-      // Kept unscoped until schema is updated with tenant isolation.
-      db.asset.count(),
+      db.vendor.count({ where: { accountId } }),
+      db.asset.count({ where: { accountId } }),
     ])
 
     const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
@@ -51,8 +45,7 @@ export async function GET() {
     const [employeesThisWeek, employeesUpdatedWeek, candidatesThisWeek, projectsThisWeek] = await Promise.all([
       db.employee.count({ where: { createdAt: { gte: oneWeekAgo }, accountId } }),
       db.employee.count({ where: { updatedAt: { gte: oneWeekAgo }, accountId } }),
-      // NOTE: Candidate model has no accountId — unscoped.
-      db.candidate.count({ where: { appliedAt: { gte: oneWeekAgo } } }),
+      db.candidate.count({ where: { appliedAt: { gte: oneWeekAgo }, accountId } }),
       db.project.count({ where: { createdAt: { gte: oneWeekAgo }, accountId } }),
     ])
 

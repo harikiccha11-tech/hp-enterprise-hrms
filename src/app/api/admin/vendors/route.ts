@@ -6,14 +6,14 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 export async function GET(req: NextRequest) {
-  const { error } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER')
+  const { error, cu } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER')
   if (error) return error
   try {
     const sp = req.nextUrl.searchParams
     const search = sp.get('search') || ''
     const status = sp.get('status') || ''
     const category = sp.get('category') || ''
-    const where: any = {}
+    const where: any = { accountId: cu.user.accountId }
     if (search) {
       where.OR = [
         { vendorName: { contains: search } },
@@ -40,6 +40,7 @@ export async function POST(req: NextRequest) {
     if (!vendorName?.trim()) return NextResponse.json({ error: 'Vendor name is required' }, { status: 400 })
     const vendor = await db.vendor.create({
       data: {
+        accountId: cu.user.accountId,
         vendorName: vendorName.trim(),
         companyName: companyName || null,
         gst: gst || null,
@@ -82,7 +83,7 @@ export async function PATCH(req: NextRequest) {
     if (bankIfsc !== undefined) data.bankIfsc = bankIfsc || null
     if (rating !== undefined) data.rating = rating ? Number(rating) : null
     if (status !== undefined) data.status = status
-    const vendor = await db.vendor.update({ where: { id }, data })
+    const vendor = await db.vendor.update({ where: { id, accountId: cu.user.accountId }, data })
     await audit(cu!.user.id, 'UPDATE_VENDOR', 'Vendor', id)
     return NextResponse.json({ ok: true, vendor })
   } catch (e) {
@@ -96,7 +97,7 @@ export async function DELETE(req: NextRequest) {
   try {
     const { id } = await req.json()
     if (!id) return NextResponse.json({ error: 'ID is required' }, { status: 400 })
-    await db.vendor.delete({ where: { id } })
+    await db.vendor.delete({ where: { id, accountId: cu.user.accountId } })
     await audit(cu!.user.id, 'DELETE_VENDOR', 'Vendor', id)
     return NextResponse.json({ ok: true })
   } catch (e) {

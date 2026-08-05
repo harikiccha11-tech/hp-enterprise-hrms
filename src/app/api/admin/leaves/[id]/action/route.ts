@@ -14,29 +14,32 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const leave = await db.leave.findUnique({ where: { id }, include: { employee: { include: { user: true } } } })
     if (!leave) return NextResponse.json({ error: 'Not found' }, { status: 404 })
     const status = action === 'approve' ? 'APPROVED' : 'REJECTED'
-    const updated = await db.leave.update({
-      where: { id },
-      data: { status, reviewedBy: cu!.user.id, reviewedAt: new Date(), comments: comments || null },
-    })
-    await db.leaveAction.create({ data: { leaveId: id, userId: cu!.user.id, action: status, comments: comments || null } })
 
-    // Update leave balances if approved
-    if (status === 'APPROVED') {
-      const balance = await db.leaveBalance.findUnique({ where: { employeeId: leave.employeeId } })
-      if (balance) {
-        const typeMap: Record<string, 'casual' | 'sick' | 'earned'> = { CL: 'casual', SL: 'sick', EL: 'earned', PL: 'earned' }
-        const field = typeMap[leave.leaveType]
-        if (field) {
-          const used = field === 'casual' ? balance.usedCasual : field === 'sick' ? balance.usedSick : balance.usedEarned
-          const newUsed = used + leave.days
-          const update: any = {}
-          if (field === 'casual') update.usedCasual = newUsed
-          if (field === 'sick') update.usedSick = newUsed
-          if (field === 'earned') update.usedEarned = newUsed
-          await db.leaveBalance.update({ where: { employeeId: leave.employeeId }, data: update })
+    // Atomic: leave status + leave action + balance update in one transaction
+    const updated = await db.$transaction(async (tx) => {
+      const l = await tx.leave.update({
+        where: { id },
+        data: { status, reviewedBy: cu!.user.id, reviewedAt: new Date(), comments: comments || null },
+      })
+      await tx.leaveAction.create({ data: { leaveId: id, userId: cu!.user.id, action: status, comments: comments || null } })
+
+      // Update leave balances if approved
+      if (status === 'APPROVED') {
+        const balance = await tx.leaveBalance.findUnique({ where: { employeeId: leave.employeeId } })
+        if (balance) {
+          const typeMap: Record<string, 'casual' | 'sick' | 'earned'> = { CL: 'casual', SL: 'sick', EL: 'earned', PL: 'earned' }
+          const field = typeMap[leave.leaveType]
+          if (field) {
+            const update: Record<string, number> = {}
+            if (field === 'casual') update.usedCasual = (balance.usedCasual ?? 0) + leave.days
+            if (field === 'sick') update.usedSick = (balance.usedSick ?? 0) + leave.days
+            if (field === 'earned') update.usedEarned = (balance.usedEarned ?? 0) + leave.days
+            await tx.leaveBalance.update({ where: { employeeId: leave.employeeId }, data: update })
+          }
         }
       }
-    }
+      return l
+    })
 
     if (leave.employee.user) {
       await notify(

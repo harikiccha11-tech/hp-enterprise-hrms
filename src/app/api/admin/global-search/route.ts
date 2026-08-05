@@ -52,10 +52,9 @@ export async function GET(req: NextRequest) {
         take: 10,
         select: { id: true, projectName: true, status: true, site: true },
       }),
-      // NOTE: Vendor model has no accountId field — cannot scope to tenant.
-      // Kept unscoped until schema is updated with tenant isolation.
       db.vendor.findMany({
         where: {
+          accountId,
           OR: [
             { vendorName: { contains: term } },
             { companyName: { contains: term } },
@@ -65,10 +64,9 @@ export async function GET(req: NextRequest) {
         take: 10,
         select: { id: true, vendorName: true, companyName: true, category: true, status: true },
       }),
-      // NOTE: Candidate model has no accountId field — cannot scope to tenant.
-      // Kept unscoped until schema is updated with tenant isolation.
       db.candidate.findMany({
         where: {
+          accountId,
           OR: [
             { fullName: { contains: term } },
             { email: { contains: term } },
@@ -78,10 +76,9 @@ export async function GET(req: NextRequest) {
         take: 10,
         select: { id: true, fullName: true, email: true, status: true, currentCompany: true },
       }),
-      // NOTE: Asset model has no accountId field — cannot scope to tenant.
-      // Kept unscoped until schema is updated with tenant isolation.
       db.asset.findMany({
         where: {
+          accountId,
           OR: [
             { name: { contains: term } },
             { serialNumber: { contains: term } },

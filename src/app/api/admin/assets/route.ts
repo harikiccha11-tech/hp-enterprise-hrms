@@ -6,14 +6,14 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 export async function GET(req: NextRequest) {
-  const { error } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER')
+  const { error, cu } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER')
   if (error) return error
   try {
     const sp = req.nextUrl.searchParams
     const status = sp.get('status') || ''
     const category = sp.get('category') || ''
     const search = sp.get('search') || ''
-    const where: any = {}
+    const where: any = { accountId: cu.user.accountId }
     if (status) where.status = status
     if (category) where.category = category
     if (search) {
@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
     if (action === 'assign') {
       const { assetId, employeeId, condition, notes } = body
       if (!assetId || !employeeId) return NextResponse.json({ error: 'Asset ID and Employee ID are required' }, { status: 400 })
-      const asset = await db.asset.findUnique({ where: { id: assetId } })
+      const asset = await db.asset.findUnique({ where: { id: assetId, accountId: cu.user.accountId } })
       if (!asset) return NextResponse.json({ error: 'Asset not found' }, { status: 404 })
       if (asset.status !== 'AVAILABLE') return NextResponse.json({ error: 'Asset is not available for assignment' }, { status: 400 })
       const assignment = await db.assetAssignment.create({
@@ -85,7 +85,7 @@ export async function POST(req: NextRequest) {
       const { assetId, condition, notes } = body
       if (!assetId) return NextResponse.json({ error: 'Asset ID is required' }, { status: 400 })
       const asset = await db.asset.findUnique({
-        where: { id: assetId },
+        where: { id: assetId, accountId: cu.user.accountId },
         include: { assignments: { where: { returnedAt: null }, orderBy: { assignedAt: 'desc' }, take: 1 } },
       })
       if (!asset) return NextResponse.json({ error: 'Asset not found' }, { status: 404 })
@@ -105,6 +105,7 @@ export async function POST(req: NextRequest) {
     if (!category?.trim()) return NextResponse.json({ error: 'Asset category is required' }, { status: 400 })
     const asset = await db.asset.create({
       data: {
+        accountId: cu.user.accountId,
         name: name.trim(),
         category: category.trim(),
         serialNumber: serialNumber || null,
@@ -145,7 +146,7 @@ export async function PATCH(req: NextRequest) {
     if (status !== undefined) data.status = status
     if (location !== undefined) data.location = location || null
     if (notes !== undefined) data.notes = notes || null
-    const asset = await db.asset.update({ where: { id }, data })
+    const asset = await db.asset.update({ where: { id, accountId: cu.user.accountId }, data })
     await audit(cu!.user.id, 'UPDATE_ASSET', 'Asset', id)
     return NextResponse.json({ ok: true, asset })
   } catch (e) {
@@ -159,7 +160,7 @@ export async function DELETE(req: NextRequest) {
   try {
     const { id } = await req.json()
     if (!id) return NextResponse.json({ error: 'ID is required' }, { status: 400 })
-    await db.asset.delete({ where: { id } })
+    await db.asset.delete({ where: { id, accountId: cu.user.accountId } })
     await audit(cu!.user.id, 'DELETE_ASSET', 'Asset', id)
     return NextResponse.json({ ok: true })
   } catch (e) {
