@@ -672,7 +672,7 @@ export function Landing() {
           <Reveal>
             <div className="flex items-center gap-2.5 mb-5 sm:mb-[22px]" style={{ ...fontMono, fontSize: '11.5px', fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: C.inkSoft }}>
               <span>Workforce Operating System · Karnataka · PAN India</span>
-              <span className="hidden sm:block flex-1 h-px max-w-[180px]" style={{ background: C.rule }} />
+              <span className="hidden sm:block flex-1 h-[1.5px] max-w-[180px]" style={{ background: C.rule }} />
             </div>
           </Reveal>
           <Reveal delay={0.05}>
@@ -682,7 +682,7 @@ export function Landing() {
             </h1>
           </Reveal>
           <Reveal delay={0.1}>
-            <p className="mt-5 sm:mt-6 max-w-[56ch] leading-[1.6]" style={{ fontSize: 'clamp(16.5px,2vw,19px)', color: C.inkSoft }}>
+            <p className="mt-5 sm:mt-6 max-w-[56ch] leading-[1.72]" style={{ fontSize: 'clamp(16.5px,2vw,19px)', color: C.inkSoft }}>
               HPHRMS Enterprise AI runs HRMS software, manpower outsourcing and client workforce management
               on one platform — with every company's data walled off from every other company's.
               Built for Indian statutory payroll, not adapted to it.

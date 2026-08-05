@@ -1,15 +1,14 @@
 'use client'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
 import { useState } from 'react'
 
-export function ForgotPasswordDialog() {
+export function ForgotPasswordDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
   const [username, setUsername] = useState('')
   const [loading, setLoading] = useState(false)
-  const [open, setOpen] = useState(false)
 
   async function submit() {
     if (!username.trim()) {
@@ -29,7 +28,7 @@ export function ForgotPasswordDialog() {
         return
       }
       toast.success(data.message, { duration: 10000 })
-      setOpen(false)
+      onOpenChange(false)
       setUsername('')
     } catch {
       toast.error('Network error. Please try again.')
@@ -39,10 +38,7 @@ export function ForgotPasswordDialog() {
   }
 
   return (
-    <Dialog data-auth="true" open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <button className="text-xs text-muted-foreground hover:text-[var(--navy)] dark:hover:text-[var(--gold)]">Forgot password?</button>
-      </DialogTrigger>
+    <Dialog data-auth="true" open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Reset your password</DialogTitle>

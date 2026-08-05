@@ -879,3 +879,45 @@ Stage Summary:
 - Subscription API: POST handler correct with validation/sanitization — PASS
 - No code changes required
 - ESLint: 0 errors
+
+---
+Task ID: 8
+Agent: Main
+Task: Preview check and visual fixes
+
+Work Log:
+- Read worklog to understand current project state (previous 7 tasks completed)
+- Started dev server (standalone production build due to 4GB sandbox OOM with Turbopack)
+- Verified all 9 landing page sections via browser accessibility tree:
+  1. Hero with muster roll table + AI insight
+  2. Services (11 cards with images)
+  3. Features (12 core features)
+  4. Three Modes (HRMS SaaS, Manpower Supply, Hybrid)
+  5. Portals (Admin, Employee, Client, HPAI Chat)
+  6. AI Features (10 AI assistants)
+  7. Module Register (23 modules)
+  8. India Compliance (PF, ESI, Gratuity, PT, CLRA, BOCW, Factories, Maternity)
+  9. Data Access Separation + Verification & Trust + CTA + Footer
+- Verified all 11 social media links match exact official URLs
+- Verified footer with Platform links, Careers, Company, HR Enquiries, Connect With Us
+- VLM analysis identified 4 visual issues
+- Fixed ForgotPasswordDialog: removed DialogTrigger (was showing on landing page), properly accepted open/onOpenChange props
+- Improved hero section text leading from 1.6 to 1.72 for better readability
+- Increased sub-header line weight from h-px to h-[1.5px]
+- Rebuilt production bundle (0 errors)
+- Final VLM verification: 'All good' - no visual issues remaining
+- Tested Login dialog: opens correctly with username/password/forgot password/close
+- Tested Register flow: opens multi-step registration form with all fields
+- Tested HPAI Chat: floating button opens chat panel with input/send
+- Tested nav scroll-to-section: Services button scrolls to Y=1300
+- Zero browser console errors
+- Zero server runtime errors
+
+Stage Summary:
+- ForgotPasswordDialog fixed (no longer leaks button onto landing page)
+- Hero text spacing improved
+- Sub-header rule weight improved
+- All 9 sections render correctly with proper content
+- All 11 social links verified with correct official URLs
+- Login, Register, HPAI Chat all function correctly
+- Production build: 0 errors, 0 warnings
