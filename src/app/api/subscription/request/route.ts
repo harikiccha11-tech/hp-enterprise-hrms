@@ -6,14 +6,45 @@ export const runtime = 'nodejs'
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { companyName, contactName, email, phone, address, plan, employeeCount, message } = body
+    const { type, companyName, contactName, email, phone, address, plan, employeeCount, message } = body
 
-    if (!companyName || !contactName || !email || !plan) {
-      return NextResponse.json({ error: 'Company name, contact name, email and plan are required' }, { status: 400 })
+    const requestType = type || 'subscription'
+
+    // Newsletter type — only contactName and email are required
+    if (requestType === 'newsletter') {
+      if (!contactName || !email) {
+        return NextResponse.json({ error: 'Name and email are required' }, { status: 400 })
+      }
+
+      const record = await db.subscriptionRequest.create({
+        data: {
+          companyName: companyName ? String(companyName).trim() : String(contactName).trim(),
+          contactName: String(contactName).trim(),
+          email: String(email).trim().toLowerCase(),
+          plan: 'newsletter',
+          message: 'Newsletter subscription',
+        },
+      })
+
+      return NextResponse.json({
+        ok: true,
+        id: record.id,
+        message: 'You are subscribed! Welcome to HPHRMS AI updates.',
+      })
     }
 
-    const validPlans = ['free', 'starter', 'professional', 'enterprise']
-    if (!validPlans.includes(plan)) {
+    // Demo / subscription type
+    if (!companyName || !contactName || !email) {
+      return NextResponse.json({ error: 'Company name, contact name, and email are required' }, { status: 400 })
+    }
+
+    const validPlans = [
+      'free', 'starter', 'standard', 'professional', 'business',
+      'enterprise', 'enterprise plus', 'enterprise-plus', 'custom', 'newsletter',
+    ]
+
+    const normalizedPlan = plan ? String(plan).trim().toLowerCase() : 'professional'
+    if (!validPlans.includes(normalizedPlan)) {
       return NextResponse.json({ error: 'Invalid plan selected' }, { status: 400 })
     }
 
@@ -24,16 +55,20 @@ export async function POST(req: NextRequest) {
         email: String(email).trim().toLowerCase(),
         phone: phone ? String(phone).trim() : null,
         address: address ? String(address).trim() : null,
-        plan,
+        plan: normalizedPlan,
         employeeCount: employeeCount ? String(employeeCount).trim() : null,
         message: message ? String(message).trim() : null,
       },
     })
 
+    const responseMessage = requestType === 'demo'
+      ? 'Demo request submitted! Our team will contact you within 24 hours.'
+      : 'Thank you! Your subscription request has been submitted. Our team will contact you within 24 hours.'
+
     return NextResponse.json({
       ok: true,
       id: record.id,
-      message: 'Thank you! Your subscription request has been submitted. Our team will contact you within 24 hours.',
+      message: responseMessage,
     })
   } catch (e) {
     console.error('Subscription request error:', e)

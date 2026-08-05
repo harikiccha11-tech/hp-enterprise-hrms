@@ -31,6 +31,10 @@ import {
   ShieldAlert,
   ChevronRight,
   CheckCheck,
+  Bot,
+  LifeBuoy,
+  Settings,
+  Sparkles,
 } from 'lucide-react'
 import { t, type LangCode } from '@/lib/i18n'
 import { fmtDateTime, fmtRelative, initials } from './lib'
@@ -65,6 +69,8 @@ const DynModules: Record<string, React.ComponentType<any>> = {
 import { HpAiChat } from '@/components/shared/HpAiChat'
 import { LanguageSwitcher } from '@/components/shared/LanguageSwitcher'
 import { ThemeToggle } from '@/components/shared/ThemeToggle'
+import { FollowUs } from '@/components/shared/FollowUs'
+import { SocialLinks } from '@/components/shared/SocialLinks'
 
 export type ModuleKey =
   | 'dashboard'
@@ -75,12 +81,16 @@ export type ModuleKey =
   | 'salary'
   | 'notifications'
   | 'password'
+  | 'aiAssistant'
+  | 'helpDesk'
+  | 'settings'
 
 interface NavItem {
   key: ModuleKey
   label: string
   icon: typeof LayoutDashboard
   desc: string
+  comingSoon?: boolean
 }
 
 function getNav(lang: LangCode): NavItem[] {
@@ -92,6 +102,9 @@ function getNav(lang: LangCode): NavItem[] {
     { key: 'documents', label: t('nav.documents', lang), icon: FileText, desc: t('emp.desc.documents', lang) },
     { key: 'salary', label: t('emp.salarySlips', lang), icon: Wallet, desc: t('emp.desc.salary', lang) },
     { key: 'notifications', label: t('nav.notifications', lang), icon: Bell, desc: t('emp.desc.notifications', lang) },
+    { key: 'aiAssistant', label: t('emp.aiAssistant', lang), icon: Bot, desc: t('emp.desc.aiAssistant', lang), comingSoon: true },
+    { key: 'helpDesk', label: t('emp.helpDesk', lang), icon: LifeBuoy, desc: t('emp.desc.helpDesk', lang), comingSoon: true },
+    { key: 'settings', label: t('emp.settings', lang), icon: Settings, desc: t('emp.desc.settings', lang), comingSoon: true },
     { key: 'password', label: t('emp.changePassword', lang), icon: KeyRound, desc: t('emp.desc.password', lang) },
   ]
 }
@@ -104,6 +117,35 @@ interface NotificationLite {
   read: boolean
   createdAt: string
   link?: string | null
+}
+
+/* ── Coming Soon Placeholder ── */
+function ComingSoonPlaceholder({
+  icon: Icon,
+  label,
+  desc,
+  lang,
+}: {
+  icon: typeof LayoutDashboard
+  label: string
+  desc: string
+  lang: LangCode
+}) {
+  return (
+    <div className="flex flex-col items-center justify-center py-20 text-center" role="status">
+      <div className="rounded-2xl border-2 border-dashed border-muted-foreground/25 bg-muted/40 px-8 py-10 max-w-sm">
+        <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-[var(--gold)]/10">
+          <Icon className="h-8 w-8 text-[var(--gold)]" />
+        </div>
+        <h2 className="mt-5 text-xl font-bold text-[var(--navy)] dark:text-white">{label}</h2>
+        <p className="mt-1.5 text-sm text-muted-foreground">{desc}</p>
+        <span className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-[var(--gold)]/10 px-3 py-1 text-xs font-semibold text-[var(--gold)]">
+          <Sparkles className="h-3.5 w-3.5" />
+          {t('emp.comingSoon', lang)}
+        </span>
+      </div>
+    </div>
+  )
 }
 
 export function EmployeeLayout() {
@@ -266,11 +308,24 @@ export function EmployeeLayout() {
                   {unread > 9 ? '9+' : unread}
                 </span>
               )}
+              {item.comingSoon && (
+                <span className={cn(
+                  'rounded-full px-1.5 py-0.5 text-[9px] font-bold leading-none',
+                  isActive ? 'bg-[var(--navy)]/20 text-[var(--navy)]' : 'bg-white/10 text-blue-200/60'
+                )}>
+                  {t('emp.comingSoon', lang)}
+                </span>
+              )}
               {isActive && <ChevronRight className="h-4 w-4 text-[var(--navy)]" />}
             </button>
           )
         })}
       </nav>
+
+      {/* Social links in sidebar */}
+      <div className="border-t border-white/10 px-3 py-2">
+        <SocialLinks variant="icons" className="[&_a]:text-blue-200/60 [&_a]:hover:text-[var(--gold)] [&_a]:hover:bg-white/10" />
+      </div>
 
       {/* User card + logout */}
       <div className="border-t border-white/10 p-3">
@@ -454,6 +509,14 @@ export function EmployeeLayout() {
               {active === 'salary' && <DynModules.salary />}
               {active === 'notifications' && <DynModules.notifications onChanged={loadNotifications} />}
               {active === 'password' && <DynModules.password />}
+              {(active === 'aiAssistant' || active === 'helpDesk' || active === 'settings') && (
+                <ComingSoonPlaceholder
+                  icon={nav.find(n => n.key === active)?.icon || Sparkles}
+                  label={currentNav?.label || ''}
+                  desc={currentNav?.desc || ''}
+                  lang={lang}
+                />
+              )}
             </div>
           </main>
         </div>
@@ -461,12 +524,15 @@ export function EmployeeLayout() {
 
       {/* Sticky footer */}
       <footer className="mt-auto border-t bg-card px-4 py-3 sm:px-6">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-1 text-xs text-muted-foreground sm:flex-row">
-          <p>© 2025 HP ENTERPRISE Safety Service & Man Power Supply • Employee Portal</p>
-          <p className="flex items-center gap-1.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-            {t('footer.systemsOperational', lang)}
-          </p>
+        <div className="mx-auto max-w-7xl">
+          <FollowUs variant="inline" heading="" showLabels={false} className="mb-2" />
+          <div className="flex flex-col items-center justify-between gap-1 text-xs text-muted-foreground sm:flex-row">
+            <p>© 2025 HP ENTERPRISE Safety Service & Man Power Supply • Employee Portal</p>
+            <p className="flex items-center gap-1.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+              {t('footer.systemsOperational', lang)}
+            </p>
+          </div>
         </div>
       </footer>
 

@@ -45,21 +45,54 @@ import {
   MapPin,
   Wallet,
   CalendarClock,
+  LayoutGrid,
+  Clock,
+  CalendarOff,
+  Banknote,
+  FolderOpen,
+  CreditCard,
+  BarChart3,
+  Download,
+  Sparkles,
+  Headphones,
+  Settings,
 } from 'lucide-react'
 import { t, type LangCode } from '@/lib/i18n'
 import { HpAiChat } from '@/components/shared/HpAiChat'
+import { FollowUs } from '@/components/shared/FollowUs'
+import { SocialLinks } from '@/components/shared/SocialLinks'
 import { LanguageSwitcher } from '@/components/shared/LanguageSwitcher'
 import { ThemeToggle } from '@/components/shared/ThemeToggle'
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
-type ClientView = 'dashboard' | 'projects' | 'work-orders' | 'invoices'
+type ClientView =
+  | 'dashboard'
+  | 'company-profile'
+  | 'employees'
+  | 'departments'
+  | 'attendance'
+  | 'leave'
+  | 'payroll'
+  | 'projects'
+  | 'documents'
+  | 'invoices'
+  | 'subscription'
+  | 'billing'
+  | 'reports'
+  | 'downloads'
+  | 'ai-assistant'
+  | 'notifications'
+  | 'support'
+  | 'settings'
+  | 'work-orders'
 
 interface NavItem {
   key: ClientView
   label: string
   icon: typeof LayoutDashboard
   desc: string
+  comingSoon?: boolean
 }
 
 interface ClientInfo {
@@ -182,10 +215,44 @@ function StatusBadge({ status }: { status: string }) {
 function getNav(lang: LangCode): NavItem[] {
   return [
     { key: 'dashboard', label: t('client.dashboard', lang), icon: LayoutDashboard, desc: t('client.desc.dashboard', lang) },
+    { key: 'company-profile', label: t('client.companyProfile', lang), icon: Building2, desc: t('client.desc.companyProfile', lang), comingSoon: true },
+    { key: 'employees', label: t('client.employees', lang), icon: Users, desc: t('client.desc.employees', lang), comingSoon: true },
+    { key: 'departments', label: t('client.departments', lang), icon: LayoutGrid, desc: t('client.desc.departments', lang), comingSoon: true },
+    { key: 'attendance', label: t('client.attendance', lang), icon: Clock, desc: t('client.desc.attendance', lang), comingSoon: true },
+    { key: 'leave', label: t('client.leave', lang), icon: CalendarOff, desc: t('client.desc.leave', lang), comingSoon: true },
+    { key: 'payroll', label: t('client.payroll', lang), icon: Banknote, desc: t('client.desc.payroll', lang), comingSoon: true },
     { key: 'projects', label: t('client.projects', lang), icon: Briefcase, desc: t('client.desc.projects', lang) },
-    { key: 'work-orders', label: t('client.workOrders', lang), icon: ClipboardList, desc: t('client.desc.workOrders', lang) },
+    { key: 'documents', label: t('client.documents', lang), icon: FolderOpen, desc: t('client.desc.documents', lang), comingSoon: true },
     { key: 'invoices', label: t('client.invoices', lang), icon: FileText, desc: t('client.desc.invoices', lang) },
+    { key: 'subscription', label: t('client.subscription', lang), icon: CreditCard, desc: t('client.desc.subscription', lang), comingSoon: true },
+    { key: 'billing', label: t('client.billing', lang), icon: Receipt, desc: t('client.desc.billing', lang), comingSoon: true },
+    { key: 'reports', label: t('client.reports', lang), icon: BarChart3, desc: t('client.desc.reports', lang), comingSoon: true },
+    { key: 'downloads', label: t('client.downloads', lang), icon: Download, desc: t('client.desc.downloads', lang), comingSoon: true },
+    { key: 'ai-assistant', label: t('client.aiAssistant', lang), icon: Sparkles, desc: t('client.desc.aiAssistant', lang), comingSoon: true },
+    { key: 'notifications', label: t('client.notifications', lang), icon: Bell, desc: t('client.desc.notifications', lang), comingSoon: true },
+    { key: 'support', label: t('client.support', lang), icon: Headphones, desc: t('client.desc.support', lang), comingSoon: true },
+    { key: 'settings', label: t('client.settings', lang), icon: Settings, desc: t('client.desc.settings', lang), comingSoon: true },
+    { key: 'work-orders', label: t('client.workOrders', lang), icon: ClipboardList, desc: t('client.desc.workOrders', lang) },
   ]
+}
+
+// ── Coming Soon View ──────────────────────────────────────────────────────
+
+function ComingSoonView({ label }: { label: string }) {
+  return (
+    <Card className="mx-auto max-w-lg">
+      <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+        <div className="mb-4 grid h-16 w-16 place-items-center rounded-2xl bg-[var(--gold)]/10">
+          <Sparkles className="h-8 w-8 text-[var(--gold)]" />
+        </div>
+        <h2 className="text-xl font-bold text-[var(--navy)] dark:text-white">{label}</h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+          This module is under development. Check back soon for updates.
+        </p>
+        <Badge variant="outline" className="mt-4 border-[var(--gold)]/40 text-[var(--gold)]">Coming Soon</Badge>
+      </CardContent>
+    </Card>
+  )
 }
 
 // ── Stat Card ───────────────────────────────────────────────────────────────
@@ -753,11 +820,19 @@ export function ClientLayout() {
                 )}
               />
               <span className="flex-1 truncate">{item.label}</span>
+              {item.comingSoon && !isActive && (
+                <span className="text-[9px] font-semibold uppercase tracking-wider text-[var(--gold-light)]/60">Soon</span>
+              )}
               {isActive && <ChevronRight className="h-4 w-4 text-[var(--navy)]" />}
             </button>
           )
         })}
       </nav>
+
+      {/* Follow HP Enterprise */}
+      <div className="border-t border-white/10 px-3 py-3">
+        <FollowUs variant="vertical" showLabels={true} />
+      </div>
 
       {/* User card + logout */}
       <div className="border-t border-white/10 p-3">
@@ -928,6 +1003,7 @@ export function ClientLayout() {
               {active === 'projects' && <ProjectsView data={data} loading={loading} />}
               {active === 'work-orders' && <WorkOrdersView data={data} loading={loading} />}
               {active === 'invoices' && <InvoicesView data={data} loading={loading} />}
+              {currentNav?.comingSoon && <ComingSoonView label={currentNav.label} />}
             </div>
           </main>
         </div>
@@ -935,8 +1011,9 @@ export function ClientLayout() {
 
       {/* Sticky footer */}
       <footer className="mt-auto border-t bg-card px-4 py-3 sm:px-6">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-1 text-xs text-muted-foreground sm:flex-row">
+        <div className="mx-auto flex max-w-7xl flex-col items-center gap-2 text-xs text-muted-foreground sm:flex-row sm:justify-between">
           <p>&copy; 2025 HP ENTERPRISE Safety Service &amp; Man Power Supply &bull; Client Portal</p>
+          <SocialLinks variant="inline" className="order-last sm:order-none" />
           <p className="flex items-center gap-1.5">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
             {t('footer.systemsOperational', lang)}

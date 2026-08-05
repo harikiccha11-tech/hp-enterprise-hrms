@@ -13,7 +13,8 @@ import { Badge } from '@/components/ui/badge'
 import { SectionTitle, EmptyState } from '@/components/shared'
 import { useAppStore } from '@/lib/store'
 import { LANGUAGES, t } from '@/lib/i18n'
-import { BRAND } from '@/lib/constants'
+import { BRAND, SOCIAL } from '@/lib/constants'
+import { FollowUs } from '@/components/shared/FollowUs'
 import { toast } from 'sonner'
 import {
   Settings as SettingsIcon, Save, Lock, Wallet, CalendarDays, Building2,
@@ -21,6 +22,24 @@ import {
   Users, FileText, Bot, HardDrive, Crown, ArrowDown, ArrowUp, Tag,
 } from 'lucide-react'
 import { api } from '../lib'
+
+// ── Read-only display field helper ──────────────────────────────────────────
+function ReadOnlyField({ label, value, href }: { label: string; value: string; href?: string }) {
+  const display = (
+    <div className="space-y-1">
+      <Label className="text-xs text-muted-foreground">{label}</Label>
+      <p className="text-sm font-medium break-all">{value}</p>
+    </div>
+  )
+  if (href) {
+    return (
+      <a href={href} target="_blank" rel="noopener noreferrer" className="block rounded-md p-2 -m-2 transition-colors hover:bg-muted/60">
+        {display}
+      </a>
+    )
+  }
+  return display
+}
 
 // ── Payroll & Leave fields (original, minus Company group) ─────────────────
 const FIELDS: { group: string; icon: any; fields: { key: string; label: string; type?: 'number' | 'text' | 'time'; suffix?: string; hint?: string }[] }[] = [
@@ -177,7 +196,7 @@ export function SettingsModule({ isSuperAdmin, isOwner }: { isSuperAdmin: boolea
       />
 
       <Tabs defaultValue="payroll" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:inline-grid">
+        <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid">
           <TabsTrigger value="payroll" className="gap-1.5 text-xs sm:text-sm">
             <Wallet className="h-4 w-4" />
             <span className="hidden sm:inline">Payroll & Leave</span>
@@ -187,6 +206,11 @@ export function SettingsModule({ isSuperAdmin, isOwner }: { isSuperAdmin: boolea
             <Palette className="h-4 w-4" />
             <span className="hidden sm:inline">Appearance</span>
             <span className="sm:hidden">Theme</span>
+          </TabsTrigger>
+          <TabsTrigger value="branding" className="gap-1.5 text-xs sm:text-sm">
+            <Building2 className="h-4 w-4" />
+            <span className="hidden sm:inline">Branding</span>
+            <span className="sm:hidden">Brand</span>
           </TabsTrigger>
           <TabsTrigger value="subscription" className="gap-1.5 text-xs sm:text-sm">
             <CreditCard className="h-4 w-4" />
@@ -443,7 +467,102 @@ export function SettingsModule({ isSuperAdmin, isOwner }: { isSuperAdmin: boolea
           </div>
         </TabsContent>
 
-        {/* ═══ TAB 3: Subscription ═══ */}
+        {/* ═══ TAB 3: Company Branding & Social Media ═══ */}
+        <TabsContent value="branding" className="mt-5 space-y-5">
+          <Alert className="border-[var(--gold)]/30 bg-[var(--gold)]/5">
+            <Building2 className="h-4 w-4 text-[#8a6f24]" />
+            <AlertTitle className="text-[#8a6f24]">Company Branding & Social Media</AlertTitle>
+            <AlertDescription className="text-xs text-[#8a6f24]/80">
+              These values are configured in application constants and displayed as read-only reference information.
+            </AlertDescription>
+          </Alert>
+
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+
+            {/* ── Company Identity ── */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Building2 className="h-4 w-4 text-[var(--gold)]" />
+                  Company Identity
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <ReadOnlyField label="Company Name" value={BRAND.name} />
+                <ReadOnlyField label="Legal Name" value={BRAND.legalName} />
+                <ReadOnlyField label="Tagline" value={BRAND.tagline} />
+                <ReadOnlyField label="Full Tagline" value={BRAND.taglineFull} />
+                <ReadOnlyField label="Website" value={BRAND.website} href={BRAND.website} />
+              </CardContent>
+            </Card>
+
+            {/* ── Legal & Registration ── */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-[var(--gold)]" />
+                  Legal & Registration
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <ReadOnlyField label="GSTIN" value={BRAND.gstin} />
+                <ReadOnlyField label="UDYAM Registration" value={BRAND.udyam} />
+                <ReadOnlyField label="PAN" value={BRAND.pan} />
+              </CardContent>
+            </Card>
+
+            {/* ── Office Addresses ── */}
+            <Card className="lg:col-span-2">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Globe className="h-4 w-4 text-[var(--gold)]" />
+                  Office Addresses
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Badge variant="outline" className="border-[var(--gold)]/40 text-[#8a6f24]">Head Office</Badge>
+                    <p className="text-sm leading-relaxed text-muted-foreground">{BRAND.headOffice.full}</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Badge variant="outline" className="border-[var(--gold)]/40 text-[#8a6f24]">Branch Office</Badge>
+                    <p className="text-sm leading-relaxed text-muted-foreground">{BRAND.branchOffice.full}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* ── Social Media Links ── */}
+            <Card className="lg:col-span-2">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Globe className="h-4 w-4 text-[var(--gold)]" />
+                  Social Media & Online Presence
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                  <ReadOnlyField label="Website" value={SOCIAL.website} href={SOCIAL.website} />
+                  <ReadOnlyField label="HPHRMS Portal" value={SOCIAL.hphrms} href={SOCIAL.hphrms} />
+                  <ReadOnlyField label="Email" value={SOCIAL.email} href={`mailto:${SOCIAL.email}`} />
+                  <ReadOnlyField label="WhatsApp" value={SOCIAL.whatsapp} href={SOCIAL.whatsapp} />
+                  <ReadOnlyField label="Instagram" value={SOCIAL.instagram} href={SOCIAL.instagram} />
+                  <ReadOnlyField label="Threads" value={SOCIAL.threads} href={SOCIAL.threads} />
+                  <ReadOnlyField label="LinkedIn" value={SOCIAL.linkedin} href={SOCIAL.linkedin} />
+                  <ReadOnlyField label="Facebook" value={SOCIAL.facebook} href={SOCIAL.facebook} />
+                  <ReadOnlyField label="X (Twitter)" value={SOCIAL.twitter} href={SOCIAL.twitter} />
+                  <ReadOnlyField label="YouTube" value={SOCIAL.youtube} href={SOCIAL.youtube} />
+                  <ReadOnlyField label="Reddit" value={SOCIAL.reddit} href={SOCIAL.reddit} />
+                  <ReadOnlyField label="Recruitment Form" value={SOCIAL.recruitment} href={SOCIAL.recruitment} />
+                </div>
+                <FollowUs variant="grid" heading="Follow HP Enterprise" />
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* ═══ TAB 4: Subscription ═══ */}
         <TabsContent value="subscription" className="mt-5 space-y-6">
           {/* Plans grid */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">

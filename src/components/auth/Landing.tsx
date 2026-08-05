@@ -6,6 +6,9 @@ import { BrandLogo } from '@/components/brand/BrandLogo'
 import { RegistrationForm } from '@/components/auth/RegistrationForm'
 import { ForgotPasswordDialog } from '@/components/auth/ForgotPasswordDialog'
 import { SocialLinks } from '@/components/shared/SocialLinks'
+import { DemoRequestForm } from '@/components/shared/DemoRequestForm'
+import { NewsletterSection } from '@/components/shared/NewsletterSection'
+import { FollowUs } from '@/components/shared/FollowUs'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -546,6 +549,7 @@ export function Landing() {
   const [mobileMenu, setMobileMenu] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const [loginOpen, setLoginOpen] = useState(false)
+  const [demoOpen, setDemoOpen] = useState(false)
   const homeRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -640,6 +644,7 @@ export function Landing() {
       </nav>
 
       <LoginDialog open={loginOpen} onClose={() => setLoginOpen(false)} />
+      {demoOpen && <DemoRequestForm onClose={() => setDemoOpen(false)} />}
 
       {/* ═══════════════════════════════════════════════════════
          SECTION 1: HERO
@@ -684,11 +689,11 @@ export function Landing() {
 
             <Reveal delay={0.25}>
               <div className="mt-8 flex flex-wrap gap-3">
-                <a href={SOCIAL.whatsapp} target="_blank" rel="noopener noreferrer"
+                <button onClick={() => setDemoOpen(true)}
                   className="inline-flex items-center gap-2 px-6 py-3 rounded-lg text-sm font-semibold transition-all duration-200 hover:-translate-y-[1px] hover:shadow-xl"
                   style={{ background: C.gold, color: C.navyDeep }}>
-                  <MessageCircle className="h-4 w-4" /> Book a Demo
-                </a>
+                  <CalendarDays className="h-4 w-4" /> Book a Demo
+                </button>
                 <button onClick={() => setView('register')}
                   className="inline-flex items-center gap-2 px-6 py-3 rounded-lg text-sm font-semibold border-2 text-white transition-all duration-200 hover:bg-white hover:text-[var(--navy)] hover:border-white"
                   style={{ borderColor: 'rgba(255,255,255,.3)' }}>
@@ -1080,6 +1085,7 @@ export function Landing() {
                 <div className="p-5 rounded-xl border" style={{ background: C.paper, borderColor: C.rule }}>
                   <h3 className="text-sm font-bold mb-3" style={{ color: C.ink }}>Follow Us</h3>
                   <SocialLinks variant="icons" />
+                  <FollowUs variant="grid" className="mt-6" />
                 </div>
               </Reveal>
             </div>

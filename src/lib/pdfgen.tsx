@@ -1,5 +1,6 @@
 import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer'
 import path from 'path'
+import { SOCIAL } from '@/lib/constants'
 
 export const NAVY = '#002B5C'
 export const NAVY_DEEP = '#001A3D'
@@ -116,10 +117,11 @@ function Header({ docTitle, refNo, date }: { docTitle: string; refNo: string; da
 }
 
 function Footer() {
+  const siteDomain = SOCIAL.website.replace('https://', '')
   return (
     <View style={brandStyles.footer} fixed>
       <Text>HP ENTERPRISE • Venkateshwara Nilaya Building, Behind Hanuman Mandir, Nagenahalli, Hosadurga Taluk, Chitradurga – 577515, Karnataka, India</Text>
-      <Text>hpenterpriseofficial11@gmail.com • hpserve.site • GSTIN: 29ANZPH4067Q1ZS • UDYAM: UDYAM-KR-10-0014648</Text>
+      <Text>{SOCIAL.email} • {siteDomain} • GSTIN: 29ANZPH4067Q1ZS • UDYAM: UDYAM-KR-10-0014648</Text>
     </View>
   )
 }

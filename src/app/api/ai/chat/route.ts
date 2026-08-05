@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
+import { BRAND, SOCIAL } from '@/lib/constants'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -8,9 +9,9 @@ export const dynamic = 'force-dynamic'
 // In-memory conversation store (keyed by userId)
 const conversations = new Map<string, { role: string; content: string }[]>()
 
-const SYSTEM_PROMPT = `You are HPAI, the intelligent AI HR assistant powered by HPHRMS — the next-generation AI Human Resource Management Platform by HP ENTERPRISE.
+const SYSTEM_PROMPT = `You are HPAI, the intelligent AI HR assistant powered by HPHRMS — the next-generation AI Human Resource Management Platform by ${BRAND.name}.
 
-Tagline: Building Safer Tomorrow. Empowering Smarter Workplaces.
+Tagline: ${BRAND.tagline}
 
 You help with:
 - Leave policies, balances, and application procedures
@@ -24,22 +25,22 @@ You help with:
 - HPHRMS features: AI HR Assistant, Employee Management, Recruitment & ATS, Attendance, Leave, Payroll, ESS, Shift & Roster, Document Management, Reports & Analytics
 
 Company info:
-- Website: https://hpserve.site
-- HPHRMS AI Platform: https://hphrms.com
-- Email: hpenterpriseofficial11@gmail.com
-- Business Phone: +91 80737 48271
-- HR Contact: +91 73377 92436
-- WhatsApp: https://wa.me/message/65PDYODAFJZAN1
-- GSTIN: 29ANZPH4067Q1ZS
-- UDYAM: UDYAM-KR-10-0014648
-- Managing Director: Hariprasad N P
-- EHS Director: Rajesh S
-- Head Office: Venkateshwara Nilaya Building, Behind Hanuman Mandir, Nagenahalli, Hosadurga Taluk, Chitradurga – 577515, Karnataka, India
-- Branch Office: JeevaGurunadan Building, Kalkere Market Road, Ramamurthy Nagar, Bengaluru – 560016, Karnataka, India
+- Website: ${BRAND.website}
+- HPHRMS AI Platform: ${BRAND.hphrmsUrl}
+- Email: ${SOCIAL.email}
+- Business Phone: ${BRAND.phone}
+- HR Contact: ${BRAND.hrPhone}
+- WhatsApp: ${SOCIAL.whatsapp}
+- GSTIN: ${BRAND.gstin}
+- UDYAM: ${BRAND.udyam}
+- Managing Director: ${BRAND.managingDirector}
+- EHS Director: ${BRAND.ehsDirector}
+- Head Office: ${BRAND.headOffice.full}
+- Branch Office: ${BRAND.branchOffice.full}
 
 Services: HR Management, Recruitment & Talent Acquisition, Manpower Supply, EHS Consultancy, Engineering & Project Support, Construction Labour Supply, Land Survey, Vendor Coordination, Payroll Management, Website Design & Development, Safety Training & Compliance.
 
-Keep responses concise (2-4 sentences max unless asked for details). Be friendly but professional. Use bullet points for lists. If unsure, advise the user to contact HR at hpenterpriseofficial11@gmail.com or call +91 73377 92436.`
+Keep responses concise (2-4 sentences max unless asked for details). Be friendly but professional. Use bullet points for lists. If unsure, advise the user to contact HR at ${SOCIAL.email} or call ${BRAND.hrPhone}.`
 
 /** Graceful fallback when all AI providers are down — users should never see a raw error. */
 function getFallbackResponse(userMessage: string): string {
@@ -52,26 +53,26 @@ function getFallbackResponse(userMessage: string): string {
 
   // Leave related
   if (/leave|holiday|vacation|time.?off|casual.?leave|sick.?leave|earned.?leave|cl|sl|el|pl/.test(msg)) {
-    return 'For leave-related queries, please reach out to HR at **+91 73377 92436** or email **hpenterpriseofficial11@gmail.com**. You can also check your leave balance and apply through the HPHRMS portal. Would you like information about a specific leave type?'
+    return `For leave-related queries, please reach out to HR at **${BRAND.hrPhone}** or email **${SOCIAL.email}**. You can also check your leave balance and apply through the HPHRMS portal. Would you like information about a specific leave type?`
   }
 
   // Payroll related
   if (/salary|pay|payroll|pf|esi|tax|payslip|wage|compensation|ctc|deduction/.test(msg)) {
-    return 'For payroll queries (salary breakdown, PF, ESI, professional tax), please contact HR at **+91 73377 92436** or email **hpenterpriseofficial11@gmail.com**. Salary slips are available on the HPHRMS portal under the ESS section.'
+    return `For payroll queries (salary breakdown, PF, ESI, professional tax), please contact HR at **${BRAND.hrPhone}** or email **${SOCIAL.email}**. Salary slips are available on the HPHRMS portal under the ESS section.`
   }
 
   // Attendance related
   if (/attendance|punch|late|overtime|shift|roster|check.?in|check.?out|biometric/.test(msg)) {
-    return 'For attendance-related queries (punch-in/out timing, late grace, overtime, shifts), please contact HR at **+91 73377 92436** or check the HPHRMS portal. Your attendance records are available in the Attendance section.'
+    return `For attendance-related queries (punch-in/out timing, late grace, overtime, shifts), please contact HR at **${BRAND.hrPhone}** or check the HPHRMS portal. Your attendance records are available in the Attendance section.`
   }
 
   // Document related
   if (/document|letter|certificate|offer|id.?card|experience|salary.?slip/.test(msg)) {
-    return 'For document requests (offer letters, ID cards, salary slips, experience letters), please reach out to HR at **hpenterpriseofficial11@gmail.com** or call **+91 73377 92436**. Many documents are also available for download from the HPHRMS portal.'
+    return `For document requests (offer letters, ID cards, salary slips, experience letters), please reach out to HR at **${SOCIAL.email}** or call **${BRAND.hrPhone}**. Many documents are also available for download from the HPHRMS portal.`
   }
 
   // Generic helpful fallback
-  return 'I\'m currently experiencing high demand, but I\'m still here to help! For immediate assistance, please contact our HR team:\n\n- 📧 **Email:** hpenterpriseofficial11@gmail.com\n- 📞 **Phone:** +91 73377 92436\n- 💬 **WhatsApp:** [Chat with us](https://wa.me/message/65PDYODAFJZAN1)\n\nYou can also explore the HPHRMS portal at [hphrms.com](https://hphrms.com) for self-service options. Please try asking me again in a moment!'
+  return `I'm currently experiencing high demand, but I'm still here to help! For immediate assistance, please contact our HR team:\n\n- 📧 **Email:** ${SOCIAL.email}\n- 📞 **Phone:** ${BRAND.hrPhone}\n- 💬 **WhatsApp:** [Chat with us](${SOCIAL.whatsapp})\n\nYou can also explore the HPHRMS portal at [hphrms.com](${BRAND.hphrmsUrl}) for self-service options. Please try asking me again in a moment!`
 }
 
 /** Detailed error logging — avoids silently swallowing unknown error shapes */

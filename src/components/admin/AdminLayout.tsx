@@ -30,6 +30,7 @@ import {
   Search, Key, Globe,
 } from 'lucide-react'
 import { ROLE_LABELS } from '@/lib/constants'
+import { FollowUs } from '@/components/shared/FollowUs'
 import { t, type LangCode } from '@/lib/i18n'
 import { fmtRelative, initials } from './lib'
 import { AccountTypeBadge } from '@/components/shared/AccountTypeBadge'
@@ -499,9 +500,12 @@ export function AdminLayout() {
       </div>
 
       <footer className="mt-auto border-t bg-card px-4 py-3 sm:px-6">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-1 text-xs text-muted-foreground sm:flex-row">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 text-xs text-muted-foreground sm:flex-row">
           <p>© 2025 HP ENTERPRISE • Admin Console • GSTIN: 29ANZPH4067Q1ZS • UDYAM: UDYAM-KR-10-0014648</p>
-          <p className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />{t('footer.systemsOperational', lang)}</p>
+          <div className="flex items-center gap-3">
+            <p className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />{t('footer.systemsOperational', lang)}</p>
+            <FollowUs variant="inline" className="hidden md:flex" />
+          </div>
         </div>
       </footer>
 
