@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useState, useCallback, startTransition } from 'react'
 import { useAuth } from '@/lib/store'
 import { Landing } from '@/components/auth/Landing'
 import { AdminLayout } from '@/components/admin/AdminLayout'
@@ -67,6 +67,16 @@ const PORTAL_ACCESS: Record<string, string[]> = {
 }
 
 const PORTAL_STORAGE_KEY = 'hpe-selected-portal'
+
+// Auto-redirect map: roles with only one portal skip the selector
+const ROLE_PRIMARY_PORTAL: Record<string, string> = {
+  EMPLOYEE: 'employee',
+  CLIENT: 'client',
+  CANDIDATE: 'candidate',
+  HR_MANAGER: 'admin',
+  OWNER: 'admin',
+  SUPER_ADMIN: 'admin',
+}
 
 /* ═══════════════════════════════════════════════════════
    PORTAL SELECTOR COMPONENT
@@ -179,25 +189,22 @@ export default function Page() {
     }
   }, [refresh])
 
-  // Check localStorage for saved portal — reads external store in callback
+  // Auto-select portal for single-portal roles or primary portal
   useEffect(() => {
-    const checkPortal = () => {
-      if (user) {
-        const saved = localStorage.getItem(PORTAL_STORAGE_KEY)
-        const allowed = PORTAL_ACCESS[user.role] || []
-        if (saved && allowed.includes(saved)) {
-          setSelectedPortal(saved)
-        }
+    if (!user || portalChecked) return
+    const saved = localStorage.getItem(PORTAL_STORAGE_KEY)
+    const allowed = PORTAL_ACCESS[user.role] || []
+    const target = (saved && allowed.includes(saved)) ? saved : (ROLE_PRIMARY_PORTAL[user.role] && allowed.includes(ROLE_PRIMARY_PORTAL[user.role])) ? ROLE_PRIMARY_PORTAL[user.role] : null
+    if (target) {
+      localStorage.setItem(PORTAL_STORAGE_KEY, target)
+      startTransition(() => {
+        setSelectedPortal(target)
         setPortalChecked(true)
-      } else {
-        setSelectedPortal(null)
-        setPortalChecked(false)
-      }
+      })
+    } else {
+      startTransition(() => setPortalChecked(true))
     }
-    // Use microtask to defer setState out of the synchronous effect body
-    const id = requestAnimationFrame(checkPortal)
-    return () => cancelAnimationFrame(id)
-  }, [user])
+  }, [user, portalChecked])
 
   // Listen for portal changes from layouts (Change Portal button)
   useEffect(() => {

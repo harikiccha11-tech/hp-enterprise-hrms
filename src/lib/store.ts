@@ -160,8 +160,9 @@ export const useAppStore = create<AppState>((set, get) => ({
   setLoading: (b) => set({ loading: b }),
   setView: (v) => set({ view: v }),
   logout: async () => {
+    localStorage.removeItem('hpe-selected-portal')
     await fetch('/api/auth/logout', { method: 'POST' })
-    cacheInvalidate() // Clear all cache on logout
+    cacheInvalidate()
     set({ user: null, view: 'login' })
   },
   refresh: async () => {

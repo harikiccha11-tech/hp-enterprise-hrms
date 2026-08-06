@@ -53,8 +53,11 @@ model Account {
   generatedDocuments GeneratedDocument[] @relation("GeneratedDocAccount")
   employeeDocuments EmployeeDocument[]
   vendors           Vendor[] @relation("VendorAccount")
-  candidates        Candidate[] @relation("CandidateAccount")
-  assets            Asset[] @relation("AssetAccount")
+  candidates                Candidate[] @relation("CandidateAccount")
+  candidateApplications      CandidateApplication[] @relation("CandAppAccount")
+  jobPostings               JobPosting[] @relation("JobPostingAccount")
+  interviews                Interview[] @relation("InterviewAccount")
+  assets                    Asset[] @relation("AssetAccount")
 
   @@index([status])
   @@index([accountType])
@@ -69,7 +72,7 @@ model User {
   username         String   @unique
   email            String   @unique
   passwordHash     String
-  role             String   @default("EMPLOYEE") // OWNER | SUPER_ADMIN | HR_MANAGER | EMPLOYEE | CLIENT
+  role             String   @default("EMPLOYEE") // OWNER | SUPER_ADMIN | HR_MANAGER | EMPLOYEE | CLIENT | CANDIDATE
   clientId         String?  // Legacy: For CLIENT role users — links to Client record
   // Dual-mode fields
   accountId        String?
@@ -83,6 +86,7 @@ model User {
 
   account          Account? @relation(fields: [accountId], references: [id], onDelete: Cascade)
   employee         Employee?
+  candidate        Candidate?
   notifications    Notification[]
   auditLogs        AuditLog[]
   attendanceRecords Attendance[] @relation("AttendanceMarkedBy")
@@ -706,45 +710,116 @@ model JobPosting {
   department  String?
   designation String?
   location    String?
-  type        String   @default("FULL_TIME")
+  type        String   @default("FULL_TIME") // FULL_TIME | PART_TIME | CONTRACT | INTERNSHIP | FREELANCE
   experience   String?
   salaryMin   Float?
   salaryMax   Float?
   description String?
   requirements String?
-  status      String   @default("OPEN")
+  status      String   @default("OPEN") // DRAFT | OPEN | CLOSED | FILLED | ARCHIVED
+  isPublic    Boolean  @default(true)
   postedBy    String?
   postedAt    DateTime @default(now())
   closedAt    DateTime?
+  accountId   String?
 
-  candidates  Candidate[]
+  candidates           Candidate[]
+  candidateApplications CandidateApplication[]
+  interviews           Interview[]
+  account              Account? @relation("JobPostingAccount", fields: [accountId], references: [id], onDelete: Cascade)
 
   @@index([status])
+  @@index([accountId])
 }
 
 model Candidate {
-  id          String   @id @default(cuid())
-  fullName    String
-  email       String
-  phone       String?
-  resume      String?
-  experience  String?
+  id             String   @id @default(cuid())
+  fullName       String
+  email          String
+  phone          String?
+  resume         String?
+  experience     String?
+  education      String?    // JSON array of education entries
+  summary        String?    // Professional summary / bio
   currentCompany String?
-  currentCtc  Float?
-  expectedCtc Float?
-  noticePeriod String?
-  skills      String?
-  source      String?
-  status      String   @default("NEW")
-  jobPostingId String?
-  remarks     String?
-  appliedAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  currentCtc     Float?
+  expectedCtc    Float?
+  noticePeriod   String?
+  skills         String?
+  source         String?
+  status         String   @default("NEW")
+  jobPostingId   String?
+  userId         String?   @unique
+  remarks        String?
+  appliedAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
-  jobPosting  JobPosting? @relation(fields: [jobPostingId], references: [id])
-  accountId  String
-  account   Account @relation("CandidateAccount", fields: [accountId], references: [id], onDelete: Cascade)
+  jobPosting             JobPosting? @relation(fields: [jobPostingId], references: [id])
+  user                   User?       @relation(fields: [userId], references: [id])
+  accountId              String
+  account                Account @relation("CandidateAccount", fields: [accountId], references: [id], onDelete: Cascade)
+  candidateApplications  CandidateApplication[]
+  interviews             Interview[]
 
+  @@index([status])
+  @@index([accountId])
+  @@index([userId])
+}
+
+// ============================================================
+// CANDIDATE APPLICATIONS (Portal-authenticated job applications)
+// ============================================================
+
+model CandidateApplication {
+  id            String   @id @default(cuid())
+  candidateId   String
+  jobPostingId  String
+  status        String   @default("APPLIED") // APPLIED | SCREENING | SHORTLISTED | INTERVIEW | OFFER | REJECTED | WITHDRAWN | HIRED
+  coverLetter   String?
+  appliedDate   DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  accountId     String
+
+  candidate     Candidate  @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  jobPosting    JobPosting @relation(fields: [jobPostingId], references: [id])
+  account       Account   @relation("CandAppAccount", fields: [accountId], references: [id], onDelete: Cascade)
+  interviews    Interview[]
+
+  @@unique([candidateId, jobPostingId])
+  @@index([candidateId])
+  @@index([jobPostingId])
+  @@index([status])
+  @@index([accountId])
+}
+
+// ============================================================
+// INTERVIEWS
+// ============================================================
+
+model Interview {
+  id                     String   @id @default(cuid())
+  candidateApplicationId  String?
+  candidateId            String
+  jobPostingId           String
+  date                   DateTime
+  time                   String   // e.g. "10:00 AM"
+  type                   String   // TECHNICAL | HR | BEHAVIORAL | FINAL | PANEL
+  status                 String   @default("SCHEDULED") // SCHEDULED | COMPLETED | CANCELLED | NO_SHOW | RESCHEDULED
+  interviewerName        String?
+  interviewerId          String?
+  notes                  String?
+  location               String?  // meeting link or physical location
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+  accountId              String
+
+  candidateApplication   CandidateApplication? @relation(fields: [candidateApplicationId], references: [id])
+  candidate              Candidate  @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  jobPosting             JobPosting @relation(fields: [jobPostingId], references: [id])
+  account                Account    @relation("InterviewAccount", fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([candidateId])
+  @@index([jobPostingId])
   @@index([status])
   @@index([accountId])
 }
@@ -1237,4 +1312,70 @@ model TimesheetLine {
 
   account Account @relation("GeneratedDocAccount", fields: [accountId], references: [id], onDelete: Cascade)
   employee Employee? @relation("GeneratedDocEmployee", fields: [employeeId], references: [id])
+}
+
+// ============================================================
+// SUPER ADMIN — SaaS Platform Models
+// ============================================================
+
+model ContentItem {
+  id          String   @id @default(cuid())
+  type        String   // faq | blog | career | banner | social | landing_section
+  title       String
+  slug        String?  @unique
+  content     String?  // JSON string for flexible content
+  status      String   @default("published") // published | draft | archived
+  sortOrder   Int      @default(0)
+  metadata    String?  // JSON string for extra fields
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([type, status])
+  @@index([sortOrder])
+}
+
+model CustomDomain {
+  id          String   @id @default(cuid())
+  domain      String   @unique
+  sslStatus   String   @default("Pending") // Active | Pending | Failed
+  verified    Boolean  @default(false)
+  primary     Boolean  @default(false)
+  accountId   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([domain])
+}
+
+model BackupRecord {
+  id          String   @id @default(cuid())
+  fileName    String
+  fileSize    String?
+  backupType  String   @default("Manual") // Manual | Auto
+  createdAt   DateTime @default(now())
+}
+
+model AiModelConfig {
+  id          String   @id @default(cuid())
+  name        String
+  provider    String
+  version     String?
+  status      String   @default("Active") // Active | Beta | Deprecated
+  capabilities String? // JSON array
+  costPerK    Float?   @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model PromptTemplate {
+  id          String   @id @default(cuid())
+  name        String
+  category    String?
+  description String?
+  template    String?  // The actual prompt text
+  variables   String?  // JSON array of variable names
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([category])
 }

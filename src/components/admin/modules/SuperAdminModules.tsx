@@ -1,5 +1,5 @@
   'use client'
-import { useState, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef, startTransition } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -27,8 +27,50 @@ import {
   HardDrive, CalendarDays, Upload, Download, Save, FileText, Linkedin,
   Twitter, Instagram, Facebook, Youtube, Undo2, AlertTriangle, Brain,
   Cpu, BookOpen, MessageCircle, Activity, Zap, Server, Database,
-  MailCheck, Phone, Settings,
+  MailCheck, Phone, Settings, Loader2,
 } from 'lucide-react'
+
+// ═══════════════════════════════════════════════════════════════════════════
+// DATA FETCHING HOOK
+// ═══════════════════════════════════════════════════════════════════════════
+function useApiData<T>(url: string, defaultValue: T, deps: unknown[] = []) {
+  const [data, setData] = useState<T>(defaultValue)
+  const [loading, setLoading] = useState(true)
+  useEffect(() => {
+    let cancelled = false
+    const controller = new AbortController()
+    startTransition(() => setLoading(true))
+    fetch(url, { cache: 'no-store', signal: controller.signal }).then(r => r.ok ? r.json() : null).then(d => {
+      if (!cancelled) startTransition(() => setData(d ?? defaultValue))
+    }).catch((e) => { if (!cancelled && e.name !== 'AbortError') console.warn('fetch failed:', url) }).finally(() => { if (!cancelled) startTransition(() => setLoading(false)) })
+    return () => { cancelled = true; controller.abort() }
+  }, [url, ...deps])
+  const urlRef = useRef(url)
+  useEffect(() => { urlRef.current = url }, [url])
+  const refetch = () => {
+    let cancelled = false
+    const fetchUrl = urlRef.current
+    startTransition(() => setLoading(true))
+    fetch(fetchUrl, { cache: 'no-store' }).then(r => r.ok ? r.json() : null).then(d => {
+      if (!cancelled) startTransition(() => setData(d ?? defaultValue))
+    }).catch(() => {}).finally(() => { if (!cancelled) startTransition(() => setLoading(false)) })
+  }
+  return { data, setData, loading, refetch }
+}
+
+function useApiSave(url: string) {
+  const [saving, setSaving] = useState(false)
+  const save = useCallback(async (body: unknown) => {
+    setSaving(true)
+    try {
+      const r = await fetch(url, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+      if (r.ok) { toast.success('Saved successfully'); return true }
+      toast.error('Save failed'); return false
+    } catch { toast.error('Network error'); return false }
+    finally { setSaving(false) }
+  }, [url])
+  return { save, saving }
+}
 
 // ═══════════════════════════════════════════════════════════════════════════
 // 1. CLIENT COMPANIES
@@ -45,30 +87,39 @@ const MOCK_COMPANIES = [
 
 const statusColor: Record<string, string> = {
   Active: 'bg-emerald-500/10 text-emerald-700 border-emerald-500/30',
+  active: 'bg-emerald-500/10 text-emerald-700 border-emerald-500/30',
   Trial: 'bg-amber-500/10 text-amber-700 border-amber-500/30',
+  trial: 'bg-amber-500/10 text-amber-700 border-amber-500/30',
   Expired: 'bg-red-500/10 text-red-700 border-red-500/30',
+  expired: 'bg-red-500/10 text-red-700 border-red-500/30',
   Suspended: 'bg-gray-500/10 text-gray-700 border-gray-500/30',
+  suspended: 'bg-gray-500/10 text-gray-700 border-gray-500/30',
 }
 
 const planColor: Record<string, string> = {
   Starter: 'bg-slate-500/10 text-slate-700 border-slate-500/30',
+  starter: 'bg-slate-500/10 text-slate-700 border-slate-500/30',
   Professional: 'bg-[var(--navy)]/10 text-[var(--navy)] border-[var(--navy)]/30',
+  professional: 'bg-[var(--navy)]/10 text-[var(--navy)] border-[var(--navy)]/30',
   Enterprise: 'bg-[var(--gold)]/15 text-[#8a6f24] border-[var(--gold)]/30',
+  enterprise: 'bg-[var(--gold)]/15 text-[#8a6f24] border-[var(--gold)]/30',
 }
 
 export function ClientCompanies({ refreshKey }: { refreshKey?: number }) {
+  const { data: res, loading } = useApiData<{ accounts: any[]; total: number }>('/api/admin/saas/accounts', { accounts: [], total: 0 }, [refreshKey])
   const [search, setSearch] = useState('')
-  const filtered = MOCK_COMPANIES.filter((c) =>
-    c.name.toLowerCase().includes(search.toLowerCase()),
+  const companies = res?.accounts || []
+  const filtered = companies.filter((c: any) =>
+    (c.organizationName || c.name || '').toLowerCase().includes(search.toLowerCase()),
   )
-  const totalMrr = MOCK_COMPANIES.reduce((a, c) => a + c.mrr, 0)
+  const totalMrr = companies.reduce((a: number, c: any) => a + (c.mrr || 0), 0)
   return (
     <div className="space-y-6">
       <SectionTitle title="Client Companies" desc="Manage all SaaS tenant companies" />
       <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
-        <StatCard icon={Building2} label="Total Companies" value={MOCK_COMPANIES.length} sub="All registered tenants" />
-        <StatCard icon={CheckCircle} label="Active" value={MOCK_COMPANIES.filter(c => c.status === 'Active').length} sub="Paying customers" accent="green" />
-        <StatCard icon={Clock} label="Trial" value={MOCK_COMPANIES.filter(c => c.status === 'Trial').length} sub="Free trials running" accent="amber" />
+        <StatCard icon={Building2} label="Total Companies" value={companies.length} sub="All registered tenants" />
+        <StatCard icon={CheckCircle} label="Active" value={companies.filter((c: any) => ['active','Active'].includes(c.status)).length} sub="Paying customers" accent="green" />
+        <StatCard icon={Clock} label="Trial" value={companies.filter((c: any) => ['trial','Trial'].includes(c.status)).length} sub="Free trials running" accent="amber" />
         <StatCard icon={DollarSign} label="Total MRR" value={`₹${totalMrr.toLocaleString('en-IN')}`} sub="Monthly recurring" accent="gold" />
       </div>
       <div className="relative max-w-sm">
@@ -81,24 +132,24 @@ export function ClientCompanies({ refreshKey }: { refreshKey?: number }) {
             <CardHeader className="pb-3">
               <div className="flex items-start justify-between">
                 <div className="min-w-0">
-                  <CardTitle className="text-base truncate">{c.name}</CardTitle>
-                  <p className="text-xs text-muted-foreground mt-1">Joined {new Date(c.joinDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                  <CardTitle className="text-base truncate">{c.organizationName || c.name}</CardTitle>
+                  <p className="text-xs text-muted-foreground mt-1">Joined {new Date(c.createdAt || c.joinDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
                 </div>
                 <Badge variant="outline" className={planColor[c.plan] || ''}>{c.plan}</Badge>
               </div>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
-                <Badge variant="outline" className={statusColor[c.status]}>{c.status}</Badge>
+                <Badge variant="outline" className={statusColor[c.status] || ""}>{c.status}</Badge>
                 <div className="text-right">
-                  <p className="text-lg font-bold text-[var(--navy)] dark:text-white">₹{c.mrr.toLocaleString('en-IN')}</p>
+                  <p className="text-lg font-bold text-[var(--navy)] dark:text-white">₹{(c.mrr || 0).toLocaleString('en-IN')}</p>
                   <p className="text-[11px] text-muted-foreground">MRR</p>
                 </div>
               </div>
               <Separator className="my-3" />
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Users className="h-3.5 w-3.5" />
-                <span>{c.employees} employees</span>
+                <span>{c.employeeCount || c.employees || 0} employees</span>
               </div>
             </CardContent>
           </Card>
@@ -112,12 +163,7 @@ export function ClientCompanies({ refreshKey }: { refreshKey?: number }) {
 // 2. COMPANY APPROVAL
 // ═══════════════════════════════════════════════════════════════════════════
 
-const MOCK_PENDING = [
-  { id: '1', name: 'Larsen & Toubro HR', contact: 'Rajesh Kumar', email: 'rajesh.k@lnt.com', phone: '+91 98765 43210', plan: 'Enterprise', employees: 250, date: '2025-06-10' },
-  { id: '2', name: 'Godrej Industries', contact: 'Priya Sharma', email: 'priya.s@godrej.in', phone: '+91 87654 32109', plan: 'Professional', employees: 85, date: '2025-06-11' },
-  { id: '3', name: 'Hindustan Aeronautics', contact: 'Arun Patel', email: 'arun.p@hal.gov.in', phone: '+91 76543 21098', plan: 'Enterprise', employees: 1200, date: '2025-06-12' },
-  { id: '4', name: 'Biocon Limited', contact: 'Meera Nair', email: 'meera.n@biocon.com', phone: '+91 65432 10987', plan: 'Starter', employees: 30, date: '2025-06-13' },
-]
+const MOCK_PENDING: any[] = []
 
 export function CompanyApproval({ refreshKey }: { refreshKey?: number }) {
   const [pending, setPending] = useState(MOCK_PENDING)
@@ -151,10 +197,10 @@ export function CompanyApproval({ refreshKey }: { refreshKey?: number }) {
             <CardHeader className="pb-3">
               <div className="flex items-start justify-between">
                 <div>
-                  <CardTitle className="text-base">{c.name}</CardTitle>
+                  <CardTitle className="text-base">{c.organizationName || c.name}</CardTitle>
                   <p className="text-xs text-muted-foreground mt-0.5">Applied {new Date(c.date).toLocaleDateString('en-IN')}</p>
                 </div>
-                <Badge variant="outline" className={planColor[c.plan]}>{c.plan}</Badge>
+                <Badge variant="outline" className={planColor[c.plan] || ""}>{c.plan || "N/A"}</Badge>
               </div>
             </CardHeader>
             <CardContent className="space-y-3">
@@ -188,28 +234,11 @@ export function CompanyApproval({ refreshKey }: { refreshKey?: number }) {
 // 3. REVENUE DASHBOARD
 // ═══════════════════════════════════════════════════════════════════════════
 
-const MONTHLY_REVENUE = [
-  { month: 'Jul', amount: 320000 }, { month: 'Aug', amount: 355000 }, { month: 'Sep', amount: 340000 },
-  { month: 'Oct', amount: 378000 }, { month: 'Nov', amount: 390000 }, { month: 'Dec', amount: 410000 },
-  { month: 'Jan', amount: 395000 }, { month: 'Feb', amount: 420000 }, { month: 'Mar', amount: 435000 },
-  { month: 'Apr', amount: 415000 }, { month: 'May', amount: 440000 }, { month: 'Jun', amount: 420000 },
-]
-const MAX_REV = Math.max(...MONTHLY_REVENUE.map(m => m.amount))
 
-const REVENUE_BY_PLAN = [
-  { plan: 'Starter', clients: 12, mrr: 35988, pct: 8 },
-  { plan: 'Standard', clients: 8, mrr: 63992, pct: 15 },
-  { plan: 'Professional', clients: 15, mrr: 119985, pct: 29 },
-  { plan: 'Enterprise', clients: 6, mrr: 119994, pct: 29 },
-]
 
-const TOP_CLIENTS = [
-  { name: 'Reliance Digital Ltd', mrr: 19999, plan: 'Enterprise', since: 'Nov 2023' },
-  { name: 'Tata Consultancy Services', mrr: 19999, plan: 'Enterprise', since: 'Jan 2024' },
-  { name: 'Infosys Technologies', mrr: 15999, plan: 'Professional', since: 'Mar 2024' },
-  { name: 'HDFC Bank Solutions', mrr: 11999, plan: 'Professional', since: 'Feb 2024' },
-  { name: 'Adani Ports HR', mrr: 9999, plan: 'Standard', since: 'May 2024' },
-]
+
+
+
 
 export function RevenueDashboard({ refreshKey }: { refreshKey?: number }) {
   const fmt = (n: number) => '₹' + (n >= 100000 ? `${(n / 100000).toFixed(1)}L` : n >= 1000 ? `${(n / 1000).toFixed(1)}K` : n.toString())
@@ -227,7 +256,7 @@ export function RevenueDashboard({ refreshKey }: { refreshKey?: number }) {
         <CardHeader className="pb-3"><CardTitle className="text-base">Monthly Revenue</CardTitle><p className="text-xs text-muted-foreground">Last 12 months — in ₹</p></CardHeader>
         <CardContent>
           <div className="flex items-end gap-2 h-48">
-            {MONTHLY_REVENUE.map((m) => (
+            {monthlyRevenue.map((m: any) => (
               <div key={m.month} className="flex-1 flex flex-col items-center gap-1">
                 <span className="text-[10px] font-medium text-muted-foreground">{fmt(m.amount)}</span>
                 <div className="w-full rounded-t-md bg-[var(--navy)] dark:bg-[var(--gold)] transition-all" style={{ height: `${(m.amount / MAX_REV) * 140}px`, minHeight: '8px' }} />
@@ -245,7 +274,7 @@ export function RevenueDashboard({ refreshKey }: { refreshKey?: number }) {
             <div className="max-h-96 overflow-y-auto">
               <Table><TableHeader><TableRow><TableHead>Plan</TableHead><TableHead>Clients</TableHead><TableHead>MRR</TableHead><TableHead>Share</TableHead></TableRow></TableHeader>
               <TableBody>
-                {REVENUE_BY_PLAN.map((r) => (
+                {revenueByPlan.map((r: any) => (
                   <TableRow key={r.plan}><TableCell className="font-medium">{r.plan}</TableCell><TableCell>{r.clients}</TableCell><TableCell>₹{r.mrr.toLocaleString('en-IN')}</TableCell><TableCell><div className="flex items-center gap-2"><Progress value={r.pct} className="h-2 w-20" /><span className="text-xs text-muted-foreground">{r.pct}%</span></div></TableCell></TableRow>
                 ))}
               </TableBody></Table>
@@ -258,8 +287,8 @@ export function RevenueDashboard({ refreshKey }: { refreshKey?: number }) {
             <div className="max-h-96 overflow-y-auto">
               <Table><TableHeader><TableRow><TableHead>Company</TableHead><TableHead>Plan</TableHead><TableHead>MRR</TableHead><TableHead>Since</TableHead></TableRow></TableHeader>
               <TableBody>
-                {TOP_CLIENTS.map((c) => (
-                  <TableRow key={c.name}><TableCell className="font-medium truncate max-w-[140px]">{c.name}</TableCell><TableCell><Badge variant="outline" className={planColor[c.plan]}>{c.plan}</Badge></TableCell><TableCell className="font-semibold">₹{c.mrr.toLocaleString('en-IN')}</TableCell><TableCell className="text-muted-foreground text-xs">{c.since}</TableCell></TableRow>
+                {topClients.map((c: any) => (
+                  <TableRow key={c.organizationName || c.name}><TableCell className="font-medium truncate max-w-[140px]">{c.organizationName || c.name}</TableCell><TableCell><Badge variant="outline" className={planColor[c.plan] || ""}>{c.plan || "N/A"}</Badge></TableCell><TableCell className="font-semibold">₹{(c.mrr || 0).toLocaleString('en-IN')}</TableCell><TableCell className="text-muted-foreground text-xs">{c.since}</TableCell></TableRow>
                 ))}
               </TableBody></Table>
             </div>
@@ -275,13 +304,15 @@ export function RevenueDashboard({ refreshKey }: { refreshKey?: number }) {
 // ═══════════════════════════════════════════════════════════════════════════
 
 export function WebsiteCMS({ refreshKey }: { refreshKey?: number }) {
+  const { data: cmsData, loading } = useApiData<any>('/api/admin/saas/website', {}, [refreshKey])
+  const { save, saving } = useApiSave('/api/admin/saas/website')
   const [heroTitle, setHeroTitle] = useState('HPHRMS — AI-Powered Human Resource Management')
   const [heroSubtitle, setHeroSubtitle] = useState('Streamline your HR operations with intelligent automation and real-time analytics.')
   const [ctaText, setCtaText] = useState('Start Free Trial')
   const [footerText, setFooterText] = useState('© 2025 HPHRMS Technologies Pvt. Ltd. All rights reserved. Made with ❤️ in India.')
   const [metaDesc, setMetaDesc] = useState('HPHRMS is a comprehensive AI-powered HR management system for modern Indian enterprises. Manage payroll, attendance, recruitment, and more.')
 
-  const handleSave = () => toast.success('CMS content saved successfully!')
+  const handleSave = () => save({ heroTitle, heroSubtitle, ctaText, footerText, metaDesc })
 
   return (
     <div className="space-y-6">
@@ -334,6 +365,8 @@ const DEFAULT_SECTIONS = [
 ]
 
 export function LandingPageBuilder({ refreshKey }: { refreshKey?: number }) {
+  const { data: lpData, loading } = useApiData<any>('/api/admin/saas/website?type=landing', {}, [refreshKey])
+  const { save } = useApiSave('/api/admin/saas/website?type=landing')
   const [sections, setSections] = useState(DEFAULT_SECTIONS)
   const toggle = (id: string) => {
     setSections((s) => s.map((sec) => sec.id === id ? { ...sec, enabled: !sec.enabled } : sec))
@@ -357,14 +390,14 @@ export function LandingPageBuilder({ refreshKey }: { refreshKey?: number }) {
                 </div>
                 <GripVertical className="h-4 w-4 text-muted-foreground shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm text-[var(--navy)] dark:text-white">{sec.name}</p>
+                  <p className="font-medium text-sm text-[var(--navy)] dark:text-white">{sec.organizationName || c.name}</p>
                   <p className="text-xs text-muted-foreground">Position {i + 1} of {sections.length}</p>
                 </div>
                 <Badge variant="outline" className={sec.enabled ? 'bg-emerald-500/10 text-emerald-700 border-emerald-500/30' : 'bg-gray-500/10 text-gray-500 border-gray-500/30'}>
                   {sec.enabled ? 'Visible' : 'Hidden'}
                 </Badge>
-                <Button variant="ghost" size="sm" onClick={() => toast.info(`Editing ${sec.name}`)}><Pencil className="h-4 w-4" /></Button>
-                <Button variant="ghost" size="sm" onClick={() => toast.info(`Previewing ${sec.name}`)}><Eye className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="sm" onClick={() => toast.info(`Editing ${sec.organizationName || c.name}`)}><Pencil className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="sm" onClick={() => toast.info(`Previewing ${sec.organizationName || c.name}`)}><Eye className="h-4 w-4" /></Button>
                 <Switch checked={sec.enabled} onCheckedChange={() => toggle(sec.id)} />
               </div>
             ))}
@@ -388,6 +421,7 @@ const INITIAL_SLIDES: Slide[] = [
 ]
 
 export function HeroBannerManager({ refreshKey }: { refreshKey?: number }) {
+  const { data: bannerData, loading } = useApiData<any>('/api/admin/saas/website?type=banners', { slides: [] }, [refreshKey])
   const [slides, setSlides] = useState(INITIAL_SLIDES)
   const addSlide = () => {
     const newSlide: Slide = { id: Date.now().toString(), title: 'New Banner Slide', subtitle: 'Enter subtitle text here.', cta: 'Learn More', link: '#', bgColor: '#002B5C', active: false }
@@ -463,6 +497,7 @@ const INITIAL_PLANS: Plan[] = [
 ]
 
 export function PricingEditor({ refreshKey }: { refreshKey?: number }) {
+  const { data: priceData, loading } = useApiData<any>('/api/admin/subscription-plans', { plans: [] }, [refreshKey])
   const [plans, setPlans] = useState(INITIAL_PLANS)
   const updatePlan = (id: string, field: keyof Plan, value: string | boolean | string[]) => {
     setPlans((p) => p.map((pl) => pl.id === id ? { ...pl, [field]: value } : pl))
@@ -530,6 +565,7 @@ const INITIAL_FAQS: FAQ[] = [
 ]
 
 export function FAQEditor({ refreshKey }: { refreshKey?: number }) {
+  const { data: faqData, loading, refetch: faqRefetch } = useApiData<any>('/api/admin/saas/content?type=faq', { items: [] }, [refreshKey])
   const [faqs, setFaqs] = useState(INITIAL_FAQS)
   const [adding, setAdding] = useState(false)
   const [newQ, setNewQ] = useState('')
@@ -606,6 +642,7 @@ const DEPARTMENTS = ['Engineering', 'Human Resources', 'Marketing', 'Product', '
 const JOB_TYPES = ['Full-time', 'Part-time', 'Contract', 'Internship']
 
 export function CareersManager({ refreshKey }: { refreshKey?: number }) {
+  const { data: careerData, loading, refetch: careerRefetch } = useApiData<any>('/api/admin/saas/content?type=career', { items: [] }, [refreshKey])
   const [jobs, setJobs] = useState(INITIAL_JOBS)
   const [dialog, setDialog] = useState(false)
   const [form, setForm] = useState<Job>({ id: '', title: '', department: 'Engineering', location: '', type: 'Full-time', salary: '', status: 'Draft' })
@@ -691,6 +728,7 @@ const INITIAL_POSTS: BlogPost[] = [
 const BLOG_CATEGORIES = ['Industry', 'Payroll', 'Culture', 'Technology', 'Product Updates', 'Compliance', 'HR Tips']
 
 export function BlogManager({ refreshKey }: { refreshKey?: number }) {
+  const { data: blogData, loading, refetch: blogRefetch } = useApiData<any>('/api/admin/saas/content?type=blog', { items: [] }, [refreshKey])
   const [posts, setPosts] = useState(INITIAL_POSTS)
   const [dialog, setDialog] = useState(false)
   const [form, setForm] = useState<BlogPost>({ id: '', title: '', slug: '', category: 'Industry', author: '', date: '', status: 'Draft' })
@@ -772,6 +810,7 @@ const INITIAL_SOCIALS: SocialPlatform[] = [
 ]
 
 export function SocialMediaManager({ refreshKey }: { refreshKey?: number }) {
+  const { data: socialData, loading } = useApiData<any>('/api/admin/saas/content?type=social', { platforms: [] }, [refreshKey])
   const [socials, setSocials] = useState(INITIAL_SOCIALS)
   const updateUrl = (id: string, url: string) => setSocials((s) => s.map((p) => p.id === id ? { ...p, url } : p))
   const toggleEnabled = (id: string) => setSocials((s) => s.map((p) => p.id === id ? { ...p, enabled: !p.enabled } : p))
@@ -818,6 +857,7 @@ const INITIAL_BACKUPS: BackupEntry[] = [
 ]
 
 export function BackupRestore({ refreshKey }: { refreshKey?: number }) {
+  const { data: backupData, loading, refetch } = useApiData<any>('/api/admin/saas/system?type=backup', { backups: [] }, [refreshKey])
   const [backups, setBackups] = useState(INITIAL_BACKUPS)
   const [autoBackup, setAutoBackup] = useState(true)
   const [schedule, setSchedule] = useState('Daily')
@@ -891,6 +931,8 @@ export function BackupRestore({ refreshKey }: { refreshKey?: number }) {
 
 // ─── 1. HPAI Management ───────────────────────────────────────────────────
 export function HPAIManagement({ refreshKey }: { refreshKey?: number }) {
+  const { data: aiData, loading } = useApiData<any>('/api/admin/saas/ai-config', {}, [refreshKey])
+  const { save } = useApiSave('/api/admin/saas/ai-config')
   const [model, setModel] = useState('gpt-4')
   const [temperature, setTemperature] = useState(0.7)
   const [maxTokens, setMaxTokens] = useState('2048')
@@ -955,6 +997,7 @@ export function HPAIManagement({ refreshKey }: { refreshKey?: number }) {
 
 // ─── 2. AI Models ──────────────────────────────────────────────────────────
 export function AIModels({ refreshKey }: { refreshKey?: number }) {
+  const { data: modelsData, loading } = useApiData<any>('/api/admin/saas/ai-config?type=models', { models: [] }, [refreshKey])
   const [models, setModels] = useState([
     { id: 1, name: 'GPT-4 Turbo', provider: 'OpenAI', version: 'v1.0.5', status: 'Active' as const, capabilities: ['Chat', 'Vision', 'Function Calling'], cost: 0.03 },
     { id: 2, name: 'GPT-3.5 Turbo', provider: 'OpenAI', version: 'v2.1.0', status: 'Active' as const, capabilities: ['Chat', 'Code'], cost: 0.002 },
@@ -1012,6 +1055,7 @@ export function AIModels({ refreshKey }: { refreshKey?: number }) {
 
 // ─── 3. Prompt Library ─────────────────────────────────────────────────────
 export function PromptLibrary({ refreshKey }: { refreshKey?: number }) {
+  const { data: promptData, loading, refetch: promptRefetch } = useApiData<any>('/api/admin/saas/ai-config?type=prompts', { items: [] }, [refreshKey])
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState('all')
   const [addOpen, setAddOpen] = useState(false)
@@ -1074,6 +1118,7 @@ export function PromptLibrary({ refreshKey }: { refreshKey?: number }) {
 
 // ─── 4. Knowledge Manager ──────────────────────────────────────────────────
 export function KnowledgeManager({ refreshKey }: { refreshKey?: number }) {
+  const { data: kbData, loading, refetch: kbRefetch } = useApiData<any>('/api/admin/saas/ai-config?type=knowledge', { items: [] }, [refreshKey])
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState('all')
   const [addOpen, setAddOpen] = useState(false)
@@ -1135,6 +1180,7 @@ export function KnowledgeManager({ refreshKey }: { refreshKey?: number }) {
 
 // ─── 5. Custom Domains ─────────────────────────────────────────────────────
 export function CustomDomains({ refreshKey }: { refreshKey?: number }) {
+  const { data: domData, loading } = useApiData<any>('/api/admin/saas/domains', { domains: [] }, [refreshKey])
   const [domains, setDomains] = useState([
     { id: 1, domain: 'app.acmecorp.com', ssl: 'Active' as const, verified: true, primary: true },
     { id: 2, domain: 'portal.globalhr.io', ssl: 'Pending' as const, verified: false, primary: false },
@@ -1180,6 +1226,8 @@ export function CustomDomains({ refreshKey }: { refreshKey?: number }) {
 
 // ─── 6. White Label ────────────────────────────────────────────────────────
 export function WhiteLabel({ refreshKey }: { refreshKey?: number }) {
+  const { data: wlData, loading } = useApiData<any>('/api/admin/saas/branding?type=whitelabel', {}, [refreshKey])
+  const { save } = useApiSave('/api/admin/saas/branding?type=whitelabel')
   const [form, setForm] = useState({ companyName: 'HPHRMS Enterprise', logoUrl: '/logo.png', primaryColor: '#002B5C', accentColor: '#D4AF37', faviconUrl: '/favicon.ico', loginMessage: 'Welcome to your HR management portal.', emailSender: 'HPHRMS System' })
   const update = (k: string, v: string) => setForm(prev => ({ ...prev, [k]: v }))
   return (
@@ -1210,6 +1258,8 @@ export function WhiteLabel({ refreshKey }: { refreshKey?: number }) {
 
 // ─── 7. Branding ───────────────────────────────────────────────────────────
 export function Branding({ refreshKey }: { refreshKey?: number }) {
+  const { data: brandData, loading } = useApiData<any>('/api/admin/saas/branding', {}, [refreshKey])
+  const { save } = useApiSave('/api/admin/saas/branding')
   const [colors, setColors] = useState({ primary: '#002B5C', secondary: '#1a3a6b', accent: '#D4AF37', background: '#ffffff' })
   const [css, setCss] = useState('/* Custom CSS overrides */\n.hero-section {\n  min-height: 60vh;\n}')
   const updateColor = (k: string, v: string) => setColors(prev => ({ ...prev, [k]: v }))
@@ -1267,6 +1317,7 @@ export function Branding({ refreshKey }: { refreshKey?: number }) {
 
 // ─── 8. Themes ─────────────────────────────────────────────────────────────
 export function Themes({ refreshKey }: { refreshKey?: number }) {
+  const { data: themeData, loading } = useApiData<any>('/api/admin/saas/branding?type=themes', {}, [refreshKey])
   const [activeTheme, setActiveTheme] = useState('navy')
   const themes = [
     { id: 'navy', name: 'Default Navy', primary: '#002B5C', secondary: '#1a3a6b', accent: '#D4AF37', bg: '#ffffff', text: '#002B5C' },
@@ -1307,6 +1358,7 @@ export function Themes({ refreshKey }: { refreshKey?: number }) {
 
 // ─── 9. Email Templates Manager ────────────────────────────────────────────
 export function EmailTemplatesManager({ refreshKey }: { refreshKey?: number }) {
+  const { data: emailData, loading } = useApiData<any>('/api/admin/saas/templates?type=email', { templates: [] }, [refreshKey])
   const [editOpen, setEditOpen] = useState(false)
   const [selected, setSelected] = useState<typeof templates[0] | null>(null)
   const [editSubject, setEditSubject] = useState('')
@@ -1353,6 +1405,7 @@ export function EmailTemplatesManager({ refreshKey }: { refreshKey?: number }) {
 
 // ─── 10. WhatsApp Templates ────────────────────────────────────────────────
 export function WhatsAppTemplates({ refreshKey }: { refreshKey?: number }) {
+  const { data: waData, loading } = useApiData<any>('/api/admin/saas/templates?type=whatsapp', { templates: [] }, [refreshKey])
   const [addOpen, setAddOpen] = useState(false)
   const [templates, setTemplates] = useState([
     { id: 1, name: 'Interview Reminder', category: 'Recruitment', language: 'English', status: 'Approved' as const, content: 'Hello {{name}}, this is a reminder for your interview scheduled on {{date}} at {{time}}. Please be prepared.' },
@@ -1401,6 +1454,8 @@ export function WhatsAppTemplates({ refreshKey }: { refreshKey?: number }) {
 
 // ─── 11. Maintenance Mode ──────────────────────────────────────────────────
 export function MaintenanceMode({ refreshKey }: { refreshKey?: number }) {
+  const { data: mmData, loading } = useApiData<any>('/api/admin/saas/system?type=maintenance', {}, [refreshKey])
+  const { save } = useApiSave('/api/admin/saas/system?type=maintenance')
   const [enabled, setEnabled] = useState(false)
   const [message, setMessage] = useState('We are performing scheduled maintenance. We will be back shortly.')
   const [downtime, setDowntime] = useState('30 minutes')
@@ -1449,6 +1504,7 @@ export function MaintenanceMode({ refreshKey }: { refreshKey?: number }) {
 
 // ─── 12. Monitoring ────────────────────────────────────────────────────────
 export function Monitoring({ refreshKey }: { refreshKey?: number }) {
+  const { data: monData, loading } = useApiData<any>('/api/admin/saas/system?type=monitoring', {}, [refreshKey])
   const services = [
     { name: 'API Server', icon: Server, status: 'green' },
     { name: 'Database', icon: Database, status: 'green' },

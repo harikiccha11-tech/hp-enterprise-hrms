@@ -1085,27 +1085,42 @@ function InvoicesView({ data, loading }: { data: DashboardData | null; loading: 
 
 // ── Employees View ──────────────────────────────────────────────────────────
 
-const MOCK_EMPLOYEES = [
-  { id: 'e1', name: 'Rajesh Kumar', code: 'HP-EMP-001', designation: 'Site Supervisor', department: 'Operations', status: 'ACTIVE', assignment: 'Mumbai Metro Project' },
-  { id: 'e2', name: 'Amit Sharma', code: 'HP-EMP-002', designation: 'Safety Officer', department: 'Safety', status: 'ACTIVE', assignment: 'Delhi Airport Site' },
-  { id: 'e3', name: 'Priya Patel', code: 'HP-EMP-003', designation: 'HR Coordinator', department: 'HR', status: 'ON_LEAVE', assignment: 'Corporate Office' },
-  { id: 'e4', name: 'Suresh Mehta', code: 'HP-EMP-004', designation: 'Electrician', department: 'Operations', status: 'ACTIVE', assignment: 'Mumbai Metro Project' },
-  { id: 'e5', name: 'Kavita Desai', code: 'HP-EMP-005', designation: 'Admin Assistant', department: 'Admin', status: 'ACTIVE', assignment: 'Corporate Office' },
-  { id: 'e6', name: 'Vikram Singh', code: 'HP-EMP-006', designation: 'Welder', department: 'Operations', status: 'ACTIVE', assignment: 'Pune Industrial Site' },
-  { id: 'e7', name: 'Neha Joshi', code: 'HP-EMP-007', designation: 'Accountant', department: 'Finance', status: 'ON_LEAVE', assignment: 'Corporate Office' },
-]
-
 function EmployeesView() {
+  const [employees, setEmployees] = useState<{ id: string; name: string; code: string; designation: string; department: string; status: string; assignment: string }[]>([])
+  const [empLoading, setEmpLoading] = useState(true)
+  const [empError, setEmpError] = useState(false)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('ALL')
-  const filtered = MOCK_EMPLOYEES.filter((e) => {
+
+  useEffect(() => {
+    let cancelled = false
+    fetch('/api/client/employees?limit=100')
+      .then((r) => { if (!r.ok) throw new Error(); return r.json() })
+      .then((json) => {
+        if (cancelled) return
+        setEmployees((json.employees || []).map((e: { id: string; fullName: string; employeeCode: string; designation: string; department: string; status: string }) => ({
+          id: e.id,
+          name: e.fullName,
+          code: e.employeeCode,
+          designation: e.designation || '—',
+          department: e.department || '—',
+          status: e.status === 'APPROVED' ? 'ACTIVE' : e.status,
+          assignment: '—',
+        })))
+      })
+      .catch(() => { if (!cancelled) { setEmpError(true); toast.error('Failed to load employees') } })
+      .finally(() => { if (!cancelled) setEmpLoading(false) })
+    return () => { cancelled = true }
+  }, [])
+
+  const filtered = employees.filter((e) => {
     if (statusFilter !== 'ALL' && e.status !== statusFilter) return false
     if (search && !e.name.toLowerCase().includes(search.toLowerCase()) && !e.code.toLowerCase().includes(search.toLowerCase())) return false
     return true
   })
-  const totalDeployed = MOCK_EMPLOYEES.length
-  const activeCount = MOCK_EMPLOYEES.filter((e) => e.status === 'ACTIVE').length
-  const onLeaveCount = MOCK_EMPLOYEES.filter((e) => e.status === 'ON_LEAVE').length
+  const totalDeployed = employees.length
+  const activeCount = employees.filter((e) => e.status === 'ACTIVE').length
+  const onLeaveCount = employees.filter((e) => e.status === 'ON_LEAVE').length
 
   return (
     <div className="space-y-6">
@@ -1129,6 +1144,15 @@ function EmployeesView() {
         </Card>
       </div>
 
+      {empLoading ? (
+        <div className="space-y-4">
+          {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
+        </div>
+      ) : empError ? (
+        <EmptyStateView icon={Users} title="Failed to load employees" message="Could not retrieve employee data. Please try again later." />
+      ) : employees.length === 0 ? (
+        <EmptyStateView icon={Users} title="No employees found" message="No employees have been deployed to your account yet." />
+      ) : (
       <Card>
         <CardHeader className="pb-3">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -1166,7 +1190,9 @@ function EmployeesView() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.map((emp) => (
+                {filtered.length === 0 ? (
+                  <TableRow><TableCell colSpan={6} className="py-8 text-center text-sm text-muted-foreground">No employees match your filters</TableCell></TableRow>
+                ) : filtered.map((emp) => (
                   <TableRow key={emp.id} className="hover:bg-muted/40">
                     <TableCell>
                       <div className="flex items-center gap-3">
@@ -1186,24 +1212,42 @@ function EmployeesView() {
           </div>
         </CardContent>
       </Card>
+      )}
     </div>
   )
 }
 
 // ── Departments View ───────────────────────────────────────────────────────
 
-const MOCK_DEPARTMENTS = [
-  { id: 'd1', name: 'Operations', head: 'Rajesh Kumar', employees: 24, status: 'ACTIVE', color: 'bg-blue-500' },
-  { id: 'd2', name: 'Safety', head: 'Amit Sharma', employees: 8, status: 'ACTIVE', color: 'bg-emerald-500' },
-  { id: 'd3', name: 'Human Resources', head: 'Priya Patel', employees: 6, status: 'ACTIVE', color: 'bg-violet-500' },
-  { id: 'd4', name: 'Finance', head: 'Neha Joshi', employees: 4, status: 'ACTIVE', color: 'bg-amber-500' },
-  { id: 'd5', name: 'Admin', head: 'Kavita Desai', employees: 5, status: 'ACTIVE', color: 'bg-rose-500' },
-  { id: 'd6', name: 'Quality Assurance', head: 'Vikram Singh', employees: 3, status: 'ON_HOLD', color: 'bg-slate-500' },
-]
+const DEPT_COLORS = ['bg-blue-500', 'bg-emerald-500', 'bg-violet-500', 'bg-amber-500', 'bg-rose-500', 'bg-sky-500', 'bg-teal-500', 'bg-orange-500', 'bg-pink-500', 'bg-indigo-500']
 
 function DepartmentsView() {
+  const [departments, setDepartments] = useState<{ id: string; name: string; head: string; employees: number; status: string; color: string }[]>([])
+  const [deptLoading, setDeptLoading] = useState(true)
+  const [deptError, setDeptError] = useState(false)
   const [selected, setSelected] = useState<string | null>(null)
-  const dept = selected ? MOCK_DEPARTMENTS.find((d) => d.id === selected) : null
+
+  useEffect(() => {
+    let cancelled = false
+    fetch('/api/client/departments')
+      .then((r) => { if (!r.ok) throw new Error(); return r.json() })
+      .then((json) => {
+        if (cancelled) return
+        setDepartments((json.departments || []).map((d: { name: string; employeeCount: number }, i: number) => ({
+          id: d.name.toLowerCase().replace(/\s+/g, '-'),
+          name: d.name,
+          head: '—',
+          employees: d.employeeCount,
+          status: 'ACTIVE',
+          color: DEPT_COLORS[i % DEPT_COLORS.length],
+        })))
+      })
+      .catch(() => { if (!cancelled) { setDeptError(true); toast.error('Failed to load departments') } })
+      .finally(() => { if (!cancelled) setDeptLoading(false) })
+    return () => { cancelled = true }
+  }, [])
+
+  const dept = selected ? departments.find((d) => d.id === selected) : null
 
   return (
     <div className="space-y-6">
@@ -1212,8 +1256,18 @@ function DepartmentsView() {
         <p className="mt-1 text-sm text-blue-100/80">Organisational structure and department overview for your deployed workforce.</p>
       </div>
 
+      {deptLoading ? (
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-32 w-full" />)}
+        </div>
+      ) : deptError ? (
+        <EmptyStateView icon={LayoutGrid} title="Failed to load departments" message="Could not retrieve department data. Please try again later." />
+      ) : departments.length === 0 ? (
+        <EmptyStateView icon={LayoutGrid} title="No departments found" message="No department data is available for your workforce yet." />
+      ) : (
+      <>
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-        {MOCK_DEPARTMENTS.map((d) => (
+        {departments.map((d) => (
           <Card
             key={d.id}
             className={cn('cursor-pointer transition-all hover:shadow-md hover:border-[var(--gold)]/40', selected === d.id && 'ring-2 ring-[var(--gold)]')}
@@ -1226,7 +1280,7 @@ function DepartmentsView() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="font-semibold text-[var(--navy)] dark:text-white">{d.name}</p>
-                  <p className="mt-0.5 text-xs text-muted-foreground">Head: {d.head}</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">Employees: {d.employees}</p>
                   <div className="mt-2 flex items-center justify-between">
                     <div className="flex items-center gap-1 text-xs text-muted-foreground">
                       <Users className="h-3.5 w-3.5" /> {d.employees} employees
@@ -1247,13 +1301,12 @@ function DepartmentsView() {
           </CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-3">
             <InfoRow label="Department" value={dept.name} />
-            <InfoRow label="Department Head" value={dept.head} />
             <InfoRow label="Total Employees" value={String(dept.employees)} />
             <InfoRow label="Status" value={dept.status.replace(/_/g, ' ')} />
-            <InfoRow label="Active Assignments" value={`${Math.ceil(dept.employees * 0.8)} of ${dept.employees}`} />
-            <InfoRow label="Avg. Tenure" value="14 months" />
           </CardContent>
         </Card>
+      )}
+      </>
       )}
     </div>
   )
@@ -1261,26 +1314,38 @@ function DepartmentsView() {
 
 // ── Attendance View ────────────────────────────────────────────────────────
 
-const MOCK_ATTENDANCE = [
-  { id: 'a1', employee: 'Rajesh Kumar', date: '2025-07-14', checkIn: '08:55', checkOut: '17:32', hours: '8.6', status: 'PRESENT' },
-  { id: 'a2', employee: 'Amit Sharma', date: '2025-07-14', checkIn: '09:22', checkOut: '17:45', hours: '8.4', status: 'LATE' },
-  { id: 'a3', employee: 'Priya Patel', date: '2025-07-14', checkIn: '—', checkOut: '—', hours: '0', status: 'ABSENT' },
-  { id: 'a4', employee: 'Suresh Mehta', date: '2025-07-14', checkIn: '08:48', checkOut: '13:15', hours: '4.5', status: 'HALF_DAY' },
-  { id: 'a5', employee: 'Kavita Desai', date: '2025-07-14', checkIn: '09:02', checkOut: '18:10', hours: '9.1', status: 'PRESENT' },
-  { id: 'a6', employee: 'Vikram Singh', date: '2025-07-14', checkIn: '08:59', checkOut: '17:30', hours: '8.5', status: 'PRESENT' },
-  { id: 'a7', employee: 'Rajesh Kumar', date: '2025-07-13', checkIn: '08:50', checkOut: '17:28', hours: '8.6', status: 'PRESENT' },
-  { id: 'a8', employee: 'Amit Sharma', date: '2025-07-13', checkIn: '09:18', checkOut: '17:40', hours: '8.4', status: 'LATE' },
-  { id: 'a9', employee: 'Suresh Mehta', date: '2025-07-13', checkIn: '08:45', checkOut: '17:30', hours: '8.7', status: 'PRESENT' },
-  { id: 'a10', employee: 'Kavita Desai', date: '2025-07-13', checkIn: '09:00', checkOut: '18:05', hours: '9.1', status: 'PRESENT' },
-]
-
 function AttendanceView() {
+  const [attendance, setAttendance] = useState<{ id: string; employee: string; date: string; checkIn: string; checkOut: string; hours: string; status: string }[]>([])
+  const [attLoading, setAttLoading] = useState(true)
+  const [attError, setAttError] = useState(false)
   const [search, setSearch] = useState('')
-  const filtered = MOCK_ATTENDANCE.filter((a) => !search || a.employee.toLowerCase().includes(search.toLowerCase()))
-  const presentCount = MOCK_ATTENDANCE.filter((a) => a.status === 'PRESENT').length
-  const absentCount = MOCK_ATTENDANCE.filter((a) => a.status === 'ABSENT').length
-  const lateCount = MOCK_ATTENDANCE.filter((a) => a.status === 'LATE').length
-  const halfDayCount = MOCK_ATTENDANCE.filter((a) => a.status === 'HALF_DAY').length
+
+  useEffect(() => {
+    let cancelled = false
+    fetch('/api/client/attendance')
+      .then((r) => { if (!r.ok) throw new Error(); return r.json() })
+      .then((json) => {
+        if (cancelled) return
+        setAttendance((json.attendance || []).map((a: { id: string; employeeName: string; date: string; checkIn: string | null; checkOut: string | null; status: string; hoursWorked: number | null }) => ({
+          id: a.id,
+          employee: a.employeeName,
+          date: a.date,
+          checkIn: a.checkIn ? format(new Date(a.checkIn), 'HH:mm') : '—',
+          checkOut: a.checkOut ? format(new Date(a.checkOut), 'HH:mm') : '—',
+          hours: a.hoursWorked != null ? String(a.hoursWorked) : '0',
+          status: a.status,
+        })))
+      })
+      .catch(() => { if (!cancelled) { setAttError(true); toast.error('Failed to load attendance') } })
+      .finally(() => { if (!cancelled) setAttLoading(false) })
+    return () => { cancelled = true }
+  }, [])
+
+  const filtered = attendance.filter((a) => !search || a.employee.toLowerCase().includes(search.toLowerCase()))
+  const presentCount = attendance.filter((a) => a.status === 'PRESENT').length
+  const absentCount = attendance.filter((a) => a.status === 'ABSENT').length
+  const lateCount = attendance.filter((a) => a.status === 'LATE').length
+  const halfDayCount = attendance.filter((a) => a.status === 'HALF_DAY').length
 
   return (
     <div className="space-y-6">
@@ -1308,6 +1373,15 @@ function AttendanceView() {
         </Card>
       </div>
 
+      {attLoading ? (
+        <div className="space-y-4">
+          {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
+        </div>
+      ) : attError ? (
+        <EmptyStateView icon={Clock} title="Failed to load attendance" message="Could not retrieve attendance data. Please try again later." />
+      ) : attendance.length === 0 ? (
+        <EmptyStateView icon={Clock} title="No attendance records" message="No attendance data is available yet." />
+      ) : (
       <Card>
         <CardHeader className="pb-3">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -1335,7 +1409,9 @@ function AttendanceView() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.map((a) => (
+                {filtered.length === 0 ? (
+                  <TableRow><TableCell colSpan={6} className="py-8 text-center text-sm text-muted-foreground">No attendance records match your search</TableCell></TableRow>
+                ) : filtered.map((a) => (
                   <TableRow key={a.id} className="hover:bg-muted/40">
                     <TableCell className="font-medium text-[var(--navy)] dark:text-white">{a.employee}</TableCell>
                     <TableCell className="text-xs text-muted-foreground">{fmtDate(a.date)}</TableCell>
@@ -1350,31 +1426,48 @@ function AttendanceView() {
           </div>
         </CardContent>
       </Card>
+      )}
     </div>
   )
 }
 
 // ── Leave View ────────────────────────────────────────────────────────────
 
-const MOCK_LEAVES = [
-  { id: 'l1', employee: 'Priya Patel', type: 'Casual Leave', from: '2025-07-14', to: '2025-07-16', days: 3, status: 'APPROVED' },
-  { id: 'l2', employee: 'Neha Joshi', type: 'Sick Leave', from: '2025-07-12', to: '2025-07-13', days: 2, status: 'APPROVED' },
-  { id: 'l3', employee: 'Rajesh Kumar', type: 'Earned Leave', from: '2025-07-20', to: '2025-07-25', days: 6, status: 'PENDING' },
-  { id: 'l4', employee: 'Suresh Mehta', type: 'Half-Day Leave', from: '2025-07-14', to: '2025-07-14', days: 0.5, status: 'APPROVED' },
-  { id: 'l5', employee: 'Vikram Singh', type: 'Casual Leave', from: '2025-07-28', to: '2025-07-29', days: 2, status: 'REJECTED' },
-  { id: 'l6', employee: 'Amit Sharma', type: 'Earned Leave', from: '2025-08-01', to: '2025-08-05', days: 5, status: 'PENDING' },
-]
-
 function LeaveView() {
+  const [leaves, setLeaves] = useState<{ id: string; employee: string; type: string; from: string; to: string; days: number; status: string }[]>([])
+  const [lvLoading, setLvLoading] = useState(true)
+  const [lvError, setLvError] = useState(false)
   const [statusFilter, setStatusFilter] = useState('ALL')
   const [typeFilter, setTypeFilter] = useState('ALL')
-  const filtered = MOCK_LEAVES.filter((l) => {
+
+  useEffect(() => {
+    let cancelled = false
+    fetch('/api/client/leave')
+      .then((r) => { if (!r.ok) throw new Error(); return r.json() })
+      .then((json) => {
+        if (cancelled) return
+        setLeaves((json.leaves || []).map((l: { id: string; employeeName: string; leaveType: string; startDate: string; endDate: string; days: number; status: string }) => ({
+          id: l.id,
+          employee: l.employeeName,
+          type: l.leaveType,
+          from: l.startDate,
+          to: l.endDate,
+          days: l.days,
+          status: l.status,
+        })))
+      })
+      .catch(() => { if (!cancelled) { setLvError(true); toast.error('Failed to load leave data') } })
+      .finally(() => { if (!cancelled) setLvLoading(false) })
+    return () => { cancelled = true }
+  }, [])
+
+  const filtered = leaves.filter((l) => {
     if (statusFilter !== 'ALL' && l.status !== statusFilter) return false
     if (typeFilter !== 'ALL' && l.type !== typeFilter) return false
     return true
   })
-  const totalLeaves = MOCK_LEAVES.reduce((s, l) => s + l.days, 0)
-  const usedLeaves = MOCK_LEAVES.filter((l) => l.status === 'APPROVED').reduce((s, l) => s + l.days, 0)
+  const totalLeaves = leaves.reduce((s, l) => s + l.days, 0)
+  const usedLeaves = leaves.filter((l) => l.status === 'APPROVED').reduce((s, l) => s + l.days, 0)
 
   return (
     <div className="space-y-6">
@@ -1386,7 +1479,7 @@ function LeaveView() {
       <div className="grid gap-4 grid-cols-2 sm:grid-cols-4">
         <Card className="p-4">
           <p className="text-xs uppercase tracking-wider text-muted-foreground">Total Requests</p>
-          <p className="mt-1 text-xl font-bold text-[var(--navy)] dark:text-white">{MOCK_LEAVES.length}</p>
+          <p className="mt-1 text-xl font-bold text-[var(--navy)] dark:text-white">{leaves.length}</p>
         </Card>
         <Card className="p-4">
           <p className="text-xs uppercase tracking-wider text-muted-foreground">Total Days</p>
@@ -1402,6 +1495,15 @@ function LeaveView() {
         </Card>
       </div>
 
+      {lvLoading ? (
+        <div className="space-y-4">
+          {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
+        </div>
+      ) : lvError ? (
+        <EmptyStateView icon={CalendarOff} title="Failed to load leave data" message="Could not retrieve leave records. Please try again later." />
+      ) : leaves.length === 0 ? (
+        <EmptyStateView icon={CalendarOff} title="No leave records" message="No leave requests have been submitted yet." />
+      ) : (
       <Card>
         <CardHeader className="pb-3">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -1443,7 +1545,9 @@ function LeaveView() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.map((l) => (
+                {filtered.length === 0 ? (
+                  <TableRow><TableCell colSpan={6} className="py-8 text-center text-sm text-muted-foreground">No leave records match your filters</TableCell></TableRow>
+                ) : filtered.map((l) => (
                   <TableRow key={l.id} className="hover:bg-muted/40">
                     <TableCell className="font-medium text-[var(--navy)] dark:text-white">{l.employee}</TableCell>
                     <TableCell><Badge variant="outline" className="text-[10px]">{l.type}</Badge></TableCell>
@@ -1458,24 +1562,58 @@ function LeaveView() {
           </div>
         </CardContent>
       </Card>
+      )}
     </div>
   )
 }
 
 // ── Payroll View ───────────────────────────────────────────────────────────
 
-const MOCK_PAYROLL = [
-  { id: 'p1', month: 'July 2025', basic: 312000, hra: 156000, deductions: 62400, netPay: 405600, status: 'PROCESSING' },
-  { id: 'p2', month: 'June 2025', basic: 308000, hra: 154000, deductions: 61200, netPay: 400800, status: 'PAID' },
-  { id: 'p3', month: 'May 2025', basic: 305000, hra: 152500, deductions: 60800, netPay: 396700, status: 'PAID' },
-  { id: 'p4', month: 'April 2025', basic: 300000, hra: 150000, deductions: 60100, netPay: 389900, status: 'PAID' },
-  { id: 'p5', month: 'March 2025', basic: 298000, hra: 149000, deductions: 59800, netPay: 387200, status: 'PAID' },
-  { id: 'p6', month: 'February 2025', basic: 295000, hra: 147500, deductions: 59500, netPay: 383000, status: 'PAID' },
-]
+const MONTH_NAMES = ['', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 
 function PayrollView() {
-  const totalNet = MOCK_PAYROLL.reduce((s, p) => s + p.netPay, 0)
-  const currentMonth = MOCK_PAYROLL[0]
+  const [payroll, setPayroll] = useState<{ id: string; month: string; basic: number; hra: number; deductions: number; netPay: number; status: string }[]>([])
+  const [prLoading, setPrLoading] = useState(true)
+  const [prError, setPrError] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    fetch('/api/client/payroll')
+      .then((r) => { if (!r.ok) throw new Error(); return r.json() })
+      .then((json) => {
+        if (cancelled) return
+        const raw = json.payrolls || []
+        // Aggregate per-employee records into monthly summaries
+        const monthMap = new Map<string, { basic: number; hra: number; deductions: number; netPay: number; status: string }>()
+        for (const p of raw) {
+          const key = `${p.year}-${String(p.month).padStart(2, '0')}`
+          const label = `${MONTH_NAMES[p.month] || ''} ${p.year}`
+          const existing = monthMap.get(key) || { basic: 0, hra: 0, deductions: 0, netPay: 0, status: p.status }
+          existing.basic += p.basicSalary || 0
+          existing.hra += p.hra || 0
+          existing.deductions += p.deductions || 0
+          existing.netPay += p.netSalary || 0
+          if (p.status === 'PROCESSING') existing.status = 'PROCESSING'
+          monthMap.set(key, existing)
+        }
+        const aggregated = Array.from(monthMap.entries()).map(([key, val], i) => ({
+          id: `pr-${key}`,
+          month: `${MONTH_NAMES[parseInt(key.split('-')[1])]} ${key.split('-')[0]}`,
+          basic: val.basic,
+          hra: val.hra,
+          deductions: val.deductions,
+          netPay: val.netPay,
+          status: i === 0 ? val.status : 'PAID',
+        })).reverse()
+        setPayroll(aggregated)
+      })
+      .catch(() => { if (!cancelled) { setPrError(true); toast.error('Failed to load payroll') } })
+      .finally(() => { if (!cancelled) setPrLoading(false) })
+    return () => { cancelled = true }
+  }, [])
+
+  const totalNet = payroll.reduce((s, p) => s + p.netPay, 0)
+  const currentMonth = payroll[0]
 
   return (
     <div className="space-y-6">
@@ -1484,7 +1622,18 @@ function PayrollView() {
         <p className="mt-1 text-sm text-blue-100/80">Monthly payroll summary and billing details for your workforce.</p>
       </div>
 
+      {prLoading ? (
+        <div className="space-y-4">
+          {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
+        </div>
+      ) : prError ? (
+        <EmptyStateView icon={Banknote} title="Failed to load payroll" message="Could not retrieve payroll data. Please try again later." />
+      ) : payroll.length === 0 ? (
+        <EmptyStateView icon={Banknote} title="No payroll data" message="No payroll records are available yet." />
+      ) : (
+      <>
       {/* Current month summary */}
+      {currentMonth && (
       <Card className="border-[var(--gold)]/30">
         <CardHeader className="pb-3">
           <div className="flex items-center gap-2">
@@ -1501,13 +1650,14 @@ function PayrollView() {
           </div>
         </CardContent>
       </Card>
+      )}
 
       <Card>
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-base">Payroll History</CardTitle>
             <div className="text-right">
-              <p className="text-[11px] uppercase tracking-wider text-muted-foreground">6-Month Total</p>
+              <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Total</p>
               <p className="font-bold text-[var(--navy)] dark:text-white">{formatINR(totalNet)}</p>
             </div>
           </div>
@@ -1526,7 +1676,7 @@ function PayrollView() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {MOCK_PAYROLL.map((p) => (
+                {payroll.map((p) => (
                   <TableRow key={p.id} className="hover:bg-muted/40">
                     <TableCell className="font-medium text-[var(--navy)] dark:text-white">{p.month}</TableCell>
                     <TableCell className="hidden sm:table-cell text-right font-mono text-sm">{formatINR(p.basic)}</TableCell>
@@ -1541,6 +1691,8 @@ function PayrollView() {
           </div>
         </CardContent>
       </Card>
+      </>
+      )}
     </div>
   )
 }
@@ -1653,19 +1805,35 @@ function SubscriptionView() {
 
 // ── Billing View ───────────────────────────────────────────────────────────
 
-const MOCK_INVOICES_BILLING = [
-  { id: 'b1', invoiceNo: 'INV-2025-007', date: '2025-07-01', amount: 312000, tax: 56160, total: 368160, status: 'PAID' },
-  { id: 'b2', invoiceNo: 'INV-2025-006', date: '2025-06-01', amount: 308000, tax: 55440, total: 363440, status: 'PAID' },
-  { id: 'b3', invoiceNo: 'INV-2025-005', date: '2025-05-01', amount: 305000, tax: 54900, total: 359900, status: 'PAID' },
-  { id: 'b4', invoiceNo: 'INV-2025-004', date: '2025-04-01', amount: 300000, tax: 54000, total: 354000, status: 'OVERDUE' },
-  { id: 'b5', invoiceNo: 'INV-2025-003', date: '2025-03-01', amount: 298000, tax: 53640, total: 351640, status: 'PAID' },
-  { id: 'b6', invoiceNo: 'INV-2025-008', date: '2025-08-01', amount: 315000, tax: 56700, total: 371700, status: 'SENT' },
-]
-
 function BillingView() {
-  const thisMonth = MOCK_INVOICES_BILLING.find((i) => i.status === 'SENT')
-  const overdueTotal = MOCK_INVOICES_BILLING.filter((i) => i.status === 'OVERDUE').reduce((s, i) => s + i.total, 0)
-  const paidTotal = MOCK_INVOICES_BILLING.filter((i) => i.status === 'PAID').reduce((s, i) => s + i.total, 0)
+  const [invoices, setInvoices] = useState<{ id: string; invoiceNo: string; date: string; amount: number; tax: number; total: number; status: string }[]>([])
+  const [billLoading, setBillLoading] = useState(true)
+  const [billError, setBillError] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    fetch('/api/client/billing')
+      .then((r) => { if (!r.ok) throw new Error(); return r.json() })
+      .then((json) => {
+        if (cancelled) return
+        setInvoices((json.invoices || []).map((inv: { id: string; invoiceNumber: string; issueDate: string; amount: number; tax: number; total: number; status: string }) => ({
+          id: inv.id,
+          invoiceNo: inv.invoiceNumber,
+          date: inv.issueDate,
+          amount: inv.amount,
+          tax: inv.tax,
+          total: inv.total,
+          status: inv.status,
+        })))
+      })
+      .catch(() => { if (!cancelled) { setBillError(true); toast.error('Failed to load billing data') } })
+      .finally(() => { if (!cancelled) setBillLoading(false) })
+    return () => { cancelled = true }
+  }, [])
+
+  const thisMonth = invoices.find((i) => i.status === 'SENT')
+  const overdueTotal = invoices.filter((i) => i.status === 'OVERDUE').reduce((s, i) => s + i.total, 0)
+  const paidTotal = invoices.filter((i) => i.status === 'PAID').reduce((s, i) => s + i.total, 0)
 
   return (
     <div className="space-y-6">
@@ -1674,6 +1842,16 @@ function BillingView() {
         <p className="mt-1 text-sm text-blue-100/80">Invoice history, payment records, and billing summaries.</p>
       </div>
 
+      {billLoading ? (
+        <div className="space-y-4">
+          {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
+        </div>
+      ) : billError ? (
+        <EmptyStateView icon={Receipt} title="Failed to load billing" message="Could not retrieve billing data. Please try again later." />
+      ) : invoices.length === 0 ? (
+        <EmptyStateView icon={Receipt} title="No invoices" message="No invoice data is available yet." />
+      ) : (
+      <>
       <div className="grid gap-4 grid-cols-2 sm:grid-cols-4">
         <Card className="p-4">
           <p className="text-xs uppercase tracking-wider text-muted-foreground">This Month</p>
@@ -1716,7 +1894,7 @@ function BillingView() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {MOCK_INVOICES_BILLING.map((inv) => (
+                {invoices.map((inv) => (
                   <TableRow key={inv.id} className="hover:bg-muted/40">
                     <TableCell className="font-mono text-xs font-semibold text-[var(--navy)] dark:text-[var(--gold-light)]">{inv.invoiceNo}</TableCell>
                     <TableCell className="text-xs text-muted-foreground">{fmtDate(inv.date)}</TableCell>
@@ -1736,6 +1914,8 @@ function BillingView() {
           </div>
         </CardContent>
       </Card>
+      </>
+      )}
     </div>
   )
 }
@@ -1745,32 +1925,65 @@ function BillingView() {
 const REPORT_TYPES = [
   { id: 'workforce', label: 'Workforce Summary', icon: Users, desc: 'Employee deployment, headcount trends, and role distribution', color: 'bg-blue-500' },
   { id: 'attendance', label: 'Attendance Analysis', icon: Clock, desc: 'Attendance rates, late arrivals, and absence patterns', color: 'bg-emerald-500' },
-  { id: 'leave', label: 'Leave Trends', icon: CalendarDays, desc: 'Leave utilisation by type, department, and period', color: 'bg-violet-500' },
   { id: 'cost', label: 'Cost Analysis', icon: IndianRupee, desc: 'Payroll costs, billing trends, and budget utilisation', color: 'bg-amber-500' },
 ]
 
-const MOCK_REPORT_DATA: Record<string, { col: string[]; rows: string[][] }> = {
-  workforce: {
-    col: ['Department', 'Headcount', 'Active', 'On Leave', 'Avg. Tenure'],
-    rows: [['Operations', '24', '22', '2', '16 months'], ['Safety', '8', '8', '0', '12 months'], ['Human Resources', '6', '5', '1', '20 months'], ['Finance', '4', '3', '1', '18 months'], ['Admin', '5', '5', '0', '14 months']],
-  },
-  attendance: {
-    col: ['Week', 'Present %', 'Late %', 'Absent %', 'Avg. Hours'],
-    rows: [['Week 28 (Jul 14)', '87%', '7%', '6%', '8.2h'], ['Week 27 (Jul 7)', '91%', '5%', '4%', '8.5h'], ['Week 26 (Jun 30)', '89%', '6%', '5%', '8.3h'], ['Week 25 (Jun 23)', '93%', '4%', '3%', '8.6h'], ['Week 24 (Jun 16)', '85%', '8%', '7%', '8.1h']],
-  },
-  leave: {
-    col: ['Leave Type', 'Total Days', 'Used', 'Balance', 'Utilisation'],
-    rows: [['Casual Leave', '72', '28', '44', '39%'], ['Sick Leave', '36', '12', '24', '33%'], ['Earned Leave', '90', '45', '45', '50%'], ['Half-Day Leave', '24', '8', '16', '33%']],
-  },
-  cost: {
-    col: ['Month', 'Payroll', 'Deductions', 'Net Cost', 'vs Budget'],
-    rows: [['July 2025', '₹4,68,000', '₹62,400', '₹4,05,600', '-4%'], ['June 2025', '₹4,62,000', '₹61,200', '₹4,00,800', '-6%'], ['May 2025', '₹4,57,500', '₹60,800', '₹3,96,700', '-7%'], ['April 2025', '₹4,50,000', '₹60,100', '₹3,89,900', '-8%'], ['March 2025', '₹4,47,000', '₹59,800', '₹3,87,200', '-9%']],
-  },
-}
-
 function ReportsView() {
   const [activeReport, setActiveReport] = useState('workforce')
-  const rd = MOCK_REPORT_DATA[activeReport]
+  const [reportData, setReportData] = useState<{ employees: { total: number; active: number; onLeave: number; departments: number }; attendance: { presentToday: number; absentToday: number }; payroll: { totalPaidThisMonth: number; month: number; year: number } } | null>(null)
+  const [rptLoading, setRptLoading] = useState(true)
+  const [rptError, setRptError] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    fetch('/api/client/reports')
+      .then((r) => { if (!r.ok) throw new Error(); return r.json() })
+      .then((json) => {
+        if (cancelled) return
+        setReportData(json)
+      })
+      .catch(() => { if (!cancelled) { setRptError(true); toast.error('Failed to load reports') } })
+      .finally(() => { if (!cancelled) setRptLoading(false) })
+    return () => { cancelled = true }
+  }, [])
+
+  const getReportTable = () => {
+    if (!reportData) return { col: [] as string[], rows: [] as string[][] }
+    if (activeReport === 'workforce') {
+      return {
+        col: ['Metric', 'Value'],
+        rows: [
+          ['Total Employees', String(reportData.employees.total)],
+          ['Active Employees', String(reportData.employees.active)],
+          ['On Leave', String(reportData.employees.onLeave)],
+          ['Departments', String(reportData.employees.departments)],
+        ],
+      }
+    }
+    if (activeReport === 'attendance') {
+      const total = reportData.attendance.presentToday + reportData.attendance.absentToday
+      return {
+        col: ['Metric', 'Value'],
+        rows: [
+          ['Present Today', `${reportData.attendance.presentToday} (${total > 0 ? Math.round(reportData.attendance.presentToday / total * 100) : 0}%)`],
+          ['Absent Today', `${reportData.attendance.absentToday} (${total > 0 ? Math.round(reportData.attendance.absentToday / total * 100) : 0}%)`],
+          ['Total', String(total)],
+        ],
+      }
+    }
+    if (activeReport === 'cost') {
+      return {
+        col: ['Metric', 'Value'],
+        rows: [
+          ['Month', `${MONTH_NAMES[reportData.payroll.month]} ${reportData.payroll.year}`],
+          ['Total Paid This Month', formatINR(reportData.payroll.totalPaidThisMonth)],
+        ],
+      }
+    }
+    return { col: [] as string[], rows: [] as string[][] }
+  }
+
+  const rd = getReportTable()
 
   return (
     <div className="space-y-6">
@@ -1778,7 +1991,7 @@ function ReportsView() {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-xl font-bold">Reports & Analytics</h2>
-            <p className="mt-1 text-sm text-blue-100/80">Insights into your workforce, attendance, leave, and costs.</p>
+            <p className="mt-1 text-sm text-blue-100/80">Insights into your workforce, attendance, and costs.</p>
           </div>
           <Button variant="outline" size="sm" className="gap-1.5 border-white/20 text-white hover:bg-white/10" onClick={() => toast.info('Export initiated')}>
             <FileDown className="h-4 w-4" /> Export Report
@@ -1787,7 +2000,7 @@ function ReportsView() {
       </div>
 
       {/* Report type cards */}
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         {REPORT_TYPES.map((rt) => {
           const RtIcon = rt.icon
           return (
@@ -1812,7 +2025,13 @@ function ReportsView() {
         })}
       </div>
 
-      {/* Report table */}
+      {rptLoading ? (
+        <div className="space-y-4">
+          {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
+        </div>
+      ) : rptError ? (
+        <EmptyStateView icon={BarChart3} title="Failed to load reports" message="Could not retrieve report data. Please try again later." />
+      ) : (
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base">{REPORT_TYPES.find((r) => r.id === activeReport)?.label}</CardTitle>
@@ -1840,6 +2059,7 @@ function ReportsView() {
           </div>
         </CardContent>
       </Card>
+      )}
     </div>
   )
 }
@@ -1848,27 +2068,36 @@ function ReportsView() {
 
 const DOWNLOAD_CATEGORIES = ['Reports', 'Invoices', 'Contracts', 'Policies'] as const
 
-type DownloadCategory = (typeof DOWNLOAD_CATEGORIES)[number]
 
-const MOCK_FILES: { id: string; name: string; type: DownloadCategory; size: string; date: string; format: string }[] = [
-  { id: 'f1', name: 'Monthly Workforce Report — June 2025', type: 'Reports', size: '1.2 MB', date: '2025-07-01', format: 'PDF' },
-  { id: 'f2', name: 'Attendance Summary — Q2 2025', type: 'Reports', size: '845 KB', date: '2025-07-01', format: 'XLSX' },
-  { id: 'f3', name: 'Leave Utilisation Report', type: 'Reports', size: '540 KB', date: '2025-06-28', format: 'PDF' },
-  { id: 'f4', name: 'INV-2025-007 — July Invoice', type: 'Invoices', size: '320 KB', date: '2025-07-01', format: 'PDF' },
-  { id: 'f5', name: 'INV-2025-006 — June Invoice', type: 'Invoices', size: '315 KB', date: '2025-06-01', format: 'PDF' },
-  { id: 'f6', name: 'INV-2025-005 — May Invoice', type: 'Invoices', size: '310 KB', date: '2025-05-01', format: 'PDF' },
-  { id: 'f7', name: 'Master Service Agreement v3', type: 'Contracts', size: '2.4 MB', date: '2025-01-15', format: 'PDF' },
-  { id: 'f8', name: 'Amendment — Work Order Expansion', type: 'Contracts', size: '890 KB', date: '2025-04-10', format: 'PDF' },
-  { id: 'f9', name: 'Employee Safety Policy 2025', type: 'Policies', size: '1.1 MB', date: '2025-01-01', format: 'PDF' },
-  { id: 'f10', name: 'Leave & Attendance Policy', type: 'Policies', size: '680 KB', date: '2025-01-01', format: 'PDF' },
-  { id: 'f11', name: 'Code of Conduct', type: 'Policies', size: '420 KB', date: '2025-01-01', format: 'PDF' },
-  { id: 'f12', name: 'Cost Analysis — H1 2025', type: 'Reports', size: '1.5 MB', date: '2025-07-05', format: 'XLSX' },
-]
 
 function DownloadsView() {
+  const [documents, setDocuments] = useState<{ id: string; name: string; type: string; size: string; date: string; format: string }[]>([])
+  const [dlLoading, setDlLoading] = useState(true)
+  const [dlError, setDlError] = useState(false)
   const [search, setSearch] = useState('')
-  const [category, setCategory] = useState<DownloadCategory | 'ALL'>('ALL')
-  const filtered = MOCK_FILES.filter((f) => {
+  const [category, setCategory] = useState<string>('ALL')
+
+  useEffect(() => {
+    let cancelled = false
+    fetch('/api/client/downloads')
+      .then((r) => { if (!r.ok) throw new Error(); return r.json() })
+      .then((json) => {
+        if (cancelled) return
+        setDocuments((json.documents || []).map((d: { id: string; fileName: string; category: string; fileSize: string | null; uploadedAt: string; fileType: string }) => ({
+          id: d.id,
+          name: d.fileName,
+          type: d.category || 'Other',
+          size: d.fileSize || '—',
+          date: d.uploadedAt.slice(0, 10),
+          format: d.fileType.split('/').pop()?.toUpperCase() || 'FILE',
+        })))
+      })
+      .catch(() => { if (!cancelled) { setDlError(true); toast.error('Failed to load downloads') } })
+      .finally(() => { if (!cancelled) setDlLoading(false) })
+    return () => { cancelled = true }
+  }, [])
+
+  const filtered = documents.filter((f) => {
     if (category !== 'ALL' && f.type !== category) return false
     if (search && !f.name.toLowerCase().includes(search.toLowerCase())) return false
     return true
@@ -1876,7 +2105,7 @@ function DownloadsView() {
 
   const formatColor = (fmt: string) => {
     if (fmt === 'PDF') return 'bg-red-500/15 text-red-700 dark:text-red-400 border-red-500/25'
-    if (fmt === 'XLSX') return 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/25'
+    if (fmt === 'XLSX' || fmt === 'XLS') return 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/25'
     return 'bg-primary/10 text-primary border-primary/20'
   }
 
@@ -1887,8 +2116,18 @@ function DownloadsView() {
         <p className="mt-1 text-sm text-blue-100/80">Access and download reports, invoices, contracts, and policies.</p>
       </div>
 
+      {dlLoading ? (
+        <div className="space-y-4">
+          {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
+        </div>
+      ) : dlError ? (
+        <EmptyStateView icon={FolderOpen} title="Failed to load downloads" message="Could not retrieve download data. Please try again later." />
+      ) : documents.length === 0 ? (
+        <EmptyStateView icon={FolderOpen} title="No downloads available" message="No documents are available for download yet." />
+      ) : (
+      <>
       {/* Category tabs */}
-      <Tabs defaultValue="ALL" onValueChange={(v) => setCategory(v as DownloadCategory | 'ALL')}>
+      <Tabs defaultValue="ALL" onValueChange={(v) => setCategory(v)}>
         <TabsList>
           <TabsTrigger value="ALL">All</TabsTrigger>
           {DOWNLOAD_CATEGORIES.map((c) => (
@@ -1921,7 +2160,9 @@ function DownloadsView() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.map((f) => (
+                {filtered.length === 0 ? (
+                  <TableRow><TableCell colSpan={6} className="py-8 text-center text-sm text-muted-foreground">No files match your filters</TableCell></TableRow>
+                ) : filtered.map((f) => (
                   <TableRow key={f.id} className="hover:bg-muted/40">
                     <TableCell>
                       <div className="flex items-center gap-2">
@@ -1945,6 +2186,8 @@ function DownloadsView() {
           </div>
         </CardContent>
       </Card>
+      </>
+      )}
     </div>
   )
 }

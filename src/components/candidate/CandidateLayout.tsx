@@ -197,50 +197,70 @@ function DashboardModule({ lang, onNavigate }: { lang: LangCode; onNavigate: (k:
 
   const [apps, setApps] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [dashboardStats, setDashboardStats] = useState<{ totalApplications: number; pendingApplications: number; interviewScheduled: number; offers: number } | null>(null)
+  const [profileCompletion, setProfileCompletion] = useState(0)
 
   useEffect(() => {
     let cancelled = false
-    const saved = localStorage.getItem('hpe-cand-applications')
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved)
-        if (!cancelled) { queueMicrotask(() => { setApps(parsed); setLoading(false) }) }
-      } catch {}
-    }
-    // Also try API
+
+    // Fetch dashboard stats
+    fetch('/api/candidate/dashboard', { cache: 'no-store' })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (cancelled) return
+        if (data?.stats) setDashboardStats(data.stats)
+      })
+      .catch(() => {})
+
+    // Fetch applications for recent activity
     fetch('/api/candidate/applications', { cache: 'no-store' })
       .then(r => r.ok ? r.json() : null)
       .then(data => {
         if (cancelled) return
-        if (data?.applications) setApps(data.applications)
+        if (data?.applications) {
+          setApps(data.applications.map((a: any) => ({
+            id: a.id,
+            jobTitle: a.job?.title || 'Unknown Position',
+            company: a.company?.name || 'HP Enterprise',
+            status: a.status,
+            appliedDate: a.appliedDate || a.createdAt,
+          })))
+        }
         setLoading(false)
       })
       .catch(() => { if (!cancelled) setLoading(false) })
+
+    // Fetch resume for profile completion
+    fetch('/api/candidate/resume', { cache: 'no-store' })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (cancelled || !data) return
+        let filled = 0
+        const total = 5
+        const fullName = [data.firstName, data.lastName].filter(Boolean).join(' ').trim()
+        if (fullName) filled++
+        if (data.email) filled++
+        if (data.summary) filled++
+        const edu = Array.isArray(data.education) ? data.education : []
+        const exp = Array.isArray(data.experience) ? data.experience : []
+        const sk = Array.isArray(data.skills) ? data.skills : []
+        if (edu.length > 0) filled++
+        if (exp.length > 0 || sk.length > 0) filled++
+        setProfileCompletion(Math.round((filled / total) * 100))
+      })
+      .catch(() => {})
+
     return () => { cancelled = true }
   }, [])
 
   const stats = {
-    applied: apps.filter((a: any) => a.status === 'APPLIED' || a.status === 'Applied').length,
-    screening: apps.filter((a: any) => a.status === 'SCREENING' || a.status === 'Screening').length,
-    interviewing: apps.filter((a: any) => a.status === 'INTERVIEW' || a.status === 'Interview').length,
-    offered: apps.filter((a: any) => a.status === 'OFFERED' || a.status === 'Offered').length,
-    rejected: apps.filter((a: any) => a.status === 'REJECTED' || a.status === 'Rejected').length,
-    withdrawn: apps.filter((a: any) => a.status === 'WITHDRAWN' || a.status === 'Withdrawn').length,
+    applied: dashboardStats?.totalApplications ?? apps.filter((a: any) => a.status === 'APPLIED' || a.status === 'Applied').length,
+    screening: dashboardStats?.pendingApplications ?? apps.filter((a: any) => a.status === 'SCREENING' || a.status === 'Screening').length,
+    interviewing: dashboardStats?.interviewScheduled ?? apps.filter((a: any) => a.status === 'INTERVIEW' || a.status === 'Interview').length,
+    offered: dashboardStats?.offers ?? apps.filter((a: any) => a.status === 'OFFERED' || a.status === 'Offered').length,
+    rejected: 0,
+    withdrawn: 0,
   }
-
-  const profileCompletion = (() => {
-    try {
-      const resume = JSON.parse(localStorage.getItem('hpe-cand-resume') || '{}')
-      let filled = 0
-      const total = 5
-      if (resume.fullName) filled++
-      if (resume.email) filled++
-      if (resume.summary) filled++
-      if (resume.education?.length > 0) filled++
-      if (resume.experience?.length > 0 || resume.skills?.length > 0) filled++
-      return Math.round((filled / total) * 100)
-    } catch { return 0 }
-  })()
 
   const statCards = [
     { label: t('candidate.stat.applied', lang), value: stats.applied, icon: FileText, color: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 dark:text-emerald-400' },
@@ -377,17 +397,6 @@ interface JobListing {
   skills: string[]
 }
 
-const MOCK_JOBS: JobListing[] = [
-  { id: 'j1', title: 'Senior React Developer', company: 'HP Enterprise', location: 'Bengaluru', salaryMin: 1200000, salaryMax: 1800000, type: 'Full-time', postedDate: '2025-06-01T00:00:00Z', description: 'We are looking for an experienced React developer to join our engineering team.', skills: ['React', 'TypeScript', 'Next.js', 'Tailwind CSS'] },
-  { id: 'j2', title: 'EHS Officer', company: 'HP Enterprise', location: 'Chitradurga', salaryMin: 350000, salaryMax: 500000, type: 'Full-time', postedDate: '2025-06-03T00:00:00Z', description: 'Seeking a qualified EHS Officer for safety compliance and site inspections.', skills: ['EHS', 'Safety Audit', 'OSHA', 'MS Office'] },
-  { id: 'j3', title: 'Site Engineer - Civil', company: 'HP Enterprise', location: 'Mysuru', salaryMin: 400000, salaryMax: 600000, type: 'Full-time', postedDate: '2025-06-05T00:00:00Z', description: 'Civil site engineer for ongoing commercial construction projects.', skills: ['AutoCAD', 'Site Supervision', 'RCC', 'Billing'] },
-  { id: 'j4', title: 'HR Executive', company: 'HP Enterprise', location: 'Bengaluru', salaryMin: 300000, salaryMax: 450000, type: 'Full-time', postedDate: '2025-06-07T00:00:00Z', description: 'HR Executive for recruitment, onboarding, and employee relations.', skills: ['Recruitment', 'Payroll', 'Labour Laws', 'Excel'] },
-  { id: 'j5', title: 'MEP Coordinator', company: 'HP Enterprise', location: 'Bengaluru', salaryMin: 600000, salaryMax: 900000, type: 'Contract', postedDate: '2025-06-08T00:00:00Z', description: 'Coordinate MEP activities across multiple project sites.', skills: ['MEP', 'AutoCAD', 'Revit', 'Coordination'] },
-  { id: 'j6', title: 'QA/QC Engineer', company: 'HP Enterprise', location: 'Hubli', salaryMin: 500000, salaryMax: 700000, type: 'Full-time', postedDate: '2025-06-10T00:00:00Z', description: 'Quality assurance and control for construction projects.', skills: ['QA/QC', 'IS Codes', 'Testing', 'Documentation'] },
-  { id: 'j7', title: 'Data Entry Operator', company: 'HP Enterprise', location: 'Chitradurga', salaryMin: 180000, salaryMax: 240000, type: 'Part-time', postedDate: '2025-06-12T00:00:00Z', description: 'Part-time data entry for HR and payroll records.', skills: ['Excel', 'Data Entry', 'Typing'] },
-  { id: 'j8', title: 'Accountant', company: 'HP Enterprise', location: 'Bengaluru', salaryMin: 400000, salaryMax: 550000, type: 'Full-time', postedDate: '2025-06-13T00:00:00Z', description: 'Handle accounts, GST filing, and financial reporting.', skills: ['Tally', 'GST', 'Accounting', 'Excel'] },
-]
-
 function BrowseJobsModule({ lang }: { lang: LangCode }) {
   const [jobs, setJobs] = useState<JobListing[]>([])
   const [search, setSearch] = useState('')
@@ -398,19 +407,50 @@ function BrowseJobsModule({ lang }: { lang: LangCode }) {
 
   useEffect(() => {
     let cancelled = false
-    fetch('/api/public/careers', { cache: 'no-store' })
+    const mapApiJob = (j: any): JobListing => ({
+      id: j.id,
+      title: j.title || '',
+      company: j.company || j.department || 'HP Enterprise',
+      location: j.location || '',
+      salaryMin: j.salaryMin ?? 0,
+      salaryMax: j.salaryMax ?? 0,
+      type: j.type || j.employmentType || 'Full-time',
+      postedDate: j.postedAt || j.postedDate || '',
+      description: j.description || j.requirements || '',
+      skills: j.skills || [],
+    })
+
+    // Try candidate API first, fallback to public careers
+    fetch('/api/candidate/jobs', { cache: 'no-store' })
       .then(r => r.ok ? r.json() : null)
       .then(data => {
         if (cancelled) return
         if (data?.jobs?.length > 0) {
-          setJobs(data.jobs)
-        } else {
-          setJobs(MOCK_JOBS)
+          setJobs(data.jobs.map(mapApiJob))
+          setLoading(false)
+          return
         }
-        setLoading(false)
+        // Fallback to public careers
+        return fetch('/api/public/careers', { cache: 'no-store' })
+          .then(r2 => r2.ok ? r2.json() : null)
+          .then(data2 => {
+            if (cancelled) return
+            if (data2?.jobs?.length > 0) setJobs(data2.jobs.map(mapApiJob))
+            setLoading(false)
+          })
       })
       .catch(() => {
-        if (!cancelled) { setJobs(MOCK_JOBS); setLoading(false) }
+        // On error, try public careers as fallback
+        fetch('/api/public/careers', { cache: 'no-store' })
+          .then(r2 => r2.ok ? r2.json() : null)
+          .then(data2 => {
+            if (cancelled) return
+            if (data2?.jobs?.length > 0) {
+              setJobs(data2.jobs.map(mapApiJob))
+            }
+            setLoading(false)
+          })
+          .catch(() => { if (!cancelled) setLoading(false) })
       })
     return () => { cancelled = true }
   }, [])
@@ -427,30 +467,26 @@ function BrowseJobsModule({ lang }: { lang: LangCode }) {
 
   const handleApply = (job: JobListing) => {
     setApplying(job.id)
-    setTimeout(() => {
-      try {
-        const existing = JSON.parse(localStorage.getItem('hpe-cand-applications') || '[]')
-        const already = existing.some((a: any) => a.jobId === job.id)
-        if (already) {
-          toast.error(t('candidate.alreadyApplied', lang))
-          setApplying(null)
-          return
-        }
-        const newApp = {
-          id: `APP-${Date.now().toString(36).toUpperCase()}`,
-          jobId: job.id,
-          jobTitle: job.title,
-          company: job.company,
-          appliedDate: new Date().toISOString(),
-          status: 'Applied',
-        }
-        localStorage.setItem('hpe-cand-applications', JSON.stringify([newApp, ...existing]))
+    fetch('/api/candidate/applications', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jobPostingId: job.id }),
+    })
+      .then(r => {
+        if (!r.ok) return r.json().then((d: any) => { throw new Error(d.error || 'Failed') })
+        return r.json()
+      })
+      .then(() => {
         toast.success(t('candidate.appliedSuccess', lang))
-      } catch {
-        toast.error(t('candidate.applyFailed', lang))
-      }
-      setApplying(null)
-    }, 800)
+      })
+      .catch((e: any) => {
+        if (e?.message?.includes('already applied') || e?.message?.includes('already')) {
+          toast.error(t('candidate.alreadyApplied', lang))
+        } else {
+          toast.error(t('candidate.applyFailed', lang))
+        }
+      })
+      .finally(() => setApplying(null))
   }
 
   const typeColor = (type: string) => {
@@ -580,18 +616,22 @@ function MyApplicationsModule({ lang }: { lang: LangCode }) {
 
   useEffect(() => {
     let cancelled = false
-    const saved = localStorage.getItem('hpe-cand-applications')
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved)
-        if (!cancelled) { queueMicrotask(() => { setApps(parsed); setLoading(false) }) }
-      } catch {}
-    }
     fetch('/api/candidate/applications', { cache: 'no-store' })
       .then(r => r.ok ? r.json() : null)
       .then(data => {
         if (cancelled) return
-        if (data?.applications) setApps(data.applications)
+        if (data?.applications) {
+          setApps(data.applications.map((a: any) => ({
+            id: a.id,
+            jobTitle: a.job?.title || a.jobTitle || '—',
+            company: a.company?.name || a.company || 'HP Enterprise',
+            status: a.status,
+            appliedDate: a.appliedDate,
+            coverLetter: a.coverLetter,
+            jobType: a.job?.employmentType,
+            jobLocation: a.job?.location,
+          })))
+        }
         setLoading(false)
       })
       .catch(() => { if (!cancelled) setLoading(false) })
@@ -599,9 +639,9 @@ function MyApplicationsModule({ lang }: { lang: LangCode }) {
   }, [])
 
   const handleWithdraw = (id: string) => {
+    // Optimistic local update (no withdraw API exists)
     const updated = apps.map(a => a.id === id ? { ...a, status: 'Withdrawn' } : a)
     setApps(updated)
-    try { localStorage.setItem('hpe-cand-applications', JSON.stringify(updated)) } catch {}
     toast.success(t('candidate.withdrawn', lang))
   }
 
@@ -692,12 +732,6 @@ interface Interview {
   status: string
 }
 
-const MOCK_INTERVIEWS: Interview[] = [
-  { id: 'iv1', jobTitle: 'Senior React Developer', interviewer: 'Hariprasad N P', dateTime: '2025-06-20T10:00:00Z', type: 'Technical', location: 'HP Enterprise, Bengaluru Office', status: 'Scheduled' },
-  { id: 'iv2', jobTitle: 'EHS Officer', interviewer: 'Rajesh S', dateTime: '2025-06-22T14:30:00Z', type: 'HR', location: 'https://meet.google.com/abc-defg-hij', status: 'Scheduled' },
-  { id: 'iv3', jobTitle: 'Site Engineer - Civil', interviewer: 'Technical Panel', dateTime: '2025-06-18T11:00:00Z', type: 'Panel', location: 'HP Enterprise, Chitradurga Office', status: 'Completed' },
-]
-
 function InterviewsModule({ lang }: { lang: LangCode }) {
   const [interviews, setInterviews] = useState<Interview[]>([])
   const [loading, setLoading] = useState(true)
@@ -709,11 +743,20 @@ function InterviewsModule({ lang }: { lang: LangCode }) {
       .then(r => r.ok ? r.json() : null)
       .then(data => {
         if (cancelled) return
-        if (data?.interviews) setInterviews(data.interviews)
-        else setInterviews(MOCK_INTERVIEWS)
+        if (data?.interviews) {
+          setInterviews(data.interviews.map((iv: any) => ({
+            id: iv.id,
+            jobTitle: iv.jobTitle || '',
+            interviewer: iv.interviewerName || '',
+            dateTime: iv.date && iv.time ? `${iv.date}T${iv.time}` : iv.date || '',
+            type: iv.type || '',
+            location: iv.location || '',
+            status: iv.status || '',
+          })))
+        }
         setLoading(false)
       })
-      .catch(() => { if (!cancelled) { setInterviews(MOCK_INTERVIEWS); setLoading(false) } })
+      .catch(() => { if (!cancelled) setLoading(false) })
     return () => { cancelled = true }
   }, [])
 
@@ -857,7 +900,6 @@ interface ResumeData {
   skills: string[]
 }
 
-const RESUME_STORAGE_KEY = 'hpe-cand-resume'
 const DEFAULT_RESUME: ResumeData = { fullName: '', email: '', phone: '', location: '', summary: '', education: [], experience: [], skills: [] }
 
 function MyResumeModule({ lang }: { lang: LangCode }) {
@@ -865,28 +907,100 @@ function MyResumeModule({ lang }: { lang: LangCode }) {
   const [skillInput, setSkillInput] = useState('')
   const [showPreview, setShowPreview] = useState(false)
   const [saveStatus, setSaveStatus] = useState<string>('')
+  const [loading, setLoading] = useState(true)
   const autoSaveTimer = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(RESUME_STORAGE_KEY)
-      if (saved) queueMicrotask(() => setResume(JSON.parse(saved)))
-    } catch {}
+    let cancelled = false
+    fetch('/api/candidate/resume', { cache: 'no-store' })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (cancelled || !data) { setLoading(false); return }
+        const fullName = [data.firstName, data.lastName].filter(Boolean).join(' ').trim()
+        const education = Array.isArray(data.education)
+          ? data.education.map((e: any) => ({
+              id: e.id || `edu-${Date.now()}`,
+              degree: e.degree || '',
+              institution: e.institution || e.school || '',
+              year: e.year || e.graduationYear || '',
+              grade: e.grade || e.gpa || '',
+            }))
+          : []
+        const experience = Array.isArray(data.experience)
+          ? data.experience.map((e: any) => ({
+              id: e.id || `exp-${Date.now()}`,
+              title: e.title || e.role || '',
+              company: e.company || e.employer || '',
+              startDate: e.startDate || e.from || '',
+              endDate: e.endDate || e.to || '',
+              description: e.description || '',
+            }))
+          : []
+        const skills = Array.isArray(data.skills) ? data.skills : []
+        setResume({
+          fullName: fullName || '',
+          email: data.email || '',
+          phone: data.phone || '',
+          location: data.location || '',
+          summary: data.summary || '',
+          education,
+          experience,
+          skills,
+        })
+        setLoading(false)
+      })
+      .catch(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
   }, [])
 
   const saveResume = useCallback((data: ResumeData) => {
     setResume(data)
-    try { localStorage.setItem(RESUME_STORAGE_KEY, JSON.stringify(data)) } catch {}
-    setSaveStatus('Saved ✓')
+    const nameParts = data.fullName.trim().split(/\s+/)
+    const firstName = nameParts[0] || ''
+    const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : ''
+
+    fetch('/api/candidate/resume', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        firstName,
+        lastName,
+        email: data.email,
+        phone: data.phone,
+        skills: data.skills,
+        experience: data.experience,
+        education: data.education,
+        summary: data.summary,
+      }),
+    })
+      .then(r => { if (r.ok) setSaveStatus('Saved ✓') })
+      .catch(() => setSaveStatus(''))
     setTimeout(() => setSaveStatus(''), 2000)
   }, [])
 
   const autoSave = useCallback((data: ResumeData) => {
- setResume(data)
+    setResume(data)
     if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current)
     autoSaveTimer.current = setTimeout(() => {
-      try { localStorage.setItem(RESUME_STORAGE_KEY, JSON.stringify(data)) } catch {}
-    }, 1000)
+      const nameParts = data.fullName.trim().split(/\s+/)
+      const firstName = nameParts[0] || ''
+      const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : ''
+
+      fetch('/api/candidate/resume', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          firstName,
+          lastName,
+          email: data.email,
+          phone: data.phone,
+          skills: data.skills,
+          experience: data.experience,
+          education: data.education,
+          summary: data.summary,
+        }),
+      }).catch(() => {})
+    }, 1500)
   }, [])
 
   const addSkill = () => {
@@ -932,6 +1046,8 @@ function MyResumeModule({ lang }: { lang: LangCode }) {
 
   return (
     <div className="space-y-6">
+      {loading ? <ModuleSkeleton /> : (
+    <>
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-bold text-[var(--navy)] dark:text-white">{t('candidate.myResume', lang)}</h2>
@@ -1113,6 +1229,8 @@ function MyResumeModule({ lang }: { lang: LangCode }) {
           </div>
         </div>
       )}
+    </>
+    )}
     </div>
   )
 }
