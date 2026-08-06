@@ -34,7 +34,7 @@ import {
   Sparkles, Palette, Eye, Database, Wrench, Monitor, MessageCircle, Plus,
   // Missing icons for 24 Super Admin modules
   TrendingUp, UserCheck, HelpCircle, Share2, Paintbrush, SwatchBook,
-  HardDrive, Tool, IndianRupee, Bot,
+  HardDrive, ToolCase, IndianRupee, Bot,
 } from 'lucide-react'
 import { ROLE_LABELS } from '@/lib/constants'
 import { FollowUs } from '@/components/shared/FollowUs'
@@ -275,7 +275,7 @@ function getNavGroups(lang: LangCode): { title: string; items: NavItem[] }[] {
       title: 'Infrastructure',
       items: [
         { key: 'backup', label: 'Backup & Restore', icon: HardDrive, desc: 'Data backup & restore', superAdminOnly: true },
-        { key: 'maintenance', label: 'Maintenance Mode', icon: Tool, desc: 'System maintenance controls', superAdminOnly: true },
+        { key: 'maintenance', label: 'Maintenance Mode', icon: ToolCase, desc: 'System maintenance controls', superAdminOnly: true },
         { key: 'monitoring', label: 'Monitoring', icon: Activity, desc: 'System monitoring & diagnostics', superAdminOnly: true },
       ],
     },

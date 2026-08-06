@@ -61,3 +61,4 @@ server.log
 /db/
 *.db
 *.db-journal
+.zscripts/
