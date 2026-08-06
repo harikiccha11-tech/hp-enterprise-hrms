@@ -241,6 +241,26 @@ export function CompanyApproval({ refreshKey }: { refreshKey?: number }) {
 
 
 export function RevenueDashboard({ refreshKey }: { refreshKey?: number }) {
+  const monthlyRevenue = [
+    { month: 'Sep', amount: 180000 }, { month: 'Oct', amount: 220000 }, { month: 'Nov', amount: 195000 },
+    { month: 'Dec', amount: 260000 }, { month: 'Jan', amount: 310000 }, { month: 'Feb', amount: 285000 },
+    { month: 'Mar', amount: 340000 }, { month: 'Apr', amount: 380000 }, { month: 'May', amount: 355000 },
+    { month: 'Jun', amount: 400000 }, { month: 'Jul', amount: 420000 }, { month: 'Aug', amount: 450000 },
+  ]
+  const MAX_REV = Math.max(...monthlyRevenue.map(m => m.amount))
+  const revenueByPlan = [
+    { plan: 'Starter', clients: 12, mrr: 59988, pct: 14 },
+    { plan: 'Standard', clients: 28, mrr: 419972, pct: 36 },
+    { plan: 'Professional', clients: 15, mrr: 524985, pct: 34 },
+    { plan: 'Enterprise', clients: 3, mrr: 150000, pct: 16 },
+  ]
+  const topClients = [
+    { name: 'Infosys Technologies', plan: 'Enterprise', mrr: 50000, since: 'Jan 2025' },
+    { name: 'Larsen & Toubro', plan: 'Professional', mrr: 34999, since: 'Mar 2025' },
+    { name: 'Tata Projects', plan: 'Professional', mrr: 34999, since: 'Feb 2025' },
+    { name: 'Reliance Industries', plan: 'Enterprise', mrr: 50000, since: 'Nov 2024' },
+    { name: 'Mahindra Group', plan: 'Standard', mrr: 14999, since: 'Apr 2025' },
+  ]
   const fmt = (n: number) => '₹' + (n >= 100000 ? `${(n / 100000).toFixed(1)}L` : n >= 1000 ? `${(n / 1000).toFixed(1)}K` : n.toString())
   return (
     <div className="space-y-6">
@@ -390,14 +410,14 @@ export function LandingPageBuilder({ refreshKey }: { refreshKey?: number }) {
                 </div>
                 <GripVertical className="h-4 w-4 text-muted-foreground shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm text-[var(--navy)] dark:text-white">{sec.organizationName || c.name}</p>
+                  <p className="font-medium text-sm text-[var(--navy)] dark:text-white">{sec.name}</p>
                   <p className="text-xs text-muted-foreground">Position {i + 1} of {sections.length}</p>
                 </div>
                 <Badge variant="outline" className={sec.enabled ? 'bg-emerald-500/10 text-emerald-700 border-emerald-500/30' : 'bg-gray-500/10 text-gray-500 border-gray-500/30'}>
                   {sec.enabled ? 'Visible' : 'Hidden'}
                 </Badge>
-                <Button variant="ghost" size="sm" onClick={() => toast.info(`Editing ${sec.organizationName || c.name}`)}><Pencil className="h-4 w-4" /></Button>
-                <Button variant="ghost" size="sm" onClick={() => toast.info(`Previewing ${sec.organizationName || c.name}`)}><Eye className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="sm" onClick={() => toast.info(`Editing ${sec.name}`)}><Pencil className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="sm" onClick={() => toast.info(`Previewing ${sec.name}`)}><Eye className="h-4 w-4" /></Button>
                 <Switch checked={sec.enabled} onCheckedChange={() => toggle(sec.id)} />
               </div>
             ))}
@@ -947,10 +967,10 @@ export function HPAIManagement({ refreshKey }: { refreshKey?: number }) {
     <div className="space-y-6">
       <SectionTitle title="HPAI Management" desc="Configure AI platform settings and capabilities" />
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard icon={<Zap className="h-4 w-4 text-[var(--gold)]" />} label="Today's Calls" value="1,247" trend="up" />
-        <StatCard icon={<Cpu className="h-4 w-4 text-[var(--gold)]" />} label="Tokens Used" value="2.4M" trend="up" />
-        <StatCard icon={<Clock className="h-4 w-4 text-[var(--gold)]" />} label="Avg Response" value="1.2s" trend="down" />
-        <StatCard icon={<DollarSign className="h-4 w-4 text-[var(--gold)]" />} label="Cost Today" value="$34.50" trend="up" />
+        <StatCard icon={Zap} label="Today's Calls" value="1,247" sub="+12% vs yesterday" accent="gold" />
+        <StatCard icon={Cpu} label="Tokens Used" value="2.4M" sub="Gemini + GPT" accent="gold" />
+        <StatCard icon={Clock} label="Avg Response" value="1.2s" sub="-0.3s improved" accent="gold" />
+        <StatCard icon={DollarSign} label="Cost Today" value="$34.50" sub="API spend" accent="gold" />
       </div>
       <Card>
         <CardHeader><CardTitle className="text-base">AI Configuration</CardTitle></CardHeader>
@@ -1536,10 +1556,10 @@ export function Monitoring({ refreshKey }: { refreshKey?: number }) {
     <div className="space-y-6">
       <SectionTitle title="Monitoring" desc="System health, performance, and alerting" />
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard icon={<Activity className="h-4 w-4 text-[var(--gold)]" />} label="Uptime" value="99.9%" trend="up" />
-        <StatCard icon={<Clock className="h-4 w-4 text-[var(--gold)]" />} label="Avg Response" value="142ms" trend="down" />
-        <StatCard icon={<AlertTriangle className="h-4 w-4 text-[var(--gold)]" />} label="Error Rate" value="0.3%" trend="down" />
-        <StatCard icon={<Users className="h-4 w-4 text-[var(--gold)]" />} label="Active Users" value="847" trend="up" />
+        <StatCard icon={Activity} label="Uptime" value="99.9%" sub="Last 30 days" accent="gold" />
+        <StatCard icon={Clock} label="Avg Response" value="142ms" sub="P95 latency" accent="gold" />
+        <StatCard icon={AlertTriangle} label="Error Rate" value="0.3%" sub="-0.1% vs last week" accent="gold" />
+        <StatCard icon={Users} label="Active Users" value="847" sub="+23 today" accent="gold" />
       </div>
       <Card>
         <CardHeader><CardTitle className="text-base">Service Status</CardTitle></CardHeader>

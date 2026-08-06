@@ -1391,7 +1391,7 @@ function AttendanceView() {
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input placeholder="Search employee…" className="h-9 w-52 pl-9" value={search} onChange={(e) => setSearch(e.target.value)} />
               </div>
-              <Input type="date" className="h-9 w-40" defaultValue="2025-07-14" />
+              <Input type="date" className="h-9 w-40" value={new Date().toISOString().split('T')[0]} readOnly />
             </div>
           </div>
         </CardHeader>
