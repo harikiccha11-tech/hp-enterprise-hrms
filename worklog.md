@@ -1014,3 +1014,26 @@ Stage Summary:
 - CI/CD: GitHub Actions workflow auto-deploys on every push to main
 - User needs to complete one-time setup (3 GitHub secrets + domain config)
 - Build verified: clean (0 errors)
+
+---
+Task ID: fix-landing-1
+Agent: Main + full-stack-developer subagent
+Task: Fix login dialog, subscription flow, and portal display on landing page
+
+Work Log:
+- Audit: Found LoginDialog was plain username/password with no portal selection
+- Audit: Found SubscriptionForm (setView('subscribe')) was unreachable - no button triggered it
+- Audit: Found 3 different price lists across components (inconsistent pricing)
+- Audit: Found PORTALS_DATA only had 3 portals, missing Candidate
+- Fix 1: Rewrote LoginDialog as 2-step: Step 1 shows 4 portal cards (Admin/Employee/Client/Candidate), Step 2 shows login form with selected portal name
+- Fix 2: Added 'Subscribe Now' button in pricing section CTA, desktop nav, and mobile menu
+- Fix 3: Unified SubscriptionForm prices to match FALLBACK_PLANS (Starter ₹4,999, Standard ₹14,999, Professional ₹34,999, Enterprise Custom)
+- Fix 4: Added Candidate Portal to PORTALS_DATA with 6 feature items, updated grid to 4 columns
+- Build: PASS, Lint: PASS
+- Pushed to GitHub: fd74a43
+
+Stage Summary:
+- Login now shows all 4 portals before login form
+- Subscription form is now reachable via Subscribe button in nav + pricing section
+- Pricing is consistent across all components
+- All 4 portals displayed on landing page
