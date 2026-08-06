@@ -996,3 +996,21 @@ Stage Summary:
 - Vercel: Cannot deploy from sandbox (no VERCEL_TOKEN). User needs to:
   1. Set env vars in Vercel dashboard (DATABASE_URL, JWT_SECRET, GEMINI_API_KEY)
   2. Connect GitHub repo to Vercel (or push via CLI with token)
+
+---
+Task ID: deploy-2
+Agent: Main
+Task: Deploy HPHRMS to hphrms.com via Vercel
+
+Work Log:
+- No Vercel credentials available in sandbox environment
+- Created GitHub Actions CI/CD pipeline (.github/workflows/deploy-vercel.yml)
+- Updated vercel.json for production (removed outputDirectory, added HSTS, API no-cache, static immutable cache)
+- Pushed 3 commits to GitHub main branch
+- Code is ready for Vercel deployment - just needs user to add 3 GitHub secrets
+
+Stage Summary:
+- GitHub repo: harikiccha11-tech/hp-enterprise-hrms (3 new commits pushed)
+- CI/CD: GitHub Actions workflow auto-deploys on every push to main
+- User needs to complete one-time setup (3 GitHub secrets + domain config)
+- Build verified: clean (0 errors)
