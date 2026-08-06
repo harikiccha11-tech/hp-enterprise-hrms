@@ -22,6 +22,7 @@ import {
   Send, Loader2, Eye, EyeOff, Zap, BarChart3,
   ClipboardList, Brain, FileSearch, Bell, Settings, Briefcase,
   LayoutDashboard, UserCheck, CalendarDays, UserPlus, CheckCircle2,
+  GraduationCap,
   HardHat, Factory, Landmark, Hammer, Stethoscope, Monitor, Cloud,
   Database, Activity, Code2, ChevronDown, Globe, TrendingUp,
   Linkedin, Instagram, Facebook, Twitter, Youtube, MessageCircle,
@@ -146,6 +147,12 @@ const PORTALS_DATA: PortalItem[] = [
     icon: Users,
     desc: 'Workforce visibility for client organisations — secure, scoped, and real-time.',
     items: ['View deployed workforce at sites', 'Daily attendance & timesheets', 'Invoice & payment tracking', 'Site-wise performance metrics', 'Leave and shift status overview', 'Approval workflows for timesheets'],
+  },
+  {
+    title: 'Candidate Portal',
+    icon: GraduationCap,
+    desc: 'Browse open positions, track your applications, and manage your interview schedule.',
+    items: ['Browse & search jobs', 'Track application status', 'Interview scheduling', 'AI resume builder', 'Career recommendations', 'Real-time notifications'],
   },
 ]
 
@@ -278,15 +285,39 @@ function SectionSub({ children, className = '' }: { children: React.ReactNode; c
 }
 
 /* ═══════════════════════════════════════════════════════
-   LOGIN DIALOG
+   LOGIN DIALOG (Two-Step: Portal Selection → Login Form)
    ═══════════════════════════════════════════════════════ */
+const LOGIN_PORTALS = [
+  { key: 'admin', name: 'Admin Console', icon: LayoutDashboard, desc: 'HR management, payroll, recruitment & analytics', color: C.navy },
+  { key: 'employee', name: 'Employee Portal', icon: UserCheck, desc: 'Self-service: attendance, leave, payslips & documents', color: C.verify },
+  { key: 'client', name: 'Client Portal', icon: Building2, desc: 'Workforce visibility, invoices, billing & reports', color: C.amber },
+  { key: 'candidate', name: 'Candidate Portal', icon: GraduationCap, desc: 'Browse jobs, track applications & interviews', color: '#7C3AED' },
+]
+
 function LoginDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { setUser } = useAppStore()
+  const [step, setStep] = useState<'portals' | 'login'>('portals')
+  const [selectedPortal, setSelectedPortal] = useState<typeof LOGIN_PORTALS[number] | null>(null)
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [showPw, setShowPw] = useState(false)
   const [forgotOpen, setForgotOpen] = useState(false)
+
+  // Reset state when dialog opens/closes
+  useEffect(() => {
+    if (!open) { setStep('portals'); setSelectedPortal(null); setUsername(''); setPassword(''); setShowPw(false) }
+  }, [open])
+
+  const handleSelectPortal = (portal: typeof LOGIN_PORTALS[number]) => {
+    setSelectedPortal(portal)
+    setStep('login')
+  }
+
+  const handleBack = () => {
+    setStep('portals')
+    setSelectedPortal(null)
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -306,39 +337,86 @@ function LoginDialog({ open, onClose }: { open: boolean; onClose: () => void }) 
         {open && (
           <motion.div className="fixed inset-0 z-[100] flex items-center justify-center p-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
             <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={onClose} />
-            <motion.div className="relative z-10 w-full max-w-sm"
-              initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 20 }}
-              transition={{ type: 'spring', stiffness: 300, damping: 28 }}>
-              <div className="rounded-xl border p-6 sm:p-8 shadow-2xl" style={{ background: C.paper, borderColor: C.rule }}>
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-lg font-bold" style={{ color: C.navy }}>Sign In to HPHRMS</h3>
-                  <button onClick={onClose} className="p-1.5 rounded-md hover:bg-gray-100 transition-colors" aria-label="Close">
-                    <X className="h-4 w-4" style={{ color: C.inkSoft }} />
-                  </button>
-                </div>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-semibold" style={{ color: C.inkSoft }}>Username</Label>
-                    <Input placeholder="Enter username" value={username} onChange={(e) => setUsername(e.target.value)} className="h-10 text-sm rounded-lg" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-semibold" style={{ color: C.inkSoft }}>Password</Label>
-                    <div className="relative">
-                      <Input type={showPw ? 'text' : 'password'} placeholder="Enter password" value={password} onChange={(e) => setPassword(e.target.value)} className="h-10 text-sm rounded-lg pr-10" />
-                      <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                        {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            <AnimatePresence mode="wait">
+              {step === 'portals' ? (
+                <motion.div key="portals" className="relative z-10 w-full max-w-lg"
+                  initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 20 }}
+                  transition={{ type: 'spring', stiffness: 300, damping: 28 }}>
+                  <div className="rounded-xl border p-6 sm:p-8 shadow-2xl" style={{ background: C.paper, borderColor: C.rule }}>
+                    <div className="flex items-center justify-between mb-6">
+                      <div>
+                        <h3 className="text-lg font-bold" style={{ color: C.navy }}>Sign In to HPHRMS</h3>
+                        <p className="text-xs mt-0.5" style={{ color: C.inkSoft }}>Select your portal to continue</p>
+                      </div>
+                      <button onClick={onClose} className="p-1.5 rounded-md hover:bg-gray-100 transition-colors" aria-label="Close">
+                        <X className="h-4 w-4" style={{ color: C.inkSoft }} />
                       </button>
                     </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      {LOGIN_PORTALS.map((portal, i) => {
+                        const Icon = portal.icon
+                        return (
+                          <motion.button key={portal.key}
+                            type="button"
+                            onClick={() => handleSelectPortal(portal)}
+                            className="group relative p-4 sm:p-5 rounded-xl border transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 text-left"
+                            style={{ background: C.paper, borderColor: C.rule }}
+                            initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: i * 0.06 }}>
+                            <div className="flex h-10 w-10 items-center justify-center rounded-lg mb-3" style={{ background: portal.color + '12' }}>
+                              <Icon className="h-5 w-5" style={{ color: portal.color }} />
+                            </div>
+                            <h4 className="text-sm font-bold mb-1" style={{ color: C.ink }}>{portal.name}</h4>
+                            <p className="text-[11px] leading-[1.5]" style={{ color: C.inkSoft }}>{portal.desc}</p>
+                          </motion.button>
+                        )
+                      })}
+                    </div>
                   </div>
-                  <Button type="submit" className="w-full h-10 rounded-lg text-sm font-semibold text-white" style={{ background: C.navy }} disabled={loading}>
-                    {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}Sign In
-                  </Button>
-                  <button type="button" onClick={() => setForgotOpen(true)} className="block w-full text-center text-xs font-medium hover:underline" style={{ color: C.inkSoft }}>
-                    Forgot password?
-                  </button>
-                </form>
-              </div>
-            </motion.div>
+                </motion.div>
+              ) : (
+                <motion.div key="login" className="relative z-10 w-full max-w-sm"
+                  initial={{ scale: 0.95, opacity: 0, x: 40 }} animate={{ scale: 1, opacity: 1, x: 0 }} exit={{ scale: 0.95, opacity: 0, x: -40 }}
+                  transition={{ type: 'spring', stiffness: 300, damping: 28 }}>
+                  <div className="rounded-xl border p-6 sm:p-8 shadow-2xl" style={{ background: C.paper, borderColor: C.rule }}>
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="flex items-center gap-2.5">
+                        <button onClick={handleBack} className="p-1 rounded-md hover:bg-gray-100 transition-colors" aria-label="Back to portal selection">
+                          <ArrowLeft className="h-4 w-4" style={{ color: C.inkSoft }} />
+                        </button>
+                        <div>
+                          <h3 className="text-lg font-bold" style={{ color: C.navy }}>Sign In to {selectedPortal?.name}</h3>
+                          <p className="text-xs mt-0.5" style={{ color: C.inkSoft }}>Enter your credentials</p>
+                        </div>
+                      </div>
+                      <button onClick={onClose} className="p-1.5 rounded-md hover:bg-gray-100 transition-colors" aria-label="Close">
+                        <X className="h-4 w-4" style={{ color: C.inkSoft }} />
+                      </button>
+                    </div>
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-semibold" style={{ color: C.inkSoft }}>Username</Label>
+                        <Input placeholder="Enter username" value={username} onChange={(e) => setUsername(e.target.value)} className="h-10 text-sm rounded-lg" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-semibold" style={{ color: C.inkSoft }}>Password</Label>
+                        <div className="relative">
+                          <Input type={showPw ? 'text' : 'password'} placeholder="Enter password" value={password} onChange={(e) => setPassword(e.target.value)} className="h-10 text-sm rounded-lg pr-10" />
+                          <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                            {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </button>
+                        </div>
+                      </div>
+                      <Button type="submit" className="w-full h-10 rounded-lg text-sm font-semibold text-white" style={{ background: C.navy }} disabled={loading}>
+                        {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}Sign In
+                      </Button>
+                      <button type="button" onClick={() => setForgotOpen(true)} className="block w-full text-center text-xs font-medium hover:underline" style={{ color: C.inkSoft }}>
+                        Forgot password?
+                      </button>
+                    </form>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </motion.div>
         )}
       </AnimatePresence>
@@ -359,20 +437,20 @@ function SubscriptionForm({ onBack }: { onBack: () => void }) {
 
   const SUBSCRIPTION_PLANS = [
     {
-      key: 'starter', name: 'Starter', price: '₹999/mo',
-      features: ['Up to 25 employees', 'Basic HR', 'Attendance', 'Leave Management', 'Email Support'],
+      key: 'starter', name: 'Starter', price: '₹4,999/mo',
+      features: ['Up to 50 employees', 'Core HR & Employee Management', 'Attendance with GPS', 'Leave Management', 'Basic Reports', 'Email Support', '1 Branch'],
     },
     {
-      key: 'standard', name: 'Standard', price: '₹2,499/mo',
-      features: ['Up to 100 employees', 'Full HR Suite', 'Recruitment', 'Payroll', 'Priority Support'],
+      key: 'standard', name: 'Standard', price: '₹14,999/mo',
+      features: ['Up to 250 employees', 'Everything in Starter', 'Statutory Payroll (PF/ESI/TDS)', 'Recruitment & ATS', 'Document Generation', 'AI Assistant (limited)', '5 Branches', 'Priority Support'],
     },
     {
-      key: 'professional', name: 'Professional', price: '₹4,999/mo',
-      features: ['Up to 500 employees', 'Everything in Standard', 'AI Assistant', 'Advanced Analytics', 'Dedicated Manager'],
+      key: 'professional', name: 'Professional', price: '₹34,999/mo',
+      features: ['Up to 1,000 employees', 'Everything in Standard', 'Full AI Assistant (unlimited)', 'EHS & Compliance Module', 'Multi-Branch & Multi-Company', 'Advanced Analytics & BI', 'Custom Branding', 'API Access', 'Dedicated Account Manager'],
     },
     {
-      key: 'enterprise', name: 'Enterprise', price: '₹9,999/mo',
-      features: ['Unlimited employees', 'Everything in Professional', 'Custom Integrations', 'White Label', 'SLA Guarantee', '24/7 Support'],
+      key: 'enterprise', name: 'Enterprise', price: 'Custom',
+      features: ['Unlimited employees', 'Everything in Professional', 'Custom Integrations & Workflows', 'On-Premise / Private Cloud Option', 'SLA-backed 24/7 Support', 'Dedicated DevOps Team', 'Custom Training & Onboarding', 'Audit-Ready Documentation', 'Multi-Tenant Agency Mode'],
     },
   ]
 
@@ -532,7 +610,7 @@ function SubscriptionForm({ onBack }: { onBack: () => void }) {
 /* ═══════════════════════════════════════════════════════
    PRICING SECTION COMPONENT
    ═══════════════════════════════════════════════════════ */
-function PricingSection({ onDemoClick, onLoginClick }: { onDemoClick: () => void; onLoginClick: () => void }) {
+function PricingSection({ onDemoClick, onLoginClick, onSubscribeClick }: { onDemoClick: () => void; onLoginClick: () => void; onSubscribeClick: () => void }) {
   const [plans, setPlans] = useState<PricingPlan[]>(FALLBACK_PLANS)
   const [loading, setLoading] = useState(true)
   const [annual, setAnnual] = useState(false)
@@ -614,11 +692,26 @@ function PricingSection({ onDemoClick, onLoginClick }: { onDemoClick: () => void
                     </li>
                   ))}
                 </ul>
-                <button onClick={() => displayPrice != null ? onLoginClick() : onDemoClick()}
-                  className={"w-full py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 " + (plan.isPopular ? 'text-white hover:opacity-90' : 'border-2 hover:shadow-md')}
-                  style={plan.isPopular ? { background: C.gold, color: C.navyDeep } : { borderColor: C.navy, color: C.navy }}>
-                  {displayPrice != null ? 'Start Free Trial' : 'Contact Sales'}
-                </button>
+                {displayPrice != null ? (
+                  <div className="space-y-2">
+                    <button onClick={onSubscribeClick}
+                      className="w-full py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 hover:shadow-md"
+                      style={{ background: plan.isPopular ? C.gold : C.navy, color: plan.isPopular ? C.navyDeep : '#fff' }}>
+                      Subscribe Now
+                    </button>
+                    <button onClick={onLoginClick}
+                      className="w-full py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 border-2 hover:shadow-md"
+                      style={{ borderColor: C.navy, color: C.navy }}>
+                      Start Free Trial
+                    </button>
+                  </div>
+                ) : (
+                  <button onClick={onDemoClick}
+                    className={"w-full py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 " + (plan.isPopular ? 'text-white hover:opacity-90' : 'border-2 hover:shadow-md')}
+                    style={plan.isPopular ? { background: C.gold, color: C.navyDeep } : { borderColor: C.navy, color: C.navy }}>
+                    Contact Sales
+                  </button>
+                )}
               </div>
             </Reveal>
           )
@@ -1001,6 +1094,9 @@ export function Landing() {
               style={{ color: C.verify }}>
               <MessageCircle className="h-3.5 w-3.5" /> WhatsApp
             </a>
+            <button onClick={() => setView('subscribe')}
+              className="px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 hover:-translate-y-[0.5px] hover:shadow-lg"
+              style={{ background: C.gold, color: C.navyDeep }}>Subscribe</button>
             <button onClick={() => setLoginOpen(true)}
               className="px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 hover:-translate-y-[0.5px] hover:shadow-lg"
               style={{ background: C.navy, color: '#fff' }}>Login</button>
@@ -1025,6 +1121,7 @@ export function Landing() {
                   <button key={link.id} onClick={() => scrollTo(link.id)} className="block w-full text-left px-4 py-3 rounded-lg text-sm font-medium transition-colors" style={{ color: C.inkSoft }}>{link.label}</button>
                 ))}
                 <div className="flex gap-2 pt-3 border-t mt-3" style={{ borderColor: C.ruleSoft }}>
+                  <button onClick={() => { setMobileMenu(false); setView('subscribe') }} className="flex-1 py-2.5 rounded-lg text-sm font-semibold text-center" style={{ background: C.gold, color: C.navyDeep }}>Subscribe</button>
                   <button onClick={() => { setMobileMenu(false); setLoginOpen(true) }} className="flex-1 py-2.5 rounded-lg text-sm font-semibold text-white text-center" style={{ background: C.navy }}>Login</button>
                   <button onClick={() => { setMobileMenu(false); setView('register') }} className="flex-1 py-2.5 rounded-lg text-sm font-semibold text-center border-2" style={{ borderColor: C.navy, color: C.navy }}>Register</button>
                 </div>
@@ -1303,7 +1400,7 @@ export function Landing() {
          ═══════════════════════════════════════════════════════ */}
       <section id="pricing" className="py-16 sm:py-20 lg:py-24 border-t" style={{ background: C.bg, borderColor: C.rule }}>
         <div className="max-w-[1200px] mx-auto px-5 sm:px-6">
-          <PricingSection onDemoClick={() => setDemoOpen(true)} onLoginClick={() => setLoginOpen(true)} />
+          <PricingSection onDemoClick={() => setDemoOpen(true)} onLoginClick={() => setLoginOpen(true)} onSubscribeClick={() => setView('subscribe')} />
         </div>
       </section>
 
@@ -1315,20 +1412,23 @@ export function Landing() {
           <Reveal>
             <div className="text-center max-w-2xl mx-auto">
               <SectionLabel className="text-center">Dedicated Portals</SectionLabel>
-              <SectionTitle className="mx-auto">One platform, three experiences</SectionTitle>
+              <SectionTitle className="mx-auto">One platform, four experiences</SectionTitle>
               <SectionSub className="mx-auto">Each portal is role-specific with its own dashboard, navigation, and permissions. Zero data crossover.</SectionSub>
             </div>
           </Reveal>
 
-          <div className="mt-12 sm:mt-14 grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {PORTALS_DATA.map(({ title, desc, items, icon: PortalIcon }, i) => (
+          <div className="mt-12 sm:mt-14 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {PORTALS_DATA.map(({ title, desc, items, icon: PortalIcon }, i) => {
+              const portalColors = [C.navy, C.verify, C.amber, '#7C3AED']
+              const portalBg = ['rgba(0,43,92,.08)', 'rgba(46,125,91,.08)', 'rgba(212,175,55,.1)', 'rgba(124,58,237,.08)']
+              return (
               <Reveal key={i} delay={0.08 + i * 0.08}>
                 <div onClick={() => setLoginOpen(true)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setLoginOpen(true) } }}
                   className="group relative p-6 sm:p-7 rounded-xl border transition-all duration-300 hover:shadow-xl hover:-translate-y-1 h-full cursor-pointer"
                   style={{ background: C.paper, borderColor: C.rule }}>
                   <div className="flex items-center gap-3 mb-5">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-xl" style={{ background: i === 0 ? 'rgba(0,43,92,.08)' : i === 1 ? 'rgba(46,125,91,.08)' : 'rgba(212,175,55,.1)' }}>
-                      <PortalIcon className="h-5 w-5" style={{ color: i === 0 ? C.navy : i === 1 ? C.verify : C.amber }} />
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl" style={{ background: portalBg[i] }}>
+                      <PortalIcon className="h-5 w-5" style={{ color: portalColors[i] }} />
                     </div>
                     <h3 className="text-lg font-bold" style={{ color: C.ink }}>{title}</h3>
                   </div>
@@ -1336,20 +1436,21 @@ export function Landing() {
                   <ul className="space-y-2.5">
                     {items.map((item, j) => (
                       <li key={j} className="flex items-start gap-2.5">
-                        <Check className="h-4 w-4 shrink-0 mt-0.5" style={{ color: i === 0 ? C.navy : i === 1 ? C.verify : C.gold }} />
+                        <Check className="h-4 w-4 shrink-0 mt-0.5" style={{ color: portalColors[i] }} />
                         <span className="text-[13px]" style={{ color: C.inkSoft }}>{item}</span>
                       </li>
                     ))}
                   </ul>
                   <div className="mt-6 pt-4 border-t" style={{ borderColor: C.ruleSoft }}>
                     <span className="inline-flex items-center gap-1.5 text-sm font-semibold transition-colors"
-                      style={{ color: i === 0 ? C.navy : i === 1 ? C.verify : C.amber }}>
+                      style={{ color: portalColors[i] }}>
                       Sign In <ArrowRight className="h-3.5 w-3.5" />
                     </span>
                   </div>
                 </div>
               </Reveal>
-            ))}
+              )
+            })}
           </div>
         </div>
       </section>
