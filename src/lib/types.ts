@@ -11,7 +11,7 @@ export interface AppUser {
   id: string
   username: string
   email: string
-  role: 'OWNER' | 'SUPER_ADMIN' | 'HR_MANAGER' | 'EMPLOYEE' | 'CLIENT'
+  role: 'OWNER' | 'SUPER_ADMIN' | 'HR_MANAGER' | 'EMPLOYEE' | 'CLIENT' | 'CANDIDATE'
   mustResetPassword: boolean
   employeeId?: string | null
   clientId?: string | null

@@ -19,6 +19,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Progress } from '@/components/ui/progress'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -61,6 +64,17 @@ import {
   Settings,
   Send,
   Info,
+  Search,
+  FileDown,
+  Check,
+  Crown,
+  Shield,
+  Zap,
+  Star,
+  CalendarDays,
+  UserCheck,
+  UserX,
+  Timer, ArrowLeftRight,
 } from 'lucide-react'
 import { t, type LangCode } from '@/lib/i18n'
 import { HpAiChat } from '@/components/shared/HpAiChat'
@@ -1069,6 +1083,872 @@ function InvoicesView({ data, loading }: { data: DashboardData | null; loading: 
   )
 }
 
+// ── Employees View ──────────────────────────────────────────────────────────
+
+const MOCK_EMPLOYEES = [
+  { id: 'e1', name: 'Rajesh Kumar', code: 'HP-EMP-001', designation: 'Site Supervisor', department: 'Operations', status: 'ACTIVE', assignment: 'Mumbai Metro Project' },
+  { id: 'e2', name: 'Amit Sharma', code: 'HP-EMP-002', designation: 'Safety Officer', department: 'Safety', status: 'ACTIVE', assignment: 'Delhi Airport Site' },
+  { id: 'e3', name: 'Priya Patel', code: 'HP-EMP-003', designation: 'HR Coordinator', department: 'HR', status: 'ON_LEAVE', assignment: 'Corporate Office' },
+  { id: 'e4', name: 'Suresh Mehta', code: 'HP-EMP-004', designation: 'Electrician', department: 'Operations', status: 'ACTIVE', assignment: 'Mumbai Metro Project' },
+  { id: 'e5', name: 'Kavita Desai', code: 'HP-EMP-005', designation: 'Admin Assistant', department: 'Admin', status: 'ACTIVE', assignment: 'Corporate Office' },
+  { id: 'e6', name: 'Vikram Singh', code: 'HP-EMP-006', designation: 'Welder', department: 'Operations', status: 'ACTIVE', assignment: 'Pune Industrial Site' },
+  { id: 'e7', name: 'Neha Joshi', code: 'HP-EMP-007', designation: 'Accountant', department: 'Finance', status: 'ON_LEAVE', assignment: 'Corporate Office' },
+]
+
+function EmployeesView() {
+  const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState('ALL')
+  const filtered = MOCK_EMPLOYEES.filter((e) => {
+    if (statusFilter !== 'ALL' && e.status !== statusFilter) return false
+    if (search && !e.name.toLowerCase().includes(search.toLowerCase()) && !e.code.toLowerCase().includes(search.toLowerCase())) return false
+    return true
+  })
+  const totalDeployed = MOCK_EMPLOYEES.length
+  const activeCount = MOCK_EMPLOYEES.filter((e) => e.status === 'ACTIVE').length
+  const onLeaveCount = MOCK_EMPLOYEES.filter((e) => e.status === 'ON_LEAVE').length
+
+  return (
+    <div className="space-y-6">
+      <div className="rounded-xl bg-gradient-to-r from-[var(--navy)] to-[var(--navy)]/90 p-6 text-white shadow-lg">
+        <h2 className="text-xl font-bold">Deployed Workforce</h2>
+        <p className="mt-1 text-sm text-blue-100/80">View and manage all employees deployed to your projects.</p>
+      </div>
+
+      <div className="grid gap-4 grid-cols-2 sm:grid-cols-3">
+        <Card className="p-4">
+          <p className="text-xs uppercase tracking-wider text-muted-foreground">Total Deployed</p>
+          <p className="mt-1 text-xl font-bold text-[var(--navy)] dark:text-white">{totalDeployed}</p>
+        </Card>
+        <Card className="p-4">
+          <p className="text-xs uppercase tracking-wider text-muted-foreground">Active</p>
+          <p className="mt-1 text-xl font-bold text-emerald-700">{activeCount}</p>
+        </Card>
+        <Card className="p-4">
+          <p className="text-xs uppercase tracking-wider text-muted-foreground">On Leave</p>
+          <p className="mt-1 text-xl font-bold text-amber-700">{onLeaveCount}</p>
+        </Card>
+      </div>
+
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <CardTitle className="text-base">All Employees</CardTitle>
+            <div className="flex items-center gap-2">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input placeholder="Search name or code…" className="h-9 w-56 pl-9" value={search} onChange={(e) => setSearch(e.target.value)} />
+              </div>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="h-9 w-32"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">All Status</SelectItem>
+                  <SelectItem value="ACTIVE">Active</SelectItem>
+                  <SelectItem value="ON_LEAVE">On Leave</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button variant="outline" size="sm" className="gap-1.5" onClick={() => toast.info('Export initiated')}>
+                <FileDown className="h-4 w-4" /> Export
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="px-6 pb-6 pt-0">
+          <div className="max-h-96 overflow-y-auto rounded-lg border scroll-thin">
+            <Table>
+              <TableHeader className="bg-muted/50">
+                <TableRow>
+                  <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Employee Name</TableHead>
+                  <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground w-28">Code</TableHead>
+                  <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground hidden md:table-cell">Designation</TableHead>
+                  <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground hidden lg:table-cell">Department</TableHead>
+                  <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground w-28">Status</TableHead>
+                  <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground hidden sm:table-cell">Assignment</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filtered.map((emp) => (
+                  <TableRow key={emp.id} className="hover:bg-muted/40">
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-8 w-8"><AvatarFallback className="bg-[var(--navy)]/10 text-[var(--navy)] dark:text-[var(--gold-light)] text-xs font-bold">{initials(emp.name)}</AvatarFallback></Avatar>
+                        <span className="font-medium text-[var(--navy)] dark:text-white">{emp.name}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="font-mono text-xs text-muted-foreground">{emp.code}</TableCell>
+                    <TableCell className="hidden md:table-cell text-sm">{emp.designation}</TableCell>
+                    <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">{emp.department}</TableCell>
+                    <TableCell><StatusBadge status={emp.status} /></TableCell>
+                    <TableCell className="hidden sm:table-cell text-sm text-muted-foreground max-w-40 truncate">{emp.assignment}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
+// ── Departments View ───────────────────────────────────────────────────────
+
+const MOCK_DEPARTMENTS = [
+  { id: 'd1', name: 'Operations', head: 'Rajesh Kumar', employees: 24, status: 'ACTIVE', color: 'bg-blue-500' },
+  { id: 'd2', name: 'Safety', head: 'Amit Sharma', employees: 8, status: 'ACTIVE', color: 'bg-emerald-500' },
+  { id: 'd3', name: 'Human Resources', head: 'Priya Patel', employees: 6, status: 'ACTIVE', color: 'bg-violet-500' },
+  { id: 'd4', name: 'Finance', head: 'Neha Joshi', employees: 4, status: 'ACTIVE', color: 'bg-amber-500' },
+  { id: 'd5', name: 'Admin', head: 'Kavita Desai', employees: 5, status: 'ACTIVE', color: 'bg-rose-500' },
+  { id: 'd6', name: 'Quality Assurance', head: 'Vikram Singh', employees: 3, status: 'ON_HOLD', color: 'bg-slate-500' },
+]
+
+function DepartmentsView() {
+  const [selected, setSelected] = useState<string | null>(null)
+  const dept = selected ? MOCK_DEPARTMENTS.find((d) => d.id === selected) : null
+
+  return (
+    <div className="space-y-6">
+      <div className="rounded-xl bg-gradient-to-r from-[var(--navy)] to-[var(--navy)]/90 p-6 text-white shadow-lg">
+        <h2 className="text-xl font-bold">Departments</h2>
+        <p className="mt-1 text-sm text-blue-100/80">Organisational structure and department overview for your deployed workforce.</p>
+      </div>
+
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+        {MOCK_DEPARTMENTS.map((d) => (
+          <Card
+            key={d.id}
+            className={cn('cursor-pointer transition-all hover:shadow-md hover:border-[var(--gold)]/40', selected === d.id && 'ring-2 ring-[var(--gold)]')}
+            onClick={() => setSelected(selected === d.id ? null : d.id)}
+          >
+            <CardContent className="p-5">
+              <div className="flex items-start gap-3">
+                <div className={cn('mt-0.5 h-10 w-10 shrink-0 rounded-lg flex items-center justify-center text-white text-sm font-bold', d.color)}>
+                  {d.name.charAt(0)}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold text-[var(--navy)] dark:text-white">{d.name}</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">Head: {d.head}</p>
+                  <div className="mt-2 flex items-center justify-between">
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <Users className="h-3.5 w-3.5" /> {d.employees} employees
+                    </div>
+                    <StatusBadge status={d.status} />
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {dept && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">{dept.name} — Details</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-4 sm:grid-cols-3">
+            <InfoRow label="Department" value={dept.name} />
+            <InfoRow label="Department Head" value={dept.head} />
+            <InfoRow label="Total Employees" value={String(dept.employees)} />
+            <InfoRow label="Status" value={dept.status.replace(/_/g, ' ')} />
+            <InfoRow label="Active Assignments" value={`${Math.ceil(dept.employees * 0.8)} of ${dept.employees}`} />
+            <InfoRow label="Avg. Tenure" value="14 months" />
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  )
+}
+
+// ── Attendance View ────────────────────────────────────────────────────────
+
+const MOCK_ATTENDANCE = [
+  { id: 'a1', employee: 'Rajesh Kumar', date: '2025-07-14', checkIn: '08:55', checkOut: '17:32', hours: '8.6', status: 'PRESENT' },
+  { id: 'a2', employee: 'Amit Sharma', date: '2025-07-14', checkIn: '09:22', checkOut: '17:45', hours: '8.4', status: 'LATE' },
+  { id: 'a3', employee: 'Priya Patel', date: '2025-07-14', checkIn: '—', checkOut: '—', hours: '0', status: 'ABSENT' },
+  { id: 'a4', employee: 'Suresh Mehta', date: '2025-07-14', checkIn: '08:48', checkOut: '13:15', hours: '4.5', status: 'HALF_DAY' },
+  { id: 'a5', employee: 'Kavita Desai', date: '2025-07-14', checkIn: '09:02', checkOut: '18:10', hours: '9.1', status: 'PRESENT' },
+  { id: 'a6', employee: 'Vikram Singh', date: '2025-07-14', checkIn: '08:59', checkOut: '17:30', hours: '8.5', status: 'PRESENT' },
+  { id: 'a7', employee: 'Rajesh Kumar', date: '2025-07-13', checkIn: '08:50', checkOut: '17:28', hours: '8.6', status: 'PRESENT' },
+  { id: 'a8', employee: 'Amit Sharma', date: '2025-07-13', checkIn: '09:18', checkOut: '17:40', hours: '8.4', status: 'LATE' },
+  { id: 'a9', employee: 'Suresh Mehta', date: '2025-07-13', checkIn: '08:45', checkOut: '17:30', hours: '8.7', status: 'PRESENT' },
+  { id: 'a10', employee: 'Kavita Desai', date: '2025-07-13', checkIn: '09:00', checkOut: '18:05', hours: '9.1', status: 'PRESENT' },
+]
+
+function AttendanceView() {
+  const [search, setSearch] = useState('')
+  const filtered = MOCK_ATTENDANCE.filter((a) => !search || a.employee.toLowerCase().includes(search.toLowerCase()))
+  const presentCount = MOCK_ATTENDANCE.filter((a) => a.status === 'PRESENT').length
+  const absentCount = MOCK_ATTENDANCE.filter((a) => a.status === 'ABSENT').length
+  const lateCount = MOCK_ATTENDANCE.filter((a) => a.status === 'LATE').length
+  const halfDayCount = MOCK_ATTENDANCE.filter((a) => a.status === 'HALF_DAY').length
+
+  return (
+    <div className="space-y-6">
+      <div className="rounded-xl bg-gradient-to-r from-[var(--navy)] to-[var(--navy)]/90 p-6 text-white shadow-lg">
+        <h2 className="text-xl font-bold">Attendance</h2>
+        <p className="mt-1 text-sm text-blue-100/80">Track daily attendance for your deployed workforce.</p>
+      </div>
+
+      <div className="grid gap-4 grid-cols-2 sm:grid-cols-4">
+        <Card className="p-4">
+          <div className="flex items-center gap-2"><UserCheck className="h-4 w-4 text-emerald-600" /><p className="text-xs uppercase tracking-wider text-muted-foreground">Present</p></div>
+          <p className="mt-1 text-xl font-bold text-emerald-700">{presentCount}</p>
+        </Card>
+        <Card className="p-4">
+          <div className="flex items-center gap-2"><UserX className="h-4 w-4 text-red-600" /><p className="text-xs uppercase tracking-wider text-muted-foreground">Absent</p></div>
+          <p className="mt-1 text-xl font-bold text-red-700">{absentCount}</p>
+        </Card>
+        <Card className="p-4">
+          <div className="flex items-center gap-2"><Timer className="h-4 w-4 text-amber-600" /><p className="text-xs uppercase tracking-wider text-muted-foreground">Late</p></div>
+          <p className="mt-1 text-xl font-bold text-amber-700">{lateCount}</p>
+        </Card>
+        <Card className="p-4">
+          <div className="flex items-center gap-2"><Clock className="h-4 w-4 text-sky-600" /><p className="text-xs uppercase tracking-wider text-muted-foreground">Half-Day</p></div>
+          <p className="mt-1 text-xl font-bold text-sky-700">{halfDayCount}</p>
+        </Card>
+      </div>
+
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <CardTitle className="text-base">Attendance Records</CardTitle>
+            <div className="flex items-center gap-2">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input placeholder="Search employee…" className="h-9 w-52 pl-9" value={search} onChange={(e) => setSearch(e.target.value)} />
+              </div>
+              <Input type="date" className="h-9 w-40" defaultValue="2025-07-14" />
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="px-6 pb-6 pt-0">
+          <div className="max-h-96 overflow-y-auto rounded-lg border scroll-thin">
+            <Table>
+              <TableHeader className="bg-muted/50">
+                <TableRow>
+                  <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Employee</TableHead>
+                  <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground w-28">Date</TableHead>
+                  <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground hidden sm:table-cell">Check In</TableHead>
+                  <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground hidden sm:table-cell">Check Out</TableHead>
+                  <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Hours</TableHead>
+                  <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground w-28">Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filtered.map((a) => (
+                  <TableRow key={a.id} className="hover:bg-muted/40">
+                    <TableCell className="font-medium text-[var(--navy)] dark:text-white">{a.employee}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{fmtDate(a.date)}</TableCell>
+                    <TableCell className="hidden sm:table-cell font-mono text-xs">{a.checkIn}</TableCell>
+                    <TableCell className="hidden sm:table-cell font-mono text-xs">{a.checkOut}</TableCell>
+                    <TableCell className="font-mono text-xs font-semibold">{a.hours}h</TableCell>
+                    <TableCell><StatusBadge status={a.status} /></TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
+// ── Leave View ────────────────────────────────────────────────────────────
+
+const MOCK_LEAVES = [
+  { id: 'l1', employee: 'Priya Patel', type: 'Casual Leave', from: '2025-07-14', to: '2025-07-16', days: 3, status: 'APPROVED' },
+  { id: 'l2', employee: 'Neha Joshi', type: 'Sick Leave', from: '2025-07-12', to: '2025-07-13', days: 2, status: 'APPROVED' },
+  { id: 'l3', employee: 'Rajesh Kumar', type: 'Earned Leave', from: '2025-07-20', to: '2025-07-25', days: 6, status: 'PENDING' },
+  { id: 'l4', employee: 'Suresh Mehta', type: 'Half-Day Leave', from: '2025-07-14', to: '2025-07-14', days: 0.5, status: 'APPROVED' },
+  { id: 'l5', employee: 'Vikram Singh', type: 'Casual Leave', from: '2025-07-28', to: '2025-07-29', days: 2, status: 'REJECTED' },
+  { id: 'l6', employee: 'Amit Sharma', type: 'Earned Leave', from: '2025-08-01', to: '2025-08-05', days: 5, status: 'PENDING' },
+]
+
+function LeaveView() {
+  const [statusFilter, setStatusFilter] = useState('ALL')
+  const [typeFilter, setTypeFilter] = useState('ALL')
+  const filtered = MOCK_LEAVES.filter((l) => {
+    if (statusFilter !== 'ALL' && l.status !== statusFilter) return false
+    if (typeFilter !== 'ALL' && l.type !== typeFilter) return false
+    return true
+  })
+  const totalLeaves = MOCK_LEAVES.reduce((s, l) => s + l.days, 0)
+  const usedLeaves = MOCK_LEAVES.filter((l) => l.status === 'APPROVED').reduce((s, l) => s + l.days, 0)
+
+  return (
+    <div className="space-y-6">
+      <div className="rounded-xl bg-gradient-to-r from-[var(--navy)] to-[var(--navy)]/90 p-6 text-white shadow-lg">
+        <h2 className="text-xl font-bold">Leave Management</h2>
+        <p className="mt-1 text-sm text-blue-100/80">Overview of leave requests and balances for your deployed workforce.</p>
+      </div>
+
+      <div className="grid gap-4 grid-cols-2 sm:grid-cols-4">
+        <Card className="p-4">
+          <p className="text-xs uppercase tracking-wider text-muted-foreground">Total Requests</p>
+          <p className="mt-1 text-xl font-bold text-[var(--navy)] dark:text-white">{MOCK_LEAVES.length}</p>
+        </Card>
+        <Card className="p-4">
+          <p className="text-xs uppercase tracking-wider text-muted-foreground">Total Days</p>
+          <p className="mt-1 text-xl font-bold text-[var(--navy)] dark:text-white">{totalLeaves}</p>
+        </Card>
+        <Card className="p-4">
+          <p className="text-xs uppercase tracking-wider text-muted-foreground">Approved Days</p>
+          <p className="mt-1 text-xl font-bold text-emerald-700">{usedLeaves}</p>
+        </Card>
+        <Card className="p-4">
+          <p className="text-xs uppercase tracking-wider text-muted-foreground">Balance Days</p>
+          <p className="mt-1 text-xl font-bold text-amber-700">{totalLeaves - usedLeaves}</p>
+        </Card>
+      </div>
+
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <CardTitle className="text-base">Leave Records</CardTitle>
+            <div className="flex items-center gap-2">
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="h-9 w-32"><SelectValue placeholder="Status" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">All Status</SelectItem>
+                  <SelectItem value="APPROVED">Approved</SelectItem>
+                  <SelectItem value="PENDING">Pending</SelectItem>
+                  <SelectItem value="REJECTED">Rejected</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={typeFilter} onValueChange={setTypeFilter}>
+                <SelectTrigger className="h-9 w-36"><SelectValue placeholder="Leave Type" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">All Types</SelectItem>
+                  <SelectItem value="Casual Leave">Casual Leave</SelectItem>
+                  <SelectItem value="Sick Leave">Sick Leave</SelectItem>
+                  <SelectItem value="Earned Leave">Earned Leave</SelectItem>
+                  <SelectItem value="Half-Day Leave">Half-Day</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="px-6 pb-6 pt-0">
+          <div className="max-h-96 overflow-y-auto rounded-lg border scroll-thin">
+            <Table>
+              <TableHeader className="bg-muted/50">
+                <TableRow>
+                  <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Employee</TableHead>
+                  <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Leave Type</TableHead>
+                  <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground hidden sm:table-cell">From</TableHead>
+                  <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground hidden sm:table-cell">To</TableHead>
+                  <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Days</TableHead>
+                  <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground w-28">Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filtered.map((l) => (
+                  <TableRow key={l.id} className="hover:bg-muted/40">
+                    <TableCell className="font-medium text-[var(--navy)] dark:text-white">{l.employee}</TableCell>
+                    <TableCell><Badge variant="outline" className="text-[10px]">{l.type}</Badge></TableCell>
+                    <TableCell className="hidden sm:table-cell text-xs text-muted-foreground">{fmtDate(l.from)}</TableCell>
+                    <TableCell className="hidden sm:table-cell text-xs text-muted-foreground">{fmtDate(l.to)}</TableCell>
+                    <TableCell className="font-semibold">{l.days}</TableCell>
+                    <TableCell><StatusBadge status={l.status} /></TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
+// ── Payroll View ───────────────────────────────────────────────────────────
+
+const MOCK_PAYROLL = [
+  { id: 'p1', month: 'July 2025', basic: 312000, hra: 156000, deductions: 62400, netPay: 405600, status: 'PROCESSING' },
+  { id: 'p2', month: 'June 2025', basic: 308000, hra: 154000, deductions: 61200, netPay: 400800, status: 'PAID' },
+  { id: 'p3', month: 'May 2025', basic: 305000, hra: 152500, deductions: 60800, netPay: 396700, status: 'PAID' },
+  { id: 'p4', month: 'April 2025', basic: 300000, hra: 150000, deductions: 60100, netPay: 389900, status: 'PAID' },
+  { id: 'p5', month: 'March 2025', basic: 298000, hra: 149000, deductions: 59800, netPay: 387200, status: 'PAID' },
+  { id: 'p6', month: 'February 2025', basic: 295000, hra: 147500, deductions: 59500, netPay: 383000, status: 'PAID' },
+]
+
+function PayrollView() {
+  const totalNet = MOCK_PAYROLL.reduce((s, p) => s + p.netPay, 0)
+  const currentMonth = MOCK_PAYROLL[0]
+
+  return (
+    <div className="space-y-6">
+      <div className="rounded-xl bg-gradient-to-r from-[var(--navy)] to-[var(--navy)]/90 p-6 text-white shadow-lg">
+        <h2 className="text-xl font-bold">Payroll</h2>
+        <p className="mt-1 text-sm text-blue-100/80">Monthly payroll summary and billing details for your workforce.</p>
+      </div>
+
+      {/* Current month summary */}
+      <Card className="border-[var(--gold)]/30">
+        <CardHeader className="pb-3">
+          <div className="flex items-center gap-2">
+            <div className="grid h-8 w-8 place-items-center rounded-lg bg-[var(--gold)]/15"><Banknote className="h-4 w-4 text-[var(--gold)]" /></div>
+            <CardTitle className="text-base">Current Month — {currentMonth.month}</CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 grid-cols-2 sm:grid-cols-4">
+            <div><p className="text-[11px] uppercase tracking-wider text-muted-foreground">Basic Salary</p><p className="mt-0.5 font-semibold text-[var(--navy)] dark:text-white">{formatINR(currentMonth.basic)}</p></div>
+            <div><p className="text-[11px] uppercase tracking-wider text-muted-foreground">HRA</p><p className="mt-0.5 font-semibold text-[var(--navy)] dark:text-white">{formatINR(currentMonth.hra)}</p></div>
+            <div><p className="text-[11px] uppercase tracking-wider text-muted-foreground">Deductions</p><p className="mt-0.5 font-semibold text-red-600">-{formatINR(currentMonth.deductions)}</p></div>
+            <div><p className="text-[11px] uppercase tracking-wider text-muted-foreground">Net Pay</p><p className="mt-0.5 text-lg font-bold text-emerald-700">{formatINR(currentMonth.netPay)}</p></div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base">Payroll History</CardTitle>
+            <div className="text-right">
+              <p className="text-[11px] uppercase tracking-wider text-muted-foreground">6-Month Total</p>
+              <p className="font-bold text-[var(--navy)] dark:text-white">{formatINR(totalNet)}</p>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="px-6 pb-6 pt-0">
+          <div className="max-h-96 overflow-y-auto rounded-lg border scroll-thin">
+            <Table>
+              <TableHeader className="bg-muted/50">
+                <TableRow>
+                  <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Month</TableHead>
+                  <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground text-right hidden sm:table-cell">Basic</TableHead>
+                  <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground text-right hidden md:table-cell">HRA</TableHead>
+                  <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground text-right hidden lg:table-cell">Deductions</TableHead>
+                  <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground text-right">Net Pay</TableHead>
+                  <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground w-28">Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {MOCK_PAYROLL.map((p) => (
+                  <TableRow key={p.id} className="hover:bg-muted/40">
+                    <TableCell className="font-medium text-[var(--navy)] dark:text-white">{p.month}</TableCell>
+                    <TableCell className="hidden sm:table-cell text-right font-mono text-sm">{formatINR(p.basic)}</TableCell>
+                    <TableCell className="hidden md:table-cell text-right font-mono text-sm">{formatINR(p.hra)}</TableCell>
+                    <TableCell className="hidden lg:table-cell text-right font-mono text-sm text-red-600">-{formatINR(p.deductions)}</TableCell>
+                    <TableCell className="text-right font-mono font-bold text-emerald-700">{formatINR(p.netPay)}</TableCell>
+                    <TableCell><StatusBadge status={p.status} /></TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
+// ── Subscription View ─────────────────────────────────────────────────────
+
+const PLANS = [
+  { name: 'Starter', price: '₹4,999', period: '/mo', features: ['Up to 25 employees', 'Basic attendance', 'Email support', '5 GB storage'], icon: Zap, current: false },
+  { name: 'Standard', price: '₹12,999', period: '/mo', features: ['Up to 100 employees', 'Attendance & leave', 'Priority support', '25 GB storage', 'API access'], icon: Star, current: true },
+  { name: 'Professional', price: '₹29,999', period: '/mo', features: ['Up to 500 employees', 'Full HR suite', 'Dedicated manager', '100 GB storage', 'Advanced analytics', 'Custom integrations'], icon: Shield, current: false },
+  { name: 'Enterprise', price: 'Custom', period: '', features: ['Unlimited employees', 'All features', '24/7 support', 'Unlimited storage', 'White-label option', 'SLA guarantee', 'On-premise option'], icon: Crown, current: false },
+]
+
+function SubscriptionView() {
+  return (
+    <div className="space-y-6">
+      <div className="rounded-xl bg-gradient-to-r from-[var(--navy)] to-[var(--navy)]/90 p-6 text-white shadow-lg">
+        <h2 className="text-xl font-bold">Subscription</h2>
+        <p className="mt-1 text-sm text-blue-100/80">Manage your plan, track usage, and explore upgrade options.</p>
+      </div>
+
+      {/* Current Plan */}
+      <Card className="border-[var(--gold)]/30">
+        <CardContent className="p-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-4">
+              <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-[var(--gold)]/15">
+                <Star className="h-6 w-6 text-[var(--gold)]" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-lg font-bold text-[var(--navy)] dark:text-white">Standard Plan</h3>
+                  <Badge className="bg-[var(--gold)] text-[var(--navy)] border-0 text-[10px] font-bold">CURRENT</Badge>
+                </div>
+                <p className="text-sm text-muted-foreground">Renews on 15 Aug 2025 &bull; Billed monthly</p>
+              </div>
+            </div>
+            <Button variant="outline" className="gap-1.5" onClick={() => toast.info('Contact your administrator to change plans')}>Manage Plan</Button>
+          </div>
+
+          {/* Usage meters */}
+          <div className="mt-6 grid gap-4 sm:grid-cols-3">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Employees</span>
+                <span className="font-medium">47 / 100</span>
+              </div>
+              <Progress value={47} className="h-2" />
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Storage</span>
+                <span className="font-medium">8.2 / 25 GB</span>
+              </div>
+              <Progress value={33} className="h-2" />
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">API Calls</span>
+                <span className="font-medium">2,340 / 10,000</span>
+              </div>
+              <Progress value={23} className="h-2" />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Plan comparison */}
+      <div>
+        <h3 className="mb-4 text-base font-semibold text-[var(--navy)] dark:text-white">Compare Plans</h3>
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+          {PLANS.map((plan) => {
+            const PlanIcon = plan.icon
+            return (
+              <Card key={plan.name} className={cn('relative flex flex-col', plan.current && 'ring-2 ring-[var(--gold)]')}>
+                <CardContent className="flex flex-1 flex-col p-5">
+                  <div className="flex items-center gap-2 mb-3">
+                    <PlanIcon className={cn('h-5 w-5', plan.current ? 'text-[var(--gold)]' : 'text-muted-foreground')} />
+                    <h4 className="font-bold text-[var(--navy)] dark:text-white">{plan.name}</h4>
+                  </div>
+                  <div className="mb-4">
+                    <span className="text-2xl font-bold text-[var(--navy)] dark:text-white">{plan.price}</span>
+                    <span className="text-sm text-muted-foreground">{plan.period}</span>
+                  </div>
+                  <ul className="flex-1 space-y-2">
+                    {plan.features.map((f) => (
+                      <li key={f} className="flex items-start gap-2 text-sm text-muted-foreground">
+                        <Check className={cn('mt-0.5 h-4 w-4 shrink-0', plan.current ? 'text-[var(--gold)]' : 'text-emerald-500')} />
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+                  <Button
+                    variant={plan.current ? 'outline' : 'default'}
+                    className={cn('mt-4 w-full gap-1.5', !plan.current && 'bg-[var(--navy)] hover:bg-[var(--navy)]/90')}
+                    disabled={plan.current}
+                    onClick={() => plan.name === 'Enterprise' ? toast.info('Contact sales for Enterprise pricing') : toast.info('Upgrade request sent')}
+                  >
+                    {plan.current ? 'Current Plan' : plan.name === 'Enterprise' ? 'Contact Sales' : 'Upgrade'}
+                  </Button>
+                </CardContent>
+              </Card>
+            )
+          })}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Billing View ───────────────────────────────────────────────────────────
+
+const MOCK_INVOICES_BILLING = [
+  { id: 'b1', invoiceNo: 'INV-2025-007', date: '2025-07-01', amount: 312000, tax: 56160, total: 368160, status: 'PAID' },
+  { id: 'b2', invoiceNo: 'INV-2025-006', date: '2025-06-01', amount: 308000, tax: 55440, total: 363440, status: 'PAID' },
+  { id: 'b3', invoiceNo: 'INV-2025-005', date: '2025-05-01', amount: 305000, tax: 54900, total: 359900, status: 'PAID' },
+  { id: 'b4', invoiceNo: 'INV-2025-004', date: '2025-04-01', amount: 300000, tax: 54000, total: 354000, status: 'OVERDUE' },
+  { id: 'b5', invoiceNo: 'INV-2025-003', date: '2025-03-01', amount: 298000, tax: 53640, total: 351640, status: 'PAID' },
+  { id: 'b6', invoiceNo: 'INV-2025-008', date: '2025-08-01', amount: 315000, tax: 56700, total: 371700, status: 'SENT' },
+]
+
+function BillingView() {
+  const thisMonth = MOCK_INVOICES_BILLING.find((i) => i.status === 'SENT')
+  const overdueTotal = MOCK_INVOICES_BILLING.filter((i) => i.status === 'OVERDUE').reduce((s, i) => s + i.total, 0)
+  const paidTotal = MOCK_INVOICES_BILLING.filter((i) => i.status === 'PAID').reduce((s, i) => s + i.total, 0)
+
+  return (
+    <div className="space-y-6">
+      <div className="rounded-xl bg-gradient-to-r from-[var(--navy)] to-[var(--navy)]/90 p-6 text-white shadow-lg">
+        <h2 className="text-xl font-bold">Billing</h2>
+        <p className="mt-1 text-sm text-blue-100/80">Invoice history, payment records, and billing summaries.</p>
+      </div>
+
+      <div className="grid gap-4 grid-cols-2 sm:grid-cols-4">
+        <Card className="p-4">
+          <p className="text-xs uppercase tracking-wider text-muted-foreground">This Month</p>
+          <p className="mt-1 text-xl font-bold text-[var(--navy)] dark:text-white">{thisMonth ? formatINR(thisMonth.total) : '—'}</p>
+          <p className="mt-0.5 text-[11px] text-muted-foreground">Upcoming</p>
+        </Card>
+        <Card className="p-4">
+          <p className="text-xs uppercase tracking-wider text-muted-foreground">Overdue</p>
+          <p className="mt-1 text-xl font-bold text-red-700">{overdueTotal > 0 ? formatINR(overdueTotal) : '₹0'}</p>
+          <p className="mt-0.5 text-[11px] text-muted-foreground">Immediate attention</p>
+        </Card>
+        <Card className="p-4">
+          <p className="text-xs uppercase tracking-wider text-muted-foreground">Total Paid</p>
+          <p className="mt-1 text-xl font-bold text-emerald-700">{formatINR(paidTotal)}</p>
+          <p className="mt-0.5 text-[11px] text-muted-foreground">All time</p>
+        </Card>
+        <Card className="p-4">
+          <p className="text-xs uppercase tracking-wider text-muted-foreground">Upcoming</p>
+          <p className="mt-1 text-xl font-bold text-sky-700">{thisMonth ? formatINR(thisMonth.total) : '—'}</p>
+          <p className="mt-0.5 text-[11px] text-muted-foreground">Due 31 Aug</p>
+        </Card>
+      </div>
+
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">Invoice History</CardTitle>
+        </CardHeader>
+        <CardContent className="px-6 pb-6 pt-0">
+          <div className="max-h-96 overflow-y-auto rounded-lg border scroll-thin">
+            <Table>
+              <TableHeader className="bg-muted/50">
+                <TableRow>
+                  <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Invoice #</TableHead>
+                  <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground w-28">Date</TableHead>
+                  <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground text-right hidden sm:table-cell">Amount</TableHead>
+                  <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground text-right hidden md:table-cell">Tax</TableHead>
+                  <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground text-right">Total</TableHead>
+                  <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground w-28">Status</TableHead>
+                  <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground w-20">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {MOCK_INVOICES_BILLING.map((inv) => (
+                  <TableRow key={inv.id} className="hover:bg-muted/40">
+                    <TableCell className="font-mono text-xs font-semibold text-[var(--navy)] dark:text-[var(--gold-light)]">{inv.invoiceNo}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{fmtDate(inv.date)}</TableCell>
+                    <TableCell className="hidden sm:table-cell text-right font-mono text-sm">{formatINR(inv.amount)}</TableCell>
+                    <TableCell className="hidden md:table-cell text-right font-mono text-sm text-muted-foreground">{formatINR(inv.tax)}</TableCell>
+                    <TableCell className="text-right font-mono font-bold text-[var(--navy)] dark:text-white">{formatINR(inv.total)}</TableCell>
+                    <TableCell><StatusBadge status={inv.status} /></TableCell>
+                    <TableCell>
+                      <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={() => toast.info(`Downloading ${inv.invoiceNo}…`)}>
+                        <Download className="h-3.5 w-3.5" /> PDF
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
+// ── Reports View ───────────────────────────────────────────────────────────
+
+const REPORT_TYPES = [
+  { id: 'workforce', label: 'Workforce Summary', icon: Users, desc: 'Employee deployment, headcount trends, and role distribution', color: 'bg-blue-500' },
+  { id: 'attendance', label: 'Attendance Analysis', icon: Clock, desc: 'Attendance rates, late arrivals, and absence patterns', color: 'bg-emerald-500' },
+  { id: 'leave', label: 'Leave Trends', icon: CalendarDays, desc: 'Leave utilisation by type, department, and period', color: 'bg-violet-500' },
+  { id: 'cost', label: 'Cost Analysis', icon: IndianRupee, desc: 'Payroll costs, billing trends, and budget utilisation', color: 'bg-amber-500' },
+]
+
+const MOCK_REPORT_DATA: Record<string, { col: string[]; rows: string[][] }> = {
+  workforce: {
+    col: ['Department', 'Headcount', 'Active', 'On Leave', 'Avg. Tenure'],
+    rows: [['Operations', '24', '22', '2', '16 months'], ['Safety', '8', '8', '0', '12 months'], ['Human Resources', '6', '5', '1', '20 months'], ['Finance', '4', '3', '1', '18 months'], ['Admin', '5', '5', '0', '14 months']],
+  },
+  attendance: {
+    col: ['Week', 'Present %', 'Late %', 'Absent %', 'Avg. Hours'],
+    rows: [['Week 28 (Jul 14)', '87%', '7%', '6%', '8.2h'], ['Week 27 (Jul 7)', '91%', '5%', '4%', '8.5h'], ['Week 26 (Jun 30)', '89%', '6%', '5%', '8.3h'], ['Week 25 (Jun 23)', '93%', '4%', '3%', '8.6h'], ['Week 24 (Jun 16)', '85%', '8%', '7%', '8.1h']],
+  },
+  leave: {
+    col: ['Leave Type', 'Total Days', 'Used', 'Balance', 'Utilisation'],
+    rows: [['Casual Leave', '72', '28', '44', '39%'], ['Sick Leave', '36', '12', '24', '33%'], ['Earned Leave', '90', '45', '45', '50%'], ['Half-Day Leave', '24', '8', '16', '33%']],
+  },
+  cost: {
+    col: ['Month', 'Payroll', 'Deductions', 'Net Cost', 'vs Budget'],
+    rows: [['July 2025', '₹4,68,000', '₹62,400', '₹4,05,600', '-4%'], ['June 2025', '₹4,62,000', '₹61,200', '₹4,00,800', '-6%'], ['May 2025', '₹4,57,500', '₹60,800', '₹3,96,700', '-7%'], ['April 2025', '₹4,50,000', '₹60,100', '₹3,89,900', '-8%'], ['March 2025', '₹4,47,000', '₹59,800', '₹3,87,200', '-9%']],
+  },
+}
+
+function ReportsView() {
+  const [activeReport, setActiveReport] = useState('workforce')
+  const rd = MOCK_REPORT_DATA[activeReport]
+
+  return (
+    <div className="space-y-6">
+      <div className="rounded-xl bg-gradient-to-r from-[var(--navy)] to-[var(--navy)]/90 p-6 text-white shadow-lg">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-xl font-bold">Reports & Analytics</h2>
+            <p className="mt-1 text-sm text-blue-100/80">Insights into your workforce, attendance, leave, and costs.</p>
+          </div>
+          <Button variant="outline" size="sm" className="gap-1.5 border-white/20 text-white hover:bg-white/10" onClick={() => toast.info('Export initiated')}>
+            <FileDown className="h-4 w-4" /> Export Report
+          </Button>
+        </div>
+      </div>
+
+      {/* Report type cards */}
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+        {REPORT_TYPES.map((rt) => {
+          const RtIcon = rt.icon
+          return (
+            <Card
+              key={rt.id}
+              className={cn('cursor-pointer transition-all hover:shadow-md', activeReport === rt.id && 'ring-2 ring-[var(--gold)]')}
+              onClick={() => setActiveReport(rt.id)}
+            >
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className={cn('grid h-10 w-10 shrink-0 place-items-center rounded-lg text-white', rt.color)}>
+                    <RtIcon className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-[var(--navy)] dark:text-white">{rt.label}</p>
+                    <p className="mt-0.5 text-[11px] text-muted-foreground line-clamp-2">{rt.desc}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )
+        })}
+      </div>
+
+      {/* Report table */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">{REPORT_TYPES.find((r) => r.id === activeReport)?.label}</CardTitle>
+        </CardHeader>
+        <CardContent className="px-6 pb-6 pt-0">
+          <div className="max-h-96 overflow-y-auto rounded-lg border scroll-thin">
+            <Table>
+              <TableHeader className="bg-muted/50">
+                <TableRow>
+                  {rd.col.map((c) => (
+                    <TableHead key={c} className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{c}</TableHead>
+                  ))}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {rd.rows.map((row, i) => (
+                  <TableRow key={i} className="hover:bg-muted/40">
+                    {row.map((cell, j) => (
+                      <TableCell key={j} className={j === 0 ? 'font-medium text-[var(--navy)] dark:text-white' : ''}>{cell}</TableCell>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
+// ── Downloads View ─────────────────────────────────────────────────────────
+
+const DOWNLOAD_CATEGORIES = ['Reports', 'Invoices', 'Contracts', 'Policies'] as const
+
+type DownloadCategory = (typeof DOWNLOAD_CATEGORIES)[number]
+
+const MOCK_FILES: { id: string; name: string; type: DownloadCategory; size: string; date: string; format: string }[] = [
+  { id: 'f1', name: 'Monthly Workforce Report — June 2025', type: 'Reports', size: '1.2 MB', date: '2025-07-01', format: 'PDF' },
+  { id: 'f2', name: 'Attendance Summary — Q2 2025', type: 'Reports', size: '845 KB', date: '2025-07-01', format: 'XLSX' },
+  { id: 'f3', name: 'Leave Utilisation Report', type: 'Reports', size: '540 KB', date: '2025-06-28', format: 'PDF' },
+  { id: 'f4', name: 'INV-2025-007 — July Invoice', type: 'Invoices', size: '320 KB', date: '2025-07-01', format: 'PDF' },
+  { id: 'f5', name: 'INV-2025-006 — June Invoice', type: 'Invoices', size: '315 KB', date: '2025-06-01', format: 'PDF' },
+  { id: 'f6', name: 'INV-2025-005 — May Invoice', type: 'Invoices', size: '310 KB', date: '2025-05-01', format: 'PDF' },
+  { id: 'f7', name: 'Master Service Agreement v3', type: 'Contracts', size: '2.4 MB', date: '2025-01-15', format: 'PDF' },
+  { id: 'f8', name: 'Amendment — Work Order Expansion', type: 'Contracts', size: '890 KB', date: '2025-04-10', format: 'PDF' },
+  { id: 'f9', name: 'Employee Safety Policy 2025', type: 'Policies', size: '1.1 MB', date: '2025-01-01', format: 'PDF' },
+  { id: 'f10', name: 'Leave & Attendance Policy', type: 'Policies', size: '680 KB', date: '2025-01-01', format: 'PDF' },
+  { id: 'f11', name: 'Code of Conduct', type: 'Policies', size: '420 KB', date: '2025-01-01', format: 'PDF' },
+  { id: 'f12', name: 'Cost Analysis — H1 2025', type: 'Reports', size: '1.5 MB', date: '2025-07-05', format: 'XLSX' },
+]
+
+function DownloadsView() {
+  const [search, setSearch] = useState('')
+  const [category, setCategory] = useState<DownloadCategory | 'ALL'>('ALL')
+  const filtered = MOCK_FILES.filter((f) => {
+    if (category !== 'ALL' && f.type !== category) return false
+    if (search && !f.name.toLowerCase().includes(search.toLowerCase())) return false
+    return true
+  })
+
+  const formatColor = (fmt: string) => {
+    if (fmt === 'PDF') return 'bg-red-500/15 text-red-700 dark:text-red-400 border-red-500/25'
+    if (fmt === 'XLSX') return 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/25'
+    return 'bg-primary/10 text-primary border-primary/20'
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="rounded-xl bg-gradient-to-r from-[var(--navy)] to-[var(--navy)]/90 p-6 text-white shadow-lg">
+        <h2 className="text-xl font-bold">Downloads</h2>
+        <p className="mt-1 text-sm text-blue-100/80">Access and download reports, invoices, contracts, and policies.</p>
+      </div>
+
+      {/* Category tabs */}
+      <Tabs defaultValue="ALL" onValueChange={(v) => setCategory(v as DownloadCategory | 'ALL')}>
+        <TabsList>
+          <TabsTrigger value="ALL">All</TabsTrigger>
+          {DOWNLOAD_CATEGORIES.map((c) => (
+            <TabsTrigger key={c} value={c}>{c}</TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
+
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <CardTitle className="text-base">Files ({filtered.length})</CardTitle>
+            <div className="relative">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input placeholder="Search files…" className="h-9 w-56 pl-9" value={search} onChange={(e) => setSearch(e.target.value)} />
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="px-6 pb-6 pt-0">
+          <div className="max-h-96 overflow-y-auto rounded-lg border scroll-thin">
+            <Table>
+              <TableHeader className="bg-muted/50">
+                <TableRow>
+                  <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Name</TableHead>
+                  <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground hidden sm:table-cell">Type</TableHead>
+                  <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground hidden md:table-cell">Format</TableHead>
+                  <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground hidden lg:table-cell">Size</TableHead>
+                  <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground w-28">Date</TableHead>
+                  <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground w-20">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filtered.map((f) => (
+                  <TableRow key={f.id} className="hover:bg-muted/40">
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
+                        <span className="font-medium text-[var(--navy)] dark:text-white truncate max-w-56">{f.name}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="hidden sm:table-cell"><Badge variant="outline" className="text-[10px]">{f.type}</Badge></TableCell>
+                    <TableCell className="hidden md:table-cell"><Badge variant="outline" className={cn('text-[10px]', formatColor(f.format))}>{f.format}</Badge></TableCell>
+                    <TableCell className="hidden lg:table-cell text-xs text-muted-foreground">{f.size}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{fmtDate(f.date)}</TableCell>
+                    <TableCell>
+                      <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={() => toast.info(`Downloading ${f.name}…`)}>
+                        <Download className="h-3.5 w-3.5" /> Save
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
 // ── Main Component ──────────────────────────────────────────────────────────
 
 export function ClientLayout() {
@@ -1161,6 +2041,11 @@ export function ClientLayout() {
     toast.success(t('nav.signedOut', lang))
   }
 
+  const handleChangePortal = () => {
+    localStorage.removeItem('hpe-selected-portal')
+    window.dispatchEvent(new CustomEvent('hpe-portal-change'))
+  }
+
   const nav = getNav(lang)
   const currentNav = nav.find((n) => n.key === active)
 
@@ -1224,10 +2109,18 @@ export function ClientLayout() {
             </div>
           </div>
           <Button
-            onClick={handleLogout}
+            onClick={handleChangePortal}
             variant="ghost"
             size="sm"
             className="mt-3 w-full justify-start gap-2 text-blue-100/80 hover:bg-white/10 hover:text-white"
+          >
+            <ArrowLeftRight className="h-4 w-4" /> Change Portal
+          </Button>
+          <Button
+            onClick={handleLogout}
+            variant="ghost"
+            size="sm"
+            className="mt-1 w-full justify-start gap-2 text-blue-100/80 hover:bg-white/10 hover:text-white"
           >
             <LogOut className="h-4 w-4" /> {t('nav.signOut', lang)}
           </Button>
@@ -1374,18 +2267,18 @@ export function ClientLayout() {
             <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
               {active === 'dashboard' && <DashboardView data={data} loading={loading} />}
               {active === 'company-profile' && <CompanyProfileView data={data} loading={loading} />}
-              {active === 'employees' && <EmptyStateView icon={Users} title="Workforce" message="Your deployed workforce will appear here. Contact your account manager to set up workforce visibility." />}
-              {active === 'departments' && <EmptyStateView icon={LayoutGrid} title="Departments" message="Department structure is managed by your administrator." />}
-              {active === 'attendance' && <EmptyStateView icon={Clock} title="Attendance" message="Attendance records for your deployed workforce will appear here." />}
-              {active === 'leave' && <EmptyStateView icon={CalendarOff} title="Leave Management" message="Leave management for your deployed workforce is managed by HR." />}
-              {active === 'payroll' && <EmptyStateView icon={Banknote} title="Payroll" message="Payroll and billing information will be displayed here." />}
+              {active === 'employees' && <EmployeesView />}
+              {active === 'departments' && <DepartmentsView />}
+              {active === 'attendance' && <AttendanceView />}
+              {active === 'leave' && <LeaveView />}
+              {active === 'payroll' && <PayrollView />}
               {active === 'projects' && <ProjectsView data={data} loading={loading} />}
               {active === 'documents' && <DocumentsView />}
               {active === 'invoices' && <InvoicesView data={data} loading={loading} />}
-              {active === 'subscription' && <EmptyStateView icon={CreditCard} title="Subscription" message="Subscription and plan details are managed by your administrator." />}
-              {active === 'billing' && <EmptyStateView icon={Receipt} title="Billing" message="Billing history and payment records will appear here." />}
-              {active === 'reports' && <EmptyStateView icon={BarChart3} title="Reports" message="Reports and analytics are being configured for your account." />}
-              {active === 'downloads' && <EmptyStateView icon={Download} title="Downloads" message="Documents available for download will appear here." />}
+              {active === 'subscription' && <SubscriptionView />}
+              {active === 'billing' && <BillingView />}
+              {active === 'reports' && <ReportsView />}
+              {active === 'downloads' && <DownloadsView />}
               {active === 'ai-assistant' && <AiAssistantView />}
               {active === 'notifications' && <NotificationsView notifications={notifications} onMarkRead={markOneRead} onMarkAllRead={markAllRead} unread={unread} />}
               {active === 'support' && <SupportView />}

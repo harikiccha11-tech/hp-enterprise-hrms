@@ -10,6 +10,56 @@ interface Message {
   content: string
 }
 
+/* ═══ Role-specific HPAI configuration ═══ */
+
+const ROLE_WELCOME: Record<string, string> = {
+  OWNER: 'Welcome! I am **HPAI** - your executive AI assistant. I can help with company analytics, workforce planning, revenue data, security reports, and system configuration. How can I assist you?',
+  SUPER_ADMIN: 'Welcome! I am **HPAI** - your platform AI command center. I can help with multi-tenant management, revenue analytics, AI model management, white-label config, and platform-wide analytics. What would you like to explore?',
+  HR_MANAGER: 'Welcome! I am **HPAI** - your HR command center AI. I can help with recruitment summaries, payroll validation, leave and attendance management, HR analytics, and performance reviews. How can I help you today?',
+  EMPLOYEE: 'Welcome! I am **HPAI** - the best AI for HR and workforce management. I can help with leave policies, payroll queries, attendance rules, document requests, and company policies. How can I help you today?',
+  CLIENT: 'Welcome! I am **HPAI** - your client portal AI assistant. I can help with workforce analytics, subscription and billing queries, project status, invoices, and service recommendations. How can I assist you today?',
+  CANDIDATE: 'Welcome! I am **HPAI** - your AI career assistant. I can help with job matching, resume review, interview preparation, salary negotiation, and company research. How can I help you land your dream job?',
+}
+
+const ROLE_QUICK_ACTIONS: Record<string, { label: string; prompt: string }[]> = {
+  OWNER: [
+    { label: '📊 Company KPIs', prompt: 'Show me the key company KPIs and metrics for this month' },
+    { label: '💰 Revenue Report', prompt: 'Generate a revenue summary for the current quarter' },
+    { label: '👥 Workforce Overview', prompt: 'Give me a workforce headcount and deployment summary' },
+    { label: '⚠️ Compliance Check', prompt: 'Run a compliance status check across all departments' },
+  ],
+  SUPER_ADMIN: [
+    { label: '📈 Platform Stats', prompt: 'Show platform-wide statistics: total companies, users, API usage' },
+    { label: '💰 MRR Report', prompt: 'Generate a monthly recurring revenue report with trends' },
+    { label: '🤖 AI Usage', prompt: 'Show AI usage analytics across all tenants' },
+    { label: '🏢 Pending Approvals', prompt: 'List all pending company approval requests' },
+  ],
+  HR_MANAGER: [
+    { label: '📋 Recruitment Summary', prompt: 'Give me a summary of open positions and candidate pipeline' },
+    { label: '💰 Payroll Validation', prompt: 'Validate this month\'s payroll for any discrepancies' },
+    { label: '📊 Attendance Report', prompt: 'Generate an attendance summary for this week' },
+    { label: '🎯 Performance', prompt: 'Show upcoming performance reviews and their status' },
+  ],
+  EMPLOYEE: [
+    { label: '💰 Explain Payslip', prompt: 'Explain my latest payslip breakdown and deductions' },
+    { label: '📋 Leave Balance', prompt: 'What is my current leave balance for all types?' },
+    { label: '⏰ Attendance', prompt: 'Show my attendance summary for this month' },
+    { label: '📄 Company Policy', prompt: 'What is the company policy on working from home?' },
+  ],
+  CLIENT: [
+    { label: '👥 Workforce', prompt: 'Show workforce analytics for my deployed team' },
+    { label: '💳 Subscription', prompt: 'What is my current subscription plan and usage?' },
+    { label: '📊 Project Status', prompt: 'Give me a status update on all active projects' },
+    { label: '📄 Invoice', prompt: 'Show my recent invoices and payment status' },
+  ],
+  CANDIDATE: [
+    { label: '📝 Resume Tips', prompt: 'Review my resume and suggest improvements for a better chance' },
+    { label: '🎤 Interview Prep', prompt: 'Give me tips for preparing for a technical interview' },
+    { label: '💰 Salary Guide', prompt: 'What salary should I negotiate for my experience level?' },
+    { label: '🎯 Job Match', prompt: 'What jobs match my skills and experience?' },
+  ],
+}
+
 /** Render simple markdown: **bold** and bullet lines */
 function renderMd(text: string) {
   const parts = text.split(/(\*\*[^*]+\*\*)/g)
@@ -43,12 +93,18 @@ export function HpAiChat() {
   const hpaiOpen = useAppStore((s) => s.hpaiOpen)
   const setHpaiOpen = useAppStore((s) => s.setHpaiOpen)
   const lang = useAppStore((s) => s.lang)
+  const user = useAppStore((s) => s.user)
+  const role = user?.role || 'EMPLOYEE'
 
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
+
+  // Role-specific quick actions
+  const quickActions = ROLE_QUICK_ACTIONS[role] || ROLE_QUICK_ACTIONS.EMPLOYEE
+  const welcomeText = ROLE_WELCOME[role] || ROLE_WELCOME.EMPLOYEE
 
   // Reset messages when panel opens
   useEffect(() => {
@@ -109,7 +165,10 @@ export function HpAiChat() {
     } catch {}
   }
 
-  const welcomeText = t('hpai.welcome', lang)
+  const handleQuickAction = (prompt: string) => {
+    setInput(prompt)
+    setTimeout(() => inputRef.current?.focus(), 50)
+  }
 
   return (
     <>
@@ -166,8 +225,23 @@ export function HpAiChat() {
             className="flex-1 max-h-[340px] overflow-y-auto scroll-thin px-4 py-3 space-y-3"
           >
             {messages.length === 0 && (
-              <div className="text-[13px] text-muted-foreground whitespace-pre-wrap leading-relaxed">
-                {renderMd(welcomeText)}
+              <div className="space-y-3">
+                <div className="text-[13px] text-muted-foreground whitespace-pre-wrap leading-relaxed">
+                  {renderMd(welcomeText)}
+                </div>
+                {quickActions.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {quickActions.map((action) => (
+                      <button
+                        key={action.label}
+                        onClick={() => handleQuickAction(action.prompt)}
+                        className="rounded-full border bg-background px-2.5 py-1 text-[11px] font-medium text-[var(--navy)] hover:bg-[var(--gold)]/10 hover:border-[var(--gold)]/40 transition-colors"
+                      >
+                        {action.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
             {messages.map((msg, i) => (

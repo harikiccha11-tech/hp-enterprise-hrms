@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
     const token = await createSessionToken({
       userId: user.id,
       username: user.username,
-      role: user.role as 'OWNER' | 'SUPER_ADMIN' | 'HR_MANAGER' | 'EMPLOYEE' | 'CLIENT',
+      role: user.role as 'OWNER' | 'SUPER_ADMIN' | 'HR_MANAGER' | 'EMPLOYEE' | 'CLIENT' | 'CANDIDATE',
       employeeId: user.employee?.id,
       // Dual-mode fields
       accountId: user.accountId ?? undefined,

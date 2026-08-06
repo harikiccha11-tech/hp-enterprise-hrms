@@ -354,7 +354,36 @@ function SubscriptionForm({ onBack }: { onBack: () => void }) {
   const [form, setForm] = useState({ companyName: '', contactName: '', email: '', phone: '', address: '', plan: '', employeeCount: '', message: '' })
   const [loading, setLoading] = useState(false)
   const [sent, setSent] = useState(false)
+  const formRef = useRef<HTMLDivElement>(null)
   const update = (k: string, v: string) => setForm((p) => ({ ...p, [k]: v }))
+
+  const SUBSCRIPTION_PLANS = [
+    {
+      key: 'starter', name: 'Starter', price: '₹999/mo',
+      features: ['Up to 25 employees', 'Basic HR', 'Attendance', 'Leave Management', 'Email Support'],
+    },
+    {
+      key: 'standard', name: 'Standard', price: '₹2,499/mo',
+      features: ['Up to 100 employees', 'Full HR Suite', 'Recruitment', 'Payroll', 'Priority Support'],
+    },
+    {
+      key: 'professional', name: 'Professional', price: '₹4,999/mo',
+      features: ['Up to 500 employees', 'Everything in Standard', 'AI Assistant', 'Advanced Analytics', 'Dedicated Manager'],
+    },
+    {
+      key: 'enterprise', name: 'Enterprise', price: '₹9,999/mo',
+      features: ['Unlimited employees', 'Everything in Professional', 'Custom Integrations', 'White Label', 'SLA Guarantee', '24/7 Support'],
+    },
+  ]
+
+  const handleSelectPlan = (planKey: string) => {
+    update('plan', planKey)
+    setTimeout(() => {
+      formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 100)
+  }
+
+  const selectedPlanName = SUBSCRIPTION_PLANS.find((p) => p.key === form.plan)?.name || ''
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -381,18 +410,79 @@ function SubscriptionForm({ onBack }: { onBack: () => void }) {
 
   return (
     <section data-landing="true" className="min-h-screen py-16 sm:py-20 px-4" style={{ background: C.bg }}>
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-4xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <button onClick={onBack} className="flex items-center gap-1.5 text-sm font-medium hover:underline" style={{ color: C.inkSoft }}>
             <ArrowLeft className="h-3.5 w-3.5" /> Back
           </button>
         </div>
-        <div className="text-center mb-8">
+        <div className="text-center mb-10">
           <SectionLabel className="text-center">Get Started</SectionLabel>
           <h1 className="text-3xl md:text-4xl font-extrabold mb-2" style={{ color: C.navy }}>Request a Subscription</h1>
-          <p style={{ color: C.inkSoft, fontSize: '16px' }}>Fill in the details and our team will reach out to you.</p>
+          <p style={{ color: C.inkSoft, fontSize: '16px' }}>Choose a plan that fits your organization, then fill in your details.</p>
         </div>
-        <div className="rounded-xl border p-6 sm:p-8" style={{ background: C.paper, borderColor: C.rule }}>
+
+        {/* Plan Selection Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-10">
+          {SUBSCRIPTION_PLANS.map((plan, i) => {
+            const isSelected = form.plan === plan.key
+            return (
+              <motion.div
+                key={plan.key}
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: i * 0.06 }}
+              >
+                <div
+                  className={"relative p-5 rounded-xl border transition-all duration-300 cursor-pointer h-full flex flex-col " + (isSelected ? 'shadow-lg' : 'hover:shadow-md')}
+                  style={{
+                    background: isSelected ? C.navy : C.paper,
+                    borderColor: isSelected ? C.gold : C.rule,
+                    borderWidth: isSelected ? '2px' : '1px',
+                  }}
+                  onClick={() => handleSelectPlan(plan.key)}
+                >
+                  {isSelected && (
+                    <div className="absolute -top-2.5 right-4 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold" style={{ background: C.gold, color: C.navyDeep }}>
+                      <Check className="h-3 w-3" /> SELECTED
+                    </div>
+                  )}
+                  <div className="mb-4">
+                    <h3 className={"text-lg font-bold " + (isSelected ? 'text-white' : '')} style={isSelected ? {} : { color: C.ink }}>{plan.name}</h3>
+                    <p className={"text-2xl font-extrabold mt-1 " + (isSelected ? 'text-[#E8C96A]' : '')} style={isSelected ? {} : { color: C.navy }}>{plan.price}</p>
+                  </div>
+                  <ul className="space-y-2 mb-5 flex-1">
+                    {plan.features.map((f, j) => (
+                      <li key={j} className={"flex items-start gap-2 text-[13px] " + (isSelected ? 'text-white/80' : '')} style={isSelected ? {} : { color: C.inkSoft }}>
+                        <Check className={"h-3.5 w-3.5 shrink-0 mt-0.5 " + (isSelected ? 'text-green-300' : '')} style={isSelected ? {} : { color: C.verify }} />
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+                  <button
+                    className={"w-full py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 " + (isSelected ? 'text-[#001A3D] hover:opacity-90' : 'border-2 hover:shadow-md')}
+                    style={isSelected
+                      ? { background: C.gold }
+                      : { borderColor: C.navy, color: C.navy }
+                    }
+                    onClick={(e) => { e.stopPropagation(); handleSelectPlan(plan.key) }}
+                  >
+                    {isSelected ? 'Selected' : 'Select Plan'}
+                  </button>
+                </div>
+              </motion.div>
+            )
+          })}
+        </div>
+
+        {/* Contact Form */}
+        <div ref={formRef} className="rounded-xl border p-6 sm:p-8" style={{ background: C.paper, borderColor: C.rule }}>
+          {selectedPlanName && (
+            <div className="mb-5 flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: 'rgba(212,175,55,.08)', border: `1px solid ${C.gold}40` }}>
+              <IndianRupee className="h-4 w-4" style={{ color: C.gold }} />
+              <span className="text-sm font-semibold" style={{ color: C.navy }}>Selected Plan: {selectedPlanName}</span>
+            </div>
+          )}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
@@ -418,17 +508,9 @@ function SubscriptionForm({ onBack }: { onBack: () => void }) {
               <Label className="text-xs font-semibold" style={{ color: C.inkSoft }}>Address</Label>
               <Input placeholder="Office address" value={form.address} onChange={(e) => update('address', e.target.value)} className="h-10 text-sm rounded-lg" />
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label className="text-xs font-semibold" style={{ color: C.inkSoft }}>Plan</Label>
-                <select value={form.plan} onChange={(e) => update('plan', e.target.value)} className="w-full h-10 rounded-lg border bg-white px-3 text-sm" style={{ borderColor: C.rule }}>
-                  <option value="">Select plan</option><option value="starter">Starter</option><option value="standard">Standard</option><option value="professional">Professional</option><option value="enterprise">Enterprise</option>
-                </select>
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs font-semibold" style={{ color: C.inkSoft }}>Employee Count</Label>
-                <Input placeholder="e.g. 50" value={form.employeeCount} onChange={(e) => update('employeeCount', e.target.value)} className="h-10 text-sm rounded-lg" />
-              </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold" style={{ color: C.inkSoft }}>Employee Count</Label>
+              <Input placeholder="e.g. 50" value={form.employeeCount} onChange={(e) => update('employeeCount', e.target.value)} className="h-10 text-sm rounded-lg" />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold" style={{ color: C.inkSoft }}>Message</Label>

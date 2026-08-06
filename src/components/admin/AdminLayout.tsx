@@ -22,12 +22,19 @@ import {
   LayoutDashboard, Users, Fingerprint, CalendarDays, Wallet, Building2,
   FolderKanban, ClipboardList, ReceiptText, BarChart3, FileText, Megaphone,
   ScrollText, Settings, Bell, LogOut, Menu, X, ChevronRight, CheckCheck,
+  ArrowLeftRight,
   ShieldCheck, ShieldAlert, Lock, Crown, UserCog,
   // New icons for new modules
   Network, Briefcase, MapPin, Truck, Package, UserPlus, UserMinus,
   Target, GraduationCap, CreditCard, BookOpen, Mail, BellRing,
   CreditCard as CreditCardIcon, ToggleLeft, Landmark, Shield, Activity,
   Search, Key, Globe,
+  // Super Admin SaaS icons
+  CheckCircle, DollarSign, Layers, Image, Tag, Link2, Brain, Cpu,
+  Sparkles, Palette, Eye, Database, Wrench, Monitor, MessageCircle, Plus,
+  // Missing icons for 24 Super Admin modules
+  TrendingUp, UserCheck, HelpCircle, Share2, Paintbrush, SwatchBook,
+  HardDrive, Tool, IndianRupee, Bot,
 } from 'lucide-react'
 import { ROLE_LABELS } from '@/lib/constants'
 import { FollowUs } from '@/components/shared/FollowUs'
@@ -83,6 +90,15 @@ import { GlobalSearch } from './modules/GlobalSearch'
 import { RoleManagement } from './modules/RoleManagement'
 import { HpAiChat } from '@/components/shared/HpAiChat'
 import { LanguageSwitcher } from '@/components/shared/LanguageSwitcher'
+// Super Admin SaaS modules
+import {
+  ClientCompanies, CompanyApproval, RevenueDashboard, WebsiteCMS,
+  LandingPageBuilder, HeroBannerManager, PricingEditor, FAQEditor,
+  CareersManager, BlogManager, SocialMediaManager, HPAIManagement,
+  AIModels, PromptLibrary, KnowledgeManager, CustomDomains, WhiteLabel,
+  Branding, Themes, EmailTemplatesManager, WhatsAppTemplates,
+  BackupRestore, MaintenanceMode, Monitoring,
+} from './modules/SuperAdminModules'
 
 export type ModuleKey =
   // Overview
@@ -106,6 +122,19 @@ export type ModuleKey =
   | 'subscription-plans' | 'demo-requests' | 'feature-flags' | 'payment-gateways'
   | 'security' | 'system-health'
   | 'audit' | 'roles' | 'settings' | 'users'
+  // SaaS Platform (Super Admin)
+  | 'client-companies' | 'company-approval' | 'revenue'
+  // Website & Content (Super Admin)
+  | 'website-cms' | 'landing-builder' | 'hero-banner' | 'pricing-editor'
+  | 'faq-editor' | 'careers-manager' | 'blog-manager' | 'social-manager'
+  // AI Platform (Super Admin)
+  | 'hpai-management' | 'ai-models' | 'prompt-library' | 'knowledge-manager'
+  // Branding & Domains (Super Admin)
+  | 'custom-domains' | 'white-label' | 'branding' | 'themes'
+  // Templates (Super Admin)
+  | 'email-templates-manager' | 'whatsapp-templates'
+  // Infrastructure (Super Admin)
+  | 'backup' | 'maintenance' | 'monitoring'
 
 interface NavItem {
   key: ModuleKey
@@ -189,10 +218,71 @@ function getNavGroups(lang: LangCode): { title: string; items: NavItem[] }[] {
         { key: 'notification-templates', label: 'Notification Templates', icon: BellRing, desc: 'Notification template management' },
       ],
     },
+    // ── Super Admin: SaaS Control Center ──────────────────────────
+    // SaaS Platform
+    {
+      title: 'SaaS Platform',
+      items: [
+        { key: 'client-companies', label: 'Client Companies', icon: Building2, desc: 'Manage all client companies', superAdminOnly: true },
+        { key: 'company-approval', label: 'Company Approval', icon: UserCheck, desc: 'Approve or reject new companies', superAdminOnly: true },
+        { key: 'revenue', label: 'Revenue', icon: TrendingUp, desc: 'Revenue analytics & financial insights', superAdminOnly: true },
+      ],
+    },
+    // Website & Content
+    {
+      title: 'Website & Content',
+      items: [
+        { key: 'website-cms', label: 'Website CMS', icon: Globe, desc: 'Website content management', superAdminOnly: true },
+        { key: 'landing-builder', label: 'Landing Builder', icon: LayoutDashboard, desc: 'Landing page section builder', superAdminOnly: true },
+        { key: 'hero-banner', label: 'Hero Banners', icon: Megaphone, desc: 'Hero banner slide management', superAdminOnly: true },
+        { key: 'pricing-editor', label: 'Pricing Editor', icon: IndianRupee, desc: 'Plan pricing & feature editor', superAdminOnly: true },
+        { key: 'faq-editor', label: 'FAQ Editor', icon: HelpCircle, desc: 'FAQ section management', superAdminOnly: true },
+        { key: 'careers-manager', label: 'Careers', icon: Briefcase, desc: 'Job listings management', superAdminOnly: true },
+        { key: 'blog-manager', label: 'Blog', icon: BookOpen, desc: 'Blog post management', superAdminOnly: true },
+        { key: 'social-manager', label: 'Social Media', icon: Share2, desc: 'Social media link management', superAdminOnly: true },
+      ],
+    },
+    // AI Platform
+    {
+      title: 'AI Platform',
+      items: [
+        { key: 'hpai-management', label: 'HPAI Management', icon: Bot, desc: 'HPAI configuration & settings', superAdminOnly: true },
+        { key: 'ai-models', label: 'AI Models', icon: Brain, desc: 'AI model registry & management', superAdminOnly: true },
+        { key: 'prompt-library', label: 'Prompt Library', icon: FileText, desc: 'AI prompt templates', superAdminOnly: true },
+        { key: 'knowledge-manager', label: 'Knowledge Base', icon: Database, desc: 'Knowledge base articles', superAdminOnly: true },
+      ],
+    },
+    // Branding & Domains
+    {
+      title: 'Branding & Domains',
+      items: [
+        { key: 'custom-domains', label: 'Custom Domains', icon: Globe, desc: 'Custom domain management', superAdminOnly: true },
+        { key: 'white-label', label: 'White Label', icon: Palette, desc: 'White label branding settings', superAdminOnly: true },
+        { key: 'branding', label: 'Branding', icon: Paintbrush, desc: 'Brand identity & theme', superAdminOnly: true },
+        { key: 'themes', label: 'Themes', icon: SwatchBook, desc: 'Theme gallery & management', superAdminOnly: true },
+      ],
+    },
+    // Communication Templates
+    {
+      title: 'Communication Templates',
+      items: [
+        { key: 'email-templates-manager', label: 'Email Templates', icon: Mail, desc: 'System email templates', superAdminOnly: true },
+        { key: 'whatsapp-templates', label: 'WhatsApp Templates', icon: MessageCircle, desc: 'WhatsApp message templates', superAdminOnly: true },
+      ],
+    },
+    // Infrastructure
+    {
+      title: 'Infrastructure',
+      items: [
+        { key: 'backup', label: 'Backup & Restore', icon: HardDrive, desc: 'Data backup & restore', superAdminOnly: true },
+        { key: 'maintenance', label: 'Maintenance Mode', icon: Tool, desc: 'System maintenance controls', superAdminOnly: true },
+        { key: 'monitoring', label: 'Monitoring', icon: Activity, desc: 'System monitoring & diagnostics', superAdminOnly: true },
+      ],
+    },
     {
       title: 'System',
       items: [
-        { key: 'subscription-plans', label: 'Subscription Plans', icon: CreditCardIcon, desc: 'Pricing plans management' },
+        { key: 'subscription-plans', label: 'Subscription Plans', icon: CreditCardIcon, desc: 'Pricing plans management', superAdminOnly: true },
         { key: 'demo-requests', label: 'Demo Requests', icon: CalendarDays, desc: 'Demo, subscription & contact requests' },
         { key: 'feature-flags', label: 'Feature Flags', icon: ToggleLeft, desc: 'Feature toggle management' },
         { key: 'payment-gateways', label: 'Payment Gateways', icon: Landmark, desc: 'Payment gateway configuration' },
@@ -305,6 +395,11 @@ export function AdminLayout() {
 
   const handleLogout = async () => { await logout(); toast.success(t('nav.signedOut', lang)) }
 
+  const handleChangePortal = () => {
+    localStorage.removeItem('hpe-selected-portal')
+    window.dispatchEvent(new CustomEvent('hpe-portal-change'))
+  }
+
   const navGroups = getNavGroups(lang)
   const allItems = navGroups.flatMap((g) => g.items)
   const currentNav = allItems.find((n) => n.key === active)
@@ -359,7 +454,15 @@ export function AdminLayout() {
               <p className="truncate text-[11px] text-blue-200/70">{adminEmail || roleLabel}</p>
             </div>
           </div>
-          <Button onClick={handleLogout} variant="ghost" size="sm" className="mt-3 w-full justify-start gap-2 text-blue-100/80 hover:bg-white/10 hover:text-white">
+          <Button onClick={handleChangePortal} variant="ghost" size="sm" className="mt-3 w-full justify-start gap-2 text-blue-100/80 hover:bg-white/10 hover:text-white">
+            <ArrowLeftRight className="h-4 w-4" /> Change Portal
+          </Button>
+          <Button
+            onClick={handleLogout}
+            variant="ghost"
+            size="sm"
+            className="mt-1 w-full justify-start gap-2 text-blue-100/80 hover:bg-white/10 hover:text-white"
+          >
             <LogOut className="h-4 w-4" /> {t('nav.signOut', lang)}
           </Button>
         </div>
@@ -497,6 +600,38 @@ export function AdminLayout() {
               {active === 'roles' && <RoleManagement refreshKey={refreshKey} isOwner={isOwner || isSuperAdmin} />}
               {active === 'audit' && <AuditLogs isSuperAdmin={isSuperAdmin} />}
               {active === 'settings' && <SettingsModule isSuperAdmin={isSuperAdmin} isOwner={isOwner || isSuperAdmin} />}
+
+              {/* ── Super Admin: SaaS Control Center ────────────── */}
+              {/* SaaS Platform */}
+              {active === 'client-companies' && isSuperAdmin && <ClientCompanies refreshKey={refreshKey} />}
+              {active === 'company-approval' && isSuperAdmin && <CompanyApproval refreshKey={refreshKey} />}
+              {active === 'revenue' && isSuperAdmin && <RevenueDashboard refreshKey={refreshKey} />}
+              {/* Website & Content */}
+              {active === 'website-cms' && isSuperAdmin && <WebsiteCMS refreshKey={refreshKey} />}
+              {active === 'landing-builder' && isSuperAdmin && <LandingPageBuilder refreshKey={refreshKey} />}
+              {active === 'hero-banner' && isSuperAdmin && <HeroBannerManager refreshKey={refreshKey} />}
+              {active === 'pricing-editor' && isSuperAdmin && <PricingEditor refreshKey={refreshKey} />}
+              {active === 'faq-editor' && isSuperAdmin && <FAQEditor refreshKey={refreshKey} />}
+              {active === 'careers-manager' && isSuperAdmin && <CareersManager refreshKey={refreshKey} />}
+              {active === 'blog-manager' && isSuperAdmin && <BlogManager refreshKey={refreshKey} />}
+              {active === 'social-manager' && isSuperAdmin && <SocialMediaManager refreshKey={refreshKey} />}
+              {/* AI Platform */}
+              {active === 'hpai-management' && isSuperAdmin && <HPAIManagement refreshKey={refreshKey} />}
+              {active === 'ai-models' && isSuperAdmin && <AIModels refreshKey={refreshKey} />}
+              {active === 'prompt-library' && isSuperAdmin && <PromptLibrary refreshKey={refreshKey} />}
+              {active === 'knowledge-manager' && isSuperAdmin && <KnowledgeManager refreshKey={refreshKey} />}
+              {/* Branding & Domains */}
+              {active === 'custom-domains' && isSuperAdmin && <CustomDomains refreshKey={refreshKey} />}
+              {active === 'white-label' && isSuperAdmin && <WhiteLabel refreshKey={refreshKey} />}
+              {active === 'branding' && isSuperAdmin && <Branding refreshKey={refreshKey} />}
+              {active === 'themes' && isSuperAdmin && <Themes refreshKey={refreshKey} />}
+              {/* Communication Templates */}
+              {active === 'email-templates-manager' && isSuperAdmin && <EmailTemplatesManager refreshKey={refreshKey} />}
+              {active === 'whatsapp-templates' && isSuperAdmin && <WhatsAppTemplates refreshKey={refreshKey} />}
+              {/* Infrastructure */}
+              {active === 'backup' && isSuperAdmin && <BackupRestore refreshKey={refreshKey} />}
+              {active === 'maintenance' && isSuperAdmin && <MaintenanceMode refreshKey={refreshKey} />}
+              {active === 'monitoring' && isSuperAdmin && <Monitoring refreshKey={refreshKey} />}
             </div>
           </main>
         </div>

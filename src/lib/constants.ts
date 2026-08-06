@@ -157,7 +157,7 @@ export const DEPARTMENTS = [
   'Procurement', 'HR & Admin', 'Finance', 'Safety', 'Operations',
 ]
 
-export type Role = 'OWNER' | 'SUPER_ADMIN' | 'HR_MANAGER' | 'EMPLOYEE' | 'CLIENT'
+export type Role = 'OWNER' | 'SUPER_ADMIN' | 'HR_MANAGER' | 'EMPLOYEE' | 'CLIENT' | 'CANDIDATE'
 
 export const ROLE_LABELS: Record<string, string> = {
   OWNER: 'Owner',
@@ -165,6 +165,7 @@ export const ROLE_LABELS: Record<string, string> = {
   HR_MANAGER: 'HR Manager',
   EMPLOYEE: 'Employee',
   CLIENT: 'Client',
+  CANDIDATE: 'Candidate',
 }
 
 export const ROLE_RANK: Record<string, number> = {
@@ -173,6 +174,7 @@ export const ROLE_RANK: Record<string, number> = {
   HR_MANAGER: 3,
   EMPLOYEE: 2,
   CLIENT: 1,
+  CANDIDATE: 0,
 }
 
 export function canManageRole(myRole: string, targetRole: string): boolean {

@@ -24,7 +24,7 @@ export const SESSION_MAX_AGE = 60 * 60 * 24 * 7 // 7 days
 export interface SessionPayload {
   userId: string
   username: string
-  role: 'OWNER' | 'SUPER_ADMIN' | 'HR_MANAGER' | 'EMPLOYEE' | 'CLIENT'
+  role: 'OWNER' | 'SUPER_ADMIN' | 'HR_MANAGER' | 'EMPLOYEE' | 'CLIENT' | 'CANDIDATE'
   employeeId?: string
   // Dual-mode fields
   accountId?: string
