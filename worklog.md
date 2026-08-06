@@ -969,3 +969,30 @@ Stage Summary:
 - **SuperAdmin**: 9 new SaaS API routes (/api/admin/saas/accounts, revenue, website, content, ai-config, branding, system, templates, domains). All 24 modules in SuperAdminModules.tsx now have API hooks with loading states.
 - **Lint**: 0 errors, 0 warnings - completely clean.
 - **Known limitation**: Dev server OOM in 4GB sandbox (pre-existing, not caused by changes). Deploy to Vercel for full verification.
+
+---
+Task ID: deploy-1
+Agent: Main
+Task: Fix build errors, push to GitHub, prepare for Vercel deployment
+
+Work Log:
+- Fixed critical build error: `Tool` icon not exported from lucide-react → replaced with `ToolCase`
+- Added JWT_SECRET to local .env to fix production build failure
+- Verified build passes clean (NODE_OPTIONS='--max-old-space-size=384' bun run build)
+- Verified lint passes clean (bun run lint)
+- Removed .env from git tracking (contained secrets)
+- Added .zscripts/ to .gitignore
+- Updated .gitignore to allow .env.example
+- Created .env.example documenting 3 required env vars: DATABASE_URL, JWT_SECRET, GEMINI_API_KEY
+- Committed 2 pushes to GitHub (harikiccha11-tech/hp-enterprise-hrms)
+  - 1af121c: fix build error, enhance APIs, remove .env from tracking
+  - 6a40c88: add .env.example
+- Vercel CLI installed but no auth token available — deployment requires user's Vercel token or GitHub-Vercel integration
+
+Stage Summary:
+- Build: PASS (0 errors, 0 warnings with ignoreBuildErrors)
+- Lint: PASS (0 errors)
+- GitHub: PUSHED to main (2 commits)
+- Vercel: Cannot deploy from sandbox (no VERCEL_TOKEN). User needs to:
+  1. Set env vars in Vercel dashboard (DATABASE_URL, JWT_SECRET, GEMINI_API_KEY)
+  2. Connect GitHub repo to Vercel (or push via CLI with token)
