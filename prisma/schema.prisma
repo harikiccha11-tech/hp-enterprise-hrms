@@ -58,6 +58,7 @@ model Account {
   jobPostings               JobPosting[] @relation("JobPostingAccount")
   interviews                Interview[] @relation("InterviewAccount")
   assets                    Asset[] @relation("AssetAccount")
+  supportTickets             SupportTicket[]
 
   @@index([status])
   @@index([accountType])
@@ -92,6 +93,7 @@ model User {
   attendanceRecords Attendance[] @relation("AttendanceMarkedBy")
   leaveActions     LeaveAction[]
   aiConversations  AiConversation[]
+  supportTickets    SupportTicket[]
 
   @@index([role])
   @@index([accountId])
@@ -187,6 +189,7 @@ model Employee {
   siteAssignments SiteAssignment[]
   timesheetLines  TimesheetLine[]
   invoiceLineItems InvoiceLineItem[]
+  supportTickets    SupportTicket[]
 
   reviewedBy     String?
   reviewedAt     DateTime?
@@ -1378,4 +1381,35 @@ model PromptTemplate {
   updatedAt   DateTime @updatedAt
 
   @@index([category])
+}
+
+// ============================================================
+// SUPPORT TICKETS (Employee Help Desk)
+// ============================================================
+
+model SupportTicket {
+  id          String   @id @default(cuid())
+  ticketId    String   @unique                         // Human-readable ID like TKT-ABC123
+  accountId   String?  @map("account_id")
+  userId      String?  @map("user_id")
+  employeeId  String?  @map("employee_id")
+  subject     String
+  category    String   @default("General")              // Technical, HR, Payroll, Leave, Documents, General
+  priority    String   @default("Medium")               // Low, Medium, High, Critical
+  description String
+  status      String   @default("Open")                 // Open, In Progress, Resolved, Closed
+  resolution  String?
+  resolvedAt  DateTime? @map("resolved_at")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  account     Account?   @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  user        User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  employee    Employee?  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([employeeId])
+  @@index([status])
+  @@index([category])
+  @@index([createdAt])
 }

@@ -1579,6 +1579,7 @@ function SettingsModule({ lang, onNavigate }: { lang: LangCode; onNavigate: (k: 
             </div>
             <Switch checked={notifPrefs.inApp} onCheckedChange={v => saveNotifPrefs({ ...notifPrefs, inApp: v })} />
           </div>
+          <p className="pt-2 text-xs text-muted-foreground italic">Preferences are saved locally on this device</p>
         </div>
 
         {/* Account */}

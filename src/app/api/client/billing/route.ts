@@ -23,19 +23,36 @@ export async function GET(request: NextRequest) {
       where.status = statusFilter
     }
 
-    const records = await db.invoice.findMany({
-      where,
-      include: {
-        client: {
-          select: {
-            clientName: true,
-            companyName: true,
+    const [records, account] = await Promise.all([
+      db.invoice.findMany({
+        where,
+        include: {
+          client: {
+            select: {
+              clientName: true,
+              companyName: true,
+            },
           },
         },
-      },
-      orderBy: { issueDate: 'desc' },
-      take: 500,
-    })
+        orderBy: { issueDate: 'desc' },
+        take: 500,
+      }),
+      db.account.findUnique({
+        where: { id: accountId },
+        select: {
+          expiresAt: true,
+          organizationName: true,
+          status: true,
+        },
+      }),
+    ])
+
+    // Derive current period end from latest invoice billingPeriodEnd or account expiresAt
+    const latestInvoice = records[0]
+    const currentPeriodEnd =
+      latestInvoice?.billingPeriodEnd?.toISOString() ||
+      account?.expiresAt?.toISOString() ||
+      null
 
     return NextResponse.json({
       invoices: records.map((inv) => ({
@@ -54,6 +71,8 @@ export async function GET(request: NextRequest) {
         paymentDate: inv.paymentDate ? inv.paymentDate.toISOString().slice(0, 10) : null,
         createdAt: inv.createdAt.toISOString(),
       })),
+      currentPeriodEnd,
+      accountStatus: account?.status || null,
     })
   } catch {
     return NextResponse.json({ error: 'Request failed' }, { status: 500 })

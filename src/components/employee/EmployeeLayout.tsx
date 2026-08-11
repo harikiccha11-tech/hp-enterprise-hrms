@@ -346,17 +346,10 @@ interface HelpTicket {
 
 const TICKET_CATEGORIES = ['Technical', 'HR', 'Payroll', 'Leave', 'Documents', 'General'] as const
 const TICKET_PRIORITIES = ['Low', 'Medium', 'High', 'Critical'] as const
-const TICKET_STORAGE_KEY = 'hpe-emp-tickets'
 
 function HelpDeskModule({ lang }: { lang: LangCode }) {
-  const [tickets, setTickets] = useState<HelpTicket[]>(() => {
-    if (typeof window === 'undefined') return []
-    try {
-      const saved = localStorage.getItem(TICKET_STORAGE_KEY)
-      if (saved) return JSON.parse(saved)
-    } catch {}
-    return []
-  })
+  const [tickets, setTickets] = useState<HelpTicket[]>([])
+  const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [subject, setSubject] = useState('')
   const [category, setCategory] = useState('General')
@@ -364,33 +357,71 @@ function HelpDeskModule({ lang }: { lang: LangCode }) {
   const [description, setDescription] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
-  const saveTickets = (tix: HelpTicket[]) => {
-    setTickets(tix)
-    try { localStorage.setItem(TICKET_STORAGE_KEY, JSON.stringify(tix)) } catch {}
-  }
+  // Fetch tickets from API on mount
+  useEffect(() => {
+    let cancelled = false
+    fetch('/api/employee/support', { cache: 'no-store' })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (cancelled) return
+        if (data?.tickets) {
+          setTickets(data.tickets.map((t: any) => ({
+            id: t.ticketId || t.id,
+            subject: t.subject,
+            category: t.category,
+            priority: t.priority,
+            description: t.description,
+            status: t.status,
+            createdAt: t.createdAt,
+          })))
+        }
+        setLoading(false)
+      })
+      .catch(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
+  }, [])
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!subject.trim() || !description.trim()) {
       toast.error('Please fill in the subject and description.')
       return
     }
     setSubmitting(true)
-    setTimeout(() => {
+    try {
+      const res = await fetch('/api/employee/support', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          subject: subject.trim(),
+          category,
+          priority,
+          description: description.trim(),
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        toast.error(data.error || 'Failed to create ticket')
+        setSubmitting(false)
+        return
+      }
       const newTicket: HelpTicket = {
-        id: `TKT-${Date.now().toString(36).toUpperCase()}`,
+        id: data.ticket?.ticketId || `TKT-${Date.now().toString(36).toUpperCase()}`,
         subject: subject.trim(),
         category,
         priority,
         description: description.trim(),
         status: 'Open',
-        createdAt: new Date().toISOString(),
+        createdAt: data.ticket?.createdAt || new Date().toISOString(),
       }
-      saveTickets([newTicket, ...tickets])
+      setTickets(prev => [newTicket, ...prev])
       setSubject(''); setDescription(''); setCategory('General'); setPriority('Medium')
       setShowForm(false)
       setSubmitting(false)
       toast.success(`Ticket ${newTicket.id} created successfully!`)
-    }, 600)
+    } catch {
+      toast.error('Failed to create ticket. Please try again.')
+      setSubmitting(false)
+    }
   }
 
   const statusColor = (s: string) => {
@@ -500,7 +531,12 @@ function HelpDeskModule({ lang }: { lang: LangCode }) {
         <div className="border-b px-4 py-3">
           <h3 className="font-semibold text-[var(--navy)] dark:text-white">Recent Tickets</h3>
         </div>
-        {tickets.length === 0 ? (
+        {loading ? (
+          <div className="py-12 text-center">
+            <Loader2 className="mx-auto mb-3 h-6 w-6 animate-spin text-muted-foreground/50" />
+            <p className="text-sm text-muted-foreground">Loading tickets…</p>
+          </div>
+        ) : tickets.length === 0 ? (
           <div className="py-12 text-center">
             <LifeBuoy className="mx-auto mb-3 h-8 w-8 text-muted-foreground/50" />
             <p className="text-sm text-muted-foreground">No tickets yet. Create your first support ticket above.</p>
@@ -549,7 +585,7 @@ function SettingsModule({ lang, onNavigate }: { lang: LangCode; onNavigate: (k: 
   const saveNotifPrefs = (prefs: typeof notifPrefs) => {
     setNotifPrefs(prefs)
     try { localStorage.setItem('hpe-notif-prefs', JSON.stringify(prefs)) } catch {}
-    toast.success('Notification preferences saved')
+    toast.success('Preferences saved on this device')
   }
 
   const sessionInfo = typeof window !== 'undefined' ? {
@@ -651,6 +687,7 @@ function SettingsModule({ lang, onNavigate }: { lang: LangCode; onNavigate: (k: 
             </div>
             <Switch checked={notifPrefs.inApp} onCheckedChange={v => saveNotifPrefs({ ...notifPrefs, inApp: v })} />
           </div>
+          <p className="text-[11px] text-muted-foreground italic">Preferences are saved locally on this device</p>
         </div>
 
         {/* Account */}
@@ -773,7 +810,48 @@ function ReportsModule({ lang }: { lang: LangCode }) {
   const maxNet = Math.max(...recentSlips.map((s: any) => s.netPay || s.netSalary || 0), 1)
 
   const handleExport = (type: 'csv' | 'pdf') => {
-    toast.info(`${type.toUpperCase()} export coming in next release`)
+    if (type === 'csv') {
+      // Generate CSV from attendance records
+      const rows: string[][] = [['Date', 'Status', 'Punch In', 'Punch Out', 'Late Minutes']]
+      thisMonthRecords.forEach((r: any) => {
+        rows.push([
+          format(new Date(r.date || r.createdAt || r.punchIn), 'yyyy-MM-dd'),
+          r.status || '—',
+          r.punchIn ? format(new Date(r.punchIn), 'HH:mm') : '—',
+          r.punchOut ? format(new Date(r.punchOut), 'HH:mm') : '—',
+          String(r.lateMinutes || 0),
+        ])
+      })
+      // Add leave balance rows
+      rows.push([])
+      rows.push(['Leave Balance'])
+      leaveBalance.forEach((lv: any) => {
+        rows.push([lv.type || lv.leaveType, `${lv.used || 0} used`, `${lv.balance || 0} remaining`])
+      })
+      // Add salary history
+      rows.push([])
+      rows.push(['Month', 'Year', 'Net Pay'])
+      recentSlips.forEach((s: any) => {
+        rows.push([
+          s.month || s.period || '',
+          String(s.year || ''),
+          String(s.netPay || s.netSalary || 0),
+        ])
+      })
+      const csvContent = rows.map(row => row.map(cell => `"${cell}"`).join(',')).join('\n')
+      const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `employee-report-${format(now, 'yyyy-MM')}.csv`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+      toast.success('CSV downloaded successfully')
+    } else {
+      toast.info('PDF export requires server-side generation')
+    }
   }
 
   return (

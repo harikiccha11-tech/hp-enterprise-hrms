@@ -1170,7 +1170,21 @@ function EmployeesView() {
                   <SelectItem value="ON_LEAVE">On Leave</SelectItem>
                 </SelectContent>
               </Select>
-              <Button variant="outline" size="sm" className="gap-1.5" onClick={() => toast.info('Export initiated')}>
+              <Button variant="outline" size="sm" className="gap-1.5" onClick={() => {
+                const csvRows = [
+                  'Employee Name,Code,Designation,Department,Status,Assignment',
+                  ...filtered.map(e => [e.name, e.code, e.designation, e.department, e.status, e.assignment].map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',')),
+                ]
+                const blob = new Blob(['\ufeff' + csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' })
+                const url = URL.createObjectURL(blob)
+                const a = document.createElement('a')
+                const now = new Date()
+                a.href = url
+                a.download = 'employees-export-' + now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '.csv'
+                a.click()
+                URL.revokeObjectURL(url)
+                toast.success('Exported ' + filtered.length + ' employee(s)')
+              }}>
                 <FileDown className="h-4 w-4" /> Export
               </Button>
             </div>
@@ -1699,14 +1713,129 @@ function PayrollView() {
 
 // ── Subscription View ─────────────────────────────────────────────────────
 
-const PLANS = [
+const PLAN_ICONS: Record<string, typeof Zap> = { starter: Zap, standard: Star, professional: Shield, enterprise: Crown }
+const FALLBACK_PLANS = [
   { name: 'Starter', price: '₹4,999', period: '/mo', features: ['Up to 25 employees', 'Basic attendance', 'Email support', '5 GB storage'], icon: Zap, current: false },
   { name: 'Standard', price: '₹12,999', period: '/mo', features: ['Up to 100 employees', 'Attendance & leave', 'Priority support', '25 GB storage', 'API access'], icon: Star, current: true },
   { name: 'Professional', price: '₹29,999', period: '/mo', features: ['Up to 500 employees', 'Full HR suite', 'Dedicated manager', '100 GB storage', 'Advanced analytics', 'Custom integrations'], icon: Shield, current: false },
   { name: 'Enterprise', price: 'Custom', period: '', features: ['Unlimited employees', 'All features', '24/7 support', 'Unlimited storage', 'White-label option', 'SLA guarantee', 'On-premise option'], icon: Crown, current: false },
 ]
 
+interface SubData {
+  currentPeriodEnd: string | null
+  accountStatus: string | null
+  invoices: { id: string; invoiceNumber: string; amount: number; tax: number; total: number; status: string; issueDate: string | null }[]
+}
+
+interface PricingPlan {
+  id: string
+  name: string
+  description: string | null
+  priceINR: number | null
+  interval: string
+  maxEmployees: number | null
+  features: string | null
+  trialDays: number
+  isPopular: boolean
+}
+
 function SubscriptionView() {
+  const [subData, setSubData] = useState<SubData | null>(null)
+  const [pricingPlans, setPricingPlans] = useState<PricingPlan[]>([])
+  const [employeeCount, setEmployeeCount] = useState<number | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function fetchData() {
+      try {
+        const [billingRes, pricingRes, empRes] = await Promise.allSettled([
+          fetch('/api/client/billing').then((r) => (r.ok ? r.json() : null)),
+          fetch('/api/public/pricing').then((r) => (r.ok ? r.json() : null)),
+          fetch('/api/client/employees?limit=1').then((r) => (r.ok ? r.json() : null)),
+        ])
+        if (cancelled) return
+
+        if (billingRes.status === 'fulfilled' && billingRes.value) {
+          setSubData(billingRes.value)
+        }
+        if (pricingRes.status === 'fulfilled' && pricingRes.value?.plans) {
+          setPricingPlans(pricingRes.value.plans)
+        }
+        if (empRes.status === 'fulfilled' && empRes.value?.pagination) {
+          setEmployeeCount(empRes.value.pagination.total)
+        }
+      } catch {
+        // silently fail — partial data is ok
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+
+    fetchData()
+    return () => { cancelled = true }
+  }, [])
+
+  // Build display plans from API or fallback
+  const hasPricing = pricingPlans.length > 0
+  const displayPlans = hasPricing
+    ? pricingPlans.map((p) => ({
+        name: p.name,
+        price: p.priceINR != null ? formatINR(p.priceINR) : 'Custom',
+        period: p.priceINR != null ? '/mo' : '',
+        features: p.features ? (typeof p.features === 'string' ? JSON.parse(p.features) as string[] : p.features) : [],
+        icon: PLAN_ICONS[p.name.toLowerCase()] || Zap,
+        current: false,
+        maxEmployees: p.maxEmployees,
+      }))
+    : FALLBACK_PLANS
+
+  // Derive current plan name from latest invoice amount vs pricing plans
+  const latestInvoice = subData?.invoices?.[0]
+  let currentPlanName = 'Standard'
+  if (hasPricing && latestInvoice) {
+    const baseAmount = latestInvoice.amount || latestInvoice.total || 0
+    const match = pricingPlans.find((p) => p.priceINR != null && Math.abs(p.priceINR - baseAmount) < 1)
+    if (match) currentPlanName = match.name
+  }
+
+  // Mark current plan in display plans
+  const plansWithCurrent = displayPlans.map((p) => ({
+    ...p,
+    current: p.name === currentPlanName,
+  }))
+
+  // Find max employees from current plan
+  const currentPlanData = pricingPlans.find((p) => p.name === currentPlanName)
+  const maxEmployees = currentPlanData?.maxEmployees ?? null
+
+  // Usage calculations
+  const empUsed = employeeCount ?? 0
+  const empLimit = maxEmployees ?? 100
+  const empPercent = empLimit > 0 ? Math.round((empUsed / empLimit) * 100) : 0
+
+  // Renewal date from billing API
+  const renewalDate = subData?.currentPeriodEnd
+    ? new Date(subData.currentPeriodEnd).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+    : 'Contact admin'
+  const interval = hasPricing && currentPlanData ? currentPlanData.interval.toLowerCase() : 'monthly'
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="rounded-xl bg-gradient-to-r from-[var(--navy)] to-[var(--navy)]/90 p-6 text-white shadow-lg">
+          <Skeleton className="h-6 w-40 bg-white/20" />
+          <Skeleton className="mt-2 h-4 w-72 bg-white/15" />
+        </div>
+        <Skeleton className="h-64 w-full" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-80 w-full" />)}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
       <div className="rounded-xl bg-gradient-to-r from-[var(--navy)] to-[var(--navy)]/90 p-6 text-white shadow-lg">
@@ -1724,10 +1853,10 @@ function SubscriptionView() {
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h3 className="text-lg font-bold text-[var(--navy)] dark:text-white">Standard Plan</h3>
+                  <h3 className="text-lg font-bold text-[var(--navy)] dark:text-white">{currentPlanName} Plan</h3>
                   <Badge className="bg-[var(--gold)] text-[var(--navy)] border-0 text-[10px] font-bold">CURRENT</Badge>
                 </div>
-                <p className="text-sm text-muted-foreground">Renews on 15 Aug 2025 &bull; Billed monthly</p>
+                <p className="text-sm text-muted-foreground">Renews on {renewalDate} &bull; Billed {interval}</p>
               </div>
             </div>
             <Button variant="outline" className="gap-1.5" onClick={() => toast.info('Contact your administrator to change plans')}>Manage Plan</Button>
@@ -1738,23 +1867,23 @@ function SubscriptionView() {
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Employees</span>
-                <span className="font-medium">47 / 100</span>
+                <span className="font-medium">{employeeCount != null ? `${empUsed} / ${empLimit}` : '—'}</span>
               </div>
-              <Progress value={47} className="h-2" />
+              <Progress value={employeeCount != null ? empPercent : 0} className="h-2" />
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Storage</span>
-                <span className="font-medium">8.2 / 25 GB</span>
+                <span className="font-medium">—</span>
               </div>
-              <Progress value={33} className="h-2" />
+              <Progress value={0} className="h-2" />
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">API Calls</span>
-                <span className="font-medium">2,340 / 10,000</span>
+                <span className="font-medium">—</span>
               </div>
-              <Progress value={23} className="h-2" />
+              <Progress value={0} className="h-2" />
             </div>
           </div>
         </CardContent>
@@ -1764,7 +1893,7 @@ function SubscriptionView() {
       <div>
         <h3 className="mb-4 text-base font-semibold text-[var(--navy)] dark:text-white">Compare Plans</h3>
         <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-          {PLANS.map((plan) => {
+          {plansWithCurrent.map((plan) => {
             const PlanIcon = plan.icon
             return (
               <Card key={plan.name} className={cn('relative flex flex-col', plan.current && 'ring-2 ring-[var(--gold)]')}>
@@ -1789,7 +1918,7 @@ function SubscriptionView() {
                     variant={plan.current ? 'outline' : 'default'}
                     className={cn('mt-4 w-full gap-1.5', !plan.current && 'bg-[var(--navy)] hover:bg-[var(--navy)]/90')}
                     disabled={plan.current}
-                    onClick={() => plan.name === 'Enterprise' ? toast.info('Contact sales for Enterprise pricing') : toast.info('Upgrade request sent')}
+                    onClick={() => plan.name === 'Enterprise' ? toast.info('Contact sales for Enterprise pricing') : toast.info('Contact your administrator to upgrade')}
                   >
                     {plan.current ? 'Current Plan' : plan.name === 'Enterprise' ? 'Contact Sales' : 'Upgrade'}
                   </Button>
@@ -1903,7 +2032,7 @@ function BillingView() {
                     <TableCell className="text-right font-mono font-bold text-[var(--navy)] dark:text-white">{formatINR(inv.total)}</TableCell>
                     <TableCell><StatusBadge status={inv.status} /></TableCell>
                     <TableCell>
-                      <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={() => toast.info(`Downloading ${inv.invoiceNo}…`)}>
+                      <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={() => toast.info('Invoice PDF will be available after admin generates it')}>
                         <Download className="h-3.5 w-3.5" /> PDF
                       </Button>
                     </TableCell>
@@ -1993,7 +2122,22 @@ function ReportsView() {
             <h2 className="text-xl font-bold">Reports & Analytics</h2>
             <p className="mt-1 text-sm text-blue-100/80">Insights into your workforce, attendance, and costs.</p>
           </div>
-          <Button variant="outline" size="sm" className="gap-1.5 border-white/20 text-white hover:bg-white/10" onClick={() => toast.info('Export initiated')}>
+          <Button variant="outline" size="sm" className="gap-1.5 border-white/20 text-white hover:bg-white/10" onClick={() => {
+            const reportLabel = REPORT_TYPES.find((r) => r.id === activeReport)?.label || 'report'
+            const csvRows = [
+              rd.col.join(','),
+              ...rd.rows.map(r => r.map(c => '"' + String(c).replace(/"/g, '""') + '"').join(',')),
+            ]
+            const blob = new Blob(['\ufeff' + csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' })
+            const url = URL.createObjectURL(blob)
+            const a = document.createElement('a')
+            const now = new Date()
+            a.href = url
+            a.download = reportLabel.toLowerCase().replace(/\s+/g, '-') + '-export-' + now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '.csv'
+            a.click()
+            URL.revokeObjectURL(url)
+            toast.success('Report exported')
+          }}>
             <FileDown className="h-4 w-4" /> Export Report
           </Button>
         </div>
@@ -2175,7 +2319,7 @@ function DownloadsView() {
                     <TableCell className="hidden lg:table-cell text-xs text-muted-foreground">{f.size}</TableCell>
                     <TableCell className="text-xs text-muted-foreground">{fmtDate(f.date)}</TableCell>
                     <TableCell>
-                      <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={() => toast.info(`Downloading ${f.name}…`)}>
+                      <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={() => toast.info('File download is not available yet')}>
                         <Download className="h-3.5 w-3.5" /> Save
                       </Button>
                     </TableCell>
