@@ -9,12 +9,14 @@ export async function GET(req: NextRequest) {
   try {
     const { error, cu } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER')
     if (error) return error
+    const aid = cu!.user.accountId
     const { searchParams } = new URL(req.url)
     const status = searchParams.get('status') || undefined
     const q = searchParams.get('q') || undefined
 
     const employees = await db.employee.findMany({
       where: {
+        accountId: aid,
         ...(status && status !== 'ALL' ? { status } : {}),
         ...(q
           ? {
@@ -44,10 +46,15 @@ export async function GET(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   const { error, cu } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER')
   if (error) return error
+  const aid = cu!.user.accountId
   try {
     const body = await req.json()
     const { id, ...data } = body
     if (!id) return NextResponse.json({ error: 'Employee id required' }, { status: 400 })
+    const existing = await db.employee.findUnique({ where: { id } })
+    if (!existing || existing.accountId !== aid) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
     // HR cannot edit salary/role-critical fields beyond employee records (UI enforces; API keeps it simple)
     const allowed: Record<string, any> = {}
     for (const k of [

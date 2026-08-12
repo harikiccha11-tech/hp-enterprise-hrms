@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
+import { resolveClientId, getClientEmployeeIds } from '@/lib/client-scope'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -14,10 +15,19 @@ export async function GET(request: NextRequest) {
     const accountId = cu.user.accountId
     if (!accountId) return NextResponse.json({ error: 'No account linked' }, { status: 400 })
 
+    const clientId = await resolveClientId(cu.user.clientId, accountId)
+    if (!clientId) return NextResponse.json({ leaves: [] })
+
+    const clientEmpIds = await getClientEmployeeIds(db, clientId, accountId)
+    if (clientEmpIds.length === 0) return NextResponse.json({ leaves: [] })
+
     const { searchParams } = request.nextUrl
     const statusFilter = searchParams.get('status')?.trim() || ''
 
-    const where: Record<string, unknown> = { accountId }
+    const where: Record<string, unknown> = {
+      accountId,
+      employeeId: { in: clientEmpIds },
+    }
 
     if (statusFilter) {
       where.status = statusFilter

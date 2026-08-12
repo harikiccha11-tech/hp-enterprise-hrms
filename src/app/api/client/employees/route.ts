@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
+import { resolveClientId, getClientEmployeeIds } from '@/lib/client-scope'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -14,6 +15,11 @@ export async function GET(request: NextRequest) {
     const accountId = cu.user.accountId
     if (!accountId) return NextResponse.json({ error: 'No account linked' }, { status: 400 })
 
+    const clientId = await resolveClientId(cu.user.clientId, accountId)
+    if (!clientId) return NextResponse.json({ employees: [], pagination: { page: 1, limit: 20, total: 0, totalPages: 0 } })
+
+    const clientEmpIds = await getClientEmployeeIds(db, clientId, accountId)
+
     const { searchParams } = request.nextUrl
     const search = searchParams.get('search')?.trim() || ''
     const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10))
@@ -21,6 +27,7 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit
 
     const where: Record<string, unknown> = {
+      id: { in: clientEmpIds },
       accountId,
       status: 'APPROVED',
     }

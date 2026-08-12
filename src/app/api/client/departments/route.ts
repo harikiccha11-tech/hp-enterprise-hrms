@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
+import { resolveClientId, getClientEmployeeIds } from '@/lib/client-scope'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -14,10 +15,16 @@ export async function GET() {
     const accountId = cu.user.accountId
     if (!accountId) return NextResponse.json({ error: 'No account linked' }, { status: 400 })
 
-    // Get all employees with department info for this account
+    const clientId = await resolveClientId(cu.user.clientId, accountId)
+    if (!clientId) return NextResponse.json({ departments: [] })
+
+    const clientEmpIds = await getClientEmployeeIds(db, clientId, accountId)
+    if (clientEmpIds.length === 0) return NextResponse.json({ departments: [] })
+
+    // Get only employees assigned to this client with department info
     const employees = await db.employee.findMany({
       where: {
-        accountId,
+        id: { in: clientEmpIds },
         status: 'APPROVED',
         department: { not: null },
       },

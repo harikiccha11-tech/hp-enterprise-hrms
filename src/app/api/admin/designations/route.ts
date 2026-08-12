@@ -6,10 +6,12 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
-  const { error } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER')
+  const { error, cu } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER')
   if (error) return error
+  const aid = cu!.user.accountId
   try {
     const designations = await db.designation.findMany({
+      where: { accountId: aid },
       orderBy: { createdAt: 'desc' },
     })
     return NextResponse.json({ designations })
@@ -21,11 +23,12 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   const { error, cu } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER')
   if (error) return error
+  const aid = cu!.user.accountId
   try {
     const body = await req.json()
     const { title, level, department, minSalary, maxSalary, description, status } = body
     if (!title?.trim()) return NextResponse.json({ error: 'Designation title is required' }, { status: 400 })
-    const existing = await db.designation.findFirst({ where: { title: title.trim() } })
+    const existing = await db.designation.findFirst({ where: { title: title.trim(), accountId: aid } })
     if (existing) return NextResponse.json({ error: 'Designation with this title already exists' }, { status: 409 })
     const desig = await db.designation.create({
       data: {
@@ -36,6 +39,7 @@ export async function POST(req: NextRequest) {
         maxSalary: maxSalary ? Number(maxSalary) : null,
         description: description || null,
         status: status || 'ACTIVE',
+        accountId: aid,
       },
     })
     await audit(cu!.user.id, 'CREATE_DESIGNATION', 'Designation', desig.id, desig.title)
@@ -48,11 +52,16 @@ export async function POST(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   const { error, cu } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER')
   if (error) return error
+  const aid = cu!.user.accountId
   try {
     const { id, title, level, department, minSalary, maxSalary, description, status } = await req.json()
     if (!id) return NextResponse.json({ error: 'ID is required' }, { status: 400 })
+    const existingDesig = await db.designation.findUnique({ where: { id } })
+    if (!existingDesig || existingDesig.accountId !== aid) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
     if (title) {
-      const existing = await db.designation.findFirst({ where: { title: title.trim(), id: { not: id } } })
+      const existing = await db.designation.findFirst({ where: { title: title.trim(), id: { not: id }, accountId: aid } })
       if (existing) return NextResponse.json({ error: 'Designation with this title already exists' }, { status: 409 })
     }
     const data: any = {}
@@ -74,9 +83,14 @@ export async function PATCH(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   const { error, cu } = await requireRole('OWNER', 'SUPER_ADMIN')
   if (error) return error
+  const aid = cu!.user.accountId
   try {
     const { id } = await req.json()
     if (!id) return NextResponse.json({ error: 'ID is required' }, { status: 400 })
+    const existingDesig = await db.designation.findUnique({ where: { id } })
+    if (!existingDesig || existingDesig.accountId !== aid) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
     await db.designation.delete({ where: { id } })
     await audit(cu!.user.id, 'DELETE_DESIGNATION', 'Designation', id)
     return NextResponse.json({ ok: true })

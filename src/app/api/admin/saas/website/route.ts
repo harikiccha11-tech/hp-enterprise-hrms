@@ -13,7 +13,7 @@ const CMS_KEYS = [
 
 export async function GET() {
   try {
-    const { error } = await requireRole('OWNER', 'SUPER_ADMIN')
+    const { error } = await requireRole('SUPER_ADMIN')
     if (error) return error
 
     const settings = await db.setting.findMany({
@@ -43,7 +43,7 @@ export async function GET() {
 
 export async function PUT(req: NextRequest) {
   try {
-    const { error, cu } = await requireRole('OWNER', 'SUPER_ADMIN')
+    const { error, cu } = await requireRole('SUPER_ADMIN')
     if (error) return error
 
     const body = await req.json()

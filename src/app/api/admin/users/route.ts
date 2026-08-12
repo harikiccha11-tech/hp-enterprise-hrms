@@ -9,10 +9,11 @@ export const dynamic = 'force-dynamic'
 
 export async function GET() {
   try {
-    const { error } = await requireRole('OWNER', 'SUPER_ADMIN')
+    const { error, cu } = await requireRole('OWNER', 'SUPER_ADMIN')
     if (error) return error
+    const aid = cu!.user.accountId
     const users = await db.user.findMany({
-      where: { role: { in: ['OWNER', 'SUPER_ADMIN', 'HR_MANAGER', 'CLIENT'] } },
+      where: { role: { in: ['OWNER', 'SUPER_ADMIN', 'HR_MANAGER', 'CLIENT'] }, accountId: aid },
       orderBy: { createdAt: 'asc' },
       select: { id: true, username: true, email: true, role: true, locked: true, mustResetPassword: true, lastLoginAt: true, createdAt: true, employee: { select: { id: true, fullName: true, employeeCode: true } } },
     })

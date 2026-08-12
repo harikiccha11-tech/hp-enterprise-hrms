@@ -6,15 +6,16 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 export async function GET(req: NextRequest) {
-  const { error } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER')
+  const { error, cu } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER')
   if (error) return error
+  const aid = cu!.user.accountId
   try {
     const sp = req.nextUrl.searchParams
     const status = sp.get('status') || ''
     const period = sp.get('period') || ''
     const year = sp.get('year') || ''
     const search = sp.get('search') || ''
-    const where: any = {}
+    const where: any = { accountId: aid }
     if (status) where.status = status
     if (period) where.reviewPeriod = period
     if (year) where.year = year
@@ -42,6 +43,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const { error, cu } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER')
   if (error) return error
+  const aid = cu!.user.accountId
   try {
     const body = await req.json()
     const { employeeId, reviewPeriod, year, rating, strengths, improvements, goals, feedback, reviewerName, status } = body
@@ -51,6 +53,7 @@ export async function POST(req: NextRequest) {
     const review = await db.performanceReview.create({
       data: {
         employeeId,
+        accountId: aid,
         reviewPeriod,
         year: String(year),
         rating: rating || 0,
@@ -75,9 +78,14 @@ export async function POST(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   const { error, cu } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER')
   if (error) return error
+  const aid = cu!.user.accountId
   try {
     const { id, rating, strengths, improvements, goals, feedback, status, reviewerName, reviewedAt } = await req.json()
     if (!id) return NextResponse.json({ error: 'ID is required' }, { status: 400 })
+    const existing = await db.performanceReview.findUnique({ where: { id } })
+    if (!existing || existing.accountId !== aid) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
     const data: any = {}
     if (rating !== undefined) data.rating = rating
     if (strengths !== undefined) data.strengths = strengths
@@ -99,9 +107,14 @@ export async function PATCH(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   const { error, cu } = await requireRole('OWNER', 'SUPER_ADMIN')
   if (error) return error
+  const aid = cu!.user.accountId
   try {
     const { id } = await req.json()
     if (!id) return NextResponse.json({ error: 'ID is required' }, { status: 400 })
+    const existing = await db.performanceReview.findUnique({ where: { id } })
+    if (!existing || existing.accountId !== aid) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
     await db.performanceReview.delete({ where: { id } })
     return NextResponse.json({ ok: true })
   } catch (e) {

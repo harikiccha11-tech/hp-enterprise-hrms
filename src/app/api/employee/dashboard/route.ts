@@ -19,9 +19,10 @@ export async function GET() {
         generatedDocs: { orderBy: { generatedAt: 'desc' } },
         leaves: { orderBy: { appliedAt: 'desc' }, take: 10 },
         attendance: { orderBy: { date: 'desc' }, take: 30 },
-        payrolls: { orderBy: [{ year: 'desc' }, { month: 'desc' }], take: 12, include: { salarySlip: true } },
         projectAssignments: { include: { project: { include: { client: true } } } },
         leaveBalance: true,
+        // Intentionally excluded: payrolls — employees have a dedicated /api/employee/salary-slips endpoint
+        // for payroll/salary slip data to minimize dashboard exposure
       },
     })
     if (!emp) return NextResponse.json({ error: 'Not found' }, { status: 404 })

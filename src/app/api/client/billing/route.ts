@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
+import { resolveClientId } from '@/lib/client-scope'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -14,45 +15,35 @@ export async function GET(request: NextRequest) {
     const accountId = cu.user.accountId
     if (!accountId) return NextResponse.json({ error: 'No account linked' }, { status: 400 })
 
+    const clientId = await resolveClientId(cu.user.clientId, accountId)
+    if (!clientId) return NextResponse.json({ invoices: [], currentPeriodEnd: null, accountStatus: null })
+
     const { searchParams } = request.nextUrl
     const statusFilter = searchParams.get('status')?.trim() || ''
 
-    const where: Record<string, unknown> = { accountId }
+    const where: Record<string, unknown> = { clientId, accountId }
 
     if (statusFilter) {
       where.status = statusFilter
     }
 
-    const [records, account] = await Promise.all([
-      db.invoice.findMany({
-        where,
-        include: {
-          client: {
-            select: {
-              clientName: true,
-              companyName: true,
-            },
+    const records = await db.invoice.findMany({
+      where,
+      include: {
+        client: {
+          select: {
+            clientName: true,
+            companyName: true,
           },
         },
-        orderBy: { issueDate: 'desc' },
-        take: 500,
-      }),
-      db.account.findUnique({
-        where: { id: accountId },
-        select: {
-          expiresAt: true,
-          organizationName: true,
-          status: true,
-        },
-      }),
-    ])
+      },
+      orderBy: { issueDate: 'desc' },
+      take: 500,
+    })
 
-    // Derive current period end from latest invoice billingPeriodEnd or account expiresAt
+    // Derive current period end from latest invoice billingPeriodEnd
     const latestInvoice = records[0]
-    const currentPeriodEnd =
-      latestInvoice?.billingPeriodEnd?.toISOString() ||
-      account?.expiresAt?.toISOString() ||
-      null
+    const currentPeriodEnd = latestInvoice?.billingPeriodEnd?.toISOString() || null
 
     return NextResponse.json({
       invoices: records.map((inv) => ({
@@ -72,7 +63,6 @@ export async function GET(request: NextRequest) {
         createdAt: inv.createdAt.toISOString(),
       })),
       currentPeriodEnd,
-      accountStatus: account?.status || null,
     })
   } catch {
     return NextResponse.json({ error: 'Request failed' }, { status: 500 })

@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic'
 
 export async function GET() {
   try {
-    const { error } = await requireRole('OWNER', 'SUPER_ADMIN')
+    const { error } = await requireRole('SUPER_ADMIN')
     if (error) return error
 
     const accounts = await db.account.findMany({

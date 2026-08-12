@@ -258,6 +258,7 @@ model SiteAssignment {
   account         Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
   employee        Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   invoiceLineItems InvoiceLineItem[]
+  attendanceRecords Attendance[] @relation("AttendanceSite")
 
   @@index([accountId])
   @@index([employeeId])
@@ -281,6 +282,7 @@ model Attendance {
   status      String  @default("PRESENT") // PRESENT | ABSENT | LATE | HALF_DAY | LEAVE | HOLIDAY | WFH | ON_LEAVE
   markedBy    String?
   markedById  String?
+  siteAssignmentId String? // Link to site deployment for site-wise filtering
   // Geolocation captured on punch in/out (no continuous tracking)
   punchInLat      Float?
   punchInLng      Float?
@@ -295,10 +297,12 @@ model Attendance {
   employee    Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   markedByUser User?   @relation("AttendanceMarkedBy", fields: [markedById], references: [id])
   account     Account? @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  siteAssignment SiteAssignment? @relation("AttendanceSite", fields: [siteAssignmentId], references: [id])
 
   @@unique([employeeId, date])
   @@index([date])
   @@index([accountId])
+  @@index([siteAssignmentId])
 }
 
 // ============================================================
@@ -350,8 +354,11 @@ model LeaveBalance {
   usedSick    Float   @default(0)
   usedEarned  Float   @default(0)
   carriedForward Float @default(0)
+  accountId   String?
 
   employee    Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([accountId])
 }
 
 // ============================================================
@@ -419,12 +426,15 @@ model Client {
   phone        String?
   address      String?
   contactsJson String? // JSON array of contact persons
+  accountId    String?
   createdAt    DateTime @default(now())
 
   projects     Project[]
   workOrders   WorkOrder[]
   invoices     Invoice[]
   assignedEmployees Employee[] @relation("AssignedClient")
+
+  @@index([accountId])
 }
 
 model Project {
@@ -436,11 +446,14 @@ model Project {
   endDate     DateTime?
   status      String   @default("ACTIVE") // ACTIVE | COMPLETED | ON_HOLD
   description String?
+  accountId   String?
   createdAt   DateTime @default(now())
 
   client      Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
   members     ProjectMember[]
   workOrders  WorkOrder[]
+
+  @@index([accountId])
 }
 
 model ProjectMember {
@@ -466,11 +479,14 @@ model WorkOrder {
   startDate   DateTime?
   endDate     DateTime?
   status      String   @default("OPEN")
+  accountId   String?
   createdAt   DateTime @default(now())
 
   client      Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
   project     Project? @relation(fields: [projectId], references: [id])
   invoices    Invoice[]
+
+  @@index([accountId])
 }
 
 // ============================================================
@@ -601,7 +617,10 @@ model Announcement {
   body      String
   audience  String   @default("ALL") // ALL | EMPLOYEE | ADMIN
   postedBy  String?
+  accountId String?
   postedAt  DateTime @default(now())
+
+  @@index([accountId])
 }
 
 // ============================================================
@@ -629,37 +648,41 @@ model SubscriptionRequest {
 
 model Department {
   id          String   @id @default(cuid())
-  name        String   @unique
-  code        String   @unique
+  name        String
+  code        String
   description String?
   headName    String?
   headEmail   String?
   status      String   @default("ACTIVE")
+  accountId   String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   @@index([status])
+  @@index([accountId])
 }
 
 model Designation {
   id          String   @id @default(cuid())
-  title       String   @unique
+  title       String
   level       String?
   department  String?
   minSalary   Float?
   maxSalary   Float?
   description String?
   status      String   @default("ACTIVE")
+  accountId   String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   @@index([status])
+  @@index([accountId])
 }
 
 model Branch {
   id          String   @id @default(cuid())
   name        String
-  code        String   @unique
+  code        String
   address     String?
   city        String?
   state       String?
@@ -668,10 +691,12 @@ model Branch {
   email       String?
   isHead      Boolean  @default(false)
   status      String   @default("ACTIVE")
+  accountId   String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   @@index([status])
+  @@index([accountId])
 }
 
 // ============================================================
@@ -841,11 +866,13 @@ model OnboardingTask {
   completedBy String?
   completedAt DateTime?
   notes       String?
+  accountId   String?
   createdAt   DateTime @default(now())
 
   employee    Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 
   @@index([employeeId, status])
+  @@index([accountId])
 }
 
 model OffboardingTask {
@@ -858,11 +885,13 @@ model OffboardingTask {
   completedBy String?
   completedAt DateTime?
   notes       String?
+  accountId   String?
   createdAt   DateTime @default(now())
 
   employee    Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 
   @@index([employeeId, status])
+  @@index([accountId])
 }
 
 // ============================================================
@@ -883,11 +912,13 @@ model PerformanceReview {
   reviewerName String?
   status      String   @default("DRAFT")
   reviewedAt  DateTime?
+  accountId   String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   @@unique([employeeId, reviewPeriod, year])
   @@index([employeeId])
+  @@index([accountId])
 }
 
 model Goal {
@@ -901,10 +932,12 @@ model Goal {
   targetDate  DateTime?
   status      String   @default("NOT_STARTED")
   weight      Float?
+  accountId   String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   @@index([employeeId, status])
+  @@index([accountId])
 }
 
 // ============================================================
@@ -921,12 +954,14 @@ model TrainingCourse {
   instructor  String?
   maxParticipants Int?
   status      String   @default("ACTIVE")
+  accountId   String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   enrollments TrainingEnrollment[]
 
   @@index([status])
+  @@index([accountId])
 }
 
 model TrainingEnrollment {
@@ -939,11 +974,13 @@ model TrainingEnrollment {
   score       Float?
   certificatePath String?
   feedback    String?
+  accountId   String?
 
   course      TrainingCourse @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   @@unique([courseId, employeeId])
   @@index([employeeId])
+  @@index([accountId])
 }
 
 // ============================================================
@@ -962,11 +999,13 @@ model Expense {
   approvedBy  String?
   approvedAt  DateTime?
   remarks     String?
+  accountId   String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   @@index([employeeId, status])
   @@index([status])
+  @@index([accountId])
 }
 
 // ============================================================
@@ -1025,10 +1064,12 @@ model KnowledgeBase {
   keywords    String?
   enabled     Boolean  @default(true)
   sortOrder   Int      @default(0)
+  accountId   String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   @@index([category])
+  @@index([accountId])
 }
 
 // ============================================================

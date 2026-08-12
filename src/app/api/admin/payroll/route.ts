@@ -127,12 +127,13 @@ export async function POST(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   try {
-    const { error } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER')
+    const { error, cu } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER')
     if (error) return error
+    const aid = cu!.user.accountId
     const { searchParams } = new URL(req.url)
     const month = searchParams.get('month')
     const year = searchParams.get('year')
-    const where: Record<string, unknown> = {}
+    const where: Record<string, unknown> = { accountId: aid }
     if (month) where.month = Number(month)
     if (year) where.year = Number(year)
     const payrolls = await db.payroll.findMany({

@@ -25,6 +25,17 @@ async function saveSelfie(employeeId: string, action: string, base64Data: string
   return `attendance/${employeeId}/${fileName}`
 }
 
+/** Count working days in a month (exclude Sundays) */
+function workingDaysInMonth(year: number, month: number): number {
+  const daysInMonth = new Date(year, month, 0).getDate()
+  let count = 0
+  for (let d = 1; d <= daysInMonth; d++) {
+    const day = new Date(year, month - 1, d).getDay()
+    if (day !== 0) count++
+  }
+  return count
+}
+
 export async function GET() {
   try {
     const cu = await getCurrentUser()
@@ -32,17 +43,44 @@ export async function GET() {
     const employeeId = cu.user.employee?.id
     if (!employeeId) return NextResponse.json({ error: 'No employee profile' }, { status: 400 })
 
-    const today = new Date()
-    const start = new Date(today.setHours(0, 0, 0, 0))
-    const end = new Date(today.setHours(23, 59, 59, 999))
+    const now = new Date()
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    const start = new Date(today); start.setHours(0, 0, 0, 0)
+    const end = new Date(today); end.setHours(23, 59, 59, 999)
     const todayRecord = await db.attendance.findFirst({ where: { employeeId, date: { gte: start, lte: end } } })
 
-    const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
     const monthRecords = await db.attendance.findMany({ where: { employeeId, date: { gte: monthStart } }, orderBy: { date: 'desc' } })
-    const presentDays = monthRecords.filter(r => ['PRESENT', 'LATE'].includes(r.status)).length
-    const totalHours = monthRecords.reduce((s, r) => s + (r.workingHours || 0), 0)
 
-    return NextResponse.json({ todayRecord, monthRecords, stats: { presentDays, totalHours: Math.round(totalHours * 10) / 10 } })
+    const presentDays = monthRecords.filter(r => ['PRESENT', 'LATE'].includes(r.status)).length
+    const halfDays = monthRecords.filter(r => r.status === 'HALF_DAY').length
+    const lateDays = monthRecords.filter(r => r.status === 'LATE').length
+    const leaveDays = monthRecords.filter(r => ['LEAVE', 'ON_LEAVE', 'WFH'].includes(r.status)).length
+    const totalHours = Math.round(monthRecords.reduce((s, r) => s + (r.workingHours || 0), 0) * 100) / 100
+    const overtimeTotal = Math.round(monthRecords.reduce((s, r) => s + (r.overtime || 0), 0) * 100) / 100
+
+    // Working days in current month (excluding Sundays)
+    const wDays = workingDaysInMonth(now.getFullYear(), now.getMonth() + 1)
+    const absentDays = Math.max(0, Math.round((wDays - presentDays - leaveDays - halfDays * 0.5) * 10) / 10)
+    const attendancePercentage = wDays > 0
+      ? Math.round((presentDays + halfDays * 0.5) / wDays * 10000) / 100
+      : 0
+
+    return NextResponse.json({
+      todayRecord,
+      monthRecords,
+      stats: {
+        presentDays,
+        absentDays,
+        halfDays,
+        lateDays,
+        leaveDays,
+        totalHours,
+        overtimeTotal,
+        workingDaysInMonth: wDays,
+        attendancePercentage,
+      },
+    })
   } catch (e) {
     return NextResponse.json({ error: 'Request failed' }, { status: 500 })
   }

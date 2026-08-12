@@ -17,8 +17,13 @@ export async function GET(req: NextRequest) {
   const from = searchParams.get('from')
   const to = searchParams.get('to')
   const clientId = searchParams.get('clientId')
+  const siteId = searchParams.get('siteId')
 
   const where: any = {}
+  // Scope admin roles by accountId
+  if (['OWNER', 'SUPER_ADMIN', 'HR_MANAGER'].includes(cu.user.role)) {
+    where.accountId = cu.user.accountId
+  }
   // Scope employee role to their own records only
   if (cu.user.role === 'EMPLOYEE') {
     where.employeeId = cu.user.employee?.id
@@ -32,6 +37,7 @@ export async function GET(req: NextRequest) {
     where.employee = { ...(where.employee || {}), assignedClientId: clientId }
   }
   if (employeeId) where.employeeId = employeeId
+  if (siteId) where.siteAssignmentId = siteId
   if (date) {
     const d = new Date(date)
     where.date = { gte: new Date(d.setHours(0, 0, 0, 0)), lte: new Date(d.setHours(23, 59, 59, 999)) }
@@ -64,8 +70,13 @@ export async function GET(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   const { error, cu } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER')
   if (error) return error
+  const aid = cu!.user.accountId
   try {
     const { id, action, punchIn, punchOut, status } = await req.json()
+    const existing = await db.attendance.findUnique({ where: { id } })
+    if (!existing || existing.accountId !== aid) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
     const data: any = {}
     if (punchIn) data.punchIn = new Date(punchIn)
     if (punchOut) data.punchOut = new Date(punchOut)
@@ -86,8 +97,13 @@ export async function PATCH(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   const { error, cu } = await requireRole('OWNER', 'SUPER_ADMIN')
   if (error) return error
+  const aid = cu!.user.accountId
   try {
     const { id } = await req.json()
+    const existing = await db.attendance.findUnique({ where: { id } })
+    if (!existing || existing.accountId !== aid) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
     await db.attendance.delete({ where: { id } })
     await audit(cu!.user.id, 'DELETE_ATTENDANCE', 'Attendance', id)
     return NextResponse.json({ ok: true })

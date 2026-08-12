@@ -6,19 +6,21 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 export async function GET(req: NextRequest) {
-  const { error } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER')
+  const { error, cu } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER')
   if (error) return error
+  const aid = cu!.user.accountId
   try {
     const sp = req.nextUrl.searchParams
     const status = sp.get('status') || ''
     const category = sp.get('category') || ''
     const enrollments = sp.get('enrollments') === 'true'
-    const where: any = {}
+    const where: any = { accountId: aid }
     if (status) where.status = status
     if (category) where.category = category
 
     if (enrollments) {
       const rows = await db.trainingEnrollment.findMany({
+        where: { accountId: aid },
         include: {
           course: { select: { id: true, title: true } },
         },
@@ -56,7 +58,7 @@ export async function POST(req: NextRequest) {
       })
       if (existing) return NextResponse.json({ error: 'Employee is already enrolled in this course' }, { status: 409 })
       const enrollment = await db.trainingEnrollment.create({
-        data: { courseId, employeeId, status: 'ENROLLED' },
+        data: { courseId, employeeId, status: 'ENROLLED', accountId: cu!.user.accountId },
       })
       return NextResponse.json({ ok: true, enrollment })
     }
@@ -65,6 +67,10 @@ export async function POST(req: NextRequest) {
     if (action === 'update-enrollment') {
       const { enrollmentId, status, score, feedback } = body
       if (!enrollmentId) return NextResponse.json({ error: 'Enrollment ID is required' }, { status: 400 })
+      const existingEnrollment = await db.trainingEnrollment.findUnique({ where: { id: enrollmentId } })
+      if (!existingEnrollment || existingEnrollment.accountId !== cu!.user.accountId) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      }
       const data: any = {}
       if (status) data.status = status
       if (score !== undefined) data.score = score ? Number(score) : null
@@ -87,6 +93,7 @@ export async function POST(req: NextRequest) {
         instructor: instructor || '',
         maxParticipants: maxParticipants ? Number(maxParticipants) : null,
         status: status || 'ACTIVE',
+        accountId: cu!.user.accountId,
       },
     })
     return NextResponse.json({ ok: true, course })
@@ -98,9 +105,14 @@ export async function POST(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   const { error, cu } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER')
   if (error) return error
+  const aid = cu!.user.accountId
   try {
     const { id, title, description, category, duration, mode, instructor, maxParticipants, status } = await req.json()
     if (!id) return NextResponse.json({ error: 'ID is required' }, { status: 400 })
+    const existingCourse = await db.trainingCourse.findUnique({ where: { id } })
+    if (!existingCourse || existingCourse.accountId !== aid) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
     const data: any = {}
     if (title !== undefined) data.title = title.trim()
     if (description !== undefined) data.description = description
@@ -120,9 +132,14 @@ export async function PATCH(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   const { error, cu } = await requireRole('OWNER', 'SUPER_ADMIN')
   if (error) return error
+  const aid = cu!.user.accountId
   try {
     const { id } = await req.json()
     if (!id) return NextResponse.json({ error: 'ID is required' }, { status: 400 })
+    const existingCourse = await db.trainingCourse.findUnique({ where: { id } })
+    if (!existingCourse || existingCourse.accountId !== aid) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
     await db.trainingEnrollment.deleteMany({ where: { courseId: id } })
     await db.trainingCourse.delete({ where: { id } })
     return NextResponse.json({ ok: true })

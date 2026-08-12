@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
+import { resolveClientId, getClientEmployeeIds } from '@/lib/client-scope'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -14,43 +15,53 @@ export async function GET() {
     const accountId = cu.user.accountId
     if (!accountId) return NextResponse.json({ error: 'No account linked' }, { status: 400 })
 
+    const clientId = await resolveClientId(cu.user.clientId, accountId)
+    if (!clientId) {
+      return NextResponse.json({
+        employees: { total: 0, active: 0, onLeave: 0, departments: 0 },
+        attendance: { presentToday: 0, absentToday: 0 },
+        payroll: { totalPaidThisMonth: 0, month: new Date().getMonth() + 1, year: new Date().getFullYear() },
+      })
+    }
+
+    const clientEmpIds = await getClientEmployeeIds(db, clientId, accountId)
+
     const now = new Date()
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
     const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999)
     const currentMonth = now.getMonth() + 1
     const currentYear = now.getFullYear()
 
+    // If no employees assigned, return zeros
+    const empWhere = clientEmpIds.length > 0 ? { id: { in: clientEmpIds } } : { id: '__none__' }
+
     // Run all summary queries in parallel
     const [
       totalEmployees,
-      activeEmployees,
       onLeaveEmployees,
-      departmentCount,
+      departments,
       presentToday,
       absentToday,
       monthlyPayroll,
     ] = await Promise.all([
-      // Total approved employees
+      // Total approved employees scoped to client
       db.employee.count({
-        where: { accountId, status: 'APPROVED' },
-      }),
-      // Active employees (APPROVED status, not on leave)
-      db.employee.count({
-        where: { accountId, status: 'APPROVED' },
+        where: { ...empWhere, accountId, status: 'APPROVED' },
       }),
       // Employees currently on leave (approved leave overlapping today)
       db.leave.count({
         where: {
           accountId,
+          employeeId: clientEmpIds.length > 0 ? { in: clientEmpIds } : '__none__',
           status: 'APPROVED',
           fromDate: { lte: todayEnd },
           toDate: { gte: todayStart },
         },
       }),
-      // Distinct department count
+      // Distinct departments among client employees
       db.employee
         .findMany({
-          where: { accountId, status: 'APPROVED', department: { not: null } },
+          where: { ...empWhere, accountId, status: 'APPROVED', department: { not: null } },
           select: { department: true },
           distinct: ['department'],
         })
@@ -59,6 +70,7 @@ export async function GET() {
       db.attendance.count({
         where: {
           accountId,
+          employeeId: clientEmpIds.length > 0 ? { in: clientEmpIds } : '__none__',
           date: { gte: todayStart, lte: todayEnd },
           status: { in: ['PRESENT', 'LATE', 'HALF_DAY', 'WFH'] },
         },
@@ -67,6 +79,7 @@ export async function GET() {
       db.attendance.count({
         where: {
           accountId,
+          employeeId: clientEmpIds.length > 0 ? { in: clientEmpIds } : '__none__',
           date: { gte: todayStart, lte: todayEnd },
           status: 'ABSENT',
         },
@@ -75,6 +88,7 @@ export async function GET() {
       db.payroll.aggregate({
         where: {
           accountId,
+          employeeId: clientEmpIds.length > 0 ? { in: clientEmpIds } : '__none__',
           month: currentMonth,
           year: currentYear,
           status: 'PAID',
@@ -86,13 +100,13 @@ export async function GET() {
     return NextResponse.json({
       employees: {
         total: totalEmployees,
-        active: activeEmployees,
+        active: totalEmployees,
         onLeave: onLeaveEmployees,
-        departments: departmentCount,
+        departments,
       },
       attendance: {
-        presentToday: presentToday,
-        absentToday: absentToday,
+        presentToday,
+        absentToday,
       },
       payroll: {
         totalPaidThisMonth: monthlyPayroll._sum.netSalary || 0,

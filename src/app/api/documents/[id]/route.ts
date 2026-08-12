@@ -14,9 +14,20 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   if (!doc) return NextResponse.json({ error: 'Not found' }, { status: 404 })
   if (!doc.filePath) return NextResponse.json({ error: 'File not generated yet' }, { status: 404 })
 
-  if (cu.user.role === 'EMPLOYEE' && doc.employee.userId !== cu.user.id) {
+  const role = cu.user.role
+
+  // --- Role-based access control ---
+  // EMPLOYEE: only own documents
+  if (role === 'EMPLOYEE') {
+    if (doc.employee?.userId !== cu.user.id) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+  }
+  // CLIENT and CANDIDATE: no access to generated documents
+  else if (role === 'CLIENT' || role === 'CANDIDATE') {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
+  // OWNER, SUPER_ADMIN, HR_MANAGER: full access (no additional check needed)
 
   const abs = path.join(process.cwd(), 'upload', doc.filePath)
   try {

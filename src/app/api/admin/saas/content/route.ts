@@ -9,7 +9,7 @@ const VALID_TYPES = ['faq', 'blog', 'career', 'banner', 'social', 'landing_secti
 
 export async function GET(req: NextRequest) {
   try {
-    const { error } = await requireRole('OWNER', 'SUPER_ADMIN')
+    const { error } = await requireRole('SUPER_ADMIN')
     if (error) return error
 
     const url = new URL(req.url)
@@ -53,7 +53,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const { error, cu } = await requireRole('OWNER', 'SUPER_ADMIN')
+    const { error, cu } = await requireRole('SUPER_ADMIN')
     if (error) return error
 
     const body = await req.json()
@@ -97,7 +97,7 @@ export async function POST(req: NextRequest) {
 
 export async function PUT(req: NextRequest) {
   try {
-    const { error, cu } = await requireRole('OWNER', 'SUPER_ADMIN')
+    const { error, cu } = await requireRole('SUPER_ADMIN')
     if (error) return error
 
     const body = await req.json()
@@ -149,7 +149,7 @@ export async function PUT(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
-    const { error, cu } = await requireRole('OWNER', 'SUPER_ADMIN')
+    const { error, cu } = await requireRole('SUPER_ADMIN')
     if (error) return error
 
     const { searchParams } = new URL(req.url)

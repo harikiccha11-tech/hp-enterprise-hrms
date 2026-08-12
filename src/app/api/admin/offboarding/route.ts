@@ -8,14 +8,14 @@ export const dynamic = 'force-dynamic'
 // GET — list offboarding tasks for an employee, optional status filter
 export async function GET(req: NextRequest) {
   try {
-    const { error } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER')
+    const { error, cu } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER')
     if (error) return error
 
     const { searchParams } = new URL(req.url)
     const employeeId = searchParams.get('employeeId') || undefined
     const status = searchParams.get('status') || undefined
 
-    const where: Record<string, unknown> = {}
+    const where: Record<string, unknown> = { accountId: cu!.user.accountId }
     if (employeeId) where.employeeId = employeeId
     if (status) where.status = status
 
@@ -32,8 +32,9 @@ export async function GET(req: NextRequest) {
 
 // POST — create task or bulk create (array of tasks)
 export async function POST(req: NextRequest) {
-  const { error } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER')
+  const { error, cu } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER')
   if (error) return error
+  const aid = cu!.user.accountId
   try {
     const body = await req.json()
 
@@ -44,6 +45,7 @@ export async function POST(req: NextRequest) {
           db.offboardingTask.create({
             data: {
               employeeId: item.employeeId,
+              accountId: aid,
               task: item.task,
               category: item.category || null,
               dueDate: item.dueDate ? new Date(item.dueDate) : null,
@@ -60,6 +62,7 @@ export async function POST(req: NextRequest) {
     const task = await db.offboardingTask.create({
       data: {
         employeeId: body.employeeId,
+        accountId: aid,
         task: body.task,
         category: body.category || null,
         dueDate: body.dueDate ? new Date(body.dueDate) : null,
@@ -78,12 +81,17 @@ const ALLOWED_PATCH_FIELDS = ['task', 'category', 'dueDate', 'status', 'notes']
 
 // PATCH — update task (status, notes, etc.)
 export async function PATCH(req: NextRequest) {
-  const { error } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER')
+  const { error, cu } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER')
   if (error) return error
   try {
     const body = await req.json()
     const { id } = body
     if (!id) return NextResponse.json({ error: 'ID required' }, { status: 400 })
+
+    const existing = await db.offboardingTask.findUnique({ where: { id } })
+    if (!existing || existing.accountId !== cu!.user.accountId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
 
     const updateData: Record<string, unknown> = {}
     for (const key of ALLOWED_PATCH_FIELDS) {
@@ -104,10 +112,14 @@ export async function PATCH(req: NextRequest) {
 
 // DELETE — delete task
 export async function DELETE(req: NextRequest) {
-  const { error } = await requireRole('OWNER', 'SUPER_ADMIN')
+  const { error, cu } = await requireRole('OWNER', 'SUPER_ADMIN')
   if (error) return error
   try {
     const { id } = await req.json()
+    const existing = await db.offboardingTask.findUnique({ where: { id } })
+    if (!existing || existing.accountId !== cu!.user.accountId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
     await db.offboardingTask.delete({ where: { id } })
     return NextResponse.json({ ok: true })
   } catch (e) {

@@ -6,14 +6,15 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 export async function GET(req: NextRequest) {
-  const { error } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER')
+  const { error, cu } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER')
   if (error) return error
+  const aid = cu!.user.accountId
   try {
     const sp = req.nextUrl.searchParams
     const status = sp.get('status') || ''
     const category = sp.get('category') || ''
     const search = sp.get('search') || ''
-    const where: any = {}
+    const where: any = { accountId: aid }
     if (status) where.status = status
     if (category) where.category = category
     if (search) {
@@ -34,6 +35,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const { error, cu } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER')
   if (error) return error
+  const aid = cu!.user.accountId
   try {
     const body = await req.json()
     const { employeeId, category, amount, description, date } = body
@@ -43,6 +45,7 @@ export async function POST(req: NextRequest) {
     const expense = await db.expense.create({
       data: {
         employeeId,
+        accountId: aid,
         category,
         amount: Number(amount),
         description: description || '',
@@ -59,9 +62,14 @@ export async function POST(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   const { error, cu } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER')
   if (error) return error
+  const aid = cu!.user.accountId
   try {
     const { id, status, remarks } = await req.json()
     if (!id) return NextResponse.json({ error: 'ID is required' }, { status: 400 })
+    const existing = await db.expense.findUnique({ where: { id } })
+    if (!existing || existing.accountId !== aid) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
     const data: any = {}
     if (remarks !== undefined) data.remarks = remarks
     if (status === 'APPROVED' || status === 'REJECTED') {
@@ -83,9 +91,14 @@ export async function PATCH(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   const { error, cu } = await requireRole('OWNER', 'SUPER_ADMIN')
   if (error) return error
+  const aid = cu!.user.accountId
   try {
     const { id } = await req.json()
     if (!id) return NextResponse.json({ error: 'ID is required' }, { status: 400 })
+    const existing = await db.expense.findUnique({ where: { id } })
+    if (!existing || existing.accountId !== aid) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
     await db.expense.delete({ where: { id } })
     return NextResponse.json({ ok: true })
   } catch (e) {

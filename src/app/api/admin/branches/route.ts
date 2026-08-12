@@ -6,10 +6,12 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
-  const { error } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER')
+  const { error, cu } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER')
   if (error) return error
+  const aid = cu!.user.accountId
   try {
     const branches = await db.branch.findMany({
+      where: { accountId: aid },
       orderBy: { createdAt: 'desc' },
     })
     return NextResponse.json({ branches })
@@ -21,12 +23,13 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   const { error, cu } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER')
   if (error) return error
+  const aid = cu!.user.accountId
   try {
     const body = await req.json()
     const { name, code, address, city, state, pincode, phone, email, isHead, status } = body
     if (!name?.trim()) return NextResponse.json({ error: 'Branch name is required' }, { status: 400 })
     if (!code?.trim()) return NextResponse.json({ error: 'Branch code is required' }, { status: 400 })
-    const byCode = await db.branch.findFirst({ where: { code: code.trim().toUpperCase() } })
+    const byCode = await db.branch.findFirst({ where: { code: code.trim().toUpperCase(), accountId: aid } })
     if (byCode) return NextResponse.json({ error: 'Branch with this code already exists' }, { status: 409 })
     const branch = await db.branch.create({
       data: {
@@ -40,6 +43,7 @@ export async function POST(req: NextRequest) {
         email: email || null,
         isHead: !!isHead,
         status: status || 'ACTIVE',
+        accountId: aid,
       },
     })
     await audit(cu!.user.id, 'CREATE_BRANCH', 'Branch', branch.id, branch.name)
@@ -52,11 +56,16 @@ export async function POST(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   const { error, cu } = await requireRole('OWNER', 'SUPER_ADMIN', 'HR_MANAGER')
   if (error) return error
+  const aid = cu!.user.accountId
   try {
     const { id, name, code, address, city, state, pincode, phone, email, isHead, status } = await req.json()
     if (!id) return NextResponse.json({ error: 'ID is required' }, { status: 400 })
+    const existingBranch = await db.branch.findUnique({ where: { id } })
+    if (!existingBranch || existingBranch.accountId !== aid) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
     if (code) {
-      const byCode = await db.branch.findFirst({ where: { code: code.trim().toUpperCase(), id: { not: id } } })
+      const byCode = await db.branch.findFirst({ where: { code: code.trim().toUpperCase(), id: { not: id }, accountId: aid } })
       if (byCode) return NextResponse.json({ error: 'Branch with this code already exists' }, { status: 409 })
     }
     const data: any = {}
@@ -81,9 +90,14 @@ export async function PATCH(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   const { error, cu } = await requireRole('OWNER', 'SUPER_ADMIN')
   if (error) return error
+  const aid = cu!.user.accountId
   try {
     const { id } = await req.json()
     if (!id) return NextResponse.json({ error: 'ID is required' }, { status: 400 })
+    const existingBranch = await db.branch.findUnique({ where: { id } })
+    if (!existingBranch || existingBranch.accountId !== aid) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
     await db.branch.delete({ where: { id } })
     await audit(cu!.user.id, 'DELETE_BRANCH', 'Branch', id)
     return NextResponse.json({ ok: true })

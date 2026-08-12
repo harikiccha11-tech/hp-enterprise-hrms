@@ -1333,6 +1333,38 @@ function AttendanceView() {
   const [attLoading, setAttLoading] = useState(true)
   const [attError, setAttError] = useState(false)
   const [search, setSearch] = useState('')
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
+  const [dlMonth, setDlMonth] = useState(String(new Date().getMonth() + 1))
+  const [dlYear, setDlYear] = useState(String(new Date().getFullYear()))
+  const [downloading, setDownloading] = useState(false)
+
+  const loadAttendance = (from?: string, to?: string) => {
+    setAttLoading(true)
+    setAttError(false)
+    let url = '/api/client/attendance'
+    const params: string[] = []
+    if (from && to) {
+      params.push(`from=${encodeURIComponent(from)}`)
+      params.push(`to=${encodeURIComponent(to)}`)
+    }
+    if (params.length) url += '?' + params.join('&')
+    return fetch(url)
+      .then((r) => { if (!r.ok) throw new Error(); return r.json() })
+      .then((json) => {
+        setAttendance((json.attendance || []).map((a: { id: string; employeeName: string; date: string; checkIn: string | null; checkOut: string | null; status: string; hoursWorked: number | null }) => ({
+          id: a.id,
+          employee: a.employeeName,
+          date: a.date,
+          checkIn: a.checkIn ? format(new Date(a.checkIn), 'HH:mm') : '—',
+          checkOut: a.checkOut ? format(new Date(a.checkOut), 'HH:mm') : '—',
+          hours: a.hoursWorked != null ? String(a.hoursWorked) : '0',
+          status: a.status,
+        })))
+      })
+      .catch(() => { setAttError(true); toast.error('Failed to load attendance') })
+      .finally(() => setAttLoading(false))
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -1355,17 +1387,57 @@ function AttendanceView() {
     return () => { cancelled = true }
   }, [])
 
+  const handleDateFilter = () => {
+    if (dateFrom && dateTo) {
+      loadAttendance(dateFrom, dateTo)
+    } else {
+      toast.error('Please select both from and to dates')
+    }
+  }
+
+  const handleClearFilter = () => {
+    setDateFrom('')
+    setDateTo('')
+    loadAttendance()
+  }
+
+  const handleDownload = () => {
+    setDownloading(true)
+    const url = `/api/client/attendance/download?month=${dlMonth}&year=${dlYear}`
+    window.open(url, '_blank')
+    setTimeout(() => setDownloading(false), 3000)
+  }
+
   const filtered = attendance.filter((a) => !search || a.employee.toLowerCase().includes(search.toLowerCase()))
   const presentCount = attendance.filter((a) => a.status === 'PRESENT').length
   const absentCount = attendance.filter((a) => a.status === 'ABSENT').length
   const lateCount = attendance.filter((a) => a.status === 'LATE').length
   const halfDayCount = attendance.filter((a) => a.status === 'HALF_DAY').length
 
+  const MONTH_OPTIONS = ['January','February','March','April','May','June','July','August','September','October','November','December']
+
   return (
     <div className="space-y-6">
       <div className="rounded-xl bg-gradient-to-r from-[var(--navy)] to-[var(--navy)]/90 p-6 text-white shadow-lg">
-        <h2 className="text-xl font-bold">Attendance</h2>
-        <p className="mt-1 text-sm text-blue-100/80">Track daily attendance for your deployed workforce.</p>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-xl font-bold">Attendance</h2>
+            <p className="mt-1 text-sm text-blue-100/80">Track daily attendance for your deployed workforce.</p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Select value={dlMonth} onValueChange={setDlMonth}>
+              <SelectTrigger className="h-8 w-32 bg-white/10 border-white/20 text-white text-xs"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {MONTH_OPTIONS.map((m, i) => <SelectItem key={i} value={String(i + 1)}>{m}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Input type="number" min="2020" max="2100" className="h-8 w-20 bg-white/10 border-white/20 text-white text-xs" value={dlYear} onChange={(e) => setDlYear(e.target.value)} />
+            <Button size="sm" variant="outline" className="h-8 gap-1.5 border-white/20 text-white hover:bg-white/20" onClick={handleDownload} disabled={downloading}>
+              <FileDown className="h-3.5 w-3.5" />
+              {downloading ? 'Downloading…' : 'Download Report'}
+            </Button>
+          </div>
+        </div>
       </div>
 
       <div className="grid gap-4 grid-cols-2 sm:grid-cols-4">
@@ -1400,12 +1472,17 @@ function AttendanceView() {
         <CardHeader className="pb-3">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <CardTitle className="text-base">Attendance Records</CardTitle>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <div className="relative">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="Search employee…" className="h-9 w-52 pl-9" value={search} onChange={(e) => setSearch(e.target.value)} />
+                <Input placeholder="Search employee…" className="h-9 w-48 pl-9" value={search} onChange={(e) => setSearch(e.target.value)} />
               </div>
-              <Input type="date" className="h-9 w-40" value={new Date().toISOString().split('T')[0]} readOnly />
+              <Input type="date" className="h-9 w-36" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} placeholder="From" />
+              <Input type="date" className="h-9 w-36" value={dateTo} onChange={(e) => setDateTo(e.target.value)} placeholder="To" />
+              <Button size="sm" variant="outline" className="h-9" onClick={handleDateFilter}>Go</Button>
+              {(dateFrom || dateTo) && (
+                <Button size="sm" variant="ghost" className="h-9 text-xs" onClick={handleClearFilter}>Clear</Button>
+              )}
             </div>
           </div>
         </CardHeader>

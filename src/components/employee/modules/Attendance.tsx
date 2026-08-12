@@ -16,6 +16,7 @@ import {
   Fingerprint,
   MapPin,
   LocateFixed,
+  Download,
 } from 'lucide-react'
 import { fmtTime, hoursBetween } from '../lib'
 import { format } from 'date-fns'
@@ -43,7 +44,17 @@ interface AttendanceRow {
 interface AttendanceData {
   todayRecord: AttendanceRow | null
   monthRecords: AttendanceRow[]
-  stats: { presentDays: number; totalHours: number }
+  stats: {
+    presentDays: number
+    absentDays: number
+    halfDays: number
+    lateDays: number
+    leaveDays: number
+    totalHours: number
+    overtimeTotal: number
+    workingDaysInMonth: number
+    attendancePercentage: number
+  }
 }
 
 // Capture browser geolocation + reverse-geocode to an address
@@ -186,10 +197,23 @@ export function Attendance({ refreshKey }: { refreshKey: number }) {
   }
 
   const monthRecords = data?.monthRecords || []
-  const totalHours = data?.stats.totalHours || 0
-  const presentDays = data?.stats.presentDays || 0
-  const lateDays = monthRecords.filter(r => r.lateArrival).length
-  const overtimeTotal = monthRecords.reduce((s, r) => s + (r.overtime || 0), 0)
+  const stats = data?.stats
+  const totalHours = stats?.totalHours || 0
+  const presentDays = stats?.presentDays || 0
+  const absentDays = stats?.absentDays || 0
+  const halfDays = stats?.halfDays || 0
+  const lateDays = stats?.lateDays || 0
+  const leaveDays = stats?.leaveDays || 0
+  const overtimeTotal = stats?.overtimeTotal || 0
+  const workingDaysInMonth = stats?.workingDaysInMonth || 0
+  const attendancePercentage = stats?.attendancePercentage || 0
+
+  const handleDownload = () => {
+    const now = new Date()
+    const month = now.getMonth() + 1
+    const year = now.getFullYear()
+    window.open(`/api/employee/attendance/download?month=${month}&year=${year}`, '_blank')
+  }
 
   return (
     <div className="space-y-6">
@@ -303,10 +327,18 @@ export function Attendance({ refreshKey }: { refreshKey: number }) {
 
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard icon={CalendarCheck} label="Present Days (Month)" value={presentDays} accent="navy" sub="Including today" />
-        <StatCard icon={Clock} label="Total Hours" value={`${totalHours}h`} accent="gold" sub="This month" />
-        <StatCard icon={AlertTriangle} label="Late Arrivals" value={lateDays} accent="amber" sub="This month" />
+        <StatCard icon={CalendarCheck} label="Present Days (Month)" value={presentDays} accent="navy" sub={`${workingDaysInMonth} working days`} />
+        <StatCard icon={Clock} label="Total Hours" value={`${totalHours}h`} accent="gold" sub={`${attendancePercentage}% attendance`} />
+        <StatCard icon={AlertTriangle} label="Late / Absent" value={`${lateDays} / ${absentDays}`} accent="amber" sub={`${halfDays} half-days, ${leaveDays} leave`} />
         <StatCard icon={TrendingUp} label="Overtime" value={`${overtimeTotal.toFixed(1)}h`} accent="green" sub="This month" />
+      </div>
+
+      {/* Download button */}
+      <div className="flex justify-end">
+        <Button variant="outline" size="sm" onClick={handleDownload} className="gap-2">
+          <Download className="h-4 w-4" />
+          Download Monthly Report
+        </Button>
       </div>
 
       {/* History table */}

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
+import { resolveClientId, getClientEmployeeIds } from '@/lib/client-scope'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -14,44 +15,55 @@ export async function GET() {
     const accountId = cu.user.accountId
     if (!accountId) return NextResponse.json({ error: 'No account linked' }, { status: 400 })
 
-    // Fetch generated documents that are client-visible
-    const generatedDocs = await db.generatedDocument.findMany({
-      where: {
-        accountId,
-        clientVisible: true,
-      },
-      select: {
-        id: true,
-        title: true,
-        documentType: true,
-        fileFormat: true,
-        storagePath: true,
-        createdAt: true,
-      },
-      orderBy: { createdAt: 'desc' },
-      take: 200,
-    })
+    const clientId = await resolveClientId(cu.user.clientId, accountId)
+    if (!clientId) return NextResponse.json({ documents: [] })
 
-    // Fetch employee documents that are client-visible
-    const empDocs = await db.employeeDocument.findMany({
-      where: {
-        accountId,
-        clientVisible: true,
-      },
-      select: {
-        id: true,
-        fileName: true,
-        documentType: true,
-        mimeType: true,
-        filePath: true,
-        uploadedAt: true,
-        employee: {
-          select: { fullName: true, employeeCode: true },
-        },
-      },
-      orderBy: { uploadedAt: 'desc' },
-      take: 200,
-    })
+    const clientEmpIds = await getClientEmployeeIds(db, clientId, accountId)
+
+    // Fetch generated documents that are client-visible, scoped to client-assigned employees
+    const generatedDocs = clientEmpIds.length > 0
+      ? await db.generatedDocument.findMany({
+          where: {
+            accountId,
+            clientVisible: true,
+            employeeId: { in: clientEmpIds },
+          },
+          select: {
+            id: true,
+            title: true,
+            documentType: true,
+            fileFormat: true,
+            storagePath: true,
+            createdAt: true,
+          },
+          orderBy: { createdAt: 'desc' },
+          take: 200,
+        })
+      : []
+
+    // Fetch employee documents that are client-visible, scoped to client-assigned employees
+    const empDocs = clientEmpIds.length > 0
+      ? await db.employeeDocument.findMany({
+          where: {
+            accountId,
+            clientVisible: true,
+            employeeId: { in: clientEmpIds },
+          },
+          select: {
+            id: true,
+            fileName: true,
+            documentType: true,
+            mimeType: true,
+            filePath: true,
+            uploadedAt: true,
+            employee: {
+              select: { fullName: true, employeeCode: true },
+            },
+          },
+          orderBy: { uploadedAt: 'desc' },
+          take: 200,
+        })
+      : []
 
     return NextResponse.json({
       documents: [

@@ -77,7 +77,7 @@ export async function POST(req: NextRequest) {
     const to = new Date(body.toDate)
     const days = Math.max(1, Math.round((to.getTime() - from.getTime()) / 86400000) + 1)
     const leave = await db.leave.create({
-      data: { employeeId: body.employeeId, leaveType: body.leaveType, fromDate: from, toDate: to, days, reason: body.reason, status: body.status || 'PENDING' },
+      data: { employeeId: body.employeeId, leaveType: body.leaveType, fromDate: from, toDate: to, days, reason: body.reason, status: body.status || 'PENDING', accountId: cu.user.accountId },
     })
     await audit(cu.user.id, 'CREATE_LEAVE_ON_BEHALF', 'Leave', leave.id, `${body.leaveType} ${days}d for ${body.employeeId}`)
     return NextResponse.json({ ok: true, leave })

@@ -12,10 +12,12 @@ const VALID_ROLES_POST = ['SUPER_ADMIN', 'HR_MANAGER', 'EMPLOYEE', 'CLIENT']
 const VALID_ROLES_PATCH = ['OWNER', 'SUPER_ADMIN', 'HR_MANAGER', 'EMPLOYEE', 'CLIENT']
 
 export async function GET() {
-  const { error } = await requireRole('OWNER', 'SUPER_ADMIN')
+  const { error, cu } = await requireRole('OWNER', 'SUPER_ADMIN')
   if (error) return error
+  const aid = cu!.user.accountId
   try {
     const users = await db.user.findMany({
+      where: { accountId: aid },
       orderBy: { createdAt: 'desc' },
       select: {
         id: true,
@@ -56,7 +58,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Only the account owner can create new users' }, { status: 403 })
     }
 
-    const existingUser = await db.user.findFirst({ where: { OR: [{ username: username.trim().toLowerCase() }, { email: email.trim().toLowerCase() }] } })
+    const existingUser = await db.user.findFirst({ where: { OR: [{ username: username.trim().toLowerCase() }, { email: email.trim().toLowerCase() }], accountId: cu!.user.accountId } })
     if (existingUser) return NextResponse.json({ error: 'User with this username or email already exists' }, { status: 409 })
 
     const passwordHash = await hashPassword(password)
@@ -66,6 +68,7 @@ export async function POST(req: NextRequest) {
         email: email.trim().toLowerCase(),
         passwordHash,
         role,
+        accountId: cu!.user.accountId,
       },
       select: { id: true, username: true, email: true, role: true, createdAt: true },
     })
@@ -87,9 +90,12 @@ export async function PATCH(req: NextRequest) {
     // Don't allow changing own role
     if (id === cu!.user.id) return NextResponse.json({ error: 'Cannot change your own role' }, { status: 400 })
 
-    // Don't allow non-OWNER to modify OWNER role
-    const targetUser = await db.user.findUnique({ where: { id }, select: { role: true } })
-    if (targetUser?.role === 'OWNER' && cu!.user.role !== 'OWNER') {
+    // Verify ownership
+    const targetUser = await db.user.findUnique({ where: { id }, select: { role: true, accountId: true } })
+    if (!targetUser || targetUser.accountId !== cu!.user.accountId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+    if (targetUser.role === 'OWNER' && cu!.user.role !== 'OWNER') {
       return NextResponse.json({ error: 'Cannot modify OWNER role' }, { status: 403 })
     }
 

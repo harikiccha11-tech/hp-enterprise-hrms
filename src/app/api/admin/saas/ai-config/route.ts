@@ -12,7 +12,7 @@ const AI_CONFIG_KEYS = [
 
 export async function GET(req: NextRequest) {
   try {
-    const { error } = await requireRole('OWNER', 'SUPER_ADMIN')
+    const { error } = await requireRole('SUPER_ADMIN')
     if (error) return error
 
     const url = new URL(req.url)
@@ -96,7 +96,7 @@ export async function GET(req: NextRequest) {
 
 export async function PUT(req: NextRequest) {
   try {
-    const { error, cu } = await requireRole('OWNER', 'SUPER_ADMIN')
+    const { error, cu } = await requireRole('SUPER_ADMIN')
     if (error) return error
 
     const body = await req.json()
@@ -183,7 +183,7 @@ export async function PUT(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
-    const { error, cu } = await requireRole('OWNER', 'SUPER_ADMIN')
+    const { error, cu } = await requireRole('SUPER_ADMIN')
     if (error) return error
 
     const { searchParams } = new URL(req.url)
