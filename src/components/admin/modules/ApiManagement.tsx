@@ -1,5 +1,5 @@
 'use client'
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -19,14 +19,13 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
   AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { Separator } from '@/components/ui/separator'
 import { SectionTitle, EmptyState } from '@/components/shared'
 import { toast } from 'sonner'
 import {
   Key, Plus, Search, Copy, Eye, EyeOff, Trash2, Pencil, Webhook,
   BarChart3, ExternalLink, RefreshCw, CheckCircle2, XCircle, Clock,
   ArrowUpRight, ArrowDownRight, Activity, Zap, Shield, BookOpen,
-  RotateCcw, Ban, Server, Timer, Users, TrendingUp, AlertTriangle,
+  RotateCcw, Ban, Server, Timer, Users, TrendingUp, AlertTriangle, Settings,
 } from 'lucide-react'
 
 interface ApiKey {
@@ -60,46 +59,6 @@ interface UsageStat {
   icon: typeof Zap
 }
 
-const MOCK_KEYS: ApiKey[] = [
-  {
-    id: '1', name: 'Production API Key', key: 'hpe_prod_sk_a8f3k2m9x1b4c7d0e5f6g8h2j4k6l9',
-    status: 'ACTIVE', createdAt: '2024-11-15T10:30:00Z', lastUsed: '2025-06-14T08:22:00Z', totalCalls: 284729, rateLimit: '1000/min', expiresAt: null, isEnabled: true,
-  },
-  {
-    id: '2', name: 'Staging Environment', key: 'hpe_stg_sk_z3x5c7v9b1n3m5k8p2r4t6y8w0q1s3a',
-    status: 'ACTIVE', createdAt: '2025-01-08T14:15:00Z', lastUsed: '2025-06-13T17:45:00Z', totalCalls: 45812, rateLimit: '500/min', expiresAt: '2025-12-31T23:59:59Z', isEnabled: true,
-  },
-  {
-    id: '3', name: 'Mobile App Integration', key: 'hpe_mob_sk_d4f6g8h0j2l4n6p8r0s2t4v6x8z0b2d',
-    status: 'ACTIVE', createdAt: '2025-03-22T09:00:00Z', lastUsed: '2025-06-14T06:10:00Z', totalCalls: 128403, rateLimit: '2000/min', expiresAt: '2026-03-22T09:00:00Z', isEnabled: true,
-  },
-  {
-    id: '4', name: 'Legacy Integration (Deprecated)', key: 'hpe_leg_sk_m1n3p5r7t9v1x3z5b7d9f1g3h5j7k9l',
-    status: 'REVOKED', createdAt: '2024-06-01T11:00:00Z', lastUsed: '2025-02-28T23:59:00Z', totalCalls: 512048, rateLimit: '200/min', expiresAt: null, isEnabled: false,
-  },
-  {
-    id: '5', name: 'Staging API Key', key: 'hpe_sta_sk_q7w9e2r4t6y8u0i1o3p5a7s9d1f3g5',
-    status: 'ACTIVE', createdAt: '2025-04-10T12:00:00Z', lastUsed: '2025-06-12T15:30:00Z', totalCalls: 18920, rateLimit: '100/min', expiresAt: '2025-10-10T12:00:00Z', isEnabled: true,
-  },
-  {
-    id: '6', name: 'Mobile App Key', key: 'hpe_mak_sk_b6n8m0k2j4h6g8f0d2s4a6u8y0e2w4',
-    status: 'ACTIVE', createdAt: '2025-05-01T08:00:00Z', lastUsed: '2025-06-14T09:45:00Z', totalCalls: 67215, rateLimit: '10000/min', expiresAt: '2026-05-01T08:00:00Z', isEnabled: false,
-  },
-]
-
-const MOCK_WEBHOOKS: WebhookConfig[] = [
-  { id: '1', name: 'Employee Onboarding', url: 'https://hooks.internal/hr/onboarding', events: ['employee.created', 'employee.approved'], status: 'ACTIVE', lastTriggered: '2025-06-13T14:22:00Z', successRate: 99.8 },
-  { id: '2', name: 'Payroll Events', url: 'https://hooks.internal/finance/payroll', events: ['payroll.processed', 'payslip.generated'], status: 'ACTIVE', lastTriggered: '2025-06-01T00:05:00Z', successRate: 100 },
-  { id: '3', name: 'Leave Notifications', url: 'https://hooks.internal/notifications/leave', events: ['leave.applied', 'leave.approved', 'leave.rejected'], status: 'PAUSED', lastTriggered: '2025-05-20T09:15:00Z', successRate: 97.2 },
-]
-
-const MOCK_STATS: UsageStat[] = [
-  { label: 'Total API Calls (30d)', value: '458,944', change: '+12.3%', positive: true, icon: BarChart3 },
-  { label: 'Avg Response Time', value: '142ms', change: '-8.1%', positive: true, icon: Timer },
-  { label: 'Error Rate', value: '0.12%', change: '-0.05%', positive: true, icon: AlertTriangle },
-  { label: 'Active Integrations', value: '7', change: '+2', positive: true, icon: Server },
-]
-
 const WEBHOOK_EVENTS = [
   'employee.created', 'employee.approved', 'employee.updated',
   'leave.applied', 'leave.approved', 'leave.rejected',
@@ -121,6 +80,13 @@ const EXPIRY_OPTIONS = [
   { value: '90', label: '90 days' },
   { value: '365', label: '1 year' },
   { value: 'custom', label: 'Custom' },
+]
+
+const PLATFORM_STATS: UsageStat[] = [
+  { label: 'Total API Calls (30d)', value: '—', change: '—', positive: true, icon: BarChart3 },
+  { label: 'Avg Response Time', value: '—', change: '—', positive: true, icon: Timer },
+  { label: 'Error Rate', value: '—', change: '—', positive: true, icon: AlertTriangle },
+  { label: 'Active Integrations', value: '0', change: '—', positive: false, icon: Server },
 ]
 
 function statusColor(status: string, isEnabled?: boolean) {
@@ -164,10 +130,11 @@ function getExpiryDate(expiryValue: string): string | null {
 }
 
 export function ApiManagement({ refreshKey }: { refreshKey: number }) {
+  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
-  const [keys, setKeys] = useState<ApiKey[]>(MOCK_KEYS)
-  const [webhooks, setWebhooks] = useState<WebhookConfig[]>(MOCK_WEBHOOKS)
+  const [keys, setKeys] = useState<ApiKey[]>([])
+  const [webhooks, setWebhooks] = useState<WebhookConfig[]>([])
   const [revealedKeys, setRevealedKeys] = useState<Set<string>>(new Set())
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [creatingKey, setCreatingKey] = useState(false)
@@ -185,6 +152,13 @@ export function ApiManagement({ refreshKey }: { refreshKey: number }) {
   const [regeneratingKey, setRegeneratingKey] = useState<ApiKey | null>(null)
   const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set())
   const [bulkRevoking, setBulkRevoking] = useState(false)
+
+  useEffect(() => {
+    // Simulate a brief load then show empty state
+    // No backend API exists for API key management
+    const timer = setTimeout(() => setLoading(false), 400)
+    return () => clearTimeout(timer)
+  }, [])
 
   const filteredKeys = useMemo(() => {
     return keys.filter((k) => {
@@ -328,6 +302,21 @@ export function ApiManagement({ refreshKey }: { refreshKey: number }) {
     setWebhookEvents((prev) => prev.includes(event) ? prev.filter((e) => e !== event) : [...prev, event])
   }
 
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <SectionTitle title="API Management" desc="API keys, webhooks & integrations" />
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Card key={i}><CardContent className="p-4"><Skeleton className="h-20 w-full" /></CardContent></Card>
+          ))}
+        </div>
+        <Card><CardContent className="p-6"><Skeleton className="h-48 w-full" /></CardContent></Card>
+        <Card><CardContent className="p-6"><Skeleton className="h-64 w-full" /></CardContent></Card>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
       <SectionTitle
@@ -347,7 +336,7 @@ export function ApiManagement({ refreshKey }: { refreshKey: number }) {
 
       {/* Usage Stats Dashboard */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {MOCK_STATS.map((stat) => {
+        {PLATFORM_STATS.map((stat) => {
           const Icon = stat.icon
           return (
             <Card key={stat.label} className="relative overflow-hidden">
@@ -360,10 +349,6 @@ export function ApiManagement({ refreshKey }: { refreshKey: number }) {
                 </div>
                 <div className="mt-2 flex items-baseline gap-2">
                   <p className="text-2xl font-bold text-[var(--navy)] dark:text-white">{stat.value}</p>
-                  <span className={`inline-flex items-center gap-0.5 text-xs font-medium ${stat.positive ? 'text-emerald-600' : 'text-red-600'}`}>
-                    {stat.positive ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
-                    {stat.change}
-                  </span>
                 </div>
               </CardContent>
             </Card>
@@ -371,19 +356,19 @@ export function ApiManagement({ refreshKey }: { refreshKey: number }) {
         })}
       </div>
 
-      {/* API Usage Timeline Placeholder */}
+      {/* Platform Configuration Notice */}
       <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <TrendingUp className="h-4 w-4 text-[var(--gold)]" /> API Usage Timeline
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex h-48 items-center justify-center rounded-lg border border-dashed border-muted-foreground/25 bg-muted/30">
-            <div className="text-center">
-              <BarChart3 className="mx-auto h-10 w-10 text-muted-foreground/40" />
-              <p className="mt-2 text-sm text-muted-foreground">Usage chart will render here</p>
-              <p className="text-xs text-muted-foreground/60">Connect to analytics backend to see daily call volumes</p>
+        <CardContent className="p-5">
+          <div className="flex items-start gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[var(--navy)]/10">
+              <Settings className="h-5 w-5 text-[var(--navy)] dark:text-[var(--gold-light)]" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-[var(--navy)] dark:text-white">Configuration available via platform settings</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                API keys, webhooks, and integration analytics are managed through the SaaS platform configuration.
+                Contact your account manager or visit platform settings to set up API access and webhook endpoints.
+              </p>
             </div>
           </div>
         </CardContent>
@@ -397,130 +382,140 @@ export function ApiManagement({ refreshKey }: { refreshKey: number }) {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="mb-4 flex flex-wrap gap-3">
-            <div className="relative flex-1 min-w-[200px]">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input placeholder="Search API keys..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
-            </div>
-            <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v === '_all_' ? '' : v); setSelectedKeys(new Set()) }}>
-              <SelectTrigger className="w-[160px]">
-                <SelectValue placeholder="All Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="_all_">All Status</SelectItem>
-                <SelectItem value="ACTIVE">Active</SelectItem>
-                <SelectItem value="REVOKED">Revoked</SelectItem>
-                <SelectItem value="EXPIRED">Expired</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          {keys.length === 0 ? (
+            <EmptyState
+              icon={Key}
+              title="No API keys configured"
+              desc="Generate an API key to start integrating with the platform. Keys are used for authentication and rate limiting."
+            />
+          ) : (
+            <>
+              <div className="mb-4 flex flex-wrap gap-3">
+                <div className="relative flex-1 min-w-[200px]">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input placeholder="Search API keys..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+                </div>
+                <Select value={statusFilter || '_all_'} onValueChange={(v) => { setStatusFilter(v === '_all_' ? '' : v); setSelectedKeys(new Set()) }}>
+                  <SelectTrigger className="w-[160px]">
+                    <SelectValue placeholder="All Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="_all_">All Status</SelectItem>
+                    <SelectItem value="ACTIVE">Active</SelectItem>
+                    <SelectItem value="REVOKED">Revoked</SelectItem>
+                    <SelectItem value="EXPIRED">Expired</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-          {/* Bulk Actions Bar */}
-          {someSelected && (
-            <div className="mb-3 flex items-center gap-3 rounded-lg border border-[var(--gold)]/30 bg-[var(--gold)]/5 px-4 py-2.5">
-              <span className="text-sm font-medium text-[var(--navy)] dark:text-[var(--gold-light)]">
-                {selectedKeys.size} key{selectedKeys.size > 1 ? 's' : ''} selected
-              </span>
-              <div className="flex-1" />
-              <Button size="sm" variant="outline" className="text-muted-foreground" onClick={() => setSelectedKeys(new Set())}>
-                Clear Selection
-              </Button>
-              <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700 border-red-200 hover:bg-red-50" onClick={() => setBulkRevoking(true)}>
-                <Ban className="mr-1.5 h-3.5 w-3.5" /> Bulk Revoke
-              </Button>
-            </div>
-          )}
+              {/* Bulk Actions Bar */}
+              {someSelected && (
+                <div className="mb-3 flex items-center gap-3 rounded-lg border border-[var(--gold)]/30 bg-[var(--gold)]/5 px-4 py-2.5">
+                  <span className="text-sm font-medium text-[var(--navy)] dark:text-[var(--gold-light)]">
+                    {selectedKeys.size} key{selectedKeys.size > 1 ? 's' : ''} selected
+                  </span>
+                  <div className="flex-1" />
+                  <Button size="sm" variant="outline" className="text-muted-foreground" onClick={() => setSelectedKeys(new Set())}>
+                    Clear Selection
+                  </Button>
+                  <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700 border-red-200 hover:bg-red-50" onClick={() => setBulkRevoking(true)}>
+                    <Ban className="mr-1.5 h-3.5 w-3.5" /> Bulk Revoke
+                  </Button>
+                </div>
+              )}
 
-          <div className="max-h-96 overflow-y-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-10">
-                    <Checkbox
-                      checked={filteredKeys.length > 0 ? (allFilteredSelected ? true : someSelected && filteredKeys.some((k) => selectedKeys.has(k.id)) ? 'indeterminate' : false) : false}
-                      onCheckedChange={() => toggleSelectAll()}
-                      aria-label="Select all keys"
-                    />
-                  </TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>API Key</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Enabled</TableHead>
-                  <TableHead>Rate Limit</TableHead>
-                  <TableHead>Total Calls</TableHead>
-                  <TableHead>Created</TableHead>
-                  <TableHead>Last Used</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredKeys.map((k) => {
-                  const revealed = revealedKeys.has(k.id)
-                  const displayKey = revealed ? k.key : maskKey(k.key)
-                  const isSelected = selectedKeys.has(k.id)
-                  return (
-                    <TableRow key={k.id} data-selected={isSelected || undefined} className={isSelected ? 'bg-muted/50' : ''}>
-                      <TableCell>
+              <div className="max-h-96 overflow-y-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-10">
                         <Checkbox
-                          checked={isSelected}
-                          onCheckedChange={() => toggleSelectKey(k.id)}
-                          aria-label={`Select ${k.name}`}
+                          checked={filteredKeys.length > 0 ? (allFilteredSelected ? true : someSelected && filteredKeys.some((k) => selectedKeys.has(k.id)) ? 'indeterminate' : false) : false}
+                          onCheckedChange={() => toggleSelectAll()}
+                          aria-label="Select all keys"
                         />
-                      </TableCell>
-                      <TableCell className="font-medium">{k.name}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1.5">
-                          <code className="rounded bg-muted px-1.5 py-0.5 text-xs font-mono max-w-[220px] truncate">{displayKey}</code>
-                          <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => toggleReveal(k.id)} aria-label={revealed ? 'Hide key' : 'Reveal key'}>
-                            {revealed ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-                          </Button>
-                          <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => copyKey(k.key, k.id)} aria-label="Copy key">
-                            <Copy className={`h-3.5 w-3.5 ${copiedId === k.id ? 'text-emerald-600' : ''}`} />
-                          </Button>
-                          {copiedId === k.id && (
-                            <span className="text-xs font-medium text-emerald-600">Copied!</span>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell><Badge className={statusColor(k.status, k.isEnabled)}>{statusLabel(k.status, k.isEnabled)}</Badge></TableCell>
-                      <TableCell>
-                        {k.status === 'ACTIVE' ? (
-                          <Switch
-                            checked={k.isEnabled}
-                            onCheckedChange={() => toggleKeyEnabled(k.id)}
-                            aria-label={`Toggle ${k.name}`}
-                          />
-                        ) : (
-                          <span className="text-xs text-muted-foreground">—</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{k.rateLimit}</TableCell>
-                      <TableCell className="text-sm font-mono">{k.totalCalls.toLocaleString()}</TableCell>
-                      <TableCell className="text-sm">{formatDate(k.createdAt)}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{k.lastUsed === 'Never' ? 'Never' : relativeTime(k.lastUsed)}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-0.5">
-                          {k.status === 'ACTIVE' && (
-                            <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-muted-foreground hover:text-[var(--navy)]" onClick={() => setRegeneratingKey(k)} aria-label="Regenerate key" title="Regenerate key">
-                              <RotateCcw className="h-4 w-4" />
-                            </Button>
-                          )}
-                          {k.status === 'ACTIVE' && (
-                            <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-red-600 hover:text-red-700" onClick={() => setRevoking(k)} aria-label="Revoke key">
-                              <XCircle className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </div>
-                      </TableCell>
+                      </TableHead>
+                      <TableHead>Name</TableHead>
+                      <TableHead>API Key</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Enabled</TableHead>
+                      <TableHead>Rate Limit</TableHead>
+                      <TableHead>Total Calls</TableHead>
+                      <TableHead>Created</TableHead>
+                      <TableHead>Last Used</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
-                  )
-                })}
-                {filteredKeys.length === 0 && (
-                  <TableRow><TableCell colSpan={10} className="text-center text-muted-foreground py-8">No API keys match your filters</TableCell></TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredKeys.map((k) => {
+                      const revealed = revealedKeys.has(k.id)
+                      const displayKey = revealed ? k.key : maskKey(k.key)
+                      const isSelected = selectedKeys.has(k.id)
+                      return (
+                        <TableRow key={k.id} data-selected={isSelected || undefined} className={isSelected ? 'bg-muted/50' : ''}>
+                          <TableCell>
+                            <Checkbox
+                              checked={isSelected}
+                              onCheckedChange={() => toggleSelectKey(k.id)}
+                              aria-label={`Select ${k.name}`}
+                            />
+                          </TableCell>
+                          <TableCell className="font-medium">{k.name}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1.5">
+                              <code className="rounded bg-muted px-1.5 py-0.5 text-xs font-mono max-w-[220px] truncate">{displayKey}</code>
+                              <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => toggleReveal(k.id)} aria-label={revealed ? 'Hide key' : 'Reveal key'}>
+                                {revealed ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                              </Button>
+                              <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => copyKey(k.key, k.id)} aria-label="Copy key">
+                                <Copy className={`h-3.5 w-3.5 ${copiedId === k.id ? 'text-emerald-600' : ''}`} />
+                              </Button>
+                              {copiedId === k.id && (
+                                <span className="text-xs font-medium text-emerald-600">Copied!</span>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell><Badge className={statusColor(k.status, k.isEnabled)}>{statusLabel(k.status, k.isEnabled)}</Badge></TableCell>
+                          <TableCell>
+                            {k.status === 'ACTIVE' ? (
+                              <Switch
+                                checked={k.isEnabled}
+                                onCheckedChange={() => toggleKeyEnabled(k.id)}
+                                aria-label={`Toggle ${k.name}`}
+                              />
+                            ) : (
+                              <span className="text-xs text-muted-foreground">—</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground">{k.rateLimit}</TableCell>
+                          <TableCell className="text-sm font-mono">{k.totalCalls.toLocaleString()}</TableCell>
+                          <TableCell className="text-sm">{formatDate(k.createdAt)}</TableCell>
+                          <TableCell className="text-sm text-muted-foreground">{k.lastUsed === 'Never' ? 'Never' : relativeTime(k.lastUsed)}</TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex items-center justify-end gap-0.5">
+                              {k.status === 'ACTIVE' && (
+                                <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-muted-foreground hover:text-[var(--navy)]" onClick={() => setRegeneratingKey(k)} aria-label="Regenerate key" title="Regenerate key">
+                                  <RotateCcw className="h-4 w-4" />
+                                </Button>
+                              )}
+                              {k.status === 'ACTIVE' && (
+                                <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-red-600 hover:text-red-700" onClick={() => setRevoking(k)} aria-label="Revoke key">
+                                  <XCircle className="h-4 w-4" />
+                                </Button>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      )
+                    })}
+                    {filteredKeys.length === 0 && (
+                      <TableRow><TableCell colSpan={10} className="text-center text-muted-foreground py-8">No API keys match your filters</TableCell></TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
 
@@ -532,60 +527,68 @@ export function ApiManagement({ refreshKey }: { refreshKey: number }) {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="max-h-96 overflow-y-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>URL</TableHead>
-                  <TableHead>Events</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Success Rate</TableHead>
-                  <TableHead>Last Triggered</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {webhooks.map((w) => (
-                  <TableRow key={w.id}>
-                    <TableCell className="font-medium">{w.name}</TableCell>
-                    <TableCell>
-                      <code className="rounded bg-muted px-1.5 py-0.5 text-xs font-mono max-w-[200px] truncate block">{w.url}</code>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-1">
-                        {w.events.slice(0, 2).map((e) => (
-                          <Badge key={e} variant="outline" className="text-[10px]">{e}</Badge>
-                        ))}
-                        {w.events.length > 2 && (
-                          <Badge variant="outline" className="text-[10px]">+{w.events.length - 2}</Badge>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Switch checked={w.status === 'ACTIVE'} onCheckedChange={() => toggleWebhookStatus(w.id)} />
-                        <Badge className={w.status === 'ACTIVE' ? 'bg-emerald-500/10 text-emerald-700 border-emerald-500/30' : 'bg-amber-500/10 text-amber-700 border-amber-500/30'}>
-                          {w.status}
-                        </Badge>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      <span className={w.successRate >= 99 ? 'text-emerald-600' : w.successRate >= 95 ? 'text-amber-600' : 'text-red-600'}>
-                        {w.successRate}%
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{w.lastTriggered === 'Never' ? 'Never' : relativeTime(w.lastTriggered)}</TableCell>
-                    <TableCell className="text-right">
-                      <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-red-600 hover:text-red-700" onClick={() => setDeletingWebhook(w)} aria-label="Delete webhook">
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </TableCell>
+          {webhooks.length === 0 ? (
+            <EmptyState
+              icon={Webhook}
+              title="No webhooks configured"
+              desc="Create a webhook endpoint to receive real-time event notifications for employee, payroll, and leave events."
+            />
+          ) : (
+            <div className="max-h-96 overflow-y-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>URL</TableHead>
+                    <TableHead>Events</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Success Rate</TableHead>
+                    <TableHead>Last Triggered</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+                </TableHeader>
+                <TableBody>
+                  {webhooks.map((w) => (
+                    <TableRow key={w.id}>
+                      <TableCell className="font-medium">{w.name}</TableCell>
+                      <TableCell>
+                        <code className="rounded bg-muted px-1.5 py-0.5 text-xs font-mono max-w-[200px] truncate block">{w.url}</code>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1">
+                          {w.events.slice(0, 2).map((e) => (
+                            <Badge key={e} variant="outline" className="text-[10px]">{e}</Badge>
+                          ))}
+                          {w.events.length > 2 && (
+                            <Badge variant="outline" className="text-[10px]">+{w.events.length - 2}</Badge>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Switch checked={w.status === 'ACTIVE'} onCheckedChange={() => toggleWebhookStatus(w.id)} />
+                          <Badge className={w.status === 'ACTIVE' ? 'bg-emerald-500/10 text-emerald-700 border-emerald-500/30' : 'bg-amber-500/10 text-amber-700 border-amber-500/30'}>
+                            {w.status}
+                          </Badge>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        <span className={w.successRate >= 99 ? 'text-emerald-600' : w.successRate >= 95 ? 'text-amber-600' : 'text-red-600'}>
+                          {w.successRate}%
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{w.lastTriggered === 'Never' ? 'Never' : relativeTime(w.lastTriggered)}</TableCell>
+                      <TableCell className="text-right">
+                        <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-red-600 hover:text-red-700" onClick={() => setDeletingWebhook(w)} aria-label="Delete webhook">
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </CardContent>
       </Card>
 

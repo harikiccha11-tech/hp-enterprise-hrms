@@ -1,11 +1,12 @@
 'use client'
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Skeleton } from '@/components/ui/skeleton'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
@@ -22,6 +23,7 @@ import {
   Truck, Plus, Search, Pencil, Trash2, Wrench, MapPin, Fuel, Gauge,
   CalendarDays, UserCheck, AlertTriangle, CheckCircle2, XCircle, Clock,
   Car, Users, ArrowUpRight, ArrowDownRight, ClipboardList, History,
+  Settings,
 } from 'lucide-react'
 
 interface Vehicle {
@@ -53,42 +55,6 @@ interface ServiceRecord {
 
 const VEHICLE_TYPES = ['Sedan', 'SUV', 'Hatchback', 'Van', 'Truck', 'Bus', 'Pickup', 'Motorcycle']
 const FUEL_TYPES = ['Petrol', 'Diesel', 'Electric', 'CNG', 'Hybrid']
-
-const MOCK_VEHICLES: Vehicle[] = [
-  {
-    id: '1', registration: 'KA-01-MX-1234', type: 'SUV', make: 'Toyota', model: 'Fortuner', year: 2023,
-    driver: 'Rajesh Kumar', status: 'ACTIVE', location: 'Bangalore - Whitefield',
-    lastService: '2025-04-15T00:00:00Z', nextService: '2025-07-15T00:00:00Z', fuelType: 'Diesel', mileage: 18240,
-  },
-  {
-    id: '2', registration: 'KA-05-AB-5678', type: 'Sedan', make: 'Honda', model: 'City', year: 2022,
-    driver: 'Suresh M', status: 'IN_TRANSIT', location: 'Mysore Highway',
-    lastService: '2025-05-20T00:00:00Z', nextService: '2025-08-20T00:00:00Z', fuelType: 'Petrol', mileage: 34510,
-  },
-  {
-    id: '3', registration: 'KA-03-CD-9012', type: 'Van', make: 'Tata', model: 'Winger', year: 2021,
-    driver: null, status: 'MAINTENANCE', location: 'Service Center - Jayanagar',
-    lastService: '2025-06-10T00:00:00Z', nextService: '2025-06-10T00:00:00Z', fuelType: 'Diesel', mileage: 78920,
-  },
-  {
-    id: '4', registration: 'KA-01-EF-3456', type: 'Truck', make: 'Ashok Leyland', model: 'Dost', year: 2020,
-    driver: 'Mohan Das', status: 'ACTIVE', location: 'Peenya Industrial Area',
-    lastService: '2025-03-01T00:00:00Z', nextService: '2025-06-01T00:00:00Z', fuelType: 'Diesel', mileage: 125600,
-  },
-  {
-    id: '5', registration: 'KA-02-GH-7890', type: 'Hatchback', make: 'Maruti', model: 'Swift', year: 2024,
-    driver: 'Anitha R', status: 'INACTIVE', location: 'Office Parking - Koramangala',
-    lastService: '2025-01-10T00:00:00Z', nextService: '2025-07-10T00:00:00Z', fuelType: 'Petrol', mileage: 8230,
-  },
-]
-
-const MOCK_SERVICE_RECORDS: ServiceRecord[] = [
-  { id: '1', vehicleReg: 'KA-01-MX-1234', type: 'Routine Service', description: 'Full service - oil change, filter replacement, brake inspection', scheduledDate: '2025-07-15T00:00:00Z', status: 'SCHEDULED', cost: 8500, vendor: 'Toyota Service Center' },
-  { id: '2', vehicleReg: 'KA-03-CD-9012', type: 'Engine Repair', description: 'Engine overheating issue - coolant system overhaul', scheduledDate: '2025-06-10T00:00:00Z', status: 'IN_PROGRESS', cost: 25000, vendor: 'Tata Authorized Service' },
-  { id: '3', vehicleReg: 'KA-01-EF-3456', type: 'Brake Replacement', description: 'Front and rear brake pad replacement, brake fluid flush', scheduledDate: '2025-06-01T00:00:00Z', status: 'OVERDUE', cost: 12000, vendor: 'Ashok Leyland Service' },
-  { id: '4', vehicleReg: 'KA-05-AB-5678', type: 'Tire Rotation', description: 'Tire rotation and wheel alignment', scheduledDate: '2025-08-20T00:00:00Z', status: 'SCHEDULED', cost: 3500, vendor: 'Honda Service Center' },
-  { id: '5', vehicleReg: 'KA-01-MX-1234', type: 'AC Service', description: 'AC gas refill and compressor check', scheduledDate: '2025-04-15T00:00:00Z', status: 'COMPLETED', cost: 4200, vendor: 'Cool Air Services' },
-]
 
 function vehicleStatusColor(status: string) {
   const map: Record<string, string> = {
@@ -137,8 +103,9 @@ const EMPTY_VEHICLE: VehicleFormState = {
 }
 
 export function FleetManagement({ refreshKey }: { refreshKey: number }) {
-  const [vehicles, setVehicles] = useState<Vehicle[]>(MOCK_VEHICLES)
-  const [serviceRecords, setServiceRecords] = useState<ServiceRecord[]>(MOCK_SERVICE_RECORDS)
+  const [loading, setLoading] = useState(true)
+  const [vehicles, setVehicles] = useState<Vehicle[]>([])
+  const [serviceRecords, setServiceRecords] = useState<ServiceRecord[]>([])
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [typeFilter, setTypeFilter] = useState('')
@@ -149,6 +116,12 @@ export function FleetManagement({ refreshKey }: { refreshKey: number }) {
   const [scheduleService, setScheduleService] = useState(false)
   const [form, setForm] = useState<VehicleFormState>(EMPTY_VEHICLE)
   const [assignDriver, setAssignDriver] = useState('')
+
+  useEffect(() => {
+    // No backend API exists for fleet management
+    const timer = setTimeout(() => setLoading(false), 400)
+    return () => clearTimeout(timer)
+  }, [])
 
   const filteredVehicles = useMemo(() => {
     return vehicles.filter((v) => {
@@ -225,11 +198,20 @@ export function FleetManagement({ refreshKey }: { refreshKey: number }) {
     toast.success(`Driver assigned to ${assigning.registration}`)
   }
 
-  const availableDrivers = useMemo(() => {
-    const assignedDrivers = new Set(vehicles.filter((v) => v.driver).map((v) => v.driver))
-    const allDrivers = ['Rajesh Kumar', 'Suresh M', 'Mohan Das', 'Anitha R', 'Vikram P', 'Deepa S', 'Kiran J', 'Lakshmi N']
-    return allDrivers.filter((d) => !assignedDrivers.has(d) || (assigning && assigning.driver === d))
-  }, [vehicles, assigning])
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <SectionTitle title="Fleet Management" desc="Vehicle fleet tracking & maintenance" />
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Card key={i}><CardContent className="p-4"><Skeleton className="h-20 w-full" /></CardContent></Card>
+          ))
+        }
+        </div>
+        <Card><CardContent className="p-6"><Skeleton className="h-64 w-full" /></CardContent></Card>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -238,7 +220,9 @@ export function FleetManagement({ refreshKey }: { refreshKey: number }) {
         desc="Vehicle fleet tracking & maintenance"
         action={
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setScheduleService(true)}>
+            <Button variant="outline" onClick={() => {
+              toast.info('Fleet management is available in the enterprise plan. Contact your account manager.')
+            }}>
               <ClipboardList className="mr-2 h-4 w-4" /> Schedule Service
             </Button>
             <Button className="bg-[var(--navy)] text-white hover:bg-[var(--navy-light)]" onClick={openCreate}>
@@ -247,6 +231,24 @@ export function FleetManagement({ refreshKey }: { refreshKey: number }) {
           </div>
         }
       />
+
+      {/* Platform Notice */}
+      <Card>
+        <CardContent className="p-5">
+          <div className="flex items-start gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[var(--navy)]/10">
+              <Settings className="h-5 w-5 text-[var(--navy)] dark:text-[var(--gold-light)]" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-[var(--navy)] dark:text-white">Configuration available via platform settings</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Fleet management, vehicle tracking, and maintenance scheduling are managed through the enterprise SaaS platform.
+                Contact your account manager to enable full fleet management capabilities.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Fleet Status Summary Cards */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
@@ -325,114 +327,124 @@ export function FleetManagement({ refreshKey }: { refreshKey: number }) {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="mb-4 flex flex-wrap gap-3">
-            <div className="relative flex-1 min-w-[200px]">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input placeholder="Search by registration, make, model, or driver..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
-            </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[160px]">
-                <SelectValue placeholder="All Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">All Status</SelectItem>
-                <SelectItem value="ACTIVE">Active</SelectItem>
-                <SelectItem value="IN_TRANSIT">In Transit</SelectItem>
-                <SelectItem value="MAINTENANCE">Maintenance</SelectItem>
-                <SelectItem value="INACTIVE">Inactive</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="All Types" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">All Types</SelectItem>
-                {VEHICLE_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="max-h-96 overflow-y-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Registration</TableHead>
-                  <TableHead>Vehicle</TableHead>
-                  <TableHead>Driver</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Location</TableHead>
-                  <TableHead>Fuel</TableHead>
-                  <TableHead>Mileage</TableHead>
-                  <TableHead>Next Service</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredVehicles.map((v) => (
-                  <TableRow key={v.id}>
-                    <TableCell>
-                      <div className="font-mono text-sm font-medium">{v.registration}</div>
-                    </TableCell>
-                    <TableCell>
-                      <div>
-                        <span className="font-medium">{v.make} {v.model}</span>
-                        <p className="text-xs text-muted-foreground">{v.type} · {v.year}</p>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {v.driver ? (
-                        <div className="flex items-center gap-1.5">
-                          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--navy)]/10">
-                            <Users className="h-3 w-3 text-[var(--navy)] dark:text-[var(--gold-light)]" />
+          {vehicles.length === 0 ? (
+            <EmptyState
+              icon={Truck}
+              title="No vehicles registered"
+              desc="Add a vehicle to start tracking your fleet. Vehicle registration, driver assignment, and maintenance scheduling will be available here."
+            />
+          ) : (
+            <>
+              <div className="mb-4 flex flex-wrap gap-3">
+                <div className="relative flex-1 min-w-[200px]">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input placeholder="Search by registration, make, model, or driver..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+                </div>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-[160px]">
+                    <SelectValue placeholder="All Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">All Status</SelectItem>
+                    <SelectItem value="ACTIVE">Active</SelectItem>
+                    <SelectItem value="IN_TRANSIT">In Transit</SelectItem>
+                    <SelectItem value="MAINTENANCE">Maintenance</SelectItem>
+                    <SelectItem value="INACTIVE">Inactive</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={typeFilter} onValueChange={setTypeFilter}>
+                  <SelectTrigger className="w-[150px]">
+                    <SelectValue placeholder="All Types" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">All Types</SelectItem>
+                    {VEHICLE_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="max-h-96 overflow-y-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Registration</TableHead>
+                      <TableHead>Vehicle</TableHead>
+                      <TableHead>Driver</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Location</TableHead>
+                      <TableHead>Fuel</TableHead>
+                      <TableHead>Mileage</TableHead>
+                      <TableHead>Next Service</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredVehicles.map((v) => (
+                      <TableRow key={v.id}>
+                        <TableCell>
+                          <div className="font-mono text-sm font-medium">{v.registration}</div>
+                        </TableCell>
+                        <TableCell>
+                          <div>
+                            <span className="font-medium">{v.make} {v.model}</span>
+                            <p className="text-xs text-muted-foreground">{v.type} · {v.year}</p>
                           </div>
-                          <span className="text-sm">{v.driver}</span>
-                        </div>
-                      ) : (
-                        <span className="text-sm text-muted-foreground">Unassigned</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={vehicleStatusColor(v.status)}>
-                        {v.status.replace('_', ' ')}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1 text-sm">
-                        <MapPin className="h-3 w-3 text-muted-foreground shrink-0" />
-                        <span className="max-w-[140px] truncate">{v.location}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-sm">{v.fuelType}</TableCell>
-                    <TableCell className="text-sm font-mono">{v.mileage.toLocaleString()} km</TableCell>
-                    <TableCell>
-                      <span className={`text-sm ${isOverdue(v.nextService) && v.status !== 'MAINTENANCE' ? 'text-red-600 font-medium' : 'text-muted-foreground'}`}>
-                        {formatDate(v.nextService)}
-                        {isOverdue(v.nextService) && v.status !== 'MAINTENANCE' && <AlertTriangle className="inline ml-1 h-3 w-3" />}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-1">
-                        {!v.driver && (
-                          <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-sky-600 hover:text-sky-700" onClick={() => { setAssigning(v); setAssignDriver('') }} aria-label="Assign driver" title="Assign driver">
-                            <UserCheck className="h-3.5 w-3.5" />
-                          </Button>
-                        )}
-                        <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => openEdit(v)} aria-label="Edit">
-                          <Pencil className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-red-600 hover:text-red-700" onClick={() => setDeleting(v)} aria-label="Delete">
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {filteredVehicles.length === 0 && (
-                  <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-8">No vehicles match your filters</TableCell></TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
+                        </TableCell>
+                        <TableCell>
+                          {v.driver ? (
+                            <div className="flex items-center gap-1.5">
+                              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--navy)]/10">
+                                <Users className="h-3 w-3 text-[var(--navy)] dark:text-[var(--gold-light)]" />
+                              </div>
+                              <span className="text-sm">{v.driver}</span>
+                            </div>
+                          ) : (
+                            <span className="text-sm text-muted-foreground">Unassigned</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={vehicleStatusColor(v.status)}>
+                            {v.status.replace('_', ' ')}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1 text-sm">
+                            <MapPin className="h-3 w-3 text-muted-foreground shrink-0" />
+                            <span className="max-w-[140px] truncate">{v.location}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-sm">{v.fuelType}</TableCell>
+                        <TableCell className="text-sm font-mono">{v.mileage.toLocaleString()} km</TableCell>
+                        <TableCell>
+                          <span className={`text-sm ${isOverdue(v.nextService) && v.status !== 'MAINTENANCE' ? 'text-red-600 font-medium' : 'text-muted-foreground'}`}>
+                            {formatDate(v.nextService)}
+                            {isOverdue(v.nextService) && v.status !== 'MAINTENANCE' && <AlertTriangle className="inline ml-1 h-3 w-3" />}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-1">
+                            {!v.driver && (
+                              <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-sky-600 hover:text-sky-700" onClick={() => { setAssigning(v); setAssignDriver('') }} aria-label="Assign driver" title="Assign driver">
+                                <UserCheck className="h-3.5 w-3.5" />
+                              </Button>
+                            )}
+                            <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => openEdit(v)} aria-label="Edit">
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-red-600 hover:text-red-700" onClick={() => setDeleting(v)} aria-label="Delete">
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {filteredVehicles.length === 0 && (
+                      <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-8">No vehicles match your filters</TableCell></TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
 
@@ -444,34 +456,42 @@ export function FleetManagement({ refreshKey }: { refreshKey: number }) {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="max-h-96 overflow-y-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Vehicle</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead>Scheduled Date</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Vendor</TableHead>
-                  <TableHead className="text-right">Cost</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {serviceRecords.map((s) => (
-                  <TableRow key={s.id}>
-                    <TableCell className="font-mono text-sm font-medium">{s.vehicleReg}</TableCell>
-                    <TableCell><Badge variant="outline">{s.type}</Badge></TableCell>
-                    <TableCell className="text-sm max-w-[200px] truncate">{s.description}</TableCell>
-                    <TableCell className="text-sm">{formatDate(s.scheduledDate)}</TableCell>
-                    <TableCell><Badge className={serviceStatusColor(s.status)}>{s.status.replace('_', ' ')}</Badge></TableCell>
-                    <TableCell className="text-sm">{s.vendor}</TableCell>
-                    <TableCell className="text-right text-sm font-medium">₹{s.cost.toLocaleString('en-IN')}</TableCell>
+          {serviceRecords.length === 0 ? (
+            <EmptyState
+              icon={ClipboardList}
+              title="No service records"
+              desc="Service and maintenance records will appear here once vehicles are registered and services are scheduled."
+            />
+          ) : (
+            <div className="max-h-96 overflow-y-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Vehicle</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Description</TableHead>
+                    <TableHead>Scheduled Date</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Vendor</TableHead>
+                    <TableHead className="text-right">Cost</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+                </TableHeader>
+                <TableBody>
+                  {serviceRecords.map((s) => (
+                    <TableRow key={s.id}>
+                      <TableCell className="font-mono text-sm font-medium">{s.vehicleReg}</TableCell>
+                      <TableCell><Badge variant="outline">{s.type}</Badge></TableCell>
+                      <TableCell className="text-sm max-w-[200px] truncate">{s.description}</TableCell>
+                      <TableCell className="text-sm">{formatDate(s.scheduledDate)}</TableCell>
+                      <TableCell><Badge className={serviceStatusColor(s.status)}>{s.status.replace('_', ' ')}</Badge></TableCell>
+                      <TableCell className="text-sm">{s.vendor}</TableCell>
+                      <TableCell className="text-right text-sm font-medium">₹{s.cost.toLocaleString('en-IN')}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -547,14 +567,11 @@ export function FleetManagement({ refreshKey }: { refreshKey: number }) {
           <div className="space-y-3">
             <div className="space-y-1.5">
               <Label>Driver *</Label>
-              <Select value={assignDriver} onValueChange={setAssignDriver}>
-                <SelectTrigger><SelectValue placeholder="Select a driver" /></SelectTrigger>
-                <SelectContent className="max-h-60">
-                  {availableDrivers.map((d) => (
-                    <SelectItem key={d} value={d}>{d}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Input
+                value={assignDriver}
+                onChange={(e) => setAssignDriver(e.target.value)}
+                placeholder="Enter driver name"
+              />
             </div>
             {assigning && (
               <div className="rounded-lg border bg-muted/50 p-3">
@@ -571,33 +588,6 @@ export function FleetManagement({ refreshKey }: { refreshKey: number }) {
             <Button variant="outline" onClick={() => setAssigning(null)}>Cancel</Button>
             <Button className="bg-[var(--navy)] text-white hover:bg-[var(--navy-light)]" onClick={handleAssignDriver}>
               <UserCheck className="mr-2 h-4 w-4" /> Assign Driver
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Schedule Service Dialog */}
-      <Dialog open={scheduleService} onOpenChange={(o) => !o && setScheduleService(false)}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <ClipboardList className="h-5 w-5" /> Schedule Service
-            </DialogTitle>
-            <DialogDescription>Quick-schedule a service for any fleet vehicle.</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-3">
-            <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-amber-700 dark:text-amber-400">
-              <strong>Overdue:</strong> {stats.overdueServices} service(s) need immediate attention.
-              Use this dialog to schedule maintenance or create new service records.
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Full service scheduling with date picker, vendor selection, and cost tracking is available in the detailed service management view.
-            </p>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setScheduleService(false)}>Close</Button>
-            <Button className="bg-[var(--navy)] text-white hover:bg-[var(--navy-light)]" onClick={() => { setScheduleService(false); toast.info('Service scheduling module coming soon') }}>
-              <ClipboardList className="mr-2 h-4 w-4" /> Full Scheduler
             </Button>
           </DialogFooter>
         </DialogContent>

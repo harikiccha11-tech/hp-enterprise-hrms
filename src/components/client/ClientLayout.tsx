@@ -2292,7 +2292,7 @@ const DOWNLOAD_CATEGORIES = ['Reports', 'Invoices', 'Contracts', 'Policies'] as 
 
 
 function DownloadsView() {
-  const [documents, setDocuments] = useState<{ id: string; name: string; type: string; size: string; date: string; format: string }[]>([])
+  const [documents, setDocuments] = useState<{ id: string; name: string; type: string; size: string; date: string; format: string; filePath?: string; storagePath?: string; source?: string }[]>([])
   const [dlLoading, setDlLoading] = useState(true)
   const [dlError, setDlError] = useState(false)
   const [search, setSearch] = useState('')
@@ -2304,13 +2304,16 @@ function DownloadsView() {
       .then((r) => { if (!r.ok) throw new Error(); return r.json() })
       .then((json) => {
         if (cancelled) return
-        setDocuments((json.documents || []).map((d: { id: string; fileName: string; category: string; fileSize: string | null; uploadedAt: string; fileType: string }) => ({
+        setDocuments((json.documents || []).map((d: { id: string; fileName: string; category: string; fileSize: string | null; uploadedAt: string; fileType: string; filePath?: string; storagePath?: string; source?: string }) => ({
           id: d.id,
           name: d.fileName,
           type: d.category || 'Other',
           size: d.fileSize || '—',
           date: d.uploadedAt.slice(0, 10),
           format: d.fileType.split('/').pop()?.toUpperCase() || 'FILE',
+          filePath: d.filePath,
+          storagePath: d.storagePath,
+          source: d.source,
         })))
       })
       .catch(() => { if (!cancelled) { setDlError(true); toast.error('Failed to load downloads') } })
@@ -2323,6 +2326,15 @@ function DownloadsView() {
     if (search && !f.name.toLowerCase().includes(search.toLowerCase())) return false
     return true
   })
+
+  const handleDownload = (f: { id: string; name: string; filePath?: string; storagePath?: string; source?: string }) => {
+    const filePath = f.source === 'generated' ? f.storagePath : f.filePath
+    if (!filePath) {
+      toast.error('File not generated yet')
+      return
+    }
+    window.open(`/api/uploads/${filePath}`, '_blank')
+  }
 
   const formatColor = (fmt: string) => {
     if (fmt === 'PDF') return 'bg-red-500/15 text-red-700 dark:text-red-400 border-red-500/25'
@@ -2396,7 +2408,7 @@ function DownloadsView() {
                     <TableCell className="hidden lg:table-cell text-xs text-muted-foreground">{f.size}</TableCell>
                     <TableCell className="text-xs text-muted-foreground">{fmtDate(f.date)}</TableCell>
                     <TableCell>
-                      <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={() => toast.info('File download is not available yet')}>
+                      <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={() => handleDownload(f)}>
                         <Download className="h-3.5 w-3.5" /> Save
                       </Button>
                     </TableCell>

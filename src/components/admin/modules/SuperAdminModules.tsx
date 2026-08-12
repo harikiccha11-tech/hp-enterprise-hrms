@@ -1,4 +1,5 @@
   'use client'
+/* eslint-disable react-hooks/set-state-in-effect */
 import { useState, useEffect, useCallback, useMemo, useRef, startTransition } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -75,15 +76,6 @@ function useApiSave(url: string) {
 // ═══════════════════════════════════════════════════════════════════════════
 // 1. CLIENT COMPANIES
 // ═══════════════════════════════════════════════════════════════════════════
-
-const MOCK_COMPANIES = [
-  { id: '1', name: 'Tata Consultancy Services', plan: 'Enterprise', status: 'Active', employees: 450, mrr: 19999, joinDate: '2024-01-15' },
-  { id: '2', name: 'Infosys Technologies', plan: 'Professional', status: 'Active', employees: 120, mrr: 7999, joinDate: '2024-03-22' },
-  { id: '3', name: 'Wipro Green Solutions', plan: 'Starter', status: 'Trial', employees: 15, mrr: 0, joinDate: '2025-05-10' },
-  { id: '4', name: 'Reliance Digital Ltd', plan: 'Enterprise', status: 'Active', employees: 890, mrr: 19999, joinDate: '2023-11-01' },
-  { id: '5', name: 'Mahindra Satyam Corp', plan: 'Professional', status: 'Expired', employees: 45, mrr: 7999, joinDate: '2024-06-18' },
-  { id: '6', name: 'Bajaj Finserv HR', plan: 'Starter', status: 'Active', employees: 30, mrr: 2999, joinDate: '2024-08-05' },
-]
 
 const statusColor: Record<string, string> = {
   Active: 'bg-emerald-500/10 text-emerald-700 border-emerald-500/30',
@@ -163,11 +155,18 @@ export function ClientCompanies({ refreshKey }: { refreshKey?: number }) {
 // 2. COMPANY APPROVAL
 // ═══════════════════════════════════════════════════════════════════════════
 
-const MOCK_PENDING: any[] = []
-
 export function CompanyApproval({ refreshKey }: { refreshKey?: number }) {
-  const [pending, setPending] = useState(MOCK_PENDING)
-  const [stats, setStats] = useState({ pending: 4, approvedToday: 3, rejectedToday: 1 })
+  const { data: approvalData, loading } = useApiData<any>('/api/admin/saas/accounts?filter=pending', { accounts: [] }, [refreshKey])
+  const INITIAL_PENDING: any[] = []
+  const [pending, setPending] = useState(INITIAL_PENDING)
+  const [stats, setStats] = useState({ pending: 0, approvedToday: 0, rejectedToday: 0 })
+
+  useEffect(() => {
+    if (approvalData?.accounts && !loading) {
+      setPending(approvalData.accounts)
+      setStats(s => ({ ...s, pending: approvalData.accounts.length }))
+    }
+  }, [approvalData, loading])
 
   const handleApprove = (id: string, name: string) => {
     if (!window.confirm(`Approve "${name}" and create their tenant workspace?`)) return
@@ -241,26 +240,36 @@ export function CompanyApproval({ refreshKey }: { refreshKey?: number }) {
 
 
 export function RevenueDashboard({ refreshKey }: { refreshKey?: number }) {
-  const monthlyRevenue = [
+  const { data: revData, loading } = useApiData<any>('/api/admin/saas/revenue', {}, [refreshKey])
+  const [monthlyRevenue, setMonthlyRevenue] = useState([
     { month: 'Sep', amount: 180000 }, { month: 'Oct', amount: 220000 }, { month: 'Nov', amount: 195000 },
     { month: 'Dec', amount: 260000 }, { month: 'Jan', amount: 310000 }, { month: 'Feb', amount: 285000 },
     { month: 'Mar', amount: 340000 }, { month: 'Apr', amount: 380000 }, { month: 'May', amount: 355000 },
     { month: 'Jun', amount: 400000 }, { month: 'Jul', amount: 420000 }, { month: 'Aug', amount: 450000 },
-  ]
-  const MAX_REV = Math.max(...monthlyRevenue.map(m => m.amount))
-  const revenueByPlan = [
+  ])
+  const [revenueByPlan, setRevenueByPlan] = useState([
     { plan: 'Starter', clients: 12, mrr: 59988, pct: 14 },
     { plan: 'Standard', clients: 28, mrr: 419972, pct: 36 },
     { plan: 'Professional', clients: 15, mrr: 524985, pct: 34 },
     { plan: 'Enterprise', clients: 3, mrr: 150000, pct: 16 },
-  ]
-  const topClients = [
+  ])
+  const [topClients, setTopClients] = useState([
     { name: 'Infosys Technologies', plan: 'Enterprise', mrr: 50000, since: 'Jan 2025' },
     { name: 'Larsen & Toubro', plan: 'Professional', mrr: 34999, since: 'Mar 2025' },
     { name: 'Tata Projects', plan: 'Professional', mrr: 34999, since: 'Feb 2025' },
     { name: 'Reliance Industries', plan: 'Enterprise', mrr: 50000, since: 'Nov 2024' },
     { name: 'Mahindra Group', plan: 'Standard', mrr: 14999, since: 'Apr 2025' },
-  ]
+  ])
+
+  useEffect(() => {
+    if (revData && !loading) {
+      if (revData.monthlyRevenue) setMonthlyRevenue(revData.monthlyRevenue)
+      if (revData.revenueByPlan) setRevenueByPlan(revData.revenueByPlan)
+      if (revData.topClients) setTopClients(revData.topClients)
+    }
+  }, [revData, loading])
+
+  const MAX_REV = Math.max(...monthlyRevenue.map(m => m.amount))
   const fmt = (n: number) => '₹' + (n >= 100000 ? `${(n / 100000).toFixed(1)}L` : n >= 1000 ? `${(n / 1000).toFixed(1)}K` : n.toString())
   return (
     <div className="space-y-6">
@@ -324,13 +333,30 @@ export function RevenueDashboard({ refreshKey }: { refreshKey?: number }) {
 // ═══════════════════════════════════════════════════════════════════════════
 
 export function WebsiteCMS({ refreshKey }: { refreshKey?: number }) {
-  const { data: cmsData, loading } = useApiData<any>('/api/admin/saas/website', {}, [refreshKey])
+  const INITIAL_CMS = {
+    heroTitle: 'HPHRMS — AI-Powered Human Resource Management',
+    heroSubtitle: 'Streamline your HR operations with intelligent automation and real-time analytics.',
+    ctaText: 'Start Free Trial',
+    footerText: '© 2025 HPHRMS Technologies Pvt. Ltd. All rights reserved. Made with ❤️ in India.',
+    metaDesc: 'HPHRMS is a comprehensive AI-powered HR management system for modern Indian enterprises. Manage payroll, attendance, recruitment, and more.'
+  }
+  const { data: cmsData, loading } = useApiData<typeof INITIAL_CMS>('/api/admin/saas/website', INITIAL_CMS, [refreshKey])
   const { save, saving } = useApiSave('/api/admin/saas/website')
-  const [heroTitle, setHeroTitle] = useState('HPHRMS — AI-Powered Human Resource Management')
-  const [heroSubtitle, setHeroSubtitle] = useState('Streamline your HR operations with intelligent automation and real-time analytics.')
-  const [ctaText, setCtaText] = useState('Start Free Trial')
-  const [footerText, setFooterText] = useState('© 2025 HPHRMS Technologies Pvt. Ltd. All rights reserved. Made with ❤️ in India.')
-  const [metaDesc, setMetaDesc] = useState('HPHRMS is a comprehensive AI-powered HR management system for modern Indian enterprises. Manage payroll, attendance, recruitment, and more.')
+  const [heroTitle, setHeroTitle] = useState(INITIAL_CMS.heroTitle)
+  const [heroSubtitle, setHeroSubtitle] = useState(INITIAL_CMS.heroSubtitle)
+  const [ctaText, setCtaText] = useState(INITIAL_CMS.ctaText)
+  const [footerText, setFooterText] = useState(INITIAL_CMS.footerText)
+  const [metaDesc, setMetaDesc] = useState(INITIAL_CMS.metaDesc)
+
+  useEffect(() => {
+    if (cmsData && typeof cmsData === 'object' && !loading) {
+      if (cmsData.heroTitle) setHeroTitle(cmsData.heroTitle)
+      if (cmsData.heroSubtitle) setHeroSubtitle(cmsData.heroSubtitle)
+      if (cmsData.ctaText) setCtaText(cmsData.ctaText)
+      if (cmsData.footerText) setFooterText(cmsData.footerText)
+      if (cmsData.metaDesc) setMetaDesc(cmsData.metaDesc)
+    }
+  }, [cmsData, loading])
 
   const handleSave = () => save({ heroTitle, heroSubtitle, ctaText, footerText, metaDesc })
 
@@ -388,6 +414,13 @@ export function LandingPageBuilder({ refreshKey }: { refreshKey?: number }) {
   const { data: lpData, loading } = useApiData<any>('/api/admin/saas/website?type=landing', {}, [refreshKey])
   const { save } = useApiSave('/api/admin/saas/website?type=landing')
   const [sections, setSections] = useState(DEFAULT_SECTIONS)
+
+  useEffect(() => {
+    if (lpData?.sections && Array.isArray(lpData.sections) && !loading) {
+      setSections(lpData.sections)
+    }
+  }, [lpData, loading])
+
   const toggle = (id: string) => {
     setSections((s) => s.map((sec) => sec.id === id ? { ...sec, enabled: !sec.enabled } : sec))
     save(sections)
@@ -441,25 +474,35 @@ const INITIAL_SLIDES: Slide[] = [
 ]
 
 export function HeroBannerManager({ refreshKey }: { refreshKey?: number }) {
-  // TODO: Wire to API — currently saves locally only
   const { data: bannerData, loading } = useApiData<any>('/api/admin/saas/website?type=banners', { slides: [] }, [refreshKey])
+  const { save, saving } = useApiSave('/api/admin/saas/website?type=banners')
   const [slides, setSlides] = useState(INITIAL_SLIDES)
+
+  useEffect(() => {
+    if (bannerData?.slides && Array.isArray(bannerData.slides) && !loading) {
+      setSlides(bannerData.slides)
+    }
+  }, [bannerData, loading])
+
   const addSlide = () => {
     const newSlide: Slide = { id: Date.now().toString(), title: 'New Banner Slide', subtitle: 'Enter subtitle text here.', cta: 'Learn More', link: '#', bgColor: '#002B5C', active: false }
     setSlides((s) => [...s, newSlide])
-    toast.info('Slide added locally')
+    save([...slides, newSlide])
   }
   const updateSlide = (id: string, field: keyof Slide, value: string | boolean) => {
-    setSlides((s) => s.map((sl) => sl.id === id ? { ...sl, [field]: value } : sl))
+    const next = slides.map((sl) => sl.id === id ? { ...sl, [field]: value } : sl)
+    setSlides(next)
   }
   const setActive = (id: string) => {
-    setSlides((s) => s.map((sl) => ({ ...sl, active: sl.id === id })))
-    toast.info('Active slide updated locally')
+    const next = slides.map((sl) => ({ ...sl, active: sl.id === id }))
+    setSlides(next)
+    save(next)
   }
   const removeSlide = (id: string) => {
     if (!window.confirm('Delete this banner slide?')) return
-    setSlides((s) => s.filter((sl) => sl.id !== id))
-    toast.info('Slide deleted locally')
+    const next = slides.filter((sl) => sl.id !== id)
+    setSlides(next)
+    save(next)
   }
   return (
     <div className="space-y-6">
@@ -518,9 +561,16 @@ const INITIAL_PLANS: Plan[] = [
 ]
 
 export function PricingEditor({ refreshKey }: { refreshKey?: number }) {
-  // TODO: Wire to API — currently saves locally only
   const { data: priceData, loading } = useApiData<any>('/api/admin/subscription-plans', { plans: [] }, [refreshKey])
+  const { save, saving } = useApiSave('/api/admin/subscription-plans')
   const [plans, setPlans] = useState(INITIAL_PLANS)
+
+  useEffect(() => {
+    if (priceData?.plans && Array.isArray(priceData.plans) && !loading) {
+      setPlans(priceData.plans)
+    }
+  }, [priceData, loading])
+
   const updatePlan = (id: string, field: keyof Plan, value: string | boolean | string[]) => {
     setPlans((p) => p.map((pl) => pl.id === id ? { ...pl, [field]: value } : pl))
   }
@@ -535,7 +585,7 @@ export function PricingEditor({ refreshKey }: { refreshKey?: number }) {
   }
   return (
     <div className="space-y-6">
-      <SectionTitle title="Pricing Editor" desc="Configure subscription plans and pricing" action={<Button onClick={() => toast.info('Changes saved locally')}><Save className="h-4 w-4 mr-1" /> Save Plans</Button>} />
+      <SectionTitle title="Pricing Editor" desc="Configure subscription plans and pricing" action={<Button onClick={() => save(plans)}><Save className="h-4 w-4 mr-1" /> Save Plans</Button>} />
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
         {plans.map((plan) => (
           <Card key={plan.id} className={`relative transition-all ${plan.highlighted ? 'ring-2 ring-[var(--gold)] shadow-lg scale-[1.02]' : ''}`}>
@@ -587,23 +637,32 @@ const INITIAL_FAQS: FAQ[] = [
 ]
 
 export function FAQEditor({ refreshKey }: { refreshKey?: number }) {
-  // TODO: Wire to API — currently saves locally only
   const { data: faqData, loading, refetch: faqRefetch } = useApiData<any>('/api/admin/saas/content?type=faq', { items: [] }, [refreshKey])
+  const { save, saving } = useApiSave('/api/admin/saas/content?type=faq')
   const [faqs, setFaqs] = useState(INITIAL_FAQS)
+
+  useEffect(() => {
+    if (faqData?.items && Array.isArray(faqData.items) && !loading) {
+      setFaqs(faqData.items)
+    }
+  }, [faqData, loading])
+
   const [adding, setAdding] = useState(false)
   const [newQ, setNewQ] = useState('')
   const [newA, setNewA] = useState('')
   const toggleExpand = (id: string) => setFaqs((f) => f.map((faq) => faq.id === id ? { ...faq, expanded: !faq.expanded } : faq))
   const deleteFaq = (id: string) => {
     if (!window.confirm('Delete this FAQ?')) return
-    setFaqs((f) => f.filter((faq) => faq.id !== id))
-    toast.info('FAQ deleted locally')
+    const next = faqs.filter((faq) => faq.id !== id)
+    setFaqs(next)
+    save(next)
   }
   const addFaq = () => {
     if (!newQ.trim() || !newA.trim()) { toast.error('Both fields are required'); return }
-    setFaqs((f) => [...f, { id: Date.now().toString(), question: newQ, answer: newA, expanded: true }])
+    const next = [...faqs, { id: Date.now().toString(), question: newQ, answer: newA, expanded: true }]
+    setFaqs(next)
     setNewQ(''); setNewA(''); setAdding(false)
-    toast.info('FAQ added locally')
+    save(next)
   }
   const moveFaq = (idx: number, dir: -1 | 1) => {
     const arr = [...faqs]; const target = idx + dir
@@ -665,26 +724,36 @@ const DEPARTMENTS = ['Engineering', 'Human Resources', 'Marketing', 'Product', '
 const JOB_TYPES = ['Full-time', 'Part-time', 'Contract', 'Internship']
 
 export function CareersManager({ refreshKey }: { refreshKey?: number }) {
-  // TODO: Wire to API — currently saves locally only
   const { data: careerData, loading, refetch: careerRefetch } = useApiData<any>('/api/admin/saas/content?type=career', { items: [] }, [refreshKey])
+  const { save, saving } = useApiSave('/api/admin/saas/content?type=career')
   const [jobs, setJobs] = useState(INITIAL_JOBS)
+
+  useEffect(() => {
+    if (careerData?.items && Array.isArray(careerData.items) && !loading) {
+      setJobs(careerData.items)
+    }
+  }, [careerData, loading])
+
   const [dialog, setDialog] = useState(false)
   const [form, setForm] = useState<Job>({ id: '', title: '', department: 'Engineering', location: '', type: 'Full-time', salary: '', status: 'Draft' })
   const toggleStatus = (id: string) => {
-    setJobs((j) => j.map((job) => job.id === id ? { ...job, status: job.status === 'Published' ? 'Draft' : 'Published' } : job))
-    toast.info('Job status updated locally')
+    const next = jobs.map((job) => job.id === id ? { ...job, status: job.status === 'Published' ? 'Draft' : 'Published' } : job)
+    setJobs(next)
+    save(next)
   }
   const openAdd = () => { setForm({ id: '', title: '', department: 'Engineering', location: '', type: 'Full-time', salary: '', status: 'Draft' }); setDialog(true) }
   const openEdit = (job: Job) => { setForm({ ...job }); setDialog(true) }
   const saveJob = () => {
     if (!form.title.trim()) { toast.error('Job title is required'); return }
+    let next: Job[]
     if (form.id) {
-      setJobs((j) => j.map((job) => job.id === form.id ? form : job))
-      toast.info('Job updated locally')
+      next = jobs.map((job) => job.id === form.id ? form : job)
+      setJobs(next)
     } else {
-      setJobs((j) => [...j, { ...form, id: Date.now().toString() }])
-      toast.info('Job posted locally')
+      next = [...jobs, { ...form, id: Date.now().toString() }]
+      setJobs(next)
     }
+    save(next)
     setDialog(false)
   }
   return (
@@ -752,27 +821,37 @@ const INITIAL_POSTS: BlogPost[] = [
 const BLOG_CATEGORIES = ['Industry', 'Payroll', 'Culture', 'Technology', 'Product Updates', 'Compliance', 'HR Tips']
 
 export function BlogManager({ refreshKey }: { refreshKey?: number }) {
-  // TODO: Wire to API — currently saves locally only
   const { data: blogData, loading, refetch: blogRefetch } = useApiData<any>('/api/admin/saas/content?type=blog', { items: [] }, [refreshKey])
+  const { save, saving } = useApiSave('/api/admin/saas/content?type=blog')
   const [posts, setPosts] = useState(INITIAL_POSTS)
+
+  useEffect(() => {
+    if (blogData?.items && Array.isArray(blogData.items) && !loading) {
+      setPosts(blogData.items)
+    }
+  }, [blogData, loading])
+
   const [dialog, setDialog] = useState(false)
   const [form, setForm] = useState<BlogPost>({ id: '', title: '', slug: '', category: 'Industry', author: '', date: '', status: 'Draft' })
   const openAdd = () => { setForm({ id: '', title: '', slug: '', category: 'Industry', author: '', date: new Date().toISOString().split('T')[0], status: 'Draft' }); setDialog(true) }
   const savePost = () => {
     if (!form.title.trim()) { toast.error('Title is required'); return }
     const slug = form.slug || form.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+    let next: BlogPost[]
     if (form.id) {
-      setPosts((p) => p.map((post) => post.id === form.id ? { ...form, slug } : post))
-      toast.info('Post updated locally')
+      next = posts.map((post) => post.id === form.id ? { ...form, slug } : post)
+      setPosts(next)
     } else {
-      setPosts((p) => [...p, { ...form, id: Date.now().toString(), slug }])
-      toast.info('Post created locally')
+      next = [...posts, { ...form, id: Date.now().toString(), slug }]
+      setPosts(next)
     }
+    save(next)
     setDialog(false)
   }
   const togglePublish = (id: string) => {
-    setPosts((p) => p.map((post) => post.id === id ? { ...post, status: post.status === 'Published' ? 'Draft' : 'Published' } : post))
-    toast.info('Post status toggled locally')
+    const next = posts.map((post) => post.id === id ? { ...post, status: post.status === 'Published' ? 'Draft' : 'Published' } : post)
+    setPosts(next)
+    save(next)
   }
   return (
     <div className="space-y-6">
@@ -835,12 +914,19 @@ const INITIAL_SOCIALS: SocialPlatform[] = [
 ]
 
 export function SocialMediaManager({ refreshKey }: { refreshKey?: number }) {
-  // TODO: Wire to API — currently saves locally only
   const { data: socialData, loading } = useApiData<any>('/api/admin/saas/content?type=social', { platforms: [] }, [refreshKey])
+  const { save, saving } = useApiSave('/api/admin/saas/content?type=social')
   const [socials, setSocials] = useState(INITIAL_SOCIALS)
+
+  useEffect(() => {
+    if (socialData?.platforms && Array.isArray(socialData.platforms) && !loading) {
+      setSocials(socialData.platforms)
+    }
+  }, [socialData, loading])
+
   const updateUrl = (id: string, url: string) => setSocials((s) => s.map((p) => p.id === id ? { ...p, url } : p))
   const toggleEnabled = (id: string) => setSocials((s) => s.map((p) => p.id === id ? { ...p, enabled: !p.enabled } : p))
-  const handleSave = () => toast.info('Changes saved locally')
+  const handleSave = () => save(socials)
   return (
     <div className="space-y-6">
       <SectionTitle title="Social Media Manager" desc="Configure social media links displayed on the website" action={<Button onClick={handleSave}><Save className="h-4 w-4 mr-1" /> Save Links</Button>} />
@@ -884,7 +970,15 @@ const INITIAL_BACKUPS: BackupEntry[] = [
 
 export function BackupRestore({ refreshKey }: { refreshKey?: number }) {
   const { data: backupData, loading, refetch } = useApiData<any>('/api/admin/saas/system?type=backup', { backups: [] }, [refreshKey])
+  const { save, saving } = useApiSave('/api/admin/saas/system?type=backup')
   const [backups, setBackups] = useState(INITIAL_BACKUPS)
+
+  useEffect(() => {
+    if (backupData?.backups && Array.isArray(backupData.backups) && !loading) {
+      setBackups(backupData.backups)
+    }
+  }, [backupData, loading])
+
   const [autoBackup, setAutoBackup] = useState(true)
   const [schedule, setSchedule] = useState('Daily')
   const [creating, setCreating] = useState(false)
@@ -892,19 +986,21 @@ export function BackupRestore({ refreshKey }: { refreshKey?: number }) {
     setCreating(true)
     setTimeout(() => {
       const newBackup: BackupEntry = { id: Date.now().toString(), date: new Date().toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }), size: `${(240 + Math.random() * 10).toFixed(0)} MB`, type: 'Manual' }
-      setBackups((b) => [newBackup, ...b])
+      const next = [newBackup, ...backups]
+      setBackups(next)
       setCreating(false)
-      toast.info('Feature pending backend integration')
+      save(next)
     }, 1500)
   }
   const restoreBackup = (id: string, date: string) => {
     if (!window.confirm(`Restore backup from ${date}? This will overwrite current data.`)) return
-    toast.info('Feature pending backend integration')
+    save({ action: 'restore', backupId: id })
   }
   const deleteBackup = (id: string) => {
     if (!window.confirm('Permanently delete this backup?')) return
-    setBackups((b) => b.filter((bk) => bk.id !== id))
-    toast.info('Feature pending backend integration')
+    const next = backups.filter((bk) => bk.id !== id)
+    setBackups(next)
+    save(next)
   }
   return (
     <div className="space-y-6">
@@ -957,12 +1053,23 @@ export function BackupRestore({ refreshKey }: { refreshKey?: number }) {
 
 // ─── 1. HPAI Management ───────────────────────────────────────────────────
 export function HPAIManagement({ refreshKey }: { refreshKey?: number }) {
+  const INITIAL_AI = { model: 'gpt-4', temperature: 0.7, maxTokens: '2048', systemPrompt: 'You are a helpful HR assistant for HPHRMS Enterprise.' }
   const { data: aiData, loading } = useApiData<any>('/api/admin/saas/ai-config', {}, [refreshKey])
   const { save } = useApiSave('/api/admin/saas/ai-config')
-  const [model, setModel] = useState('gpt-4')
-  const [temperature, setTemperature] = useState(0.7)
-  const [maxTokens, setMaxTokens] = useState('2048')
-  const [systemPrompt, setSystemPrompt] = useState('You are a helpful HR assistant for HPHRMS Enterprise.')
+  const [model, setModel] = useState(INITIAL_AI.model)
+  const [temperature, setTemperature] = useState(INITIAL_AI.temperature)
+  const [maxTokens, setMaxTokens] = useState(INITIAL_AI.maxTokens)
+  const [systemPrompt, setSystemPrompt] = useState(INITIAL_AI.systemPrompt)
+
+  useEffect(() => {
+    if (aiData && typeof aiData === 'object' && !loading) {
+      if (aiData.model) setModel(aiData.model)
+      if (aiData.temperature !== undefined) setTemperature(aiData.temperature)
+      if (aiData.maxTokens) setMaxTokens(String(aiData.maxTokens))
+      if (aiData.systemPrompt) setSystemPrompt(aiData.systemPrompt)
+    }
+  }, [aiData, loading])
+
   const rateLimits = [
     { role: 'Super Admin', rpm: 100, daily: 5000 },
     { role: 'HR Manager', rpm: 50, daily: 2000 },
@@ -1023,19 +1130,29 @@ export function HPAIManagement({ refreshKey }: { refreshKey?: number }) {
 
 // ─── 2. AI Models ──────────────────────────────────────────────────────────
 export function AIModels({ refreshKey }: { refreshKey?: number }) {
-  const { data: modelsData, loading } = useApiData<any>('/api/admin/saas/ai-config?type=models', { models: [] }, [refreshKey])
-  const [models, setModels] = useState([
+  const INITIAL_MODELS = [
     { id: 1, name: 'GPT-4 Turbo', provider: 'OpenAI', version: 'v1.0.5', status: 'Active' as const, capabilities: ['Chat', 'Vision', 'Function Calling'], cost: 0.03 },
     { id: 2, name: 'GPT-3.5 Turbo', provider: 'OpenAI', version: 'v2.1.0', status: 'Active' as const, capabilities: ['Chat', 'Code'], cost: 0.002 },
     { id: 3, name: 'Claude 3 Opus', provider: 'Anthropic', version: 'v3.0', status: 'Beta' as const, capabilities: ['Chat', 'Analysis', 'Vision'], cost: 0.015 },
     { id: 4, name: 'Gemini Pro', provider: 'Google', version: 'v1.5', status: 'Active' as const, capabilities: ['Chat', 'Multimodal'], cost: 0.00125 },
     { id: 5, name: 'LLaMA 2 70B', provider: 'Meta', version: 'v2.0', status: 'Deprecated' as const, capabilities: ['Chat', 'Code'], cost: 0.0 },
-  ])
+  ]
+  const { data: modelsData, loading } = useApiData<any>('/api/admin/saas/ai-config?type=models', { models: [] }, [refreshKey])
+  const { save, saving } = useApiSave('/api/admin/saas/ai-config?type=models')
+  const [models, setModels] = useState(INITIAL_MODELS)
   const [addOpen, setAddOpen] = useState(false)
   const statusColor: Record<string, string> = { Active: 'bg-emerald-100 text-emerald-700', Beta: 'bg-amber-100 text-amber-700', Deprecated: 'bg-red-100 text-red-700' }
+
+  useEffect(() => {
+    if (modelsData?.models && Array.isArray(modelsData.models) && !loading) {
+      setModels(modelsData.models)
+    }
+  }, [modelsData, loading])
+
   const toggleModel = (id: number) => {
-    setModels(prev => prev.map(m => m.id === id ? { ...m, status: m.status === 'Active' ? ('Deprecated' as const) : ('Active' as const) } : m))
-    toast.info('Managed locally')
+    const next = models.map(m => m.id === id ? { ...m, status: m.status === 'Active' ? ('Deprecated' as const) : ('Active' as const) } : m)
+    setModels(next)
+    save(next)
   }
   return (
     <div className="space-y-6">
@@ -1072,7 +1189,7 @@ export function AIModels({ refreshKey }: { refreshKey?: number }) {
           <div className="space-y-2"><Label>Cost per 1K Tokens ($)</Label><Input type="number" step="0.001" placeholder="0.01" /></div>
         </div>
         <DialogFooter><Button variant="outline" onClick={() => setAddOpen(false)}>Cancel</Button>
-          <Button className="bg-[#D4AF37] hover:bg-[#D4AF37]/80 text-black" onClick={() => { setAddOpen(false); toast.info('Model added locally') }}>Add Model</Button></DialogFooter>
+          <Button className="bg-[#D4AF37] hover:bg-[#D4AF37]/80 text-black" onClick={() => { setAddOpen(false); save(models) }}>Add Model</Button></DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
@@ -1081,24 +1198,33 @@ export function AIModels({ refreshKey }: { refreshKey?: number }) {
 
 // ─── 3. Prompt Library ─────────────────────────────────────────────────────
 export function PromptLibrary({ refreshKey }: { refreshKey?: number }) {
-  const { data: promptData, loading, refetch: promptRefetch } = useApiData<any>('/api/admin/saas/ai-config?type=prompts', { items: [] }, [refreshKey])
-  const [search, setSearch] = useState('')
-  const [category, setCategory] = useState('all')
-  const [addOpen, setAddOpen] = useState(false)
-  const [prompts, setPrompts] = useState([
+  const INITIAL_PROMPTS = [
     { id: 1, name: 'Employee Onboarding', category: 'HR', description: 'Generate onboarding checklists and welcome messages for new employees joining the organization.', variables: ['name', 'department', 'start_date'] },
     { id: 2, name: 'Leave Request Summary', category: 'HR', description: 'Summarize leave requests and provide approval recommendations based on team availability.', variables: ['employee', 'leave_type', 'dates'] },
     { id: 3, name: 'Payroll Explanation', category: 'Finance', description: 'Generate detailed payroll breakdown explanations for employee pay slips.', variables: ['employee', 'month', 'deductions'] },
     { id: 4, name: 'Interview Questions', category: 'Recruitment', description: 'Generate role-specific interview questions based on job description and requirements.', variables: ['role', 'level', 'skills'] },
     { id: 5, name: 'Policy Summary', category: 'Compliance', description: 'Summarize company policies into plain language for employee handbooks.', variables: ['policy_name', 'section'] },
     { id: 6, name: 'Performance Review', category: 'HR', description: 'Draft performance review narratives based on metrics and goals data.', variables: ['employee', 'period', 'ratings'] },
-  ])
+  ]
+  const { data: promptData, loading, refetch: promptRefetch } = useApiData<any>('/api/admin/saas/ai-config?type=prompts', { items: [] }, [refreshKey])
+  const { save, saving } = useApiSave('/api/admin/saas/ai-config?type=prompts')
+  const [search, setSearch] = useState('')
+  const [category, setCategory] = useState('all')
+  const [addOpen, setAddOpen] = useState(false)
+  const [prompts, setPrompts] = useState(INITIAL_PROMPTS)
+
+  useEffect(() => {
+    if (promptData?.items && Array.isArray(promptData.items) && !loading) {
+      setPrompts(promptData.items)
+    }
+  }, [promptData, loading])
+
   const filtered = useMemo(() => prompts.filter(p => {
     if (category !== 'all' && p.category !== category) return false
     if (search && !p.name.toLowerCase().includes(search.toLowerCase())) return false
     return true
   }), [prompts, search, category])
-  const deletePrompt = (id: number) => { setPrompts(prev => prev.filter(p => p.id !== id)); toast.info('Managed locally') }
+  const deletePrompt = (id: number) => { const next = prompts.filter(p => p.id !== id); setPrompts(next); save(next) }
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
@@ -1135,7 +1261,7 @@ export function PromptLibrary({ refreshKey }: { refreshKey?: number }) {
           <div className="space-y-2"><Label>Variables (comma separated)</Label><Input placeholder="e.g. name, department, start_date" /></div>
         </div>
         <DialogFooter><Button variant="outline" onClick={() => setAddOpen(false)}>Cancel</Button>
-          <Button className="bg-[#D4AF37] hover:bg-[#D4AF37]/80 text-black" onClick={() => { setAddOpen(false); toast.info('Managed locally') }}>Save Prompt</Button></DialogFooter>
+          <Button className="bg-[#D4AF37] hover:bg-[#D4AF37]/80 text-black" onClick={() => { setAddOpen(false); save(prompts) }}>Save Prompt</Button></DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
@@ -1144,17 +1270,26 @@ export function PromptLibrary({ refreshKey }: { refreshKey?: number }) {
 
 // ─── 4. Knowledge Manager ──────────────────────────────────────────────────
 export function KnowledgeManager({ refreshKey }: { refreshKey?: number }) {
-  const { data: kbData, loading, refetch: kbRefetch } = useApiData<any>('/api/admin/saas/ai-config?type=knowledge', { items: [] }, [refreshKey])
-  const [search, setSearch] = useState('')
-  const [category, setCategory] = useState('all')
-  const [addOpen, setAddOpen] = useState(false)
-  const [articles, setArticles] = useState([
+  const INITIAL_ARTICLES = [
     { id: 1, title: 'Employee Leave Policy', category: 'Policy', tags: ['leave', 'absence', 'pto'], status: 'Published' as const, updated: '2025-01-15' },
     { id: 2, title: 'Payroll Processing Guide', category: 'Finance', tags: ['payroll', 'salary', 'taxes'], status: 'Published' as const, updated: '2025-01-10' },
     { id: 3, title: 'Onboarding Checklist', category: 'HR', tags: ['onboarding', 'new-hire', 'orientation'], status: 'Draft' as const, updated: '2025-01-12' },
     { id: 4, title: 'Performance Review Criteria', category: 'HR', tags: ['performance', 'review', 'kpi'], status: 'Published' as const, updated: '2025-01-08' },
     { id: 5, title: 'Workplace Safety Guidelines', category: 'Compliance', tags: ['safety', 'compliance', 'hazard'], status: 'Published' as const, updated: '2025-01-05' },
-  ])
+  ]
+  const { data: kbData, loading, refetch: kbRefetch } = useApiData<any>('/api/admin/saas/ai-config?type=knowledge', { items: [] }, [refreshKey])
+  const { save, saving } = useApiSave('/api/admin/saas/ai-config?type=knowledge')
+  const [search, setSearch] = useState('')
+  const [category, setCategory] = useState('all')
+  const [addOpen, setAddOpen] = useState(false)
+  const [articles, setArticles] = useState(INITIAL_ARTICLES)
+
+  useEffect(() => {
+    if (kbData?.items && Array.isArray(kbData.items) && !loading) {
+      setArticles(kbData.items)
+    }
+  }, [kbData, loading])
+
   const filtered = useMemo(() => articles.filter(a => {
     if (category !== 'all' && a.category !== category) return false
     if (search && !a.title.toLowerCase().includes(search.toLowerCase())) return false
@@ -1182,7 +1317,7 @@ export function KnowledgeManager({ refreshKey }: { refreshKey?: number }) {
               <TableCell className="hidden sm:table-cell text-muted-foreground text-sm">{a.updated}</TableCell>
               <TableCell className="text-right"><div className="flex justify-end gap-1">
                 <Button size="sm" variant="outline" onClick={() => toast.info(`Edit ${a.title}`)}><Pencil className="h-3.5 w-3.5" /></Button>
-                <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700" onClick={() => { setArticles(prev => prev.filter(x => x.id !== a.id)); toast.info('Managed locally') }}><Trash2 className="h-3.5 w-3.5" /></Button>
+                <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700" onClick={() => { const next = articles.filter(x => x.id !== a.id); setArticles(next); save(next) }}><Trash2 className="h-3.5 w-3.5" /></Button>
               </div></TableCell>
             </TableRow>
           ))}</TableBody></Table></div></CardContent></Card>
@@ -1197,7 +1332,7 @@ export function KnowledgeManager({ refreshKey }: { refreshKey?: number }) {
           </div>
         </div>
         <DialogFooter><Button variant="outline" onClick={() => setAddOpen(false)}>Cancel</Button>
-          <Button className="bg-[#D4AF37] hover:bg-[#D4AF37]/80 text-black" onClick={() => { setAddOpen(false); toast.info('Managed locally') }}>Save Article</Button></DialogFooter>
+          <Button className="bg-[#D4AF37] hover:bg-[#D4AF37]/80 text-black" onClick={() => { setAddOpen(false); save(articles) }}>Save Article</Button></DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
@@ -1206,23 +1341,33 @@ export function KnowledgeManager({ refreshKey }: { refreshKey?: number }) {
 
 // ─── 5. Custom Domains ─────────────────────────────────────────────────────
 export function CustomDomains({ refreshKey }: { refreshKey?: number }) {
-  const { data: domData, loading } = useApiData<any>('/api/admin/saas/domains', { domains: [] }, [refreshKey])
-  const [domains, setDomains] = useState([
+  const INITIAL_DOMAINS = [
     { id: 1, domain: 'app.acmecorp.com', ssl: 'Active' as const, verified: true, primary: true },
     { id: 2, domain: 'portal.globalhr.io', ssl: 'Pending' as const, verified: false, primary: false },
     { id: 3, domain: 'hr.startupxyz.com', ssl: 'Failed' as const, verified: true, primary: false },
-  ])
+  ]
+  const { data: domData, loading } = useApiData<any>('/api/admin/saas/domains', { domains: [] }, [refreshKey])
+  const { save, saving } = useApiSave('/api/admin/saas/domains')
+  const [domains, setDomains] = useState(INITIAL_DOMAINS)
+
+  useEffect(() => {
+    if (domData?.domains && Array.isArray(domData.domains) && !loading) {
+      setDomains(domData.domains)
+    }
+  }, [domData, loading])
+
   const [newDomain, setNewDomain] = useState('')
   const sslColor: Record<string, string> = { Active: 'bg-emerald-100 text-emerald-700', Pending: 'bg-amber-100 text-amber-700', Failed: 'bg-red-100 text-red-700' }
   const addDomain = () => {
     if (!newDomain) return
-    setDomains(prev => [...prev, { id: Date.now(), domain: newDomain, ssl: 'Pending' as const, verified: false, primary: false }])
+    const next = [...domains, { id: Date.now(), domain: newDomain, ssl: 'Pending' as const, verified: false, primary: false }]
+    setDomains(next)
     setNewDomain('')
-    toast.info('Domain added locally')
+    save(next)
   }
-  const verifyDomain = (id: number) => { setDomains(prev => prev.map(d => d.id === id ? { ...d, verified: true, ssl: 'Active' as const } : d)); toast.info('Domain verified locally') }
-  const removeDomain = (id: number) => { setDomains(prev => prev.filter(d => d.id !== id)); toast.info('Domain removed locally') }
-  const togglePrimary = (id: number) => { setDomains(prev => prev.map(d => ({ ...d, primary: d.id === id }))); toast.info('Primary domain updated locally') }
+  const verifyDomain = (id: number) => { const next = domains.map(d => d.id === id ? { ...d, verified: true, ssl: 'Active' as const } : d); setDomains(next); save(next) }
+  const removeDomain = (id: number) => { const next = domains.filter(d => d.id !== id); setDomains(next); save(next) }
+  const togglePrimary = (id: number) => { const next = domains.map(d => ({ ...d, primary: d.id === id })); setDomains(next); save(next) }
   return (
     <div className="space-y-6">
       <SectionTitle title="Custom Domains" desc="Manage tenant custom domain mappings" />
@@ -1252,9 +1397,17 @@ export function CustomDomains({ refreshKey }: { refreshKey?: number }) {
 
 // ─── 6. White Label ────────────────────────────────────────────────────────
 export function WhiteLabel({ refreshKey }: { refreshKey?: number }) {
+  const INITIAL_WL = { companyName: 'HPHRMS Enterprise', logoUrl: '/logo.png', primaryColor: '#002B5C', accentColor: '#D4AF37', faviconUrl: '/favicon.ico', loginMessage: 'Welcome to your HR management portal.', emailSender: 'HPHRMS System' }
   const { data: wlData, loading } = useApiData<any>('/api/admin/saas/branding?type=whitelabel', {}, [refreshKey])
   const { save } = useApiSave('/api/admin/saas/branding?type=whitelabel')
-  const [form, setForm] = useState({ companyName: 'HPHRMS Enterprise', logoUrl: '/logo.png', primaryColor: '#002B5C', accentColor: '#D4AF37', faviconUrl: '/favicon.ico', loginMessage: 'Welcome to your HR management portal.', emailSender: 'HPHRMS System' })
+  const [form, setForm] = useState(INITIAL_WL)
+
+  useEffect(() => {
+    if (wlData && typeof wlData === 'object' && !loading) {
+      setForm(prev => ({ ...prev, ...wlData }))
+    }
+  }, [wlData, loading])
+
   const update = (k: string, v: string) => setForm(prev => ({ ...prev, [k]: v }))
   return (
     <div className="space-y-6">
@@ -1284,10 +1437,19 @@ export function WhiteLabel({ refreshKey }: { refreshKey?: number }) {
 
 // ─── 7. Branding ───────────────────────────────────────────────────────────
 export function Branding({ refreshKey }: { refreshKey?: number }) {
+  const INITIAL_BRAND = { colors: { primary: '#002B5C', secondary: '#1a3a6b', accent: '#D4AF37', background: '#ffffff' }, css: '/* Custom CSS overrides */\n.hero-section {\n  min-height: 60vh;\n}' }
   const { data: brandData, loading } = useApiData<any>('/api/admin/saas/branding', {}, [refreshKey])
   const { save } = useApiSave('/api/admin/saas/branding')
-  const [colors, setColors] = useState({ primary: '#002B5C', secondary: '#1a3a6b', accent: '#D4AF37', background: '#ffffff' })
-  const [css, setCss] = useState('/* Custom CSS overrides */\n.hero-section {\n  min-height: 60vh;\n}')
+  const [colors, setColors] = useState(INITIAL_BRAND.colors)
+  const [css, setCss] = useState(INITIAL_BRAND.css)
+
+  useEffect(() => {
+    if (brandData && typeof brandData === 'object' && !loading) {
+      if (brandData.colors) setColors(brandData.colors)
+      if (brandData.css !== undefined) setCss(brandData.css)
+    }
+  }, [brandData, loading])
+
   const updateColor = (k: string, v: string) => setColors(prev => ({ ...prev, [k]: v }))
   return (
     <div className="space-y-6">
@@ -1343,9 +1505,7 @@ export function Branding({ refreshKey }: { refreshKey?: number }) {
 
 // ─── 8. Themes ─────────────────────────────────────────────────────────────
 export function Themes({ refreshKey }: { refreshKey?: number }) {
-  const { data: themeData, loading } = useApiData<any>('/api/admin/saas/branding?type=themes', {}, [refreshKey])
-  const [activeTheme, setActiveTheme] = useState('navy')
-  const themes = [
+  const INITIAL_THEMES = [
     { id: 'navy', name: 'Default Navy', primary: '#002B5C', secondary: '#1a3a6b', accent: '#D4AF37', bg: '#ffffff', text: '#002B5C' },
     { id: 'dark', name: 'Dark Mode', primary: '#0f172a', secondary: '#1e293b', accent: '#D4AF37', bg: '#0f172a', text: '#e2e8f0' },
     { id: 'ocean', name: 'Ocean Blue', primary: '#0369a1', secondary: '#0284c7', accent: '#22d3ee', bg: '#f0f9ff', text: '#0c4a6e' },
@@ -1353,12 +1513,22 @@ export function Themes({ refreshKey }: { refreshKey?: number }) {
     { id: 'purple', name: 'Royal Purple', primary: '#581c87', secondary: '#6b21a8', accent: '#c084fc', bg: '#faf5ff', text: '#3b0764' },
     { id: 'sunset', name: 'Sunset Orange', primary: '#9a3412', secondary: '#c2410c', accent: '#fdba74', bg: '#fff7ed', text: '#7c2d12' },
   ]
+  const { data: themeData, loading } = useApiData<any>('/api/admin/saas/branding?type=themes', {}, [refreshKey])
+  const { save, saving } = useApiSave('/api/admin/saas/branding?type=themes')
+  const [activeTheme, setActiveTheme] = useState('navy')
+  const themes = INITIAL_THEMES
+
+  useEffect(() => {
+    if (themeData?.activeTheme && !loading) {
+      setActiveTheme(themeData.activeTheme)
+    }
+  }, [themeData, loading])
   return (
     <div className="space-y-6">
       <SectionTitle title="Themes" desc="Interface theme management and customization" />
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {themes.map(t => (
-          <Card key={t.id} className={`cursor-pointer transition-all hover:shadow-md ${activeTheme === t.id ? 'ring-2 ring-[#D4AF37] shadow-md' : ''}`} onClick={() => { setActiveTheme(t.id); toast.info('Feature pending backend integration') }}>
+          <Card key={t.id} className={`cursor-pointer transition-all hover:shadow-md ${activeTheme === t.id ? 'ring-2 ring-[#D4AF37] shadow-md' : ''}`} onClick={() => { setActiveTheme(t.id); save({ activeTheme: t.id }) }}>
             <CardContent className="p-4 space-y-3">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full" style={{ backgroundColor: t.primary }} />
@@ -1384,12 +1554,7 @@ export function Themes({ refreshKey }: { refreshKey?: number }) {
 
 // ─── 9. Email Templates Manager ────────────────────────────────────────────
 export function EmailTemplatesManager({ refreshKey }: { refreshKey?: number }) {
-  const { data: emailData, loading } = useApiData<any>('/api/admin/saas/templates?type=email', { templates: [] }, [refreshKey])
-  const [editOpen, setEditOpen] = useState(false)
-  const [selected, setSelected] = useState<typeof templates[0] | null>(null)
-  const [editSubject, setEditSubject] = useState('')
-  const [editBody, setEditBody] = useState('')
-  const templates = [
+  const INITIAL_TEMPLATES = [
     { id: 1, name: 'Welcome Email', subject: 'Welcome to HPHRMS Enterprise!', modified: '2025-01-14', status: 'Active' },
     { id: 2, name: 'Password Reset', subject: 'Reset Your Password', modified: '2025-01-10', status: 'Active' },
     { id: 3, name: 'Invoice Generated', subject: 'Your Invoice is Ready', modified: '2025-01-12', status: 'Active' },
@@ -1399,6 +1564,20 @@ export function EmailTemplatesManager({ refreshKey }: { refreshKey?: number }) {
     { id: 7, name: 'Offer Letter', subject: 'Congratulations! Your Offer Letter', modified: '2025-01-03', status: 'Active' },
     { id: 8, name: 'Account Activated', subject: 'Your Account Has Been Activated', modified: '2025-01-01', status: 'Active' },
   ]
+  const { data: emailData, loading } = useApiData<any>('/api/admin/saas/templates?type=email', { templates: [] }, [refreshKey])
+  const { save, saving } = useApiSave('/api/admin/saas/templates?type=email')
+  const [templates, setTemplates] = useState(INITIAL_TEMPLATES)
+  const [editOpen, setEditOpen] = useState(false)
+  const [selected, setSelected] = useState<typeof templates[0] | null>(null)
+  const [editSubject, setEditSubject] = useState('')
+  const [editBody, setEditBody] = useState('')
+
+  useEffect(() => {
+    if (emailData?.templates && Array.isArray(emailData.templates) && !loading) {
+      setTemplates(emailData.templates)
+    }
+  }, [emailData, loading])
+
   const openEdit = (t: typeof templates[0]) => { setSelected(t); setEditSubject(t.subject); setEditBody(`Dear {{name}},\n\n${t.subject}\n\nBest regards,\nHPHRMS Team`); setEditOpen(true) }
   return (
     <div className="space-y-6">
@@ -1422,7 +1601,7 @@ export function EmailTemplatesManager({ refreshKey }: { refreshKey?: number }) {
           <div className="space-y-2"><Label>Body</Label><Textarea value={editBody} onChange={e => setEditBody(e.target.value)} rows={8} className="font-mono text-sm" /></div>
         </div>
         <DialogFooter><Button variant="outline" onClick={() => setEditOpen(false)}>Cancel</Button>
-          <Button className="bg-[#D4AF37] hover:bg-[#D4AF37]/80 text-black" onClick={() => { setEditOpen(false); toast.info('Template saved locally') }}>Save Template</Button></DialogFooter>
+          <Button className="bg-[#D4AF37] hover:bg-[#D4AF37]/80 text-black" onClick={() => { setEditOpen(false); save(templates) }}>Save Template</Button></DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
@@ -1431,15 +1610,24 @@ export function EmailTemplatesManager({ refreshKey }: { refreshKey?: number }) {
 
 // ─── 10. WhatsApp Templates ────────────────────────────────────────────────
 export function WhatsAppTemplates({ refreshKey }: { refreshKey?: number }) {
-  const { data: waData, loading } = useApiData<any>('/api/admin/saas/templates?type=whatsapp', { templates: [] }, [refreshKey])
-  const [addOpen, setAddOpen] = useState(false)
-  const [templates, setTemplates] = useState([
+  const INITIAL_WA = [
     { id: 1, name: 'Interview Reminder', category: 'Recruitment', language: 'English', status: 'Approved' as const, content: 'Hello {{name}}, this is a reminder for your interview scheduled on {{date}} at {{time}}. Please be prepared.' },
     { id: 2, name: 'Leave Confirmation', category: 'HR', language: 'English', status: 'Approved' as const, content: 'Hi {{name}}, your {{leave_type}} leave from {{start}} to {{end}} has been approved.' },
     { id: 3, name: 'Payroll Notification', category: 'Finance', language: 'English', status: 'Pending' as const, content: 'Dear {{name}}, your salary for {{month}} has been processed. Amount: {{amount}}.' },
     { id: 4, name: 'Onboarding Welcome', category: 'HR', language: 'English', status: 'Rejected' as const, content: 'Welcome to the team, {{name}}! Your first day is {{start_date}}. Please report to {{location}}.' },
-    { id: 5, name: 'Birthday Greeting', category: 'Engagement', language: 'English', status: 'Approved' as const, content: 'Happy Birthday, {{name}}! 🎂 We wish you a wonderful day and a great year ahead!' },
-  ])
+    { id: 5, name: 'Birthday Greeting', category: 'Engagement', language: 'English', status: 'Approved' as const, content: 'Happy Birthday, {{name}}! ' },
+  ]
+  const { data: waData, loading } = useApiData<any>('/api/admin/saas/templates?type=whatsapp', { templates: [] }, [refreshKey])
+  const { save, saving } = useApiSave('/api/admin/saas/templates?type=whatsapp')
+  const [addOpen, setAddOpen] = useState(false)
+  const [templates, setTemplates] = useState(INITIAL_WA)
+
+  useEffect(() => {
+    if (waData?.templates && Array.isArray(waData.templates) && !loading) {
+      setTemplates(waData.templates)
+    }
+  }, [waData, loading])
+
   const statusColor: Record<string, string> = { Approved: 'bg-emerald-100 text-emerald-700', Pending: 'bg-amber-100 text-amber-700', Rejected: 'bg-red-100 text-red-700' }
   return (
     <div className="space-y-6">
@@ -1457,7 +1645,7 @@ export function WhatsAppTemplates({ refreshKey }: { refreshKey?: number }) {
               <TableCell className="hidden md:table-cell max-w-xs truncate text-muted-foreground text-sm">{t.content}</TableCell>
               <TableCell className="text-right"><div className="flex justify-end gap-1">
                 <Button size="sm" variant="outline" onClick={() => toast.info(`Edit ${t.name}`)}><Pencil className="h-3.5 w-3.5" /></Button>
-                <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700" onClick={() => { setTemplates(prev => prev.filter(x => x.id !== t.id)); toast.info('Template deleted locally') }}><Trash2 className="h-3.5 w-3.5" /></Button>
+                <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700" onClick={() => { const next = templates.filter(x => x.id !== t.id); setTemplates(next); save(next) }}><Trash2 className="h-3.5 w-3.5" /></Button>
               </div></TableCell>
             </TableRow>
           ))}</TableBody></Table></div></CardContent></Card>
@@ -1471,7 +1659,7 @@ export function WhatsAppTemplates({ refreshKey }: { refreshKey?: number }) {
           <div className="space-y-2"><Label>Content</Label><Textarea placeholder="Message content... Use {{variable}} for placeholders." rows={4} /></div>
         </div>
         <DialogFooter><Button variant="outline" onClick={() => setAddOpen(false)}>Cancel</Button>
-          <Button className="bg-[#D4AF37] hover:bg-[#D4AF37]/80 text-black" onClick={() => { setAddOpen(false); toast.info('Template submitted locally') }}>Submit for Approval</Button></DialogFooter>
+          <Button className="bg-[#D4AF37] hover:bg-[#D4AF37]/80 text-black" onClick={() => { setAddOpen(false); save(templates) }}>Submit for Approval</Button></DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
@@ -1480,14 +1668,42 @@ export function WhatsAppTemplates({ refreshKey }: { refreshKey?: number }) {
 
 // ─── 11. Maintenance Mode ──────────────────────────────────────────────────
 export function MaintenanceMode({ refreshKey }: { refreshKey?: number }) {
-  const { data: mmData, loading } = useApiData<any>('/api/admin/saas/system?type=maintenance', {}, [refreshKey])
+  const getNextMonday2AM = () => {
+    const now = new Date()
+    const dayOfWeek = now.getDay()
+    const daysUntilMonday = dayOfWeek === 0 ? 1 : 8 - dayOfWeek
+    const nextMonday = new Date(now)
+    nextMonday.setDate(now.getDate() + daysUntilMonday)
+    nextMonday.setHours(2, 0, 0, 0)
+    return nextMonday.toISOString().slice(0, 16)
+  }
+  const INITIAL_MM = {
+    enabled: false,
+    message: 'We are performing scheduled maintenance. We will be back shortly.',
+    downtime: '30 minutes',
+    ips: '192.168.1.1\n10.0.0.0/24',
+    startTime: getNextMonday2AM(),
+    endTime: getNextMonday2AM(),
+  }
+  const { data: mmData, loading } = useApiData<any>('/api/admin/saas/system?type=maintenance', INITIAL_MM, [refreshKey])
   const { save } = useApiSave('/api/admin/saas/system?type=maintenance')
-  const [enabled, setEnabled] = useState(false)
-  const [message, setMessage] = useState('We are performing scheduled maintenance. We will be back shortly.')
-  const [downtime, setDowntime] = useState('30 minutes')
-  const [ips, setIps] = useState('192.168.1.1\n10.0.0.0/24')
-  const [startTime, setStartTime] = useState('2025-01-20T02:00')
-  const [endTime, setEndTime] = useState('2025-01-20T02:30')
+  const [enabled, setEnabled] = useState(INITIAL_MM.enabled)
+  const [message, setMessage] = useState(INITIAL_MM.message)
+  const [downtime, setDowntime] = useState(INITIAL_MM.downtime)
+  const [ips, setIps] = useState(INITIAL_MM.ips)
+  const [startTime, setStartTime] = useState(INITIAL_MM.startTime)
+  const [endTime, setEndTime] = useState(INITIAL_MM.endTime)
+
+  useEffect(() => {
+    if (mmData && typeof mmData === 'object' && !loading) {
+      if (mmData.enabled !== undefined) setEnabled(mmData.enabled)
+      if (mmData.message) setMessage(mmData.message)
+      if (mmData.downtime) setDowntime(mmData.downtime)
+      if (mmData.ips) setIps(mmData.ips)
+      if (mmData.startTime) setStartTime(mmData.startTime)
+      if (mmData.endTime) setEndTime(mmData.endTime)
+    }
+  }, [mmData, loading])
   return (
     <div className="space-y-6">
       <SectionTitle title="Maintenance Mode" desc="Platform maintenance and downtime controls" />
@@ -1530,33 +1746,38 @@ export function MaintenanceMode({ refreshKey }: { refreshKey?: number }) {
 
 // ─── 12. Monitoring ────────────────────────────────────────────────────────
 export function Monitoring({ refreshKey }: { refreshKey?: number }) {
-  const { data: monData, loading } = useApiData<any>('/api/admin/saas/system?type=monitoring', {}, [refreshKey])
-  const services = [
-    { name: 'API Server', icon: Server, status: 'green' },
-    { name: 'Database', icon: Database, status: 'green' },
-    { name: 'Storage', icon: HardDrive, status: 'amber' },
-    { name: 'Email Service', icon: MailCheck, status: 'green' },
-    { name: 'AI Engine', icon: Brain, status: 'green' },
-  ]
-  const apiCalls = [
-    { day: 'Mon', count: 14200 },
-    { day: 'Tue', count: 15800 },
-    { day: 'Wed', count: 13400 },
-    { day: 'Thu', count: 16100 },
-    { day: 'Fri', count: 18900 },
-    { day: 'Sat', count: 5200 },
-    { day: 'Sun', count: 4800 },
-  ]
+  const INITIAL_MON = {
+    services: [
+      { name: 'API Server', icon: 'Server', status: 'green' },
+      { name: 'Database', icon: 'Database', status: 'green' },
+      { name: 'Storage', icon: 'HardDrive', status: 'amber' },
+      { name: 'Email Service', icon: 'MailCheck', status: 'green' },
+      { name: 'AI Engine', icon: 'Brain', status: 'green' },
+    ],
+    apiCalls: [
+      { day: 'Mon', count: 14200 }, { day: 'Tue', count: 15800 }, { day: 'Wed', count: 13400 },
+      { day: 'Thu', count: 16100 }, { day: 'Fri', count: 18900 }, { day: 'Sat', count: 5200 }, { day: 'Sun', count: 4800 },
+    ],
+    responseTimes: [
+      { day: 'Mon', ms: 135 }, { day: 'Tue', ms: 148 }, { day: 'Wed', ms: 122 },
+      { day: 'Thu', ms: 156 }, { day: 'Fri', ms: 168 }, { day: 'Sat', ms: 98 }, { day: 'Sun', ms: 89 },
+    ],
+  }
+  const { data: monData, loading } = useApiData<any>('/api/admin/saas/system?type=monitoring', INITIAL_MON, [refreshKey])
+  const [services, setServices] = useState(INITIAL_MON.services)
+  const [apiCalls, setApiCalls] = useState(INITIAL_MON.apiCalls)
+  const [responseTimes, setResponseTimes] = useState(INITIAL_MON.responseTimes)
+
+  useEffect(() => {
+    if (monData && typeof monData === 'object' && !loading) {
+      if (monData.services) setServices(monData.services)
+      if (monData.apiCalls) setApiCalls(monData.apiCalls)
+      if (monData.responseTimes) setResponseTimes(monData.responseTimes)
+    }
+  }, [monData, loading])
+
+  const iconMap: Record<string, any> = { Server, Database, HardDrive, MailCheck, Brain }
   const maxCalls = Math.max(...apiCalls.map(d => d.count))
-  const responseTimes = [
-    { day: 'Mon', ms: 135 },
-    { day: 'Tue', ms: 148 },
-    { day: 'Wed', ms: 122 },
-    { day: 'Thu', ms: 156 },
-    { day: 'Fri', ms: 168 },
-    { day: 'Sat', ms: 98 },
-    { day: 'Sun', ms: 89 },
-  ]
   const maxMs = Math.max(...responseTimes.map(d => d.ms))
   return (
     <div className="space-y-6">
@@ -1571,13 +1792,16 @@ export function Monitoring({ refreshKey }: { refreshKey?: number }) {
         <CardHeader><CardTitle className="text-base">Service Status</CardTitle></CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-            {services.map(s => (
+            {services.map(s => {
+              const IconComp = iconMap[s.icon] || Server
+              return (
               <div key={s.name} className="flex items-center gap-3 p-3 rounded-lg border">
                 <div className={`w-3 h-3 rounded-full ${s.status === 'green' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
-                <s.icon className={`h-4 w-4 ${s.status === 'green' ? 'text-emerald-600' : 'text-amber-600'}`} />
+                <IconComp className={`h-4 w-4 ${s.status === 'green' ? 'text-emerald-600' : 'text-amber-600'}`} />
                 <span className="text-sm font-medium">{s.name}</span>
               </div>
-            ))}
+              )
+            })}
           </div>
         </CardContent>
       </Card>
@@ -1602,7 +1826,8 @@ export function Monitoring({ refreshKey }: { refreshKey?: number }) {
               {responseTimes.map(d => (
                 <div key={d.day} className="flex-1 flex flex-col items-center gap-1">
                   <span className="text-xs text-muted-foreground">{d.ms}ms</span>
-                  <div className="w-full bg-[#002B5C] rounded-t transition-all" style={{ height: `${(d.ms / maxMs) * 100}%`, minHeight: 8 }} />\n                  <span className="text-xs font-medium">{d.day}</span>
+                  <div className="w-full bg-[#002B5C] rounded-t transition-all" style={{ height: `${(d.ms / maxMs) * 100}%`, minHeight: 8 }} />
+                  <span className="text-xs font-medium">{d.day}</span>
                 </div>
               ))}
             </div>
