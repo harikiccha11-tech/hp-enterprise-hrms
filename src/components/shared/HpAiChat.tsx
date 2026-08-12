@@ -178,7 +178,7 @@ export function HpAiChat() {
         aria-label="HPAI — Best AI Assistant"
         title="HPAI — Best AI Assistant"
         className={cn(
-          'fixed bottom-20 right-4 z-50 flex flex-col items-center justify-center gap-0.5 rounded-2xl shadow-lg transition-all duration-300 hover:scale-105 active:scale-95 px-2 py-2.5 sm:gap-1',
+          'fixed bottom-20 right-4 z-[90] flex flex-col items-center justify-center gap-0.5 rounded-2xl shadow-lg transition-all duration-300 hover:scale-105 active:scale-95 px-2 py-2.5 sm:gap-1',
           'bg-gradient-to-br from-[var(--navy)] to-[var(--navy-light)]',
           !hpaiOpen && 'animate-hpai-pulse'
         )}
@@ -189,7 +189,7 @@ export function HpAiChat() {
 
       {/* Chat panel */}
       {hpaiOpen && (
-        <div role="dialog" aria-label="HPAI — Best AI Assistant chat" className="fixed bottom-40 right-4 z-50 flex w-[calc(100vw-2rem)] max-w-[400px] flex-col overflow-hidden rounded-2xl border bg-card shadow-xl sm:w-[400px]">
+        <div role="dialog" aria-label="HPAI — Best AI Assistant chat" className="fixed bottom-40 right-4 z-[90] flex w-[calc(100vw-2rem)] max-w-[400px] flex-col overflow-hidden rounded-2xl border bg-card shadow-xl sm:w-[400px]">
           {/* Header */}
           <div className="flex items-center justify-between bg-gradient-to-r from-[var(--navy)] to-[var(--navy-light)] px-4 py-3.5">
             <div className="flex items-center gap-2.5">

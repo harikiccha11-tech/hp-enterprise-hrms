@@ -14,7 +14,7 @@ import {
 import { SectionTitle, EmptyState } from '@/components/shared'
 import { toast } from 'sonner'
 import { BarChart3, Download, Printer, Search, FileSpreadsheet } from 'lucide-react'
-import { api, downloadCSV, type CSVColumn, fmtDate, fmtDateTime, formatINR } from '../lib'
+import { api, downloadCSV, type CSVColumn, fmtDate, fmtDateTime, formatINR, escapeHtml } from '../lib'
 
 const REPORT_TYPES = [
   { value: 'employees', label: 'Employees' },
@@ -40,9 +40,9 @@ function formatCell(col: string, value: any): string {
       col.toLowerCase().includes('amount') || col.toLowerCase().includes('tax') ||
       col.toLowerCase().includes('total') || col.toLowerCase().includes('value')) {
     const n = Number(value)
-    if (!isNaN(n) && n > 0) return formatINR(n)
+    if (!isNaN(n) && n > 0) return escapeHtml(formatINR(n))
   }
-  return String(value)
+  return escapeHtml(String(value))
 }
 
 export function Reports({ refreshKey }: { refreshKey: number }) {
@@ -89,6 +89,7 @@ export function Reports({ refreshKey }: { refreshKey: number }) {
     const tableRows = filteredRows.slice(0, 500).map((r) =>
       '<tr>' + columns.map((c) => `<td style="${tdStyle}">${formatCell(c, r[c])}</td>`).join('') + '</tr>'
     ).join('')
+    const safeReportLabel = escapeHtml(reportLabel)
     win.document.write(`<!DOCTYPE html><html><head><title>${reportLabel} Report — HP ENTERPRISE</title>
     <style>body{font-family:Arial,sans-serif;color:#0E1B33;margin:0;padding:40px}
     .head{background:#002B5C;color:#fff;padding:18px 30px;border-bottom:3px solid #D4AF37;margin:-40px -40px 24px}
@@ -97,9 +98,9 @@ export function Reports({ refreshKey }: { refreshKey: number }) {
     .foot{margin-top:20px;border-top:1px solid #dde3ee;padding-top:8px;font-size:9px;color:#5A6A8A;text-align:center}
     .meta{font-size:10px;color:#5A6A8A;margin-bottom:14px}
     @media print{body{padding:20px}.head{margin:-20px -20px 16px}}</style></head><body>
-    <div class="head"><h1>HP ENTERPRISE — ${reportLabel} Report</h1><p>SAFETY SERVICE &amp; MAN POWER SUPPLY</p></div>
+    <div class="head"><h1>HP ENTERPRISE — ${safeReportLabel} Report</h1><p>SAFETY SERVICE &amp; MAN POWER SUPPLY</p></div>
     <p class="meta">Generated on ${new Date().toLocaleString('en-IN')} &bull; ${filteredRows.length} row${filteredRows.length !== 1 ? 's' : ''} &bull; ${columns.length} columns</p>
-    <table><thead><tr>${columns.map((c) => `<th style="${thStyle}">${c}</th>`).join('')}</tr></thead><tbody>${tableRows}</tbody></table>
+    <table><thead><tr>${columns.map((c) => `<th style="${thStyle}">${escapeHtml(c)}</th>`).join('')}</tr></thead><tbody>${tableRows}</tbody></table>
     ${filteredRows.length > 500 ? '<p class="meta">Showing first 500 rows.</p>' : ''}
     <div class="foot">HP ENTERPRISE Safety Service & Man Power Supply &bull; Confidential</div>
     </body></html>`)

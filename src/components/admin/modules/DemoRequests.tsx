@@ -100,7 +100,7 @@ export function DemoRequests({ refreshKey }: { refreshKey: number }) {
     const rows = filtered.map(r => [
       r.id, r.companyName, r.contactName, r.email, r.phone || '',
       r.plan, r.employeeCount || '', r.status, r.createdAt, (r.message || '').replace(/,/g, ';')
-    ].map(v => `"${v}"`).join(','))
+    ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(','))
     const csv = [header, ...rows].join('\n')
     const blob = new Blob([csv], { type: 'text/csv' })
     const a = document.createElement('a')

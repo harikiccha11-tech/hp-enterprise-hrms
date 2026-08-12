@@ -37,7 +37,7 @@ import {
   Calendar, Wallet, Clock, CheckCheck,
 } from 'lucide-react'
 import { DEPARTMENTS } from '@/lib/constants'
-import { api, fmtDate, formatINR, initials, parseJSON } from '../lib'
+import { api, fmtDate, formatINR, initials, parseJSON, escapeHtml } from '../lib'
 import { cacheGet } from '@/lib/store'
 
 interface EmployeeDoc {
@@ -1400,7 +1400,8 @@ function exportEmployeeProfile(emp: Employee | null, docs: { uploaded: EmployeeD
   const skills = emp.skills?.split(',').filter(Boolean) || []
   const win = window.open('', '_blank', 'width=900,height=700')
   if (!win) { toast.error('Pop-up blocked — please allow pop-ups to export'); return }
-  const rows = (label: string, val: any) => `<tr><td style="padding:6px 10px;background:#f6f7fb;font-weight:600;color:#002B5C;width:35%;border:1px solid #dde3ee">${label}</td><td style="padding:6px 10px;border:1px solid #dde3ee">${val || '—'}</td></tr>`
+  const esc = (v: any) => escapeHtml(v == null ? '' : String(v))
+  const rows = (label: string, val: any) => `<tr><td style="padding:6px 10px;background:#f6f7fb;font-weight:600;color:#002B5C;width:35%;border:1px solid #dde3ee">${escapeHtml(label)}</td><td style="padding:6px 10px;border:1px solid #dde3ee">${esc(val)}</td></tr>`
   win.document.write(`<!DOCTYPE html><html><head><title>${emp.fullName} — Profile</title>
   <style>body{font-family:Arial,sans-serif;color:#0E1B33;margin:0;padding:40px}
   .head{background:#002B5C;color:#fff;padding:20px 30px;border-bottom:3px solid #D4AF37;margin:-40px -40px 24px}
@@ -1424,8 +1425,8 @@ function exportEmployeeProfile(emp: Employee | null, docs: { uploaded: EmployeeD
   <h2>Education</h2>
   <table>${education.length ? education.map((e:any,i:number)=>rows('Qualification '+(i+1), (e.qualification||'')+' '+(e.specialization||'')+' — '+(e.college||'')+' ('+(e.year||'')+')')).join('') : rows('Education', null)}</table>
   <h2>Disciplines &amp; Skills</h2>
-  <p>${disciplines.map(d=>'<span class="badge">'+d+'</span>').join('')||'<span style="color:#999">—</span>'}</p>
-  <p style="margin-top:8px">${skills.map(s=>'<span class="badge" style="background:#D4AF37;color:#002B5C">'+s+'</span>').join('')||'<span style="color:#999">—</span>'}</p>
+  <p>${disciplines.map(d=>'<span class="badge">'+escapeHtml(d)+'</span>').join('')||'<span style="color:#999">—</span>'}</p>
+  <p style="margin-top:8px">${skills.map(s=>'<span class="badge" style="background:#D4AF37;color:#002B5C">'+escapeHtml(s)+'</span>').join('')||'<span style="color:#999">—</span>'}</p>
   <h2>Uploaded Documents (${docs.uploaded.length})</h2>
   <table>${docs.uploaded.length ? docs.uploaded.map(d=>rows((DOC_LABELS[d.documentType]||d.documentType), d.fileName)).join('') : rows('Documents', 'None')}</table>
   <h2>Generated Documents (${docs.generated.length})</h2>

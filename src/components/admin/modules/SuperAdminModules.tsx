@@ -390,11 +390,11 @@ export function LandingPageBuilder({ refreshKey }: { refreshKey?: number }) {
   const [sections, setSections] = useState(DEFAULT_SECTIONS)
   const toggle = (id: string) => {
     setSections((s) => s.map((sec) => sec.id === id ? { ...sec, enabled: !sec.enabled } : sec))
-    toast.success('Section visibility updated')
+    save(sections)
   }
   return (
     <div className="space-y-6">
-      <SectionTitle title="Landing Page Builder" desc="Toggle, reorder, and manage landing page sections" action={<Button onClick={() => toast.success('Landing page published!')}><Upload className="h-4 w-4 mr-1" /> Publish</Button>} />
+      <SectionTitle title="Landing Page Builder" desc="Toggle, reorder, and manage landing page sections" action={<Button onClick={() => save(sections)}><Upload className="h-4 w-4 mr-1" /> Publish</Button>} />
       <Card>
         <CardContent className="p-0">
           <div className="divide-y">
@@ -441,24 +441,25 @@ const INITIAL_SLIDES: Slide[] = [
 ]
 
 export function HeroBannerManager({ refreshKey }: { refreshKey?: number }) {
+  // TODO: Wire to API — currently saves locally only
   const { data: bannerData, loading } = useApiData<any>('/api/admin/saas/website?type=banners', { slides: [] }, [refreshKey])
   const [slides, setSlides] = useState(INITIAL_SLIDES)
   const addSlide = () => {
     const newSlide: Slide = { id: Date.now().toString(), title: 'New Banner Slide', subtitle: 'Enter subtitle text here.', cta: 'Learn More', link: '#', bgColor: '#002B5C', active: false }
     setSlides((s) => [...s, newSlide])
-    toast.success('New slide added')
+    toast.info('Slide added locally')
   }
   const updateSlide = (id: string, field: keyof Slide, value: string | boolean) => {
     setSlides((s) => s.map((sl) => sl.id === id ? { ...sl, [field]: value } : sl))
   }
   const setActive = (id: string) => {
     setSlides((s) => s.map((sl) => ({ ...sl, active: sl.id === id })))
-    toast.success('Active slide updated')
+    toast.info('Active slide updated locally')
   }
   const removeSlide = (id: string) => {
     if (!window.confirm('Delete this banner slide?')) return
     setSlides((s) => s.filter((sl) => sl.id !== id))
-    toast.success('Slide deleted')
+    toast.info('Slide deleted locally')
   }
   return (
     <div className="space-y-6">
@@ -517,6 +518,7 @@ const INITIAL_PLANS: Plan[] = [
 ]
 
 export function PricingEditor({ refreshKey }: { refreshKey?: number }) {
+  // TODO: Wire to API — currently saves locally only
   const { data: priceData, loading } = useApiData<any>('/api/admin/subscription-plans', { plans: [] }, [refreshKey])
   const [plans, setPlans] = useState(INITIAL_PLANS)
   const updatePlan = (id: string, field: keyof Plan, value: string | boolean | string[]) => {
@@ -533,7 +535,7 @@ export function PricingEditor({ refreshKey }: { refreshKey?: number }) {
   }
   return (
     <div className="space-y-6">
-      <SectionTitle title="Pricing Editor" desc="Configure subscription plans and pricing" action={<Button onClick={() => toast.success('Pricing plans saved!')}><Save className="h-4 w-4 mr-1" /> Save Plans</Button>} />
+      <SectionTitle title="Pricing Editor" desc="Configure subscription plans and pricing" action={<Button onClick={() => toast.info('Changes saved locally')}><Save className="h-4 w-4 mr-1" /> Save Plans</Button>} />
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
         {plans.map((plan) => (
           <Card key={plan.id} className={`relative transition-all ${plan.highlighted ? 'ring-2 ring-[var(--gold)] shadow-lg scale-[1.02]' : ''}`}>
@@ -585,6 +587,7 @@ const INITIAL_FAQS: FAQ[] = [
 ]
 
 export function FAQEditor({ refreshKey }: { refreshKey?: number }) {
+  // TODO: Wire to API — currently saves locally only
   const { data: faqData, loading, refetch: faqRefetch } = useApiData<any>('/api/admin/saas/content?type=faq', { items: [] }, [refreshKey])
   const [faqs, setFaqs] = useState(INITIAL_FAQS)
   const [adding, setAdding] = useState(false)
@@ -594,13 +597,13 @@ export function FAQEditor({ refreshKey }: { refreshKey?: number }) {
   const deleteFaq = (id: string) => {
     if (!window.confirm('Delete this FAQ?')) return
     setFaqs((f) => f.filter((faq) => faq.id !== id))
-    toast.success('FAQ deleted')
+    toast.info('FAQ deleted locally')
   }
   const addFaq = () => {
     if (!newQ.trim() || !newA.trim()) { toast.error('Both fields are required'); return }
     setFaqs((f) => [...f, { id: Date.now().toString(), question: newQ, answer: newA, expanded: true }])
     setNewQ(''); setNewA(''); setAdding(false)
-    toast.success('FAQ added')
+    toast.info('FAQ added locally')
   }
   const moveFaq = (idx: number, dir: -1 | 1) => {
     const arr = [...faqs]; const target = idx + dir
@@ -662,13 +665,14 @@ const DEPARTMENTS = ['Engineering', 'Human Resources', 'Marketing', 'Product', '
 const JOB_TYPES = ['Full-time', 'Part-time', 'Contract', 'Internship']
 
 export function CareersManager({ refreshKey }: { refreshKey?: number }) {
+  // TODO: Wire to API — currently saves locally only
   const { data: careerData, loading, refetch: careerRefetch } = useApiData<any>('/api/admin/saas/content?type=career', { items: [] }, [refreshKey])
   const [jobs, setJobs] = useState(INITIAL_JOBS)
   const [dialog, setDialog] = useState(false)
   const [form, setForm] = useState<Job>({ id: '', title: '', department: 'Engineering', location: '', type: 'Full-time', salary: '', status: 'Draft' })
   const toggleStatus = (id: string) => {
     setJobs((j) => j.map((job) => job.id === id ? { ...job, status: job.status === 'Published' ? 'Draft' : 'Published' } : job))
-    toast.success('Job status updated')
+    toast.info('Job status updated locally')
   }
   const openAdd = () => { setForm({ id: '', title: '', department: 'Engineering', location: '', type: 'Full-time', salary: '', status: 'Draft' }); setDialog(true) }
   const openEdit = (job: Job) => { setForm({ ...job }); setDialog(true) }
@@ -676,10 +680,10 @@ export function CareersManager({ refreshKey }: { refreshKey?: number }) {
     if (!form.title.trim()) { toast.error('Job title is required'); return }
     if (form.id) {
       setJobs((j) => j.map((job) => job.id === form.id ? form : job))
-      toast.success('Job updated')
+      toast.info('Job updated locally')
     } else {
       setJobs((j) => [...j, { ...form, id: Date.now().toString() }])
-      toast.success('Job posted')
+      toast.info('Job posted locally')
     }
     setDialog(false)
   }
@@ -748,6 +752,7 @@ const INITIAL_POSTS: BlogPost[] = [
 const BLOG_CATEGORIES = ['Industry', 'Payroll', 'Culture', 'Technology', 'Product Updates', 'Compliance', 'HR Tips']
 
 export function BlogManager({ refreshKey }: { refreshKey?: number }) {
+  // TODO: Wire to API — currently saves locally only
   const { data: blogData, loading, refetch: blogRefetch } = useApiData<any>('/api/admin/saas/content?type=blog', { items: [] }, [refreshKey])
   const [posts, setPosts] = useState(INITIAL_POSTS)
   const [dialog, setDialog] = useState(false)
@@ -758,16 +763,16 @@ export function BlogManager({ refreshKey }: { refreshKey?: number }) {
     const slug = form.slug || form.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
     if (form.id) {
       setPosts((p) => p.map((post) => post.id === form.id ? { ...form, slug } : post))
-      toast.success('Post updated')
+      toast.info('Post updated locally')
     } else {
       setPosts((p) => [...p, { ...form, id: Date.now().toString(), slug }])
-      toast.success('Post created')
+      toast.info('Post created locally')
     }
     setDialog(false)
   }
   const togglePublish = (id: string) => {
     setPosts((p) => p.map((post) => post.id === id ? { ...post, status: post.status === 'Published' ? 'Draft' : 'Published' } : post))
-    toast.success('Post status toggled')
+    toast.info('Post status toggled locally')
   }
   return (
     <div className="space-y-6">
@@ -830,11 +835,12 @@ const INITIAL_SOCIALS: SocialPlatform[] = [
 ]
 
 export function SocialMediaManager({ refreshKey }: { refreshKey?: number }) {
+  // TODO: Wire to API — currently saves locally only
   const { data: socialData, loading } = useApiData<any>('/api/admin/saas/content?type=social', { platforms: [] }, [refreshKey])
   const [socials, setSocials] = useState(INITIAL_SOCIALS)
   const updateUrl = (id: string, url: string) => setSocials((s) => s.map((p) => p.id === id ? { ...p, url } : p))
   const toggleEnabled = (id: string) => setSocials((s) => s.map((p) => p.id === id ? { ...p, enabled: !p.enabled } : p))
-  const handleSave = () => toast.success('Social media links saved!')
+  const handleSave = () => toast.info('Changes saved locally')
   return (
     <div className="space-y-6">
       <SectionTitle title="Social Media Manager" desc="Configure social media links displayed on the website" action={<Button onClick={handleSave}><Save className="h-4 w-4 mr-1" /> Save Links</Button>} />
@@ -888,17 +894,17 @@ export function BackupRestore({ refreshKey }: { refreshKey?: number }) {
       const newBackup: BackupEntry = { id: Date.now().toString(), date: new Date().toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }), size: `${(240 + Math.random() * 10).toFixed(0)} MB`, type: 'Manual' }
       setBackups((b) => [newBackup, ...b])
       setCreating(false)
-      toast.success('Backup created successfully!')
+      toast.info('Feature pending backend integration')
     }, 1500)
   }
   const restoreBackup = (id: string, date: string) => {
     if (!window.confirm(`Restore backup from ${date}? This will overwrite current data.`)) return
-    toast.success('Backup restoration initiated. This may take a few minutes.')
+    toast.info('Feature pending backend integration')
   }
   const deleteBackup = (id: string) => {
     if (!window.confirm('Permanently delete this backup?')) return
     setBackups((b) => b.filter((bk) => bk.id !== id))
-    toast.success('Backup deleted')
+    toast.info('Feature pending backend integration')
   }
   return (
     <div className="space-y-6">
@@ -998,7 +1004,7 @@ export function HPAIManagement({ refreshKey }: { refreshKey?: number }) {
           <div className="space-y-2"><Label>System Prompt</Label>
             <Textarea value={systemPrompt} onChange={e => setSystemPrompt(e.target.value)} rows={3} />
           </div>
-          <Button className="bg-[#D4AF37] hover:bg-[#D4AF37]/80 text-black" onClick={() => toast.success('AI config saved')}><Save className="h-4 w-4 mr-2" />Save Configuration</Button>
+          <Button className="bg-[#D4AF37] hover:bg-[#D4AF37]/80 text-black" onClick={() => save({ model, temperature, maxTokens, systemPrompt })}><Save className="h-4 w-4 mr-2" />Save Configuration</Button>
         </CardContent>
       </Card>
       <Card>
@@ -1029,7 +1035,7 @@ export function AIModels({ refreshKey }: { refreshKey?: number }) {
   const statusColor: Record<string, string> = { Active: 'bg-emerald-100 text-emerald-700', Beta: 'bg-amber-100 text-amber-700', Deprecated: 'bg-red-100 text-red-700' }
   const toggleModel = (id: number) => {
     setModels(prev => prev.map(m => m.id === id ? { ...m, status: m.status === 'Active' ? ('Deprecated' as const) : ('Active' as const) } : m))
-    toast.success('Model status toggled')
+    toast.info('Managed locally')
   }
   return (
     <div className="space-y-6">
@@ -1066,7 +1072,7 @@ export function AIModels({ refreshKey }: { refreshKey?: number }) {
           <div className="space-y-2"><Label>Cost per 1K Tokens ($)</Label><Input type="number" step="0.001" placeholder="0.01" /></div>
         </div>
         <DialogFooter><Button variant="outline" onClick={() => setAddOpen(false)}>Cancel</Button>
-          <Button className="bg-[#D4AF37] hover:bg-[#D4AF37]/80 text-black" onClick={() => { setAddOpen(false); toast.success('Model added') }}>Add Model</Button></DialogFooter>
+          <Button className="bg-[#D4AF37] hover:bg-[#D4AF37]/80 text-black" onClick={() => { setAddOpen(false); toast.info('Model added locally') }}>Add Model</Button></DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
@@ -1092,7 +1098,7 @@ export function PromptLibrary({ refreshKey }: { refreshKey?: number }) {
     if (search && !p.name.toLowerCase().includes(search.toLowerCase())) return false
     return true
   }), [prompts, search, category])
-  const deletePrompt = (id: number) => { setPrompts(prev => prev.filter(p => p.id !== id)); toast.success('Prompt deleted') }
+  const deletePrompt = (id: number) => { setPrompts(prev => prev.filter(p => p.id !== id)); toast.info('Managed locally') }
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
@@ -1129,7 +1135,7 @@ export function PromptLibrary({ refreshKey }: { refreshKey?: number }) {
           <div className="space-y-2"><Label>Variables (comma separated)</Label><Input placeholder="e.g. name, department, start_date" /></div>
         </div>
         <DialogFooter><Button variant="outline" onClick={() => setAddOpen(false)}>Cancel</Button>
-          <Button className="bg-[#D4AF37] hover:bg-[#D4AF37]/80 text-black" onClick={() => { setAddOpen(false); toast.success('Prompt template created') }}>Save Prompt</Button></DialogFooter>
+          <Button className="bg-[#D4AF37] hover:bg-[#D4AF37]/80 text-black" onClick={() => { setAddOpen(false); toast.info('Managed locally') }}>Save Prompt</Button></DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
@@ -1176,7 +1182,7 @@ export function KnowledgeManager({ refreshKey }: { refreshKey?: number }) {
               <TableCell className="hidden sm:table-cell text-muted-foreground text-sm">{a.updated}</TableCell>
               <TableCell className="text-right"><div className="flex justify-end gap-1">
                 <Button size="sm" variant="outline" onClick={() => toast.info(`Edit ${a.title}`)}><Pencil className="h-3.5 w-3.5" /></Button>
-                <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700" onClick={() => { setArticles(prev => prev.filter(x => x.id !== a.id)); toast.success('Article deleted') }}><Trash2 className="h-3.5 w-3.5" /></Button>
+                <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700" onClick={() => { setArticles(prev => prev.filter(x => x.id !== a.id)); toast.info('Managed locally') }}><Trash2 className="h-3.5 w-3.5" /></Button>
               </div></TableCell>
             </TableRow>
           ))}</TableBody></Table></div></CardContent></Card>
@@ -1191,7 +1197,7 @@ export function KnowledgeManager({ refreshKey }: { refreshKey?: number }) {
           </div>
         </div>
         <DialogFooter><Button variant="outline" onClick={() => setAddOpen(false)}>Cancel</Button>
-          <Button className="bg-[#D4AF37] hover:bg-[#D4AF37]/80 text-black" onClick={() => { setAddOpen(false); toast.success('Article created') }}>Save Article</Button></DialogFooter>
+          <Button className="bg-[#D4AF37] hover:bg-[#D4AF37]/80 text-black" onClick={() => { setAddOpen(false); toast.info('Managed locally') }}>Save Article</Button></DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
@@ -1212,11 +1218,11 @@ export function CustomDomains({ refreshKey }: { refreshKey?: number }) {
     if (!newDomain) return
     setDomains(prev => [...prev, { id: Date.now(), domain: newDomain, ssl: 'Pending' as const, verified: false, primary: false }])
     setNewDomain('')
-    toast.success('Domain added — verification pending')
+    toast.info('Domain added locally')
   }
-  const verifyDomain = (id: number) => { setDomains(prev => prev.map(d => d.id === id ? { ...d, verified: true, ssl: 'Active' as const } : d)); toast.success('Domain verified & SSL activated') }
-  const removeDomain = (id: number) => { setDomains(prev => prev.filter(d => d.id !== id)); toast.success('Domain removed') }
-  const togglePrimary = (id: number) => { setDomains(prev => prev.map(d => ({ ...d, primary: d.id === id }))); toast.success('Primary domain updated') }
+  const verifyDomain = (id: number) => { setDomains(prev => prev.map(d => d.id === id ? { ...d, verified: true, ssl: 'Active' as const } : d)); toast.info('Domain verified locally') }
+  const removeDomain = (id: number) => { setDomains(prev => prev.filter(d => d.id !== id)); toast.info('Domain removed locally') }
+  const togglePrimary = (id: number) => { setDomains(prev => prev.map(d => ({ ...d, primary: d.id === id }))); toast.info('Primary domain updated locally') }
   return (
     <div className="space-y-6">
       <SectionTitle title="Custom Domains" desc="Manage tenant custom domain mappings" />
@@ -1269,7 +1275,7 @@ export function WhiteLabel({ refreshKey }: { refreshKey?: number }) {
             <div className="space-y-2"><Label>Email Sender Name</Label><Input value={form.emailSender} onChange={e => update('emailSender', e.target.value)} /></div>
           </div>
           <div className="space-y-2"><Label>Custom Login Message</Label><Textarea value={form.loginMessage} onChange={e => update('loginMessage', e.target.value)} rows={3} /></div>
-          <Button className="bg-[#D4AF37] hover:bg-[#D4AF37]/80 text-black" onClick={() => toast.success('White label settings saved')}><Save className="h-4 w-4 mr-2" />Save Settings</Button>
+          <Button className="bg-[#D4AF37] hover:bg-[#D4AF37]/80 text-black" onClick={() => save(form)}><Save className="h-4 w-4 mr-2" />Save Settings</Button>
         </CardContent>
       </Card>
     </div>
@@ -1330,7 +1336,7 @@ export function Branding({ refreshKey }: { refreshKey?: number }) {
           </div>
         </CardContent>
       </Card>
-      <Button className="bg-[#D4AF37] hover:bg-[#D4AF37]/80 text-black" onClick={() => toast.success('Branding settings saved')}><Save className="h-4 w-4 mr-2" />Save Branding</Button>
+      <Button className="bg-[#D4AF37] hover:bg-[#D4AF37]/80 text-black" onClick={() => save({ colors, css })}><Save className="h-4 w-4 mr-2" />Save Branding</Button>
     </div>
   )
 }
@@ -1352,7 +1358,7 @@ export function Themes({ refreshKey }: { refreshKey?: number }) {
       <SectionTitle title="Themes" desc="Interface theme management and customization" />
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {themes.map(t => (
-          <Card key={t.id} className={`cursor-pointer transition-all hover:shadow-md ${activeTheme === t.id ? 'ring-2 ring-[#D4AF37] shadow-md' : ''}`} onClick={() => { setActiveTheme(t.id); toast.success(`Theme applied: ${t.name}`) }}>
+          <Card key={t.id} className={`cursor-pointer transition-all hover:shadow-md ${activeTheme === t.id ? 'ring-2 ring-[#D4AF37] shadow-md' : ''}`} onClick={() => { setActiveTheme(t.id); toast.info('Feature pending backend integration') }}>
             <CardContent className="p-4 space-y-3">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full" style={{ backgroundColor: t.primary }} />
@@ -1416,7 +1422,7 @@ export function EmailTemplatesManager({ refreshKey }: { refreshKey?: number }) {
           <div className="space-y-2"><Label>Body</Label><Textarea value={editBody} onChange={e => setEditBody(e.target.value)} rows={8} className="font-mono text-sm" /></div>
         </div>
         <DialogFooter><Button variant="outline" onClick={() => setEditOpen(false)}>Cancel</Button>
-          <Button className="bg-[#D4AF37] hover:bg-[#D4AF37]/80 text-black" onClick={() => { setEditOpen(false); toast.success('Template saved') }}>Save Template</Button></DialogFooter>
+          <Button className="bg-[#D4AF37] hover:bg-[#D4AF37]/80 text-black" onClick={() => { setEditOpen(false); toast.info('Template saved locally') }}>Save Template</Button></DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
@@ -1451,7 +1457,7 @@ export function WhatsAppTemplates({ refreshKey }: { refreshKey?: number }) {
               <TableCell className="hidden md:table-cell max-w-xs truncate text-muted-foreground text-sm">{t.content}</TableCell>
               <TableCell className="text-right"><div className="flex justify-end gap-1">
                 <Button size="sm" variant="outline" onClick={() => toast.info(`Edit ${t.name}`)}><Pencil className="h-3.5 w-3.5" /></Button>
-                <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700" onClick={() => { setTemplates(prev => prev.filter(x => x.id !== t.id)); toast.success('Template deleted') }}><Trash2 className="h-3.5 w-3.5" /></Button>
+                <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700" onClick={() => { setTemplates(prev => prev.filter(x => x.id !== t.id)); toast.info('Template deleted locally') }}><Trash2 className="h-3.5 w-3.5" /></Button>
               </div></TableCell>
             </TableRow>
           ))}</TableBody></Table></div></CardContent></Card>
@@ -1465,7 +1471,7 @@ export function WhatsAppTemplates({ refreshKey }: { refreshKey?: number }) {
           <div className="space-y-2"><Label>Content</Label><Textarea placeholder="Message content... Use {{variable}} for placeholders." rows={4} /></div>
         </div>
         <DialogFooter><Button variant="outline" onClick={() => setAddOpen(false)}>Cancel</Button>
-          <Button className="bg-[#D4AF37] hover:bg-[#D4AF37]/80 text-black" onClick={() => { setAddOpen(false); toast.success('WhatsApp template submitted') }}>Submit for Approval</Button></DialogFooter>
+          <Button className="bg-[#D4AF37] hover:bg-[#D4AF37]/80 text-black" onClick={() => { setAddOpen(false); toast.info('Template submitted locally') }}>Submit for Approval</Button></DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
@@ -1513,7 +1519,7 @@ export function MaintenanceMode({ refreshKey }: { refreshKey?: number }) {
                 <div className="space-y-2"><Label>Start Time</Label><Input type="datetime-local" value={startTime} onChange={e => setStartTime(e.target.value)} /></div>
                 <div className="space-y-2"><Label>End Time</Label><Input type="datetime-local" value={endTime} onChange={e => setEndTime(e.target.value)} /></div>
               </div>
-              <Button className="bg-[#D4AF37] hover:bg-[#D4AF37]/80 text-black" onClick={() => toast.success('Maintenance settings saved')}><Save className="h-4 w-4 mr-2" />Save Settings</Button>
+              <Button className="bg-[#D4AF37] hover:bg-[#D4AF37]/80 text-black" onClick={() => save({ enabled, message, downtime, ips, startTime, endTime })}><Save className="h-4 w-4 mr-2" />Save Settings</Button>
             </CardContent>
           </Card>
         </div>

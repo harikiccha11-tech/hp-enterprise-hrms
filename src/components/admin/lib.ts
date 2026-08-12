@@ -193,6 +193,17 @@ export async function copyText(text: string): Promise<boolean> {
   }
 }
 
+/** Escape HTML entities — prevents XSS when interpolating user data into HTML strings */
+export function escapeHtml(s: string | null | undefined): string {
+  if (!s) return '—'
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
 /** Parse a JSON string safely */
 export function parseJSON<T>(s: string | null | undefined, fallback: T): T {
   if (!s) return fallback

@@ -211,7 +211,7 @@ export function Notifications({ onChanged }: { onChanged?: () => void }) {
                           )}
                         </div>
                       </div>
-                      {n.link && (
+                      {n.link && (n.link.startsWith('/') || n.link.startsWith('http://') || n.link.startsWith('https://')) && (
                         <a
                           href={n.link}
                           className="mt-2 inline-block text-xs font-medium text-[var(--navy)] hover:underline dark:text-[var(--gold-light)]"
